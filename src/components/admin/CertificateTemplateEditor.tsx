@@ -1,10 +1,10 @@
 "use client"
 // src/components/admin/CertificateTemplateEditor.tsx
-// Éditeur de modèles de certificats — 4 styles professionnels + orientation
+// Éditeur avec Directeur + Enseignant
 
 import { useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, Save, CheckCircle2, Loader2, RotateCcw, Eye, Palette, Type, Sparkles, BookOpen, LayoutTemplate } from "lucide-react"
+import { ArrowLeft, Save, CheckCircle2, Loader2, RotateCcw, Eye, Palette, Type, Sparkles, BookOpen, LayoutTemplate, User, UserCheck } from "lucide-react"
 import { useLanguage } from "@/contexts/LanguageContext"
 
 export type CertTemplate = {
@@ -26,6 +26,11 @@ export type CertTemplate = {
   signatureStyle: string
   paperTexture: string
   orientation: "portrait" | "landscape"
+  directorName: string
+  directorNameAr: string
+  showTeacher: boolean
+  teacherName: string
+  teacherNameAr: string
 }
 
 export type Templates = {
@@ -81,6 +86,12 @@ const UI: Record<string, { fr: string; en: string; ar: string }> = {
   orientation:    { fr: "Orientation",              en: "Orientation",         ar: "الاتجاه" },
   portrait:       { fr: "Portrait (A4 vertical)",   en: "Portrait (A4 vertical)", ar: "عمودي (A4)" },
   landscape:    { fr: "Paysage (A4 horizontal)",  en: "Landscape (A4 horizontal)", ar: "أفقي (A4)" },
+  directorSection: { fr: "Signatures",              en: "Signatures",          ar: "التوقيعات" },
+  directorName:   { fr: "Nom du directeur",        en: "Director name",       ar: "اسم المدير" },
+  directorNameAr: { fr: "Nom du directeur (arabe)", en: "Director name (Arabic)", ar: "اسم المدير (عربي)" },
+  showTeacher:    { fr: "Afficher l'enseignant",     en: "Show teacher",        ar: "إظهار المعلم" },
+  teacherName:    { fr: "Nom de l'enseignant",      en: "Teacher name",        ar: "اسم المعلم" },
+  teacherNameAr:  { fr: "Nom de l'enseignant (arabe)", en: "Teacher name (Arabic)", ar: "اسم المعلم (عربي)" },
 }
 
 const DEFAULTS: Templates = {
@@ -93,6 +104,8 @@ const DEFAULTS: Templates = {
     badgeEmoji: "🌱", borderStyle: "islamic", fontFamily: "Amiri", fontFamilyAr: "Scheherazade New",
     decorativePattern: "geometric", signatureStyle: "elegant", paperTexture: "parchment",
     orientation: "portrait",
+    directorName: "Directeur", directorNameAr: "المدير",
+    showTeacher: true, teacherName: "", teacherNameAr: "",
   },
   intermediate: {
     id: "andalous", title: "Certificat d'Excellence", titleAr: "شَهَادَةُ التَّفَوُّق",
@@ -103,6 +116,8 @@ const DEFAULTS: Templates = {
     badgeEmoji: "⭐", borderStyle: "andalous", fontFamily: "Georgia", fontFamilyAr: "Amiri",
     decorativePattern: "floral", signatureStyle: "calligraphic", paperTexture: "cream",
     orientation: "portrait",
+    directorName: "Directeur", directorNameAr: "المدير",
+    showTeacher: true, teacherName: "", teacherNameAr: "",
   },
   advanced: {
     id: "ottoman", title: "Certificat d'Honneur", titleAr: "شَهَادَةُ الشَّرَف",
@@ -113,6 +128,8 @@ const DEFAULTS: Templates = {
     badgeEmoji: "🏆", borderStyle: "ottoman", fontFamily: "Georgia", fontFamilyAr: "Scheherazade New",
     decorativePattern: "ornate", signatureStyle: "royal", paperTexture: "vintage",
     orientation: "portrait",
+    directorName: "Directeur", directorNameAr: "المدير",
+    showTeacher: true, teacherName: "", teacherNameAr: "",
   },
   expert: {
     id: "mamlouk", title: "Certificat de Maîtrise", titleAr: "شَهَادَةُ الْإِتْقَان",
@@ -123,6 +140,8 @@ const DEFAULTS: Templates = {
     badgeEmoji: "👑", borderStyle: "mamlouk", fontFamily: "Georgia", fontFamilyAr: "Reem Kufi",
     decorativePattern: "architectural", signatureStyle: "imperial", paperTexture: "linen",
     orientation: "landscape",
+    directorName: "Directeur", directorNameAr: "المدير",
+    showTeacher: true, teacherName: "", teacherNameAr: "",
   },
 }
 
@@ -146,7 +165,7 @@ export function CertificateTemplateEditor({ initialTemplates, locale }: Props) {
 
   const t = templates[activeLevel]
 
-  const update = (key: keyof CertTemplate, value: string) => {
+  const update = (key: keyof CertTemplate, value: any) => {
     setTemplates(prev => ({ ...prev, [activeLevel]: { ...prev[activeLevel], [key]: value } }))
     setSaved(false)
   }
@@ -190,7 +209,6 @@ export function CertificateTemplateEditor({ initialTemplates, locale }: Props) {
     setSaved(false)
   }
 
-  // Rendu du motif décoratif selon le style
   const renderPattern = () => {
     const patterns: Record<string, JSX.Element> = {
       geometric: (
@@ -230,9 +248,7 @@ export function CertificateTemplateEditor({ initialTemplates, locale }: Props) {
     return patterns[t.decorativePattern] || patterns.geometric
   }
 
-  // Dimensions selon orientation
   const isLandscape = t.orientation === "landscape"
-  const previewWidth = isLandscape ? "100%" : "100%"
   const previewMaxW = isLandscape ? "600px" : "400px"
 
   return (
@@ -312,6 +328,56 @@ export function CertificateTemplateEditor({ initialTemplates, locale }: Props) {
             </div>
           </div>
 
+          {/* Signatures — Directeur + Enseignant */}
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 space-y-4">
+            <h2 className="font-semibold text-gray-800 dark:text-gray-200 text-sm uppercase tracking-wide flex items-center gap-2">
+              <UserCheck size={16}/> {u("directorSection")}
+            </h2>
+
+            {/* Directeur */}
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{u("directorName")}</label>
+                <input value={t.directorName} onChange={e => update("directorName", e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{u("directorNameAr")}</label>
+                <input value={t.directorNameAr} onChange={e => update("directorNameAr", e.target.value)} dir="rtl"
+                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" />
+              </div>
+            </div>
+
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-3">
+              {/* Toggle enseignant */}
+              <label className="flex items-center gap-2 cursor-pointer mb-3">
+                <input 
+                  type="checkbox" 
+                  checked={t.showTeacher} 
+                  onChange={e => update("showTeacher", e.target.checked)}
+                  className="w-4 h-4 rounded accent-emerald-600"
+                />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{u("showTeacher")}</span>
+              </label>
+
+              {/* Enseignant (si activé) */}
+              {t.showTeacher && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{u("teacherName")}</label>
+                    <input value={t.teacherName} onChange={e => update("teacherName", e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{u("teacherNameAr")}</label>
+                    <input value={t.teacherNameAr} onChange={e => update("teacherNameAr", e.target.value)} dir="rtl"
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 space-y-4">
             <h2 className="font-semibold text-gray-800 dark:text-gray-200 text-sm uppercase tracking-wide flex items-center gap-2">
               <Type size={16}/> {u("sectionTitles")}
@@ -366,11 +432,11 @@ export function CertificateTemplateEditor({ initialTemplates, locale }: Props) {
                 { key: "textColor",     labelKey: "colorText" },
               ] as { key: keyof CertTemplate; labelKey: keyof typeof UI }[]).map(({ key, labelKey }) => (
                 <div key={key} className="flex items-center gap-3">
-                  <input type="color" value={t[key]} onChange={e => update(key, e.target.value)}
+                  <input type="color" value={t[key] as string} onChange={e => update(key, e.target.value)}
                     className="w-10 h-10 rounded-lg border-0 cursor-pointer p-0.5 shadow-sm" />
                   <div>
                     <p className="text-xs font-medium text-gray-700 dark:text-gray-300">{u(labelKey)}</p>
-                    <p className="text-xs text-gray-400 font-mono">{t[key]}</p>
+                    <p className="text-xs text-gray-400 font-mono">{t[key] as string}</p>
                   </div>
                 </div>
               ))}
@@ -396,7 +462,7 @@ export function CertificateTemplateEditor({ initialTemplates, locale }: Props) {
           </div>
         </div>
 
-        {/* ─── Prévisualisation professionnelle ─── */}
+        {/* ─── Prévisualisation ─── */}
         <div className="sticky top-4">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
             <Eye size={14}/> {u("preview")}
@@ -411,77 +477,67 @@ export function CertificateTemplateEditor({ initialTemplates, locale }: Props) {
               margin: "0 auto"
             }}>
 
-            {/* Motif décoratif supérieur */}
             <div className="relative">
               {renderPattern()}
               <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/80"/>
             </div>
 
-            <div className="p-8" style={{ fontFamily: t.fontFamily + ', serif' }}>
-              {/* Verset arabe */}
-              <p className="text-center mb-4 text-lg leading-relaxed" dir="rtl"
+            <div className="p-6" style={{ fontFamily: t.fontFamily + ', serif' }}>
+              <p className="text-center mb-2 text-sm" dir="rtl"
                 style={{ color: t.primaryColor, fontFamily: t.fontFamilyAr + ', serif' }}>
                 {t.arabicVerse}
               </p>
 
-              {/* Ligne ornementale */}
-              <div className="flex items-center gap-3 mb-6">
-                <div className="flex-1 h-px" style={{ background: `linear-gradient(to right, transparent, ${t.accentColor})` }}/>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ color: t.accentColor }}>
-                  <path d="M12 2L15 9L22 12L15 15L12 22L9 15L2 12L9 9L12 2Z" fill="currentColor" opacity="0.6"/>
-                </svg>
-                <div className="flex-1 h-px" style={{ background: `linear-gradient(to left, transparent, ${t.accentColor})` }}/>
-              </div>
-
-              {/* Titre */}
-              <div className="text-center mb-6">
-                <p className="text-xs font-bold tracking-[0.3em] uppercase mb-1" style={{ color: t.accentColor }}>
+              <div className="text-center mb-3">
+                <p className="text-[10px] font-bold tracking-[0.2em] uppercase mb-0.5" style={{ color: t.accentColor }}>
                   {t.subtitle}
                 </p>
-                <h2 className="text-2xl font-bold" style={{ color: t.textColor }}>{t.title}</h2>
-                <p className="text-xl mt-1" dir="rtl" style={{ color: t.primaryColor, fontFamily: t.fontFamilyAr + ', serif' }}>
+                <h2 className="text-lg font-bold" style={{ color: t.textColor }}>{t.title}</h2>
+                <p className="text-base mt-0.5" dir="rtl" style={{ color: t.primaryColor, fontFamily: t.fontFamilyAr + ', serif' }}>
                   {t.titleAr}
                 </p>
               </div>
 
-              {/* Corps */}
-              <div className="bg-white/60 rounded-xl p-4 mb-6 border"
+              <div className="bg-white/60 rounded-lg p-2 mb-3 border"
                 style={{ borderColor: t.accentColor + "30" }}>
-                <p className="text-sm text-center leading-relaxed" style={{ color: t.textColor + "cc" }}>
+                <p className="text-xs text-center" style={{ color: t.textColor + "cc" }}>
                   {t.bodyText}
                 </p>
               </div>
 
-              {/* Info étudiant exemple */}
-              <div className="flex items-center gap-4 mb-6 p-4 bg-white/80 rounded-xl border"
+              <div className="flex items-center gap-3 mb-3 p-2 bg-white/80 rounded-lg border"
                 style={{ borderColor: t.primaryColor + "20" }}>
-                <div className="w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-md"
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm"
                   style={{ background: `linear-gradient(135deg, ${t.primaryColor}, ${t.accentColor})` }}>
                   A
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400 uppercase tracking-wider">{u("awardedTo")}</p>
-                  <p className="text-lg font-bold" style={{ color: t.textColor }}>Ahmed Benali</p>
-                  <p className="text-sm" style={{ color: t.primaryColor }}>{t.badgeEmoji} {t.subtitle}</p>
+                  <p className="text-[10px] text-gray-400 uppercase">{u("awardedTo")}</p>
+                  <p className="text-sm font-bold" style={{ color: t.textColor }}>Ahmed Benali</p>
                 </div>
               </div>
 
-              {/* Signatures */}
-              <div className="flex justify-between items-end pt-4 border-t" style={{ borderColor: t.accentColor + "30" }}>
+              {/* Signatures preview */}
+              <div className="flex justify-between items-end pt-2 border-t" style={{ borderColor: t.accentColor + "30" }}>
                 <div className="text-center">
-                  <div className="w-28 h-px mx-auto mb-2" style={{ background: t.primaryColor + "50" }}/>
-                  <p className="text-xs text-gray-400">{u("direction")}</p>
-                  <p className="text-xs font-medium" style={{ color: t.textColor }}>EL NOUR</p>
+                  <div className="w-16 h-px mx-auto mb-1" style={{ background: t.primaryColor + "50" }}/>
+                  <p className="text-[10px] text-gray-400">{u("direction")}</p>
+                  <p className="text-[10px] font-medium" style={{ color: t.textColor }}>{t.directorName}</p>
+                  {t.showTeacher && (
+                    <>
+                      <p className="text-[10px] text-gray-400 mt-1">{u("teacher")}</p>
+                      <p className="text-[10px] font-medium" style={{ color: t.textColor }}>{t.teacherName || "Enseignant"}</p>
+                    </>
+                  )}
                 </div>
                 <div className="text-center">
-                  <div className="w-28 h-px mx-auto mb-2" style={{ background: t.primaryColor + "50"}}/>
-                  <p className="text-xs text-gray-400">Date</p>
-                  <p className="text-xs font-medium" style={{ color: t.textColor }}>19 mai 2026</p>
+                  <div className="w-16 h-px mx-auto mb-1" style={{ background: t.primaryColor + "50"}}/>
+                  <p className="text-[10px] text-gray-400">Date</p>
+                  <p className="text-[10px] font-medium" style={{ color: t.textColor }}>19/05/2026</p>
                 </div>
               </div>
             </div>
 
-            {/* Motif décoratif inférieur */}
             <div className="relative rotate-180">
               {renderPattern()}
               <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/80"/>

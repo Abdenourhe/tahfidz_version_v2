@@ -2,22 +2,27 @@
   "beginner": {
     "id": "islamic",
     "title": "Certificat de Mémorisation",
-    "titleAr": "شَهَــــــادَةُ الْحِفْـــــظ",
+    "titleAr": "شَهَادَةُ الْحِفْظ",
     "subtitle": "Niveau Débutant",
     "bodyText": "Pour avoir accompli avec sérieux et persévérance son programme de mémorisation du Saint Coran, et avoir démontré de belles qualités d'apprentissage et de dévotion.",
-    "arabicVerse": "بِـــــــسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-    "primaryColor": "#1a5f4a",
-    "accentColor": "#c9a227",
-    "lightColor": "#f0f7f4",
-    "textColor": "#0d3326",
+    "arabicVerse": "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+    "primaryColor": "#1e3a5f",
+    "accentColor": "#4a90a4",
+    "lightColor": "#eef4f8",
+    "textColor": "#0f1f33",
     "badgeEmoji": "🌱",
-    "borderStyle": "islamic",
-    "fontFamily": "Amiri",
+    "borderStyle": "mamlouk",
+    "fontFamily": "Georgia",
     "fontFamilyAr": "Reem Kufi",
-    "decorativePattern": "geometric",
+    "decorativePattern": "architectural",
     "signatureStyle": "elegant",
     "paperTexture": "parchment",
-    "orientation": "landscape"
+    "orientation": "landscape",
+    "directorName": "Directeur",
+    "directorNameAr": "المدير",
+    "showTeacher": true,
+    "teacherName": "",
+    "teacherNameAr": ""
   },
   "intermediate": {
     "id": "andalous",
@@ -37,7 +42,12 @@
     "decorativePattern": "floral",
     "signatureStyle": "calligraphic",
     "paperTexture": "cream",
-    "orientation": "portrait"
+    "orientation": "portrait",
+    "directorName": "Directeur",
+    "directorNameAr": "المدير",
+    "showTeacher": true,
+    "teacherName": "",
+    "teacherNameAr": ""
   },
   "advanced": {
     "id": "ottoman",
@@ -57,7 +67,12 @@
     "decorativePattern": "ornate",
     "signatureStyle": "royal",
     "paperTexture": "vintage",
-    "orientation": "portrait"
+    "orientation": "portrait",
+    "directorName": "Directeur",
+    "directorNameAr": "المدير",
+    "showTeacher": true,
+    "teacherName": "",
+    "teacherNameAr": ""
   },
   "expert": {
     "id": "mamlouk",
@@ -77,6 +92,11 @@
     "decorativePattern": "architectural",
     "signatureStyle": "imperial",
     "paperTexture": "linen",
-    "orientation": "landscape"
+    "orientation": "landscape",
+    "directorName": "Directeur",
+    "directorNameAr": "المدير",
+    "showTeacher": true,
+    "teacherName": "",
+    "teacherNameAr": ""
   }
 }
