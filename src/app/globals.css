@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Amiri:ital,wght@0,400;0,700;1,400&family=Scheherazade+New:wght@400;700&family=Reem+Kufi:wght@400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -64,16 +64,32 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   [dir="rtl"] {
-    font-family: 'Noto Naskh Arabic', serif;
+    font-family: 'Noto Naskh Arabic', 'Amiri', serif;
   }
 }
 
 @layer utilities {
   .arabic,
   .font-arabic {
-    font-family: 'Noto Naskh Arabic', serif;
+    font-family: 'Noto Naskh Arabic', 'Amiri', serif;
     direction: rtl;
     text-align: right;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     POLICES SPÉCIALES CERTIFICATS
+     ═══════════════════════════════════════════════════════════ */
+  .font-amiri {
+    font-family: 'Amiri', 'Noto Naskh Arabic', serif;
+  }
+  .font-scheherazade {
+    font-family: 'Scheherazade New', 'Amiri', serif;
+  }
+  .font-reem-kufi {
+    font-family: 'Reem Kufi', sans-serif;
+  }
+  .font-noto-naskh {
+    font-family: 'Noto Naskh Arabic', serif;
   }
 
   .rtl-layout {
@@ -125,15 +141,11 @@
 
 /* ═══════════════════════════════════════════════════════════════
    DARK MODE — Overrides globaux
-   Ces règles s'appliquent automatiquement sur TOUS les composants
-   quand la classe .dark est présente sur <html>.
-   Placées hors @layer pour avoir la priorité de cascade correcte.
    ═══════════════════════════════════════════════════════════════ */
 
 /* ── Surfaces / Fonds ── */
 .dark .bg-white          { background-color: hsl(240 10% 9%); }
 .dark .bg-gray-50        { background-color: hsl(240 10% 6%); }
-.dark .bg-gray-50\/50    { background-color: hsl(240 10% 7% / 0.5); }
 .dark .bg-gray-100       { background-color: hsl(240 7% 14%); }
 .dark .bg-gray-200       { background-color: hsl(240 6% 20%); }
 
