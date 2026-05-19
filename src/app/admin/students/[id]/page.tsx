@@ -52,7 +52,6 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
       memorized={memorized}
       inProgress={inProgress}
       attendanceRate={attendanceRate}
-      // ← SUPPRIMÉ : plus de formatDate, statusLabel, scoreToGrade, formatAge
     />
   )
 }
