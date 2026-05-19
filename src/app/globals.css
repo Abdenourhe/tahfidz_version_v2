@@ -1,0 +1,233 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 158 85% 36%;       /* Tahfidz Green */
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 158 85% 36%;
+    --radius: 0.75rem;
+    /* Tahfidz Pro palette */
+    --tahfidz-green: 158 85% 36%;
+    --tahfidz-gold: 38 82% 40%;
+    --tahfidz-purple: 244 47% 50%;
+  }
+
+  .dark {
+    --background: 240 10% 5%;
+    --foreground: 0 0% 95%;
+    --card: 240 10% 9%;
+    --card-foreground: 0 0% 95%;
+    --popover: 240 10% 9%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 158 75% 45%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 240 5% 16%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 240 5% 16%;
+    --muted-foreground: 240 5% 62%;
+    --accent: 240 5% 16%;
+    --accent-foreground: 0 0% 95%;
+    --destructive: 0 62% 40%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5% 16%;
+    --input: 240 5% 16%;
+    --ring: 158 75% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  [dir="rtl"] {
+    font-family: 'Noto Naskh Arabic', serif;
+  }
+}
+
+@layer utilities {
+  .arabic,
+  .font-arabic {
+    font-family: 'Noto Naskh Arabic', serif;
+    direction: rtl;
+    text-align: right;
+  }
+
+  .rtl-layout {
+    direction: rtl;
+  }
+
+  /* Animation pour les badges */
+  .badge-earned {
+    animation: badge-pop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  @keyframes badge-pop {
+    0% { transform: scale(0); opacity: 0; }
+    70% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Étoiles animées */
+  .star-fill {
+    animation: star-shine 0.4s ease-out;
+  }
+
+  @keyframes star-shine {
+    0% { transform: scale(0) rotate(-30deg); opacity: 0; }
+    60% { transform: scale(1.3) rotate(5deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0); opacity: 1; }
+  }
+
+  /* Gradient vert Tahfidz */
+  .gradient-tahfidz {
+    background: linear-gradient(135deg, #1D9E75 0%, #0F6E56 100%);
+  }
+
+  /* Card avec hover effect */
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-md hover:-translate-y-0.5;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    @apply h-2 rounded-full bg-muted overflow-hidden;
+  }
+
+  .progress-bar-fill {
+    @apply h-full rounded-full transition-all duration-500;
+    background: linear-gradient(90deg, #1D9E75, #0F6E56);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DARK MODE — Overrides globaux
+   Ces règles s'appliquent automatiquement sur TOUS les composants
+   quand la classe .dark est présente sur <html>.
+   Placées hors @layer pour avoir la priorité de cascade correcte.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Surfaces / Fonds ── */
+.dark .bg-white          { background-color: hsl(240 10% 9%); }
+.dark .bg-gray-50        { background-color: hsl(240 10% 6%); }
+.dark .bg-gray-50\/50    { background-color: hsl(240 10% 7% / 0.5); }
+.dark .bg-gray-100       { background-color: hsl(240 7% 14%); }
+.dark .bg-gray-200       { background-color: hsl(240 6% 20%); }
+
+/* Hover fonds clairs */
+.dark .hover\:bg-gray-50:hover   { background-color: hsl(240 7% 13%); }
+.dark .hover\:bg-gray-100:hover  { background-color: hsl(240 7% 17%); }
+
+/* Fond page (body/layout) */
+.dark .bg-gray-50.min-h-screen,
+.dark .min-h-screen.bg-gray-50  { background-color: hsl(240 10% 5%); }
+
+/* ── Textes ── */
+.dark .text-gray-900 { color: hsl(0 0% 95%); }
+.dark .text-gray-800 { color: hsl(0 0% 87%); }
+.dark .text-gray-700 { color: hsl(0 0% 79%); }
+.dark .text-gray-600 { color: hsl(0 0% 69%); }
+.dark .text-gray-500 { color: hsl(0 0% 59%); }
+.dark .text-gray-400 { color: hsl(0 0% 50%); }
+.dark .text-gray-300 { color: hsl(0 0% 42%); }
+
+/* Hover textes */
+.dark .hover\:text-gray-900:hover { color: hsl(0 0% 95%); }
+.dark .hover\:text-gray-700:hover { color: hsl(0 0% 85%); }
+
+/* ── Bordures ── */
+.dark .border-gray-100  { border-color: hsl(240 6% 14%); }
+.dark .border-gray-200  { border-color: hsl(240 5% 18%); }
+.dark .divide-gray-100 > * + * { border-color: hsl(240 6% 14%); }
+
+/* ── Inputs / Formulaires ── */
+.dark input:not([type="color"]):not([type="checkbox"]):not([type="radio"]),
+.dark textarea,
+.dark select {
+  background-color: hsl(240 10% 12%);
+  border-color: hsl(240 5% 22%);
+  color: hsl(0 0% 92%);
+}
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: hsl(240 5% 45%);
+}
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  border-color: hsl(158 75% 45%);
+}
+
+/* ── Sidebar ── */
+.dark aside {
+  background-color: hsl(240 10% 8%);
+  border-right-color: hsl(240 6% 14%);
+}
+
+/* ── Tables ── */
+.dark thead { background-color: hsl(240 8% 10%); }
+.dark .border-b { border-color: hsl(240 6% 14%); }
+.dark tr:hover { background-color: hsl(240 8% 11%); }
+.dark .hover\:bg-gray-50:hover { background-color: hsl(240 8% 11%); }
+
+/* ── Badges / Pills ── */
+.dark .bg-green-100  { background-color: hsl(158 40% 12%); }
+.dark .text-green-700 { color: hsl(158 60% 55%); }
+.dark .bg-red-100    { background-color: hsl(0 40% 12%); }
+.dark .text-red-700  { color: hsl(0 60% 55%); }
+.dark .bg-red-500    { background-color: hsl(0 72% 45%); }
+.dark .bg-blue-100   { background-color: hsl(220 40% 12%); }
+.dark .text-blue-700 { color: hsl(220 60% 65%); }
+.dark .bg-yellow-100 { background-color: hsl(45 40% 12%); }
+.dark .text-yellow-700 { color: hsl(45 60% 55%); }
+.dark .bg-orange-50  { background-color: hsl(30 40% 10%); }
+.dark .bg-orange-100 { background-color: hsl(30 40% 13%); }
+.dark .text-orange-700 { color: hsl(30 60% 60%); }
+.dark .bg-purple-100 { background-color: hsl(244 40% 14%); }
+.dark .text-purple-700 { color: hsl(244 60% 70%); }
+.dark .bg-amber-50   { background-color: hsl(38 40% 10%); }
+.dark .bg-amber-100  { background-color: hsl(38 40% 13%); }
+.dark .text-amber-700 { color: hsl(38 60% 60%); }
+
+/* Emerald / Tahfidz Green maintenu */
+.dark .bg-emerald-50   { background-color: hsl(158 40% 8%); }
+.dark .bg-green-50     { background-color: hsl(158 40% 8%); }
+.dark .border-green-100 { border-color: hsl(158 30% 16%); }
+.dark .border-green-200 { border-color: hsl(158 30% 20%); }
+.dark .border-emerald-100 { border-color: hsl(158 30% 16%); }
+.dark .border-emerald-200 { border-color: hsl(158 30% 20%); }
+
+/* Tahfidz-green-light (custom color) */
+.dark .bg-tahfidz-green-light { background-color: hsl(158 40% 10%); }
+.dark .hover\:bg-tahfidz-green-light:hover { background-color: hsl(158 40% 12%); }
+
+/* ── Code / Mono ── */
+.dark code { background-color: hsl(240 8% 14%); color: hsl(0 0% 85%); }
+
+/* ── Scrollbar ── */
+.dark ::-webkit-scrollbar-track { background: hsl(240 10% 8%); }
+.dark ::-webkit-scrollbar-thumb { background: hsl(240 6% 20%); border-radius: 4px; }
+.dark ::-webkit-scrollbar-thumb:hover { background: hsl(240 5% 28%); }
