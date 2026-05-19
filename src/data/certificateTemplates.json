@@ -2,21 +2,22 @@
   "beginner": {
     "id": "islamic",
     "title": "Certificat de Mémorisation",
-    "titleAr": "شَهَادَةُ الْحِفْظ",
+    "titleAr": "شَهَــــــادَةُ الْحِفْـــــظ",
     "subtitle": "Niveau Débutant",
     "bodyText": "Pour avoir accompli avec sérieux et persévérance son programme de mémorisation du Saint Coran, et avoir démontré de belles qualités d'apprentissage et de dévotion.",
-    "arabicVerse": "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-    "primaryColor": "#8b4513",
-    "accentColor": "#daa520",
-    "lightColor": "#faf5ef",
-    "textColor": "#3d2314",
+    "arabicVerse": "بِـــــــسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+    "primaryColor": "#1a5f4a",
+    "accentColor": "#c9a227",
+    "lightColor": "#f0f7f4",
+    "textColor": "#0d3326",
     "badgeEmoji": "🌱",
-    "borderStyle": "ottoman",
-    "fontFamily": "Georgia",
-    "fontFamilyAr": "Scheherazade New",
-    "decorativePattern": "ornate",
+    "borderStyle": "islamic",
+    "fontFamily": "Amiri",
+    "fontFamilyAr": "Reem Kufi",
+    "decorativePattern": "geometric",
     "signatureStyle": "elegant",
-    "paperTexture": "parchment"
+    "paperTexture": "parchment",
+    "orientation": "landscape"
   },
   "intermediate": {
     "id": "andalous",
@@ -35,7 +36,8 @@
     "fontFamilyAr": "Amiri",
     "decorativePattern": "floral",
     "signatureStyle": "calligraphic",
-    "paperTexture": "cream"
+    "paperTexture": "cream",
+    "orientation": "portrait"
   },
   "advanced": {
     "id": "ottoman",
@@ -54,7 +56,8 @@
     "fontFamilyAr": "Scheherazade New",
     "decorativePattern": "ornate",
     "signatureStyle": "royal",
-    "paperTexture": "vintage"
+    "paperTexture": "vintage",
+    "orientation": "portrait"
   },
   "expert": {
     "id": "mamlouk",
@@ -63,16 +66,17 @@
     "subtitle": "Niveau Expert",
     "bodyText": "Pour avoir atteint la maîtrise complète de la mémorisation du Saint Coran avec ijtihad et perfection, et être devenu un modèle d'excellence spirituelle et académique.",
     "arabicVerse": "نَحْنُ نَقُصُّ عَلَيْكَ أَحْسَنَ الْقَصَصِ",
-    "primaryColor": "#8b4513",
-    "accentColor": "#daa520",
-    "lightColor": "#faf5ef",
-    "textColor": "#3d2314",
+    "primaryColor": "#1e3a5f",
+    "accentColor": "#4a90a4",
+    "lightColor": "#eef4f8",
+    "textColor": "#0f1f33",
     "badgeEmoji": "👑",
-    "borderStyle": "ottoman",
+    "borderStyle": "mamlouk",
     "fontFamily": "Georgia",
-    "fontFamilyAr": "Scheherazade New",
-    "decorativePattern": "ornate",
+    "fontFamilyAr": "Reem Kufi",
+    "decorativePattern": "architectural",
     "signatureStyle": "imperial",
-    "paperTexture": "linen"
+    "paperTexture": "linen",
+    "orientation": "landscape"
   }
 }

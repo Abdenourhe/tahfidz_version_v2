@@ -11,7 +11,7 @@ const REQUIRED_FIELDS = [
   "id", "title", "titleAr", "subtitle", "bodyText", "arabicVerse",
   "primaryColor", "accentColor", "lightColor", "textColor", "badgeEmoji",
   "borderStyle", "fontFamily", "fontFamilyAr", "decorativePattern",
-  "signatureStyle", "paperTexture",
+  "signatureStyle", "paperTexture", "orientation",
 ]
 
 export async function GET() {

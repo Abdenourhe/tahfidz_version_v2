@@ -1,10 +1,10 @@
 "use client"
 // src/components/admin/CertificateTemplateEditor.tsx
-// Éditeur de modèles de certificats — 4 styles professionnels
+// Éditeur de modèles de certificats — 4 styles professionnels + orientation
 
 import { useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, Save, CheckCircle2, Loader2, RotateCcw, Eye, Palette, Type, Sparkles, BookOpen } from "lucide-react"
+import { ArrowLeft, Save, CheckCircle2, Loader2, RotateCcw, Eye, Palette, Type, Sparkles, BookOpen, LayoutTemplate } from "lucide-react"
 import { useLanguage } from "@/contexts/LanguageContext"
 
 export type CertTemplate = {
@@ -25,6 +25,7 @@ export type CertTemplate = {
   decorativePattern: string
   signatureStyle: string
   paperTexture: string
+  orientation: "portrait" | "landscape"
 }
 
 export type Templates = {
@@ -77,6 +78,9 @@ const UI: Record<string, { fr: string; en: string; ar: string }> = {
   pattern:        { fr: "Motif décoratif",          en: "Decorative pattern",  ar: "النمط الزخرفي" },
   fontFamily:     { fr: "Police française",         en: "French font",         ar: "خط فرنسي" },
   fontFamilyAr:   { fr: "Police arabe",             en: "Arabic font",         ar: "خط عربي" },
+  orientation:    { fr: "Orientation",              en: "Orientation",         ar: "الاتجاه" },
+  portrait:       { fr: "Portrait (A4 vertical)",   en: "Portrait (A4 vertical)", ar: "عمودي (A4)" },
+  landscape:    { fr: "Paysage (A4 horizontal)",  en: "Landscape (A4 horizontal)", ar: "أفقي (A4)" },
 }
 
 const DEFAULTS: Templates = {
@@ -88,6 +92,7 @@ const DEFAULTS: Templates = {
     primaryColor: "#1a5f4a", accentColor: "#c9a227", lightColor: "#f0f7f4", textColor: "#0d3326",
     badgeEmoji: "🌱", borderStyle: "islamic", fontFamily: "Amiri", fontFamilyAr: "Scheherazade New",
     decorativePattern: "geometric", signatureStyle: "elegant", paperTexture: "parchment",
+    orientation: "portrait",
   },
   intermediate: {
     id: "andalous", title: "Certificat d'Excellence", titleAr: "شَهَادَةُ التَّفَوُّق",
@@ -97,6 +102,7 @@ const DEFAULTS: Templates = {
     primaryColor: "#2d5a3d", accentColor: "#d4a843", lightColor: "#f5f0e6", textColor: "#1a3d2e",
     badgeEmoji: "⭐", borderStyle: "andalous", fontFamily: "Georgia", fontFamilyAr: "Amiri",
     decorativePattern: "floral", signatureStyle: "calligraphic", paperTexture: "cream",
+    orientation: "portrait",
   },
   advanced: {
     id: "ottoman", title: "Certificat d'Honneur", titleAr: "شَهَادَةُ الشَّرَف",
@@ -106,6 +112,7 @@ const DEFAULTS: Templates = {
     primaryColor: "#8b4513", accentColor: "#daa520", lightColor: "#faf5ef", textColor: "#3d2314",
     badgeEmoji: "🏆", borderStyle: "ottoman", fontFamily: "Georgia", fontFamilyAr: "Scheherazade New",
     decorativePattern: "ornate", signatureStyle: "royal", paperTexture: "vintage",
+    orientation: "portrait",
   },
   expert: {
     id: "mamlouk", title: "Certificat de Maîtrise", titleAr: "شَهَادَةُ الْإِتْقَان",
@@ -115,6 +122,7 @@ const DEFAULTS: Templates = {
     primaryColor: "#1e3a5f", accentColor: "#4a90a4", lightColor: "#eef4f8", textColor: "#0f1f33",
     badgeEmoji: "👑", borderStyle: "mamlouk", fontFamily: "Georgia", fontFamilyAr: "Reem Kufi",
     decorativePattern: "architectural", signatureStyle: "imperial", paperTexture: "linen",
+    orientation: "landscape",
   },
 }
 
@@ -222,6 +230,11 @@ export function CertificateTemplateEditor({ initialTemplates, locale }: Props) {
     return patterns[t.decorativePattern] || patterns.geometric
   }
 
+  // Dimensions selon orientation
+  const isLandscape = t.orientation === "landscape"
+  const previewWidth = isLandscape ? "100%" : "100%"
+  const previewMaxW = isLandscape ? "600px" : "400px"
+
   return (
     <div className="space-y-6 max-w-6xl">
       {/* Header actions */}
@@ -275,6 +288,27 @@ export function CertificateTemplateEditor({ initialTemplates, locale }: Props) {
                   <p className="text-xs text-gray-400">{preset.font} + {preset.fontAr}</p>
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Orientation */}
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 space-y-4">
+            <h2 className="font-semibold text-gray-800 dark:text-gray-200 text-sm uppercase tracking-wide flex items-center gap-2">
+              <LayoutTemplate size={16}/> {u("orientation")}
+            </h2>
+            <div className="flex gap-3">
+              <button
+                onClick={() => update("orientation", "portrait")}
+                className={`flex-1 p-4 rounded-xl border-2 transition text-center ${t.orientation === "portrait" ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'}`}>
+                <div className="w-8 h-12 border-2 border-current rounded mx-auto mb-2" style={{ color: t.primaryColor }}/>
+                <p className="text-sm font-medium">{u("portrait")}</p>
+              </button>
+              <button
+                onClick={() => update("orientation", "landscape")}
+                className={`flex-1 p-4 rounded-xl border-2 transition text-center ${t.orientation === "landscape" ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'}`}>
+                <div className="w-12 h-8 border-2 border-current rounded mx-auto mb-2" style={{ color: t.primaryColor }}/>
+                <p className="text-sm font-medium">{u("landscape")}</p>
+              </button>
             </div>
           </div>
 
@@ -370,7 +404,12 @@ export function CertificateTemplateEditor({ initialTemplates, locale }: Props) {
           <p className="text-xs text-gray-400 mb-3">{u("previewNote")}</p>
 
           <div className="rounded-2xl overflow-hidden shadow-2xl border-2"
-            style={{ borderColor: t.accentColor + "60", background: t.lightColor }}>
+            style={{ 
+              borderColor: t.accentColor + "60", 
+              background: t.lightColor,
+              maxWidth: previewMaxW,
+              margin: "0 auto"
+            }}>
 
             {/* Motif décoratif supérieur */}
             <div className="relative">
@@ -435,7 +474,7 @@ export function CertificateTemplateEditor({ initialTemplates, locale }: Props) {
                   <p className="text-xs font-medium" style={{ color: t.textColor }}>EL NOUR</p>
                 </div>
                 <div className="text-center">
-                  <div className="w-28 h-px mx-auto mb-2" style={{ background: t.primaryColor + "50" }}/>
+                  <div className="w-28 h-px mx-auto mb-2" style={{ background: t.primaryColor + "50"}}/>
                   <p className="text-xs text-gray-400">Date</p>
                   <p className="text-xs font-medium" style={{ color: t.textColor }}>19 mai 2026</p>
                 </div>
