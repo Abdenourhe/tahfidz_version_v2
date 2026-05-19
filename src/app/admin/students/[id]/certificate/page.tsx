@@ -76,7 +76,8 @@ export default async function StudentCertificatePage({
       user: { select: { fullName: true, fullNameAr: true, schoolId: true } },
       group: { select: { name: true, level: true } },
       memorizedSurahs: { include: { surah: { select: { nameFr: true, nameAr: true } } } },
-      // totalStars is on the student model directly
+      // ← AJOUTÉ : récupérer l'enseignant lié à l'étudiant
+      teacher: { include: { user: { select: { fullName: true, fullNameAr: true } } } },
     },
   })
 
@@ -84,7 +85,7 @@ export default async function StudentCertificatePage({
 
   const school = await prisma.school.findUnique({
     where: { id: session.user.schoolId! },
-    select: { name: true, logo: true },
+    select: { name: true, nameAr: true, logo: true, city: true },
   })
 
   const templates = loadTemplates()
@@ -103,13 +104,20 @@ export default async function StudentCertificatePage({
         memorizedCount: student.memorizedSurahs.length,
         level: student.group?.level ? (LEVEL_LABEL[student.group.level] ?? student.group.level) : "beginner",
         groupName: student.group?.name ?? undefined,
+        // ← AJOUTÉ : nom de l'enseignant depuis la relation teacher
+        teacherName: student.teacher?.user.fullName ?? undefined,
         memorizedSurahs: student.memorizedSurahs.map(m => ({
           id: m.surahId,
           nameFr: m.surah.nameFr,
           nameAr: m.surah.nameAr,
         })),
       }}
-      school={{ name: school?.name ?? "TAHFIDZ", logo: school?.logo ?? undefined }}
+      school={{ 
+        name: school?.name ?? "TAHFIDZ", 
+        nameAr: school?.nameAr ?? undefined,
+        logo: school?.logo ?? undefined,
+        city: school?.city ?? undefined,
+      }}
       template={template}
     />
   )
