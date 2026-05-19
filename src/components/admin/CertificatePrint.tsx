@@ -225,7 +225,7 @@ export function CertificatePrint({ student, school, template = DEFAULT_TEMPLATE 
 
             {/* ═══ NOM ÉTUDIANT ═══ */}
             <div className="text-center w-full" style={{ marginBottom: "20px" }}>
-              <p style={{ color: "#9ca3af", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: "4px" }}>Décerné à</p>
+              <p style={{ color: "#9ca3af", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: "4px" }}>Ce certificat est décerné à</p>
               <h2 style={{ color: t.textColor, fontSize: "1.8rem", fontWeight: 700, lineHeight: 1.2 }}>{student.fullName}</h2>
               {student.fullNameAr && (
                 <p dir="rtl" style={{ color: t.primaryColor, fontFamily: `${t.fontFamilyAr}, serif`, fontSize: "1.2rem", marginTop: "4px" }}>
@@ -239,7 +239,7 @@ export function CertificatePrint({ student, school, template = DEFAULT_TEMPLATE 
               {[
                 { icon: BookOpen, label: "Sourates", value: student.memorizedCount, color: t.primaryColor },
                 { icon: Star, label: "Étoiles", value: student.totalStars, color: t.accentColor },
-                { icon: Award, label: "Niveau", value: student.level, color: t.primaryColor },
+                { icon: Award, label: "Niveau", value: student.level === "beginner" ? "1" : student.level === "intermediate" ? "2" : student.level === "advanced" ? "3" : "4", color: t.primaryColor },
               ].map((stat, i) => (
                 <div key={i} className="text-center px-5 py-3 rounded-lg border" style={{ borderColor: t.accentColor + "18", background: "rgba(255,255,255,0.6)" }}>
                   <stat.icon size={18} style={{ color: stat.color }} className="mx-auto mb-1.5"/>
@@ -276,14 +276,14 @@ export function CertificatePrint({ student, school, template = DEFAULT_TEMPLATE 
           {/* ═══════════════════════════════════════════════════════════
               SIGNATURES COMPACTES — CENTRÉES PAR RAPPORT À LEUR AXE
               ═══════════════════════════════════════════════════════════ */}
-          <div className="w-full" style={{ marginTop: "auto", paddingTop: "12px" }}>
+          <div className="w-full" style={{ marginTop: "auto", paddingTop: "6px" }}>
 
             {/* Ligne de séparation subtile */}
             <div className="w-full mb-4" style={{ maxWidth: "600px", margin: "0 auto 16px" }}>
               <div className="h-px" style={{ background: `linear-gradient(to right, transparent, ${t.accentColor}30, transparent)` }}/>
             </div>
 
-            <div className="flex items-start justify-between" style={{ padding: "0 24px" }}>
+            <div className="flex items-start justify-between" style={{ padding: "0 40px" }}>
 
               {/* ═══ GAUCHE : Directeur (centré sur son axe) ═══ */}
               <div className="text-center" style={{ width: "100px" }}>
@@ -318,7 +318,7 @@ export function CertificatePrint({ student, school, template = DEFAULT_TEMPLATE 
                 <div className="w-full h-px mb-2" style={{ background: `linear-gradient(to right, transparent, ${t.accentColor}40, transparent)` }}/>
                 <p style={{ color: "#9ca3af", fontSize: "0.55rem", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "2px" }}>Date</p>
                 <p style={{ color: t.textColor, fontSize: "0.8rem", fontWeight: 600, lineHeight: 1.2 }}>{today}</p>
-                <p style={{ color: "#9ca3af", fontSize: "0.6rem", marginTop: "1px" }}>
+                <p style={{ color: "#9ca3af", fontSize: "0.6rem", marginTop: "4px" }}>
                   {new Date().toLocaleDateString("ar-SA", { day: "numeric", month: "long", year: "numeric" })}
                 </p>
               </div>

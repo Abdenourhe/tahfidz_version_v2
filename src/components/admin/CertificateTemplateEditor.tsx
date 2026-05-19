@@ -1,10 +1,10 @@
 "use client"
 // src/components/admin/CertificateTemplateEditor.tsx
-// Éditeur avec Directeur + Enseignant
+// Éditeur avec Directeur + Enseignant — prévisualisation corrigée
 
 import { useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, Save, CheckCircle2, Loader2, RotateCcw, Eye, Palette, Type, Sparkles, BookOpen, LayoutTemplate, User, UserCheck } from "lucide-react"
+import { ArrowLeft, Save, CheckCircle2, Loader2, RotateCcw, Eye, Palette, Type, Sparkles, BookOpen, LayoutTemplate, UserCheck } from "lucide-react"
 import { useLanguage } from "@/contexts/LanguageContext"
 
 export type CertTemplate = {
@@ -76,7 +76,7 @@ const UI: Record<string, { fr: string; en: string; ar: string }> = {
   previewNote:    { fr: "Aperçu temps réel — le certificat final est plus grand",
                     en: "Live preview — the final certificate is larger",
                     ar: "معاينة فورية — الشهادة النهائية أكبر" },
-  awardedTo:      { fr: "Décerné à",               en: "Awarded to",          ar: "ممنوح لـ" },
+  awardedTo:      { fr: "Ce certificat est décerné à",               en: "This certificate is awarded to",          ar: "تُمنح هذه الشهادة لـ" },
   studentName:    { fr: "Nom de l'élève",           en: "Student name",        ar: "اسم الطالب" },
   direction:      { fr: "Direction",                en: "Direction",           ar: "الإدارة" },
   teacher:        { fr: "Enseignant",               en: "Teacher",             ar: "المعلم" },
@@ -92,6 +92,7 @@ const UI: Record<string, { fr: string; en: string; ar: string }> = {
   showTeacher:    { fr: "Afficher l'enseignant",     en: "Show teacher",        ar: "إظهار المعلم" },
   teacherName:    { fr: "Nom de l'enseignant",      en: "Teacher name",        ar: "اسم المعلم" },
   teacherNameAr:  { fr: "Nom de l'enseignant (arabe)", en: "Teacher name (Arabic)", ar: "اسم المعلم (عربي)" },
+  teacherAuto:    { fr: "(Auto : récupéré depuis le profil élève)", en: "(Auto: from student profile)", ar: "(تلقائي: من ملف الطالب)" },
 }
 
 const DEFAULTS: Templates = {
@@ -251,6 +252,10 @@ export function CertificateTemplateEditor({ initialTemplates, locale }: Props) {
   const isLandscape = t.orientation === "landscape"
   const previewMaxW = isLandscape ? "600px" : "400px"
 
+  // ← CORRECTION : nom enseignant pour la preview (fallback si vide)
+  const previewTeacherName = t.teacherName || "M. Martin"
+  const previewTeacherNameAr = t.teacherNameAr || "الأستاذ"
+
   return (
     <div className="space-y-6 max-w-6xl">
       {/* Header actions */}
@@ -363,14 +368,17 @@ export function CertificateTemplateEditor({ initialTemplates, locale }: Props) {
               {/* Enseignant (si activé) */}
               {t.showTeacher && (
                 <div className="space-y-3">
+                  <p className="text-xs text-gray-400 italic">{u("teacherAuto")}</p>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{u("teacherName")}</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{u("teacherName")} <span className="text-gray-400 font-normal">(optionnel — écrase le nom auto)</span></label>
                     <input value={t.teacherName} onChange={e => update("teacherName", e.target.value)}
+                      placeholder="Laisser vide pour utiliser l'enseignant de l'élève"
                       className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{u("teacherNameAr")}</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{u("teacherNameAr")} <span className="text-gray-400 font-normal">(optionnel)</span></label>
                     <input value={t.teacherNameAr} onChange={e => update("teacherNameAr", e.target.value)} dir="rtl"
+                      placeholder="الأستاذ"
                       className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" />
                   </div>
                 </div>
@@ -517,21 +525,34 @@ export function CertificateTemplateEditor({ initialTemplates, locale }: Props) {
                 </div>
               </div>
 
-              {/* Signatures preview */}
+              {/* ═══ SIGNATURES PREVIEW — CORRIGÉ ═══ */}
               <div className="flex justify-between items-end pt-2 border-t" style={{ borderColor: t.accentColor + "30" }}>
-                <div className="text-center">
-                  <div className="w-16 h-px mx-auto mb-1" style={{ background: t.primaryColor + "50" }}/>
+                {/* Direction */}
+                <div className="text-center" style={{ width: "80px" }}>
+                  <div className="w-full h-px mb-1" style={{ background: t.primaryColor + "50" }}/>
                   <p className="text-[10px] text-gray-400">{u("direction")}</p>
                   <p className="text-[10px] font-medium" style={{ color: t.textColor }}>{t.directorName}</p>
-                  {t.showTeacher && (
-                    <>
-                      <p className="text-[10px] text-gray-400 mt-1">{u("teacher")}</p>
-                      <p className="text-[10px] font-medium" style={{ color: t.textColor }}>{t.teacherName || "Enseignant"}</p>
-                    </>
-                  )}
                 </div>
-                <div className="text-center">
-                  <div className="w-16 h-px mx-auto mb-1" style={{ background: t.primaryColor + "50"}}/>
+
+                {/* Enseignant — CORRIGÉ : affiche même si teacherName vide */}
+                {t.showTeacher && (
+                  <div className="text-center" style={{ width: "80px" }}>
+                    <div className="w-full h-px mb-1" style={{ background: t.primaryColor + "50" }}/>
+                    <p className="text-[10px] text-gray-400">{u("teacher")}</p>
+                    <p className="text-[10px] font-medium" style={{ color: t.textColor }}>
+                      {previewTeacherName}
+                    </p>
+                    {previewTeacherNameAr && (
+                      <p className="text-[9px]" dir="rtl" style={{ color: t.primaryColor, fontFamily: t.fontFamilyAr + ', serif' }}>
+                        {previewTeacherNameAr}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Date */}
+                <div className="text-center" style={{ width: "80px" }}>
+                  <div className="w-full h-px mb-1" style={{ background: t.primaryColor + "50"}}/>
                   <p className="text-[10px] text-gray-400">Date</p>
                   <p className="text-[10px] font-medium" style={{ color: t.textColor }}>19/05/2026</p>
                 </div>

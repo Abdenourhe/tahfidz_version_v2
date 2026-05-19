@@ -12,17 +12,17 @@
     "textColor": "#0f1f33",
     "badgeEmoji": "🌱",
     "borderStyle": "mamlouk",
-    "fontFamily": "Georgia",
+    "fontFamily": "serif",
     "fontFamilyAr": "Reem Kufi",
     "decorativePattern": "architectural",
     "signatureStyle": "elegant",
     "paperTexture": "parchment",
     "orientation": "landscape",
-    "directorName": "Directeur",
-    "directorNameAr": "المدير",
+    "directorName": "ABDENOUR",
+    "directorNameAr": "عبد النور ",
     "showTeacher": true,
     "teacherName": "",
-    "teacherNameAr": ""
+    "teacherNameAr": "ramzi"
   },
   "intermediate": {
     "id": "andalous",
