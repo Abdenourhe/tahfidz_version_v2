@@ -1,0 +1,41 @@
+{
+  "beginner": {
+    "title": "Certificat de Mémorisation",
+    "titleAr": "     شَهَــــــــادَةُ الْحِفْظ",
+    "subtitle": "Niveau Débutant",
+    "bodyText": "Pour avoir accompli avec sérieux et persévérance son programme de mémorisation du Saint Coran, et avoir démontré de belles qualités d'apprentissage.",
+    "arabicVerse": "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+    "primaryColor": "#10b981",
+    "accentColor": "#059669",
+    "lightColor": "#d1fae5",
+    "textColor": "#065f46",
+    "badgeEmoji": "",
+    "borderStyle": "simple"
+  },
+  "intermediate": {
+    "title": "Certificat d'Excellence",
+    "titleAr": "شَهَادَةُ التَّفَوُّق",
+    "subtitle": "Niveau Intermédiaire",
+    "bodyText": "Pour avoir accompli avec brio et dévouement son programme de mémorisation du Saint Coran, et avoir atteint un niveau remarquable de récitation.",
+    "arabicVerse": "وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا",
+    "primaryColor": "#d97706",
+    "accentColor": "#b45309",
+    "lightColor": "#fef3c7",
+    "textColor": "#78350f",
+    "badgeEmoji": "⭐",
+    "borderStyle": "double"
+  },
+  "advanced": {
+    "title": "Certificat d'Honneur",
+    "titleAr": "شَهَادَةُ الشَّرَف",
+    "subtitle": "Niveau Avancé",
+    "bodyText": "Pour avoir maîtrisé avec distinction et excellence son programme avancé de mémorisation du Saint Coran, et avoir fait preuve d'une dévotion exemplaire.",
+    "arabicVerse": "إِنَّ هَذَا الْقُرْآنَ يَهْدِي لِلَّتِي هِيَ أَقْوَمُ",
+    "primaryColor": "#7c3aed",
+    "accentColor": "#6d28d9",
+    "lightColor": "#ede9fe",
+    "textColor": "#4c1d95",
+    "badgeEmoji": "🏆",
+    "borderStyle": "ornate"
+  }
+}

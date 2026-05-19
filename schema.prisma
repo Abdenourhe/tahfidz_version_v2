@@ -1,0 +1,568 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model School {
+  id             String          @id @default(uuid())
+  name           String
+  nameAr         String?
+  slug           String          @unique
+  plan           SchoolPlan      @default(FREE)
+  isActive       Boolean         @default(true)
+  settings       Json            @default("{}")
+  address        String?
+  city           String?
+  country        String?         @default("DZ")
+  phone          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  logo           String?
+  announcements  Announcement[]
+  auditLogs      AuditLog[]
+  badges         Badge[]
+  directMessages DirectMessage[]
+  exams          Exam[]
+  groups         Group[]
+  notifications  Notification[]
+  users          User[]
+
+  @@index([slug])
+  @@map("schools")
+}
+
+model User {
+  id               String          @id @default(uuid())
+  schoolId         String
+  email            String
+  password         String
+  fullName         String
+  fullNameAr       String?
+  role             UserRole
+  phone            String?
+  gender           Gender?
+  avatar           String?
+  isActive         Boolean         @default(true)
+  emailVerified    DateTime?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  lastLoginAt      DateTime?
+  adminProfile     Admin?
+  announcements    Announcement[]
+  auditLogs        AuditLog[]
+  sentMessages     DirectMessage[] @relation("SentMessages")
+  receivedMessages DirectMessage[] @relation("ReceivedMessages")
+  notifications    Notification[]
+  parentProfile    Parent?
+  sessions         Session[]
+  studentProfile   Student?
+  teacherProfile   Teacher?
+  school           School          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([schoolId, email])
+  @@index([schoolId, role])
+  @@index([schoolId, email])
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model Admin {
+  id          String @id @default(uuid())
+  userId      String @unique
+  permissions Json?
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("admins")
+}
+
+model Teacher {
+  id             String       @id @default(uuid())
+  userId         String       @unique
+  bio            String?
+  specialization String?
+  maxStudents    Int          @default(20)
+  isActive       Boolean      @default(true)
+  evaluations    Evaluation[]
+  exams          Exam[]
+  groups         Group[]
+  students       Student[]
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("teachers")
+}
+
+model Parent {
+  id            String              @id @default(uuid())
+  userId        String              @unique
+  childrenLinks ParentStudentLink[]
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("parents")
+}
+
+model Student {
+  id                   String                 @id @default(uuid())
+  userId               String                 @unique
+  studentCode          String                 @default(cuid())
+  dateOfBirth          DateTime?
+  enrollmentDate       DateTime               @default(now())
+  groupId              String?
+  teacherId            String?
+  currentSurahId       Int?
+  totalStars           Int                    @default(0)
+  currentStreak        Int                    @default(0)
+  longestStreak        Int                    @default(0)
+  lastActivityDate     DateTime?
+  status               String                 @default("active")
+  attendances          Attendance[]
+  evaluations          Evaluation[]
+  memorizationProgress MemorizationProgress[]
+  memorizedSurahs      MemorizedSurah[]
+  parentLinks          ParentStudentLink[]
+  starsLogs            StarsLog[]
+  studentBadges        StudentBadge[]
+  stats                StudentStats?
+  group                Group?                 @relation(fields: [groupId], references: [id])
+  teacher              Teacher?               @relation(fields: [teacherId], references: [id])
+  user                 User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
+  @@index([teacherId])
+  @@index([studentCode])
+  @@map("students")
+}
+
+model ParentStudentLink {
+  id         String   @id @default(uuid())
+  parentId   String
+  studentId  String
+  relation   String
+  accessCode String
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  parent     Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, studentId])
+  @@map("parent_student_links")
+}
+
+model Group {
+  id            String              @id @default(uuid())
+  schoolId      String
+  name          String
+  nameAr        String?
+  teacherId     String
+  level         String
+  schedule      Json?
+  maxCapacity   Int                 @default(15)
+  isActive      Boolean             @default(true)
+  createdAt     DateTime            @default(now())
+  attendances   Attendance[]
+  exams         Exam[]
+  announcements GroupAnnouncement[]
+  school        School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  teacher       Teacher             @relation(fields: [teacherId], references: [id])
+  students      Student[]
+
+  @@index([schoolId])
+  @@index([teacherId])
+  @@map("groups")
+}
+
+model Surah {
+  id               Int                    @id
+  nameAr           String
+  nameFr           String
+  nameEn           String
+  verseCount       Int
+  juzNumber        Int
+  revelationType   String
+  difficultyLevel  Int                    @default(3)
+  orderInMushaf    Int
+  progressRecords  MemorizationProgress[]
+  memorizedRecords MemorizedSurah[]
+
+  @@map("surahs")
+}
+
+model MemorizationProgress {
+  id                   String             @id @default(uuid())
+  studentId            String
+  surahId              Int
+  startVerse           Int                @default(1)
+  endVerse             Int
+  targetDate           DateTime?
+  status               MemorizationStatus @default(NOT_STARTED)
+  currentVerse         Int                @default(1)
+  completionPercentage Float              @default(0)
+  startedAt            DateTime           @default(now())
+  completedAt          DateTime?
+  updatedAt            DateTime           @updatedAt
+  evaluation           Evaluation?
+  student              Student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  surah                Surah              @relation(fields: [surahId], references: [id])
+  statusHistory        StatusHistory[]
+
+  @@unique([studentId, surahId, startVerse, endVerse])
+  @@index([studentId, status])
+  @@map("memorization_progress")
+}
+
+model StatusHistory {
+  id         String               @id @default(uuid())
+  progressId String
+  oldStatus  MemorizationStatus
+  newStatus  MemorizationStatus
+  changedBy  String
+  changedAt  DateTime             @default(now())
+  note       String?
+  progress   MemorizationProgress @relation(fields: [progressId], references: [id], onDelete: Cascade)
+
+  @@map("status_history")
+}
+
+model MemorizedSurah {
+  id              String   @id @default(uuid())
+  studentId       String
+  surahId         Int
+  progressId      String   @unique
+  completionDate  DateTime @default(now())
+  versesMemorized Int
+  finalScore      Int?
+  teacherNotes    String?
+  starsEarned     Int      @default(0)
+  student         Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  surah           Surah    @relation(fields: [surahId], references: [id])
+
+  @@map("memorized_surahs")
+}
+
+model Evaluation {
+  id                  String               @id @default(uuid())
+  progressId          String               @unique
+  studentId           String
+  teacherId           String
+  evaluatedAt         DateTime             @default(now())
+  evaluationType      String
+  memorizationScore   Int
+  tajweedScore        Int
+  fluencyScore        Int
+  makharijScore       Int?
+  tafsirUnderstanding Int?
+  finalScore          Int
+  teacherNotes        String?
+  strengths           String[]
+  improvements        String[]
+  revisionRequired    Boolean              @default(false)
+  decision            EvaluationDecision
+  progress            MemorizationProgress @relation(fields: [progressId], references: [id], onDelete: Cascade)
+  student             Student              @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher             Teacher              @relation(fields: [teacherId], references: [id])
+
+  @@index([studentId])
+  @@index([teacherId])
+  @@map("evaluations")
+}
+
+model Attendance {
+  id           String           @id @default(uuid())
+  studentId    String
+  groupId      String?
+  date         DateTime
+  status       AttendanceStatus
+  checkInTime  DateTime?
+  checkOutTime DateTime?
+  notes        String?
+  recordedBy   String
+  createdAt    DateTime         @default(now())
+  group        Group?           @relation(fields: [groupId], references: [id])
+  student      Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, date])
+  @@index([date])
+  @@index([groupId])
+  @@map("attendances")
+}
+
+model Badge {
+  id            String         @id @default(uuid())
+  schoolId      String?
+  name          String
+  nameAr        String
+  description   String
+  descriptionAr String
+  icon          String
+  color         String
+  criteriaType  String
+  criteriaValue Int
+  rarity        BadgeRarity    @default(COMMON)
+  school        School?        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  studentBadges StudentBadge[]
+
+  @@index([schoolId])
+  @@map("badges")
+}
+
+model StudentBadge {
+  id          String   @id @default(uuid())
+  studentId   String
+  badgeId     String
+  earnedAt    DateTime @default(now())
+  earnedValue Int
+  badge       Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, badgeId])
+  @@map("student_badges")
+}
+
+model StarsLog {
+  id           String   @id @default(uuid())
+  studentId    String
+  amount       Int
+  balanceAfter Int
+  sourceType   String
+  sourceId     String?
+  reason       String
+  awardedBy    String?
+  createdAt    DateTime @default(now())
+  student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@map("stars_logs")
+}
+
+model Announcement {
+  id           String              @id @default(uuid())
+  schoolId     String
+  title        String
+  titleAr      String?
+  content      String
+  contentAr    String?
+  type         AnnouncementType    @default(GENERAL)
+  targetRoles  UserRole[]
+  isPinned     Boolean             @default(false)
+  isPublished  Boolean             @default(true)
+  publishedAt  DateTime            @default(now())
+  expiresAt    DateTime?
+  createdBy    String
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  author       User                @relation(fields: [createdBy], references: [id])
+  school       School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  targetGroups GroupAnnouncement[]
+
+  @@index([schoolId, isPublished, publishedAt])
+  @@map("announcements")
+}
+
+model GroupAnnouncement {
+  id             String       @id @default(uuid())
+  announcementId String
+  groupId        String
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  group          Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, groupId])
+  @@map("group_announcements")
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  schoolId  String
+  userId    String
+  type      String
+  title     String
+  titleAr   String?
+  message   String
+  messageAr String?
+  data      Json?
+  isRead    Boolean   @default(false)
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  school    School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([schoolId, userId, isRead])
+  @@map("notifications")
+}
+
+model StudentStats {
+  id                   String    @id @default(uuid())
+  studentId            String    @unique
+  totalSurahsMemorized Int       @default(0)
+  totalVersesMemorized Int       @default(0)
+  totalEvaluationScore Int       @default(0)
+  evaluationCount      Int       @default(0)
+  averageScore         Float     @default(0)
+  attendanceRate       Float     @default(0)
+  currentStreakStart   DateTime?
+  longestStreakStart   DateTime?
+  longestStreakEnd     DateTime?
+  lastCalculatedAt     DateTime  @default(now())
+  student              Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("student_stats")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  schoolId   String
+  userId     String
+  action     String
+  entityType String
+  entityId   String?
+  oldValues  Json?
+  newValues  Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  school     School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@index([schoolId, userId])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
+
+model Exam {
+  id          String   @id @default(uuid())
+  schoolId    String
+  title       String
+  titleAr     String?
+  description String?
+  groupId     String
+  teacherId   String
+  examDate    DateTime
+  duration    Int      @default(60)
+  surahIds    Int[]
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  group       Group    @relation(fields: [groupId], references: [id])
+  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  teacher     Teacher  @relation(fields: [teacherId], references: [id])
+
+  @@index([schoolId])
+  @@index([groupId])
+  @@index([teacherId])
+  @@map("exams")
+}
+
+model DirectMessage {
+  id         String   @id @default(uuid())
+  schoolId   String
+  fromUserId String
+  toUserId   String
+  subject    String
+  body       String
+  isRead     Boolean  @default(false)
+  sentAt     DateTime @default(now())
+  fromUser   User     @relation("SentMessages", fields: [fromUserId], references: [id])
+  school     School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  toUser     User     @relation("ReceivedMessages", fields: [toUserId], references: [id])
+
+  @@index([schoolId, toUserId, isRead])
+  @@map("direct_messages")
+}
+
+model SchoolRequest {
+  id               String        @id @default(uuid())
+  schoolName       String
+  city             String?
+  country          String        @default("DZ")
+  adminEmail       String
+  adminPassword    String
+  adminName        String
+  classCount       Int
+  studentsPerClass Int
+  adminPhone       String?
+  teachersCount    Int
+  status           RequestStatus @default(PENDING)
+  slug             String?
+  rejectionReason  String?
+  createdAt        DateTime      @default(now())
+  processedAt      DateTime?
+
+  @@index([status])
+  @@map("school_requests")
+}
+
+enum UserRole {
+  SUPERADMIN
+  ADMIN
+  TEACHER
+  PARENT
+  STUDENT
+}
+
+enum SchoolPlan {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum MemorizationStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  UNDER_REVIEW
+  READY_FOR_RECITATION
+  PENDING_TEACHER_APPROVAL
+  MEMORIZED
+  NEEDS_REVISION
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum AnnouncementType {
+  GENERAL
+  EVENT
+  ACHIEVEMENT
+  URGENT
+}
+
+enum BadgeRarity {
+  COMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+enum EvaluationDecision {
+  APPROVED
+  NEEDS_REVISION
+  REJECTED
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}

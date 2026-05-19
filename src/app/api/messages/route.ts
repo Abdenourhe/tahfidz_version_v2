@@ -1,0 +1,68 @@
+// src/app/api/messages/route.ts
+import { auth } from "@/auth"
+import { prisma } from "@/lib/prisma"
+import { NextResponse } from "next/server"
+import { z } from "zod"
+
+const sendSchema = z.object({
+  toUserId: z.string().uuid(),
+  subject:  z.string().min(1).max(200),
+  body:     z.string().min(1).max(5000),
+})
+
+export async function GET(req: Request) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+  const { searchParams } = new URL(req.url)
+  const type = searchParams.get("type") || "inbox"
+  const messages = await prisma.directMessage.findMany({
+    where: type === "sent" ? { fromUserId: session.user.id } : { toUserId: session.user.id },
+    include: {
+      fromUser: { select: { fullName: true, role: true } },
+      toUser:   { select: { fullName: true, role: true } },
+    },
+    orderBy: { sentAt: "desc" },
+    take: 50,
+  })
+  const unreadCount = type === "inbox"
+    ? await prisma.directMessage.count({ where: { toUserId: session.user.id, isRead: false } })
+    : 0
+  return NextResponse.json({ messages, unreadCount })
+}
+
+export async function POST(req: Request) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+  const body   = await req.json()
+  const parsed = sendSchema.safeParse(body)
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+  const { toUserId, subject, body: msgBody } = parsed.data
+  const toUser = await prisma.user.findUnique({ where: { id: toUserId }, select: { id:true, fullName:true, email:true } })
+  if (!toUser) return NextResponse.json({ error: "Destinataire introuvable" }, { status: 404 })
+  const fromUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { fullName:true } })
+  const message = await prisma.directMessage.create({ data: { schoolId: session.user.schoolId, fromUserId: session.user.id, toUserId, subject, body: msgBody } })
+  await prisma.notification.create({
+    data: {
+      schoolId: session.user.schoolId,
+      userId: toUserId, type: "direct_message",
+      title: `Nouveau message : ${subject}`,
+      titleAr: `رسالة جديدة : ${subject}`,
+      message: `De : ${fromUser?.fullName ?? "Inconnu"}\n${msgBody.slice(0,150)}${msgBody.length>150?"…":""}`,
+      data: { messageId: message.id, fromUserId: session.user.id },
+    },
+  })
+  // Email if RESEND configured
+  if (toUser.email && process.env.RESEND_API_KEY) {
+    try {
+      const { Resend } = await import("resend")
+      const resend = new Resend(process.env.RESEND_API_KEY)
+      await resend.emails.send({
+        from: process.env.RESEND_FROM_EMAIL ?? "noreply@tahfidz.com",
+        to: toUser.email,
+        subject: `[TAHFIDZ] ${subject}`,
+        html: `<div style="font-family:sans-serif;padding:24px;max-width:560px;"><h2>📬 Nouveau message</h2><p><strong>De :</strong> ${fromUser?.fullName ?? "Inconnu"}</p><p><strong>Objet :</strong> ${subject}</p><div style="background:#f9fafb;padding:16px;border-radius:8px;white-space:pre-wrap;">${msgBody}</div><p style="margin-top:20px;"><a href="${process.env.NEXT_PUBLIC_APP_URL}" style="background:#1D9E75;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;">Voir sur TAHFIDZ</a></p></div>`,
+      })
+    } catch(e) { console.error("Email error:", e) }
+  }
+  return NextResponse.json({ message }, { status: 201 })
+}
