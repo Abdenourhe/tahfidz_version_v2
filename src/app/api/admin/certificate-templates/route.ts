@@ -1,4 +1,3 @@
-// src/app/api/admin/certificate-templates/route.ts
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { readFile, writeFile } from "fs/promises"
@@ -12,6 +11,7 @@ const REQUIRED_FIELDS = [
   "primaryColor", "accentColor", "lightColor", "textColor", "badgeEmoji",
   "borderStyle", "fontFamily", "fontFamilyAr", "decorativePattern",
   "signatureStyle", "paperTexture", "orientation",
+  "directorName", "directorNameAr", "showTeacher", "teacherName", "teacherNameAr",
 ]
 
 export async function GET() {

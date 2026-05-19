@@ -1,6 +1,6 @@
 "use client"
 // src/components/admin/CertificatePrint.tsx
-// Certificat professionnel compact — tient sur 1 page A4
+// Certificat avec signatures compactes et centrées
 
 import { useState, useRef } from "react"
 import Link from "next/link"
@@ -37,8 +37,8 @@ const DEFAULT_TEMPLATE: CertTemplate = {
   id: "islamic",
   title: "Certificat de Mémorisation",
   titleAr: "شَهَادَةُ الْحِفْظ",
-  subtitle: "Niveau",
-  bodyText: "Pour avoir accompli avec succès son programme de mémorisation du Saint Coran.",
+  subtitle: "Niveau Débutant",
+  bodyText: "Pour avoir accompli avec sérieux et persévérance son programme de mémorisation du Saint Coran, et avoir démontré de belles qualités d'apprentissage et de dévotion.",
   arabicVerse: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
   primaryColor: "#1a5f4a",
   accentColor: "#c9a227",
@@ -46,19 +46,34 @@ const DEFAULT_TEMPLATE: CertTemplate = {
   textColor: "#0d3326",
   badgeEmoji: "🌱",
   borderStyle: "islamic",
-  fontFamily: "Amiri",
+  fontFamily: "Georgia",
   fontFamilyAr: "Scheherazade New",
   decorativePattern: "geometric",
   signatureStyle: "elegant",
   paperTexture: "parchment",
   orientation: "portrait",
+  directorName: "Directeur",
+  directorNameAr: "المدير",
+  showTeacher: true,
+  teacherName: "",
+  teacherNameAr: "",
 }
 
-// Ornement simple
-const CENTER_ORNAMENT = (
-  <svg width="80" height="20" viewBox="0 0 80 20" className="mx-auto">
-    <path d="M0 10 L20 10 M60 10 L80 10" stroke="currentColor" strokeWidth="0.8" opacity="0.4"/>
-    <circle cx="40" cy="10" r="4" fill="currentColor" opacity="0.3"/>
+// Ornement décoratif
+const ORNAMENT_TOP = (
+  <svg width="200" height="24" viewBox="0 0 200 24" className="mx-auto">
+    <path d="M0 12 L80 12" stroke="currentColor" strokeWidth="0.8" opacity="0.3"/>
+    <path d="M120 12 L200 12" stroke="currentColor" strokeWidth="0.8" opacity="0.3"/>
+    <circle cx="100" cy="12" r="5" fill="currentColor" opacity="0.25"/>
+    <path d="M100 7 L100 17 M95 12 L105 12" stroke="currentColor" strokeWidth="0.5" opacity="0.4"/>
+  </svg>
+)
+
+const ORNAMENT_BOTTOM = (
+  <svg width="160" height="16" viewBox="0 0 160 16" className="mx-auto">
+    <path d="M0 8 L60 8" stroke="currentColor" strokeWidth="0.6" opacity="0.3"/>
+    <path d="M100 8 L160 8" stroke="currentColor" strokeWidth="0.6" opacity="0.3"/>
+    <circle cx="80" cy="8" r="3" fill="currentColor" opacity="0.2"/>
   </svg>
 )
 
@@ -70,7 +85,6 @@ export function CertificatePrint({ student, school, template = DEFAULT_TEMPLATE 
   const t = template
   const isLandscape = t.orientation === "landscape"
 
-  // MESURES A4 PRÉCISES
   const pageWidth  = isLandscape ? "297mm" : "210mm"
   const pageHeight = isLandscape ? "210mm" : "297mm"
   const printSize  = isLandscape ? "A4 landscape" : "A4 portrait"
@@ -87,61 +101,24 @@ export function CertificatePrint({ student, school, template = DEFAULT_TEMPLATE 
     day: "numeric", month: "long", year: "numeric",
   })
 
-  // CSS d'impression dynamique
   const printStyles = `
     @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Scheherazade+New:wght@400;700&family=Reem+Kufi:wght@400;700&display=swap');
 
     @media print {
-      @page {
-        size: ${printSize};
-        margin: 0;
-      }
-
-      html, body {
-        width: ${pageWidth} !important;
-        height: ${pageHeight} !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        overflow: hidden !important;
-        background: white !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
-
-      body * {
-        visibility: hidden !important;
-      }
-
-      #certificate-area,
-      #certificate-area * {
-        visibility: visible !important;
-      }
-
-      #certificate-area {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: ${pageWidth} !important;
-        height: ${pageHeight} !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        overflow: hidden !important;
-        box-shadow: none !important;
-        background: white !important;
-      }
-
-      .no-print {
-        display: none !important;
-      }
+      @page { size: ${printSize}; margin: 0; }
+      html, body { width: ${pageWidth} !important; height: ${pageHeight} !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; background: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      body * { visibility: hidden !important; }
+      #certificate-area, #certificate-area * { visibility: visible !important; }
+      #certificate-area { position: fixed !important; inset: 0 !important; width: ${pageWidth} !important; height: ${pageHeight} !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; box-shadow: none !important; background: white !important; }
+      .no-print { display: none !important; }
     }
   `
 
   return (
     <>
-      {/* ─── Styles d'impression ─── */}
       <style dangerouslySetInnerHTML={{ __html: printStyles }} />
 
-      {/* ─── Interface admin ─── */}
+      {/* Interface admin */}
       <div className="space-y-4 no-print">
         <div className="flex items-center gap-3">
           <Link href={`/admin/students/${student.id}`} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition">
@@ -153,259 +130,204 @@ export function CertificatePrint({ student, school, template = DEFAULT_TEMPLATE 
           </div>
         </div>
 
-        {/* Info orientation */}
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-3 flex items-center gap-3">
-          <div 
-            className="border-2 border-current rounded flex-shrink-0"
-            style={{ 
-              color: t.primaryColor,
-              width: isLandscape ? "28px" : "20px",
-              height: isLandscape ? "20px" : "28px",
-            }}
-          />
+          <div className="border-2 border-current rounded flex-shrink-0" style={{ color: t.primaryColor, width: isLandscape ? "28px" : "20px", height: isLandscape ? "20px" : "28px" }}/>
           <div>
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Format : {isLandscape ? "Paysage (A4 horizontal)" : "Portrait (A4 vertical)"}
-            </p>
-            <p className="text-xs text-gray-400">
-              {isLandscape ? "297mm × 210mm" : "210mm × 297mm"}
-            </p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Format : {isLandscape ? "Paysage (A4 horizontal)" : "Portrait (A4 vertical)"}</p>
+            <p className="text-xs text-gray-400">{isLandscape ? "297mm × 210mm" : "210mm × 297mm"}</p>
           </div>
         </div>
 
-        {/* Note personnalisée */}
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 space-y-2">
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-            📝 Note personnalisée <span className="font-normal text-gray-400">(optionnelle)</span>
-          </label>
-          <textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            rows={2}
-            maxLength={200}
-            placeholder="Félicitations..."
-            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none transition"
-          />
+          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">📝 Note personnalisée <span className="font-normal text-gray-400">(optionnelle)</span></label>
+          <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={200} placeholder="Félicitations..." className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none transition"/>
           <p className="text-xs text-gray-400 text-right">{note.length}/200</p>
         </div>
 
-        {/* Bouton imprimer */}
         <div className="flex items-center gap-3">
-          <button
-            onClick={handlePrint}
-            disabled={isPrinting}
-            className="flex items-center gap-2 px-5 py-2.5 text-white font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-60 shadow-lg text-sm"
-            style={{ background: `linear-gradient(to right, ${t.primaryColor}, ${t.accentColor})` }}
-          >
-            <Printer size={16} />
-            Imprimer
+          <button onClick={handlePrint} disabled={isPrinting} className="flex items-center gap-2 px-5 py-2.5 text-white font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-60 shadow-lg text-sm" style={{ background: `linear-gradient(to right, ${t.primaryColor}, ${t.accentColor})` }}>
+            <Printer size={16} /> Imprimer
           </button>
           <p className="text-xs text-gray-400">{printSize}</p>
         </div>
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
-          CERTIFICAT COMPACT — TIENT SUR 1 PAGE A4
+          CERTIFICAT — SIGNATURES COMPACTES ET CENTRÉES
           ═══════════════════════════════════════════════════════════ */}
       <div id="certificate-area" ref={certRef}
         className="mt-4 relative overflow-hidden shadow-2xl print:shadow-none"
-        style={{
-          width: pageWidth,
-          height: pageHeight,
-          boxSizing: "border-box",
-          background: `linear-gradient(135deg, ${t.lightColor} 0%, #ffffff 50%, ${t.lightColor} 100%)`,
-          fontFamily: `${t.fontFamily}, Georgia, serif`,
-        }}>
+        style={{ width: pageWidth, height: pageHeight, boxSizing: "border-box", background: t.lightColor, fontFamily: `${t.fontFamily}, Georgia, serif` }}>
 
-        {/* Bordure décorative fine */}
-        <div className="absolute inset-3 border rounded-lg pointer-events-none"
-          style={{ borderColor: t.accentColor + "30" }}>
-          <div className="absolute inset-1 border pointer-events-none"
-            style={{ borderColor: t.primaryColor + "15" }}>
-            <div className="absolute inset-1 border border-dashed pointer-events-none"
-              style={{ borderColor: t.accentColor + "10" }}/>
+        {/* Bordure fine */}
+        <div className="absolute inset-4 border rounded-lg pointer-events-none" style={{ borderColor: t.accentColor + "25" }}>
+          <div className="absolute inset-2 border pointer-events-none" style={{ borderColor: t.primaryColor + "10" }}>
+            <div className="absolute inset-1 border border-dashed pointer-events-none" style={{ borderColor: t.accentColor + "8"}}/>
           </div>
         </div>
 
-        <div className="relative z-10 flex flex-col"
-          style={{ 
-            height: pageHeight,
-            padding: isLandscape ? "24px 32px" : "32px 24px",
-          }}>
+        {/* Contenu principal */}
+        <div className="relative z-10 flex flex-col items-center"
+          style={{ height: pageHeight, padding: isLandscape ? "28px 40px" : "36px 32px" }}>
 
-          {/* ═══ EN-TÊTE COMPACT ═══ */}
-          <div className="text-center mb-2">
-            <p className="text-sm mb-1 leading-relaxed" dir="rtl"
-              style={{
-                color: t.primaryColor,
-                fontFamily: `${t.fontFamilyAr}, 'Scheherazade New', serif`,
-                fontSize: "1.1rem",
-              }}>
+          {/* ═══ EN-TÊTE ═══ */}
+          <div className="text-center w-full" style={{ marginBottom: "16px" }}>
+            <p dir="rtl" style={{ color: t.primaryColor, fontFamily: `${t.fontFamilyAr}, 'Scheherazade New', serif`, fontSize: "1.15rem", lineHeight: 1.6, marginBottom: "8px", letterSpacing: "0.02em" }}>
               {t.arabicVerse}
             </p>
-            <div style={{ color: t.accentColor }}>{CENTER_ORNAMENT}</div>
+            <div style={{ color: t.accentColor }}>{ORNAMENT_TOP}</div>
           </div>
 
-          {/* ═══ LOGO + INFO ÉCOLE ═══ */}
-          <div className="flex items-center justify-between mb-3 px-2">
-            <div className="flex items-center gap-3">
-              {school.logo ? (
-                <img src={school.logo} alt={school.name}
-                  className="w-14 h-14 object-contain rounded-lg border p-1"
-                  style={{ borderColor: t.accentColor + "30" }}/>
-              ) : (
-                <div className="w-14 h-14 rounded-lg flex items-center justify-center shadow"
-                  style={{ background: `linear-gradient(135deg, ${t.primaryColor}, ${t.accentColor})` }}>
-                  <span className="text-white font-bold text-2xl">{school.name.charAt(0)}</span>
-                </div>
-              )}
-              <div>
-                <p className="font-bold text-base" style={{ color: t.textColor }}>{school.name}</p>
-                {school.nameAr && (
-                  <p className="text-sm" dir="rtl" style={{ color: t.primaryColor, fontFamily: `${t.fontFamilyAr}, serif` }}>
-                    {school.nameAr}
-                  </p>
-                )}
+          {/* ═══ INFO ÉCOLE ═══ */}
+          <div className="flex items-center justify-center gap-3 mb-4">
+            {school.logo ? (
+              <img src={school.logo} alt={school.name} className="w-12 h-12 object-contain rounded-lg border p-1" style={{ borderColor: t.accentColor + "30" }}/>
+            ) : (
+              <div className="w-12 h-12 rounded-lg flex items-center justify-center shadow" style={{ background: `linear-gradient(135deg, ${t.primaryColor}, ${t.accentColor})` }}>
+                <span className="text-white font-bold text-xl">{school.name.charAt(0)}</span>
               </div>
-            </div>
-
-            {/* Badge niveau */}
+            )}
             <div className="text-center">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow mx-auto mb-1"
-                style={{ background: `linear-gradient(135deg, ${t.primaryColor}, ${t.accentColor})` }}>
-                {t.badgeEmoji}
-              </div>
-              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: t.accentColor }}>
-                {t.subtitle}
-              </p>
+              <p className="font-bold text-base" style={{ color: t.textColor, letterSpacing: "0.01em" }}>{school.name}</p>
+              {school.nameAr && <p className="text-sm" dir="rtl" style={{ color: t.primaryColor, fontFamily: `${t.fontFamilyAr}, serif` }}>{school.nameAr}</p>}
             </div>
           </div>
 
-          {/* ═══ TITRE PRINCIPAL ═══ */}
-          <div className="text-center mb-3">
-            <p className="text-[10px] font-bold tracking-[0.3em] uppercase mb-1" style={{ color: t.accentColor }}>
+          {/* ═══ TITRE CERTIFICAT ═══ */}
+          <div className="text-center w-full" style={{ marginBottom: "20px" }}>
+            <p style={{ color: t.accentColor, fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: "6px" }}>
               {t.subtitle}
             </p>
-            <h1 className="text-3xl font-bold mb-1" style={{ color: t.textColor }}>
+            <h1 style={{ color: t.textColor, fontSize: "2.2rem", fontWeight: 700, letterSpacing: "0.02em", lineHeight: 1.2, marginBottom: "4px" }}>
               {t.title}
             </h1>
-            <p className="text-xl" dir="rtl" style={{
-              color: t.primaryColor,
-              fontFamily: `${t.fontFamilyAr}, 'Scheherazade New', serif`,
-              fontWeight: 700,
-            }}>
+            <p dir="rtl" style={{ color: t.primaryColor, fontFamily: `${t.fontFamilyAr}, 'Scheherazade New', serif`, fontSize: "1.5rem", fontWeight: 700, lineHeight: 1.3 }}>
               {t.titleAr}
             </p>
           </div>
 
           {/* ═══ CORPS ═══ */}
-          <div className="flex-1 flex flex-col">
-            {/* Texte du corps */}
-            <div className="max-w-xl mx-auto text-center mb-3">
-              <p className="text-sm leading-relaxed italic" style={{ color: t.textColor + "cc" }}>
+          <div className="flex-1 flex flex-col items-center w-full" style={{ maxWidth: "600px" }}>
+
+            {/* Texte du corps — largeur indépendante */}
+            <div className="text-center w-full" style={{ marginBottom: "20px", maxWidth: "600px", marginLeft: "auto", marginRight: "auto" }}>
+              <p style={{ color: t.textColor, fontSize: "0.95rem", lineHeight: 1.5, fontStyle: "italic" }}>
                 &ldquo;{t.bodyText}&rdquo;
               </p>
             </div>
 
-            {/* Photo + Nom étudiant */}
-            <div className="flex items-center justify-center gap-4 mb-3">
-              {student.avatar ? (
-                <img src={student.avatar} alt={student.fullName}
-                  className="w-20 h-20 rounded-full object-cover shadow-lg border-2"
-                  style={{ borderColor: t.accentColor + "50" }}/>
-              ) : (
-                <div className="w-20 h-20 rounded-full flex items-center justify-center shadow-lg border-2 text-white font-bold text-3xl"
-                  style={{ background: `linear-gradient(135deg, ${t.primaryColor}, ${t.accentColor})`, borderColor: t.accentColor + "50" }}>
-                  {student.fullName.charAt(0).toUpperCase()}
-                </div>
-              )}
-
-              <div className="text-left">
-                <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">Décerné à</p>
-                <h2 className="text-2xl font-bold" style={{ color: t.textColor }}>{student.fullName}</h2>
-                {student.fullNameAr && (
-                  <p className="text-lg" dir="rtl" style={{ color: t.primaryColor, fontFamily: `${t.fontFamilyAr}, serif` }}>
-                    {student.fullNameAr}
-                  </p>
-                )}
-              </div>
+            {/* Ligne décorative */}
+            <div className="w-full flex items-center gap-3" style={{ marginBottom: "20px" }}>
+              <div className="flex-1 h-px" style={{ background: `linear-gradient(to right, transparent, ${t.accentColor})` }}/>
+              <div style={{ color: t.accentColor }}>{ORNAMENT_BOTTOM}</div>
+              <div className="flex-1 h-px" style={{ background: `linear-gradient(to left, transparent, ${t.accentColor})` }}/>
             </div>
 
-            {/* Stats compactes */}
-            <div className="flex justify-center gap-4 mb-3">
+            {/* ═══ NOM ÉTUDIANT ═══ */}
+            <div className="text-center w-full" style={{ marginBottom: "20px" }}>
+              <p style={{ color: "#9ca3af", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: "4px" }}>Décerné à</p>
+              <h2 style={{ color: t.textColor, fontSize: "1.8rem", fontWeight: 700, lineHeight: 1.2 }}>{student.fullName}</h2>
+              {student.fullNameAr && (
+                <p dir="rtl" style={{ color: t.primaryColor, fontFamily: `${t.fontFamilyAr}, serif`, fontSize: "1.2rem", marginTop: "4px" }}>
+                  {student.fullNameAr}
+                </p>
+              )}
+            </div>
+
+            {/* Stats */}
+            <div className="flex justify-center gap-5" style={{ marginBottom: "16px" }}>
               {[
                 { icon: BookOpen, label: "Sourates", value: student.memorizedCount, color: t.primaryColor },
-                { icon: Star, label: "Étoiles", value: student.totalStars, color: "#d4a843" },
-                { icon: Award, label: "Niveau", value: student.level, color: t.accentColor },
+                { icon: Star, label: "Étoiles", value: student.totalStars, color: t.accentColor },
+                { icon: Award, label: "Niveau", value: student.level, color: t.primaryColor },
               ].map((stat, i) => (
-                <div key={i} className="text-center px-4 py-2 rounded-lg border"
-                  style={{ borderColor: t.accentColor + "20", background: t.lightColor + "60" }}>
-                  <stat.icon size={16} style={{ color: stat.color }} className="mx-auto mb-1"/>
-                  <p className="text-lg font-bold" style={{ color: t.textColor }}>{stat.value}</p>
-                  <p className="text-[10px] text-gray-500 uppercase">{stat.label}</p>
+                <div key={i} className="text-center px-5 py-3 rounded-lg border" style={{ borderColor: t.accentColor + "18", background: "rgba(255,255,255,0.6)" }}>
+                  <stat.icon size={18} style={{ color: stat.color }} className="mx-auto mb-1.5"/>
+                  <p style={{ color: t.textColor, fontSize: "1.3rem", fontWeight: 700, lineHeight: 1 }}>{stat.value}</p>
+                  <p style={{ color: "#9ca3af", fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.15em" }}>{stat.label}</p>
                 </div>
               ))}
             </div>
 
-            {/* Sourates mémorisées (compact) */}
+            {/* Sourates */}
             {student.memorizedSurahs.length > 0 && (
-              <div className="max-w-2xl mx-auto mb-3 p-3 rounded-lg border"
-                style={{ background: t.lightColor + "40", borderColor: t.accentColor + "15" }}>
-                <p className="text-center text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: t.textColor }}>
-                  Sourates mémorisées
-                </p>
-                <div className="flex flex-wrap justify-center gap-2">
-                  {student.memorizedSurahs.slice(0, 8).map(s => (
-                    <span key={s.id}
-                      className="inline-flex items-center gap-1 px-2 py-1 bg-white rounded border text-xs"
-                      style={{ borderColor: t.primaryColor + "20" }}>
-                      <span className="w-5 h-5 rounded-full text-white flex items-center justify-center font-bold text-[10px]"
-                        style={{ background: t.primaryColor }}>
-                        {s.id}
-                      </span>
-                      <span className="font-medium" style={{ color: t.textColor }}>{s.nameFr}</span>
+              <div className="w-full p-3 rounded-lg border mb-3" style={{ background: "rgba(255,255,255,0.5)", borderColor: t.accentColor + "12" }}>
+                <p className="text-center mb-2" style={{ color: t.textColor, fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.2em" }}>Sourates mémorisées</p>
+                <div className="flex flex-wrap justify-center gap-1.5">
+                  {student.memorizedSurahs.slice(0, 10).map(s => (
+                    <span key={s.id} className="inline-flex items-center gap-1 px-2 py-1 bg-white rounded border text-xs" style={{ borderColor: t.primaryColor + "15" }}>
+                      <span className="w-5 h-5 rounded-full text-white flex items-center justify-center font-bold text-[10px]" style={{ background: t.primaryColor }}>{s.id}</span>
+                      <span style={{ color: t.textColor, fontWeight: 500 }}>{s.nameFr}</span>
                     </span>
                   ))}
-                  {student.memorizedSurahs.length > 8 && (
-                    <span className="text-xs text-gray-400">+{student.memorizedSurahs.length - 8} autres</span>
-                  )}
+                  {student.memorizedSurahs.length > 10 && <span className="text-xs text-gray-400">+{student.memorizedSurahs.length - 10}</span>}
                 </div>
               </div>
             )}
 
-            {/* Note personnalisée */}
+            {/* Note */}
             {note && (
-              <div className="max-w-xl mx-auto mb-3 p-3 rounded-lg border"
-                style={{ background: t.lightColor + "80", borderColor: t.accentColor + "20" }}>
-                <p className="text-center text-sm italic" style={{ color: t.textColor + "cc" }}>
-                  &ldquo;{note}&rdquo;
-                </p>
+              <div className="w-full p-3 rounded-lg border mb-3" style={{ background: "rgba(255,255,255,0.7)", borderColor: t.accentColor + "15" }}>
+                <p className="text-center text-sm italic" style={{ color: t.textColor + "cc", lineHeight: 1.5 }}>&ldquo;{note}&rdquo;</p>
               </div>
             )}
           </div>
 
-          {/* ═══ PIED DE PAGE ═══ */}
-          <div className="mt-auto pt-4">
-            <div className="flex items-end justify-between">
-              {/* Signature direction */}
-              <div className="text-center flex-1">
-                <div className="w-32 h-px mx-auto mb-2" style={{ background: `linear-gradient(to right, transparent, ${t.accentColor}, transparent)` }}/>
-                <p className="text-xs font-bold mb-0.5" style={{ color: t.textColor }}>Direction</p>
-                <p className="text-xs" style={{ color: t.primaryColor }}>{school.name}</p>
+          {/* ═══════════════════════════════════════════════════════════
+              SIGNATURES COMPACTES — CENTRÉES PAR RAPPORT À LEUR AXE
+              ═══════════════════════════════════════════════════════════ */}
+          <div className="w-full" style={{ marginTop: "auto", paddingTop: "12px" }}>
+
+            {/* Ligne de séparation subtile */}
+            <div className="w-full mb-4" style={{ maxWidth: "600px", margin: "0 auto 16px" }}>
+              <div className="h-px" style={{ background: `linear-gradient(to right, transparent, ${t.accentColor}30, transparent)` }}/>
+            </div>
+
+            <div className="flex items-start justify-between" style={{ padding: "0 24px" }}>
+
+              {/* ═══ GAUCHE : Directeur (centré sur son axe) ═══ */}
+              <div className="text-center" style={{ width: "100px" }}>
+                <div className="w-full h-px mb-2" style={{ background: `linear-gradient(to right, transparent, ${t.accentColor}40, transparent)` }}/>
+                <p style={{ color: "#9ca3af", fontSize: "0.55rem", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "2px" }}>Directeur</p>
+                <p style={{ color: t.textColor, fontSize: "0.8rem", fontWeight: 600, lineHeight: 1.2 }}>{t.directorName}</p>
+                {t.directorNameAr && (
+                  <p dir="rtl" style={{ color: t.primaryColor, fontFamily: `${t.fontFamilyAr}, serif`, fontSize: "0.7rem", marginTop: "1px" }}>
+                    {t.directorNameAr}
+                  </p>
+                )}
               </div>
 
-              {/* Date */}
-              <div className="text-center flex-1">
-                <div className="w-32 h-px mx-auto mb-2" style={{ background: `linear-gradient(to right, transparent, ${t.accentColor}, transparent)` }}/>
-                <p className="text-xs font-bold mb-0.5" style={{ color: t.textColor }}>Date</p>
-                <p className="text-xs" style={{ color: t.primaryColor }}>{today}</p>
+              {/* ═══ CENTRE : Enseignant (si activé) ═══ */}
+              {t.showTeacher && (
+                <div className="text-center" style={{ width: "100px" }}>
+                  <div className="w-full h-px mb-2" style={{ background: `linear-gradient(to right, transparent, ${t.accentColor}40, transparent)` }}/>
+                  <p style={{ color: "#9ca3af", fontSize: "0.55rem", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "2px" }}>Enseignant</p>
+                  <p style={{ color: t.textColor, fontSize: "0.8rem", fontWeight: 600, lineHeight: 1.2 }}>
+                    {t.teacherName || student.teacherName || "Enseignant"}
+                  </p>
+                  {t.teacherNameAr && (
+                    <p dir="rtl" style={{ color: t.primaryColor, fontFamily: `${t.fontFamilyAr}, serif`, fontSize: "0.7rem", marginTop: "1px" }}>
+                      {t.teacherNameAr}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* ═══ DROITE : Date (centrée sur son axe) ═══ */}
+              <div className="text-center" style={{ width: "100px" }}>
+                <div className="w-full h-px mb-2" style={{ background: `linear-gradient(to right, transparent, ${t.accentColor}40, transparent)` }}/>
+                <p style={{ color: "#9ca3af", fontSize: "0.55rem", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "2px" }}>Date</p>
+                <p style={{ color: t.textColor, fontSize: "0.8rem", fontWeight: 600, lineHeight: 1.2 }}>{today}</p>
+                <p style={{ color: "#9ca3af", fontSize: "0.6rem", marginTop: "1px" }}>
+                  {new Date().toLocaleDateString("ar-SA", { day: "numeric", month: "long", year: "numeric" })}
+                </p>
               </div>
             </div>
 
-            {/* Ligne finale */}
-            <div className="mt-4 flex items-center gap-3">
+            {/* Footer compact */}
+            <div className="mt-3 flex items-center gap-2" style={{ maxWidth: "600px", margin: "12px auto 0" }}>
               <div className="flex-1 h-px" style={{ background: `linear-gradient(to right, transparent, ${t.primaryColor})` }}/>
-              <span className="text-[10px] tracking-[0.2em] uppercase" style={{ color: t.accentColor + "80" }}>
+              <span style={{ color: t.accentColor + "60", fontSize: "0.5rem", letterSpacing: "0.2em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
                 {school.name} — TAHFIDZ
               </span>
               <div className="flex-1 h-px" style={{ background: `linear-gradient(to left, transparent, ${t.primaryColor})` }}/>
