@@ -1,10 +1,10 @@
 "use client"
 // src/components/admin/CertificatePrint.tsx
-// Certificat avec signatures compactes et centrées
+// Certificat synchronisé avec l'éditeur — motifs + textures
 
 import { useState, useRef } from "react"
 import Link from "next/link"
-import { ArrowLeft, Printer, BookOpen, Star, Award } from "lucide-react"
+import { ArrowLeft, Printer, BookOpen, Star, Award, Users } from "lucide-react"
 import type { CertTemplate } from "./CertificateTemplateEditor"
 
 interface StudentData {
@@ -38,7 +38,7 @@ const DEFAULT_TEMPLATE: CertTemplate = {
   title: "Certificat de Mémorisation",
   titleAr: "شَهَادَةُ الْحِفْظ",
   subtitle: "Niveau Débutant",
-  bodyText: "Pour avoir accompli avec sérieux et persévérance son programme de mémorisation du Saint Coran, et avoir démontré de belles qualités d'apprentissage et de dévotion.",
+  bodyText: "Pour avoir accompli avec sérieux et persévérance son programme de mémorisation du Saint Coran.",
   arabicVerse: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
   primaryColor: "#1a5f4a",
   accentColor: "#c9a227",
@@ -59,7 +59,61 @@ const DEFAULT_TEMPLATE: CertTemplate = {
   teacherNameAr: "",
 }
 
-// Ornement décoratif
+// ═══════════════════════════════════════════════════════════
+// MOTIFS DÉCORATIFS SVG — synchronisés avec l'éditeur
+// ═══════════════════════════════════════════════════════════
+const BORDER_PATTERNS: Record<string, JSX.Element> = {
+  islamic: (
+    <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+      <defs>
+        <pattern id="border-islamic" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+          <rect width="60" height="60" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.15"/>
+          <polygon points="30,5 55,30 30,55 5,30" fill="none" stroke="currentColor" strokeWidth="0.8" opacity="0.2"/>
+          <circle cx="30" cy="30" r="8" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.1"/>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#border-islamic)"/>
+    </svg>
+  ),
+  andalous: (
+    <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+      <defs>
+        <pattern id="border-andalous" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+          <path d="M20 40 Q40 20 60 40 Q40 60 20 40" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.15"/>
+          <circle cx="40" cy="40" r="15" fill="none" stroke="currentColor" strokeWidth="0.8" opacity="0.1"/>
+          <path d="M40 10 Q50 25 40 40 Q30 25 40 10" fill="currentColor" opacity="0.08"/>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#border-andalous)"/>
+    </svg>
+  ),
+  ottoman: (
+    <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+      <defs>
+        <pattern id="border-ottoman" x="0" y="0" width="100" height="40" patternUnits="userSpaceOnUse">
+          <path d="M0 20 Q25 5 50 20 Q75 35 100 20" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.2"/>
+          <path d="M0 20 Q25 35 50 20 Q75 5 100 20" fill="none" stroke="currentColor" strokeWidth="0.8" opacity="0.1"/>
+          <circle cx="50" cy="20" r="4" fill="currentColor" opacity="0.15"/>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#border-ottoman)"/>
+    </svg>
+  ),
+  mamlouk: (
+    <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+      <defs>
+        <pattern id="border-mamlouk" x="0" y="0" width="70" height="70" patternUnits="userSpaceOnUse">
+          <path d="M15 70 L15 35 Q35 15 55 35 L55 70" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.15"/>
+          <rect x="30" y="25" width="10" height="12" fill="currentColor" opacity="0.1"/>
+          <circle cx="35" cy="50" r="3" fill="currentColor" opacity="0.12"/>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#border-mamlouk)"/>
+    </svg>
+  ),
+}
+
+// Ornements centraux
 const ORNAMENT_TOP = (
   <svg width="200" height="24" viewBox="0 0 200 24" className="mx-auto">
     <path d="M0 12 L80 12" stroke="currentColor" strokeWidth="0.8" opacity="0.3"/>
@@ -76,6 +130,23 @@ const ORNAMENT_BOTTOM = (
     <circle cx="80" cy="8" r="3" fill="currentColor" opacity="0.2"/>
   </svg>
 )
+
+// ═══════════════════════════════════════════════════════════
+// TEXTURES DE PAPIER CSS
+// ═══════════════════════════════════════════════════════════
+const PAPER_TEXTURES: Record<string, string> = {
+  parchment: `radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.8) 0%, transparent 50%),
+              radial-gradient(ellipse at 70% 80%, rgba(200,180,140,0.1) 0%, transparent 50%),
+              linear-gradient(135deg, #f5f0e6 0%, #faf8f3 50%, #f0ebe0 100%)`,
+  cream:     `radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.9) 0%, transparent 70%),
+              linear-gradient(180deg, #fefcf8 0%, #f8f5ef 100%)`,
+  vintage:   `radial-gradient(ellipse at 20% 30%, rgba(180,160,130,0.15) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 70%, rgba(160,140,110,0.1) 0%, transparent 50%),
+              linear-gradient(135deg, #f0e8d8 0%, #faf5ef 50%, #e8dfd0 100%)`,
+  linen:     `repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.02) 2px, rgba(0,0,0,0.02) 4px),
+              repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,0,0,0.02) 2px, rgba(0,0,0,0.02) 4px),
+              linear-gradient(135deg, #f5f3f0 0%, #faf9f7 100%)`,
+}
 
 export function CertificatePrint({ student, school, template = DEFAULT_TEMPLATE }: Props) {
   const [note, setNote] = useState("")
@@ -100,6 +171,10 @@ export function CertificatePrint({ student, school, template = DEFAULT_TEMPLATE 
   const today = new Date().toLocaleDateString("fr-FR", {
     day: "numeric", month: "long", year: "numeric",
   })
+
+  // Motif et texture
+  const borderPattern = BORDER_PATTERNS[t.borderStyle] || BORDER_PATTERNS.islamic
+  const paperBg = PAPER_TEXTURES[t.paperTexture] || PAPER_TEXTURES.parchment
 
   const printStyles = `
     @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Scheherazade+New:wght@400;700&family=Reem+Kufi:wght@400;700&display=swap');
@@ -153,16 +228,31 @@ export function CertificatePrint({ student, school, template = DEFAULT_TEMPLATE 
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
-          CERTIFICAT — SIGNATURES COMPACTES ET CENTRÉES
+          CERTIFICAT — AVEC MOTIFS + TEXTURES (synchronisé éditeur)
           ═══════════════════════════════════════════════════════════ */}
       <div id="certificate-area" ref={certRef}
         className="mt-4 relative overflow-hidden shadow-2xl print:shadow-none"
-        style={{ width: pageWidth, height: pageHeight, boxSizing: "border-box", background: t.lightColor, fontFamily: `${t.fontFamily}, Georgia, serif` }}>
+        style={{ 
+          width: pageWidth, 
+          height: pageHeight, 
+          boxSizing: "border-box", 
+          background: paperBg,
+          fontFamily: `${t.fontFamily}, Georgia, serif` 
+        }}>
 
-        {/* Bordure fine */}
-        <div className="absolute inset-4 border rounded-lg pointer-events-none" style={{ borderColor: t.accentColor + "25" }}>
-          <div className="absolute inset-2 border pointer-events-none" style={{ borderColor: t.primaryColor + "10" }}>
-            <div className="absolute inset-1 border border-dashed pointer-events-none" style={{ borderColor: t.accentColor + "8"}}/>
+        {/* ═══ MOTIF DE FOND (bordure décorative) ═══ */}
+        <div className="absolute inset-0 text-current opacity-30 pointer-events-none"
+          style={{ color: t.primaryColor }}>
+          {borderPattern}
+        </div>
+
+        {/* Bordure fine extérieure */}
+        <div className="absolute inset-4 border-2 rounded-lg pointer-events-none"
+          style={{ borderColor: t.accentColor + "40" }}>
+          <div className="absolute inset-1 border pointer-events-none"
+            style={{ borderColor: t.primaryColor + "20" }}>
+            <div className="absolute inset-1 border border-dashed pointer-events-none"
+              style={{ borderColor: t.accentColor + "15" }}/>
           </div>
         </div>
 
@@ -207,10 +297,10 @@ export function CertificatePrint({ student, school, template = DEFAULT_TEMPLATE 
           </div>
 
           {/* ═══ CORPS ═══ */}
-          <div className="flex-1 flex flex-col items-center w-full" style={{ maxWidth: "600px" }}>
+          <div className="flex-1 flex flex-col items-center w-full" style={{ maxWidth: "520px" }}>
 
-            {/* Texte du corps — largeur indépendante */}
-            <div className="text-center w-full" style={{ marginBottom: "20px", maxWidth: "600px", marginLeft: "auto", marginRight: "auto" }}>
+            {/* Texte du corps */}
+            <div className="text-center w-full" style={{ marginBottom: "20px", maxWidth: "460px", marginLeft: "auto", marginRight: "auto" }}>
               <p style={{ color: t.textColor, fontSize: "0.95rem", lineHeight: 1.5, fontStyle: "italic" }}>
                 &ldquo;{t.bodyText}&rdquo;
               </p>
@@ -225,7 +315,9 @@ export function CertificatePrint({ student, school, template = DEFAULT_TEMPLATE 
 
             {/* ═══ NOM ÉTUDIANT ═══ */}
             <div className="text-center w-full" style={{ marginBottom: "20px" }}>
-              <p style={{ color: "#9ca3af", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: "4px" }}>Ce certificat est décerné à</p>
+              <p style={{ color: "#9ca3af", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: "4px" }}>
+                Ce certificat est décerné à
+              </p>
               <h2 style={{ color: t.textColor, fontSize: "1.8rem", fontWeight: 700, lineHeight: 1.2 }}>{student.fullName}</h2>
               {student.fullNameAr && (
                 <p dir="rtl" style={{ color: t.primaryColor, fontFamily: `${t.fontFamilyAr}, serif`, fontSize: "1.2rem", marginTop: "4px" }}>
@@ -248,6 +340,27 @@ export function CertificatePrint({ student, school, template = DEFAULT_TEMPLATE 
                 </div>
               ))}
             </div>
+
+            {/* ═══ GROUPE — Badge professionnel ═══ */}
+            {student.groupName && (
+              <div className="flex items-center justify-center gap-2 mb-4 px-4 py-2 rounded-full border"
+                style={{ 
+                  borderColor: t.accentColor + "30", 
+                  background: `linear-gradient(135deg, ${t.primaryColor}15, ${t.accentColor}15)`,
+                  display: "inline-flex",
+                  margin: "0 auto 16px"
+                }}>
+                <Users size={14} style={{ color: t.primaryColor }}/>
+                <span style={{ 
+                  color: t.textColor, 
+                  fontSize: "0.75rem", 
+                  fontWeight: 600,
+                  letterSpacing: "0.05em"
+                }}>
+                  {student.groupName}
+                </span>
+              </div>
+            )}
 
             {/* Sourates */}
             {student.memorizedSurahs.length > 0 && (
@@ -273,19 +386,16 @@ export function CertificatePrint({ student, school, template = DEFAULT_TEMPLATE 
             )}
           </div>
 
-          {/* ═══════════════════════════════════════════════════════════
-              SIGNATURES COMPACTES — CENTRÉES PAR RAPPORT À LEUR AXE
-              ═══════════════════════════════════════════════════════════ */}
+          {/* ═══ SIGNATURES ═══ */}
           <div className="w-full" style={{ marginTop: "auto", paddingTop: "6px" }}>
 
-            {/* Ligne de séparation subtile */}
             <div className="w-full mb-4" style={{ maxWidth: "600px", margin: "0 auto 16px" }}>
               <div className="h-px" style={{ background: `linear-gradient(to right, transparent, ${t.accentColor}30, transparent)` }}/>
             </div>
 
             <div className="flex items-start justify-between" style={{ padding: "0 40px" }}>
 
-              {/* ═══ GAUCHE : Directeur (centré sur son axe) ═══ */}
+              {/* Directeur */}
               <div className="text-center" style={{ width: "100px" }}>
                 <div className="w-full h-px mb-2" style={{ background: `linear-gradient(to right, transparent, ${t.accentColor}40, transparent)` }}/>
                 <p style={{ color: "#9ca3af", fontSize: "0.55rem", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "2px" }}>Directeur</p>
@@ -297,7 +407,7 @@ export function CertificatePrint({ student, school, template = DEFAULT_TEMPLATE 
                 )}
               </div>
 
-              {/* ═══ CENTRE : Enseignant (si activé) ═══ */}
+              {/* Enseignant */}
               {t.showTeacher && (
                 <div className="text-center" style={{ width: "100px" }}>
                   <div className="w-full h-px mb-2" style={{ background: `linear-gradient(to right, transparent, ${t.accentColor}40, transparent)` }}/>
@@ -313,7 +423,7 @@ export function CertificatePrint({ student, school, template = DEFAULT_TEMPLATE 
                 </div>
               )}
 
-              {/* ═══ DROITE : Date (centrée sur son axe) ═══ */}
+              {/* Date */}
               <div className="text-center" style={{ width: "100px" }}>
                 <div className="w-full h-px mb-2" style={{ background: `linear-gradient(to right, transparent, ${t.accentColor}40, transparent)` }}/>
                 <p style={{ color: "#9ca3af", fontSize: "0.55rem", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "2px" }}>Date</p>
@@ -324,7 +434,7 @@ export function CertificatePrint({ student, school, template = DEFAULT_TEMPLATE 
               </div>
             </div>
 
-            {/* Footer compact */}
+            {/* Footer */}
             <div className="mt-3 flex items-center gap-2" style={{ maxWidth: "600px", margin: "12px auto 0" }}>
               <div className="flex-1 h-px" style={{ background: `linear-gradient(to right, transparent, ${t.primaryColor})` }}/>
               <span style={{ color: t.accentColor + "60", fontSize: "0.5rem", letterSpacing: "0.2em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
