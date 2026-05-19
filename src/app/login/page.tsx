@@ -1,6 +1,7 @@
 // src/app/login/page.tsx — avec mode Super Admin
 "use client"
 
+import { Suspense } from "react"
 import { useState, useEffect } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -37,7 +38,10 @@ const features = [
   { icon: BarChart2, text: "Rapports et statistiques detailles" },
 ]
 
-export default function LoginPage() {
+// ═══════════════════════════════════════════════════════════
+// Composant qui utilise useSearchParams (doit être dans Suspense)
+// ═══════════════════════════════════════════════════════════
+function LoginForm() {
   const router        = useRouter()
   const searchParams  = useSearchParams()
   const callbackUrl   = searchParams.get("callbackUrl") || "/"
@@ -310,5 +314,20 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════
+// Page exportée avec Suspense wrapper
+// ═══════════════════════════════════════════════════════════
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 size={32} className="animate-spin text-emerald-600" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }
