@@ -51,6 +51,7 @@ export default async function AdminDashboard() {
   return (
     <AdminDashboardClient
       userName={(session.user as any).name ?? session.user.email ?? ""}
+      userEmail={session.user.email ?? ""}
       todayDate={todayDate}
       {...stats}
     />

@@ -2,8 +2,10 @@
 // src/components/teacher/TeacherProfileClient.tsx
 
 import Link from "next/link"
+import { useState } from "react"
 import { useLanguage } from "@/contexts/LanguageContext"
-import { Users, BookOpen, Star, ClipboardList, Phone, Mail, GraduationCap, CalendarCheck } from "lucide-react"
+import { Users, BookOpen, Star, ClipboardList, Phone, Mail, GraduationCap, CalendarCheck, Bug } from "lucide-react"
+import { FeedbackModal } from "@/components/shared/FeedbackModal"
 
 interface Student {
   id: string
@@ -53,6 +55,8 @@ interface Props {
 }
 
 export function TeacherProfileClient({ teacher, totalMemorized, avgScore, formatDate }: Props) {
+  const [showFeedback, setShowFeedback] = useState(false)
+
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
@@ -205,12 +209,19 @@ export function TeacherProfileClient({ teacher, totalMemorized, avgScore, format
                 { label: t("attendance"),      href: "/teacher/attendance",  icon: CalendarCheck, color: "bg-tahfidz-green-light dark:bg-emerald-900/20 text-tahfidz-green hover:bg-tahfidz-green/20 dark:hover:bg-emerald-900/30" },
                 { label: t("progress"),        href: "/teacher/progress",    icon: BookOpen,      color: "bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/30" },
                 { label: t("myEvaluations"),   href: "/teacher/evaluations", icon: ClipboardList, color: "bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 hover:bg-orange-100 dark:hover:bg-orange-900/30" },
-              ].map(a => (
+              ].map(a => a.href ? (
                 <Link key={a.href} href={a.href} className={`flex items-center gap-3 p-4 rounded-xl transition ${a.color}`}>
                   <a.icon size={18} />
                   <span className="text-sm font-medium">{a.label}</span>
                 </Link>
-              ))}
+              ) : null)}
+              <button
+                onClick={() => setShowFeedback(true)}
+                className="flex items-center gap-3 p-4 rounded-xl transition bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30"
+              >
+                <Bug size={18} />
+                <span className="text-sm font-medium">{L === "ar" ? "الإبلاغ عن مشكلة" : L === "en" ? "Report issue" : "Signaler un problème"}</span>
+              </button>
             </div>
           </div>
 
@@ -241,6 +252,14 @@ export function TeacherProfileClient({ teacher, totalMemorized, avgScore, format
           )}
         </div>
       </div>
+      <FeedbackModal
+        isOpen={showFeedback}
+        onClose={() => setShowFeedback(false)}
+        userRole="TEACHER"
+        userName={teacher.user.fullName}
+        userEmail={teacher.user.email}
+        schoolName={undefined}
+      />
     </div>
   )
 }

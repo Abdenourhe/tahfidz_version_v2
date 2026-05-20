@@ -98,6 +98,7 @@ model School {
   exams          Exam[]
   directMessages DirectMessage[]
   badges         Badge[]
+  feedbacks      Feedback[]
 
   @@index([slug])
   @@map("schools")
@@ -137,6 +138,7 @@ model User {
   sessions         Session[]
   auditLogs        AuditLog[]
   announcements    Announcement[]
+  feedbacks        Feedback[]
 
   @@unique([schoolId, email])           // même email autorisé dans 2 écoles
   @@index([schoolId, role])
@@ -670,4 +672,52 @@ model SchoolRequest {
 
   @@index([status])
   @@map("school_requests")
+}
+
+// ==================== FEEDBACK / BUG REPORTS ====================
+
+enum FeedbackType {
+  BUG
+  SUGGESTION
+  FEEDBACK
+  OTHER
+}
+
+enum FeedbackStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum FeedbackPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model Feedback {
+  id          String           @id @default(uuid())
+  schoolId    String
+  userId      String
+  type        FeedbackType     @default(BUG)
+  category    String           @default("GENERAL") // UI, PERFORMANCE, FEATURE, BUG, OTHER
+  title       String
+  message     String           @db.Text
+  screenshot  String?          // URL de la photo/screenshot
+  status      FeedbackStatus   @default(PENDING)
+  priority    FeedbackPriority @default(LOW)
+  adminNote   String?          @db.Text
+  resolvedAt  DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([schoolId, status])
+  @@index([status, priority])
+  @@index([createdAt])
+  @@map("feedbacks")
 }

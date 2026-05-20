@@ -1,191 +1,66 @@
 "use client"
-// src/app/admin/super/page.tsx — Dashboard Super-Admin TAHFIDZ v2
-
 import Image from "next/image"
 import { useState, useEffect, useCallback, useRef, Fragment, useMemo } from "react"
 import {
   Loader2, Plus, Building2, Users, ToggleLeft, ToggleRight,
   CheckCircle2, X, LogOut, Clock, Check, Ban, Copy, KeyRound,
   Phone, Mail, MapPin, ChevronDown, ChevronRight, GraduationCap, BookOpen, UserCog,
-  Pencil, Trash2, RefreshCw, Sun, Moon, Search, Download, ImagePlus,
+  Pencil, Trash2, RefreshCw, Sun, Moon, Search, Download,
   Activity, AlertTriangle, Zap, BarChart3, TrendingUp, TrendingDown,
-  MessageSquare, Bell, Send, Eye, Filter, Calendar, ChevronLeft,
+  Send, Eye, Filter, MessageCircleQuestion, Inbox, Bug, Bell, ImagePlus,
 } from "lucide-react"
 import { signOut } from "next-auth/react"
-import { useDebounce } from "use-debounce"
 import { Toaster, toast } from "sonner"
 
-/* ─── Types ─────────────────────────────────────────────────────── */
-interface SchoolUser {
-  id: string; fullName: string; email: string; role: string; isActive: boolean; createdAt: string
-}
-interface School {
-  id: string; name: string; nameAr: string | null; slug: string; plan: string
-  isActive: boolean; createdAt: string; logo: string | null
-  address: string | null; city: string | null; country: string | null; phone: string | null
-  _count: { users: number }
-  users: SchoolUser[]
-}
-interface SchoolRequest {
-  id: string; schoolName: string; city: string | null; country: string
-  adminName: string; adminEmail: string; adminPhone: string | null
-  classCount: number; studentsPerClass: number; teachersCount: number
-  status: "PENDING" | "APPROVED" | "REJECTED"
-  slug: string | null; createdAt: string; processedAt: string | null
-}
-interface ApprovalResult {
-  schoolName: string; slug: string; plan: string; adminEmail: string; adminName: string
-}
+// ─── Types ───────────────────────────────────────────────────────
+interface SchoolUser { id: string; fullName: string; email: string; role: string; isActive: boolean; createdAt: string }
+interface School { id: string; name: string; nameAr: string | null; slug: string; plan: string; isActive: boolean; createdAt: string; logo: string | null; address: string | null; city: string | null; country: string | null; phone: string | null; _count: { users: number }; users: SchoolUser[] }
+interface SchoolRequest { id: string; schoolName: string; city: string | null; country: string; adminName: string; adminEmail: string; adminPhone: string | null; classCount: number; studentsPerClass: number; teachersCount: number; status: "PENDING" | "APPROVED" | "REJECTED"; slug: string | null; createdAt: string; processedAt: string | null }
+interface ApprovalResult { schoolName: string; slug: string; plan: string; adminEmail: string; adminName: string }
+interface AuditLog { id: string; action: string; actor: string | null; actorId: string | null; target: string | null; targetId: string | null; targetType: string | null; details: string | null; ipAddress: string | null; userAgent: string | null; createdAt: string }
+interface FeedbackItem { id: string; type: string; category: string; title: string; message: string; screenshot: string | null; status: string; priority: string; adminNote: string | null; createdAt: string; resolvedAt: string | null; user: { fullName: string; email: string; role: string; phone: string | null }; school: { name: string; slug: string } }
+interface SystemHealth { status: "healthy" | "warning" | "critical"; apiLatency: number; dbStatus: string; lastError: string | null; errorCount24h: number }
 
-// ✅ Interface AuditLog corrigée — tous les champs avec fallback
-interface AuditLog {
-  id: string
-  action: string
-  actor: string | null
-  actorId: string | null
-  target: string | null
-  targetId: string | null
-  targetType: string | null
-  details: string | null
-  ipAddress: string | null
-  userAgent: string | null
-  createdAt: string
-}
-
-interface SystemHealth {
-  status: "healthy" | "warning" | "critical"; apiLatency: number; dbStatus: string
-  lastError: string | null; errorCount24h: number
-}
-interface ImpersonateResult {
-  url: string; token: string
-}
-
-/* ─── Constantes ─────────────────────────────────────────────────── */
-const EMPTY_FORM = {
-  schoolName: "", schoolSlug: "", plan: "FREE",
-  address: "", city: "", country: "DZ", phone: "",
-  adminEmail: "", adminName: "", adminPassword: "",
-}
-
-const PLAN_PRICES: Record<string, number> = {
-  FREE: 0, STARTER: 29, PRO: 79, ENTERPRISE: 199,
-}
-
+// ─── Constantes ───────────────────────────────────────────────────
+const EMPTY_FORM = { schoolName: "", schoolSlug: "", plan: "FREE", address: "", city: "", country: "DZ", phone: "", adminEmail: "", adminName: "", adminPassword: "" }
+const PLAN_PRICES: Record<string, number> = { FREE: 0, STARTER: 29, PRO: 79, ENTERPRISE: 199 }
 const COUNTRIES = [
-  { code: "DZ", name: "Algérie" },
-  { code: "MA", name: "Maroc" },
-  { code: "TN", name: "Tunisie" },
-  { code: "LY", name: "Libye" },
-  { code: "EG", name: "Égypte" },
-  { code: "SA", name: "Arabie Saoudite" },
-  { code: "AE", name: "Émirats Arabes Unis" },
-  { code: "QA", name: "Qatar" },
-  { code: "KW", name: "Koweït" },
-  { code: "BH", name: "Bahreïn" },
-  { code: "OM", name: "Oman" },
-  { code: "JO", name: "Jordanie" },
-  { code: "LB", name: "Liban" },
-  { code: "SY", name: "Syrie" },
-  { code: "IQ", name: "Irak" },
-  { code: "PS", name: "Palestine" },
-  { code: "SD", name: "Soudan" },
-  { code: "MR", name: "Mauritanie" },
-  { code: "SO", name: "Somalie" },
-  { code: "DJ", name: "Djibouti" },
-  { code: "KM", name: "Comores" },
-  { code: "SN", name: "Sénégal" },
-  { code: "ML", name: "Mali" },
-  { code: "NE", name: "Niger" },
-  { code: "TD", name: "Tchad" },
-  { code: "FR", name: "France" },
-  { code: "BE", name: "Belgique" },
-  { code: "DE", name: "Allemagne" },
-  { code: "GB", name: "Royaume-Uni" },
-  { code: "CA", name: "Canada" },
-  { code: "US", name: "États-Unis" },
-  { code: "OTHER", name: "Autre" },
+  { code: "DZ", name: "Algérie" }, { code: "MA", name: "Maroc" }, { code: "TN", name: "Tunisie" },
+  { code: "LY", name: "Libye" }, { code: "EG", name: "Égypte" }, { code: "SA", name: "Arabie Saoudite" },
+  { code: "AE", name: "Émirats Arabes Unis" }, { code: "QA", name: "Qatar" }, { code: "KW", name: "Koweït" },
+  { code: "BH", name: "Bahreïn" }, { code: "OM", name: "Oman" }, { code: "JO", name: "Jordanie" },
+  { code: "LB", name: "Liban" }, { code: "SY", name: "Syrie" }, { code: "IQ", name: "Irak" },
+  { code: "SD", name: "Soudan" }, { code: "MR", name: "Mauritanie" }, { code: "SO", name: "Somalie" },
+  { code: "DJ", name: "Djibouti" }, { code: "KM", name: "Comores" }, { code: "FR", name: "France" },
+  { code: "BE", name: "Belgique" }, { code: "DE", name: "Allemagne" }, { code: "GB", name: "Royaume-Uni" },
+  { code: "CA", name: "Canada" }, { code: "US", name: "États-Unis" }, { code: "TR", name: "Turquie" },
+  { code: "SN", name: "Sénégal" }, { code: "ML", name: "Mali" }, { code: "NE", name: "Niger" },
+  { code: "NG", name: "Nigéria" }, { code: "OTHER", name: "Autre" },
 ]
 
-/* ─── Helpers ────────────────────────────────────────────────────── */
-function generateSlug(): string {
-  const L = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-  return `${L[Math.floor(Math.random() * 26)]}${L[Math.floor(Math.random() * 26)]}-${Math.floor(10000 + Math.random() * 90000)}`
-}
+// ─── Helpers ──────────────────────────────────────────────────────
+function generateSlug(): string { const L = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; return `${L[Math.floor(Math.random() * 26)]}${L[Math.floor(Math.random() * 26)]}-${Math.floor(10000 + Math.random() * 90000)}` }
+function formatPhone(raw: string | null): string { if (!raw) return "—"; const digits = raw.replace(/\D/g, ""); if (digits.startsWith("213") && digits.length >= 11) { const local = digits.slice(3); return `(+213) ${local.slice(0,3)} ${local.slice(3,6)} ${local.slice(6)}` } if (digits.startsWith("0") && digits.length === 10) { return `(+213) ${digits.slice(1,4)} ${digits.slice(4,7)} ${digits.slice(7)}` } return raw }
+function formatDate(d: string | Date): string { return new Date(d).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) }
+function getActionColor(action: string): string { if (action.includes("DELETE")) return "bg-red-500"; if (action.includes("CREATE") || action.includes("APPROVE")) return "bg-emerald-500"; if (action.includes("UPDATE") || action.includes("EDIT")) return "bg-blue-500"; if (action.includes("REJECT") || action.includes("BAN")) return "bg-orange-500"; if (action.includes("LOGIN") || action.includes("IMPERSONATE")) return "bg-purple-500"; return "bg-gray-400" }
+function getActionLabel(action: string): string { const labels: Record<string, string> = { CREATE_SCHOOL: "Création école", UPDATE_SCHOOL: "Modification école", DELETE_SCHOOL: "Suppression école", TOGGLE_SCHOOL: "Activation/Désactivation", APPROVE_REQUEST: "Approbation demande", REJECT_REQUEST: "Rejet demande", DELETE_REQUEST: "Suppression demande", CREATE_USER: "Création utilisateur", UPDATE_USER: "Modification utilisateur", DELETE_USER: "Suppression utilisateur", IMPERSONATE: "Impersonation", BROADCAST: "Broadcast", EXPORT_DATA: "Export données", CLEAR_HISTORY: "Nettoyage historique" }; return labels[action] || action.replace(/_/g, " ") }
+function getTargetIcon(targetType: string | null): string { if (!targetType) return "🔧"; const icons: Record<string, string> = { SCHOOL: "🏫", REQUEST: "📋", USER: "👤", SYSTEM: "⚙️" }; return icons[targetType] || "🔧" }
+function getFeedbackTypeColor(type: string): string { const map: Record<string, string> = { BUG: "bg-red-100 text-red-700", SUGGESTION: "bg-amber-100 text-amber-700", FEEDBACK: "bg-blue-100 text-blue-700", OTHER: "bg-gray-100 text-gray-600" }; return map[type] || map.OTHER }
+function getFeedbackTypeLabel(type: string): string { const map: Record<string, string> = { BUG: "Bug", SUGGESTION: "Suggestion", FEEDBACK: "Commentaire", OTHER: "Autre" }; return map[type] || type }
+function getStatusColor(status: string): string { const map: Record<string, string> = { PENDING: "bg-orange-100 text-orange-700", IN_PROGRESS: "bg-blue-100 text-blue-700", RESOLVED: "bg-green-100 text-green-700", CLOSED: "bg-gray-100 text-gray-500" }; return map[status] || map.PENDING }
+function getStatusLabel(status: string): string { const map: Record<string, string> = { PENDING: "En attente", IN_PROGRESS: "En cours", RESOLVED: "Résolu", CLOSED: "Fermé" }; return map[status] || status }
+function getPriorityColor(priority: string): string { const map: Record<string, string> = { LOW: "bg-gray-100 text-gray-600", MEDIUM: "bg-yellow-100 text-yellow-700", HIGH: "bg-orange-100 text-orange-700", CRITICAL: "bg-red-100 text-red-700" }; return map[priority] || map.LOW }
+function getPriorityLabel(priority: string): string { const map: Record<string, string> = { LOW: "Basse", MEDIUM: "Moyenne", HIGH: "Haute", CRITICAL: "Critique" }; return map[priority] || priority }
 
-function formatPhone(raw: string | null): string {
-  if (!raw) return "—"
-  const digits = raw.replace(/\D/g, "")
-  if (digits.startsWith("213") && digits.length >= 11) {
-    const local = digits.slice(3)
-    return `(+213) ${local.slice(0,3)} ${local.slice(3,6)} ${local.slice(6)}`
-  }
-  if (digits.startsWith("0") && digits.length === 10) {
-    return `(+213) ${digits.slice(1,4)} ${digits.slice(4,7)} ${digits.slice(7)}`
-  }
-  return raw
-}
-
-function formatDate(d: string | Date): string {
-  return new Date(d).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
-}
-
-// ✅ NOUVEAU : Helper couleur selon l'action
-function getActionColor(action: string): string {
-  if (action.includes("DELETE")) return "bg-red-500"
-  if (action.includes("CREATE") || action.includes("APPROVE")) return "bg-emerald-500"
-  if (action.includes("UPDATE") || action.includes("EDIT")) return "bg-blue-500"
-  if (action.includes("REJECT") || action.includes("BAN")) return "bg-orange-500"
-  if (action.includes("LOGIN") || action.includes("IMPERSONATE")) return "bg-purple-500"
-  return "bg-gray-400"
-}
-
-// ✅ NOUVEAU : Helper label lisible pour l'action
-function getActionLabel(action: string): string {
-  const labels: Record<string, string> = {
-    CREATE_SCHOOL: "Création école",
-    UPDATE_SCHOOL: "Modification école",
-    DELETE_SCHOOL: "Suppression école",
-    TOGGLE_SCHOOL: "Activation/Désactivation",
-    APPROVE_REQUEST: "Approbation demande",
-    REJECT_REQUEST: "Rejet demande",
-    DELETE_REQUEST: "Suppression demande",
-    CREATE_USER: "Création utilisateur",
-    UPDATE_USER: "Modification utilisateur",
-    DELETE_USER: "Suppression utilisateur",
-    IMPERSONATE: "Impersonation",
-    BROADCAST: "Broadcast",
-    EXPORT_DATA: "Export données",
-    CLEAR_HISTORY: "Nettoyage historique",
-  }
-  return labels[action] || action.replace(/_/g, " ")
-}
-
-// ✅ NOUVEAU : Helper icône selon le type de cible
-function getTargetIcon(targetType: string | null): string {
-  if (!targetType) return "🔧"
-  const icons: Record<string, string> = {
-    SCHOOL: "🏫",
-    REQUEST: "📋",
-    USER: "👤",
-    SYSTEM: "⚙️",
-  }
-  return icons[targetType] || "🔧"
-}
-/* ─── RequestCard ────────────────────────────────────────────────── */
-function RequestCard({ r, processing, onApprove, onReject, onDelete }: {
-  r: SchoolRequest; processing: string | null
-  onApprove: (id: string) => void; onReject: (id: string) => void; onDelete?: (id: string) => void
-}) {
+// ─── RequestCard ──────────────────────────────────────────────────
+function RequestCard({ r, processing, onApprove, onReject, onDelete }: { r: SchoolRequest; processing: string | null; onApprove: (id: string) => void; onReject: (id: string) => void; onDelete?: (id: string) => void }) {
   return (
     <div className={`p-5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition ${r.status !== "PENDING" ? "opacity-70" : ""}`}>
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-semibold text-gray-900 dark:text-gray-100">{r.schoolName}</h3>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-              r.status === "PENDING" ? "bg-orange-100 text-orange-600" :
-              r.status === "APPROVED" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-500"
-            }`}>{r.status === "PENDING" ? "En attente" : r.status === "APPROVED" ? "Approuvee" : "Rejetee"}</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${r.status === "PENDING" ? "bg-orange-100 text-orange-600" : r.status === "APPROVED" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-500"}`}>{r.status === "PENDING" ? "En attente" : r.status === "APPROVED" ? "Approuvee" : "Rejetee"}</span>
             {r.slug && <span className="font-mono bg-tahfidz-green-light text-tahfidz-green px-2 py-0.5 rounded text-[10px]">🔑 {r.slug}</span>}
           </div>
           <p className="text-xs text-gray-400 flex items-center gap-1"><MapPin size={11} />{r.city ? `${r.city}, ` : ""}{r.country}</p>
@@ -199,20 +74,11 @@ function RequestCard({ r, processing, onApprove, onReject, onDelete }: {
         </div>
         <div className="flex flex-col gap-2 shrink-0 items-end">
           {r.status === "PENDING" && (<>
-            <button onClick={() => onApprove(r.id)} disabled={processing === r.id}
-              className="flex items-center gap-1.5 px-3 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg text-xs font-semibold hover:bg-green-100 disabled:opacity-50 transition">
-              {processing === r.id ? <Loader2 size={12} className="animate-spin" /> : <Check size={13} />}Approuver
-            </button>
-            <button onClick={() => onReject(r.id)} disabled={processing === r.id}
-              className="flex items-center gap-1.5 px-3 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-semibold hover:bg-red-100 disabled:opacity-50 transition">
-              <Ban size={13} /> Rejeter
-            </button>
+            <button onClick={() => onApprove(r.id)} disabled={processing === r.id} className="flex items-center gap-1.5 px-3 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg text-xs font-semibold hover:bg-green-100 disabled:opacity-50 transition">{processing === r.id ? <Loader2 size={12} className="animate-spin" /> : <Check size={13} />}Approuver</button>
+            <button onClick={() => onReject(r.id)} disabled={processing === r.id} className="flex items-center gap-1.5 px-3 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-semibold hover:bg-red-100 disabled:opacity-50 transition"><Ban size={13} /> Rejeter</button>
           </>)}
           {r.status !== "PENDING" && onDelete && (
-            <button onClick={() => onDelete(r.id)}
-              className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 dark:bg-gray-800 text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg text-xs hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition">
-              <Trash2 size={12} /> Supprimer
-            </button>
+            <button onClick={() => onDelete(r.id)} className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 dark:bg-gray-800 text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg text-xs hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition"><Trash2 size={12} /> Supprimer</button>
           )}
         </div>
       </div>
@@ -220,7 +86,7 @@ function RequestCard({ r, processing, onApprove, onReject, onDelete }: {
   )
 }
 
-/* ─── Mini chart component ─────────────────────────────────────── */
+// ─── MiniBarChart ─────────────────────────────────────────────────
 function MiniBarChart({ data, color = "bg-tahfidz-green" }: { data: number[]; color?: string }) {
   const max = Math.max(...data, 1)
   return (
@@ -235,7 +101,7 @@ function MiniBarChart({ data, color = "bg-tahfidz-green" }: { data: number[]; co
 /* ─── Page principale ────────────────────────────────────────────── */
 export default function SuperAdminPage() {
   /* ── États existants ── */
-  const [tab, setTab] = useState<"schools" | "requests" | "health" | "audit" | "broadcast">("schools")
+  const [tab, setTab] = useState<"schools" | "requests" | "health" | "audit" | "broadcast" | "feedback">("schools")
   const [schools, setSchools] = useState<School[]>([])
   const [requests, setRequests] = useState<SchoolRequest[]>([])
   const [loading, setLoading] = useState(true)
@@ -285,6 +151,18 @@ export default function SuperAdminPage() {
   const [selectedSchools, setSelectedSchools] = useState<Set<string>>(new Set())
   const [showBulkActions, setShowBulkActions] = useState(false)
   const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d" | "1y">("30d")
+
+  // 6. Feedback
+  const [feedbackList, setFeedbackList] = useState<FeedbackItem[]>([])
+  const [feedbackLoading, setFeedbackLoading] = useState(false)
+  const [feedbackError, setFeedbackError] = useState<string | null>(null)
+  const [feedbackFilter, setFeedbackFilter] = useState("")
+  const [feedbackStatusFilter, setFeedbackStatusFilter] = useState<string>("ALL")
+  const [feedbackPriorityFilter, setFeedbackPriorityFilter] = useState<string>("ALL")
+  const [selectedFeedback, setSelectedFeedback] = useState<FeedbackItem | null>(null)
+  const [showFeedbackDetail, setShowFeedbackDetail] = useState(false)
+  const [updatingFeedback, setUpdatingFeedback] = useState(false)
+  const [adminNote, setAdminNote] = useState("")
 
   // 5. Broadcast
   const [broadcastMessage, setBroadcastMessage] = useState("")
@@ -385,6 +263,37 @@ export default function SuperAdminPage() {
   useEffect(() => {
     if (tab === "audit") loadAudit()
   }, [tab, loadAudit])
+
+
+  /* ── 6. Feedback ── */
+  const loadFeedback = useCallback(async () => {
+    setFeedbackLoading(true)
+    setFeedbackError(null)
+    try {
+      const params = new URLSearchParams()
+      if (feedbackStatusFilter !== "ALL") params.append("status", feedbackStatusFilter)
+      if (feedbackPriorityFilter !== "ALL") params.append("priority", feedbackPriorityFilter)
+      const res = await fetch(`/api/feedback?${params.toString()}`)
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Erreur HTTP " + res.status }))
+        setFeedbackError(err.error || `Erreur ${res.status}`)
+        setFeedbackList([])
+        return
+      }
+      const data = await res.json()
+      setFeedbackList(data.feedbacks || [])
+    } catch (err) {
+      setFeedbackError("Impossible de charger les feedbacks")
+      setFeedbackList([])
+    } finally {
+      setFeedbackLoading(false)
+    }
+  }, [feedbackStatusFilter, feedbackPriorityFilter])
+
+  useEffect(() => {
+    if (tab === "feedback") loadFeedback()
+  }, [tab, loadFeedback])
+
 
   /* ── Filtre + Pagination ── */
   const filteredSchools = useMemo(() => {
@@ -713,6 +622,7 @@ export default function SuperAdminPage() {
               { id: "health", label: "Sante", icon: <Activity size={15} />, color: "text-red-500", border: "border-red-500" },
               { id: "audit", label: "Audit", icon: <Eye size={15} />, color: "text-tahfidz-purple", border: "border-tahfidz-purple" },
               { id: "broadcast", label: "Broadcast", icon: <Send size={15} />, color: "text-blue-500", border: "border-blue-500" },
+              { id: "feedback", label: "Feedback", icon: <MessageCircleQuestion size={15} />, count: feedbackList.filter(f => f.status === "PENDING").length, color: "text-pink-500", border: "border-pink-500", badge: feedbackList.filter(f => f.status === "PENDING").length > 0 },
             ].map(t => (
               <button key={t.id} onClick={() => setTab(t.id as any)}
                 className={`flex-1 py-3.5 text-sm font-medium transition whitespace-nowrap ${tab === t.id ? `${t.color} border-b-2 ${t.border}` : "text-gray-500 dark:text-gray-400 hover:text-gray-700"}`}>
@@ -1076,6 +986,108 @@ export default function SuperAdminPage() {
               </div>
             </div>
           </div>)}
+
+          {/* ── Tab Feedback ── */}
+          {tab === "feedback" && (<div className="p-6">
+            {/* Filtres */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
+              <div className="relative flex-1">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input type="text" value={feedbackFilter} onChange={e => setFeedbackFilter(e.target.value)} placeholder="Filtrer par titre, message ou auteur..."
+                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green" />
+              </div>
+              <div className="flex gap-2">
+                <select value={feedbackStatusFilter} onChange={e => { setFeedbackStatusFilter(e.target.value); setCurrentPage(1) }}
+                  className="text-xs px-2 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">
+                  <option value="ALL">Tous les statuts</option>
+                  <option value="PENDING">En attente</option>
+                  <option value="IN_PROGRESS">En cours</option>
+                  <option value="RESOLVED">Résolu</option>
+                  <option value="CLOSED">Fermé</option>
+                </select>
+                <select value={feedbackPriorityFilter} onChange={e => { setFeedbackPriorityFilter(e.target.value); setCurrentPage(1) }}
+                  className="text-xs px-2 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">
+                  <option value="ALL">Toutes priorités</option>
+                  <option value="LOW">Basse</option>
+                  <option value="MEDIUM">Moyenne</option>
+                  <option value="HIGH">Haute</option>
+                  <option value="CRITICAL">Critique</option>
+                </select>
+                <button onClick={loadFeedback} className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-400 hover:text-tahfidz-green hover:border-tahfidz-green transition"><RefreshCw size={14} /></button>
+              </div>
+            </div>
+
+            {/* Stats rapides */}
+            <div className="grid grid-cols-4 gap-3 mb-4">
+              {[
+                { label: "Total", value: feedbackList.length, color: "text-gray-600", bg: "bg-gray-50 dark:bg-gray-800" },
+                { label: "En attente", value: feedbackList.filter(f => f.status === "PENDING").length, color: "text-orange-600", bg: "bg-orange-50 dark:bg-orange-900/20" },
+                { label: "En cours", value: feedbackList.filter(f => f.status === "IN_PROGRESS").length, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-900/20" },
+                { label: "Résolus", value: feedbackList.filter(f => f.status === "RESOLVED").length, color: "text-green-600", bg: "bg-green-50 dark:bg-green-900/20" },
+              ].map(s => (
+                <div key={s.label} className={`${s.bg} rounded-lg p-3 text-center`}>
+                  <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
+                  <p className="text-[10px] text-gray-400">{s.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {feedbackError && (
+              <div className="p-3 mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 text-sm flex items-center gap-2">
+                <AlertTriangle size={14} /> {feedbackError}
+              </div>
+            )}
+
+            {feedbackLoading ? (
+              <div className="flex items-center justify-center py-12"><Loader2 size={32} className="animate-spin text-tahfidz-green" /></div>
+            ) : (
+              <div className="space-y-2">
+                {(() => {
+                  const filtered = feedbackFilter.trim()
+                    ? feedbackList.filter(f =>
+                        f.title.toLowerCase().includes(feedbackFilter.toLowerCase()) ||
+                        f.message.toLowerCase().includes(feedbackFilter.toLowerCase()) ||
+                        f.user.fullName.toLowerCase().includes(feedbackFilter.toLowerCase()) ||
+                        f.user.email.toLowerCase().includes(feedbackFilter.toLowerCase()) ||
+                        f.school.name.toLowerCase().includes(feedbackFilter.toLowerCase())
+                      )
+                    : feedbackList
+                  return filtered.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Inbox size={32} className="mx-auto text-gray-300 mb-2" />
+                      <p className="text-gray-400 text-sm">{feedbackFilter ? "Aucun feedback ne correspond au filtre" : "Aucun feedback reçu"}</p>
+                      <p className="text-xs text-gray-300 mt-1">Les messages apparaissent quand un utilisateur envoie un signalement</p>
+                    </div>
+                  ) : filtered.map(fb => (
+                    <div key={fb.id} className="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 transition cursor-pointer"
+                      onClick={() => { setSelectedFeedback(fb); setAdminNote(fb.adminNote || ""); setShowFeedbackDetail(true) }}>
+                      <div className={`w-2.5 h-2.5 rounded-full mt-2 shrink-0 ${fb.status === "PENDING" ? "bg-orange-500" : fb.status === "IN_PROGRESS" ? "bg-blue-500" : fb.status === "RESOLVED" ? "bg-green-500" : "bg-gray-400"}`} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded ${getFeedbackTypeColor(fb.type)}`}>{getFeedbackTypeLabel(fb.type)}</span>
+                          <span className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">{fb.title}</span>
+                          <span className={`text-xs px-1.5 py-0.5 rounded ${getStatusColor(fb.status)}`}>{getStatusLabel(fb.status)}</span>
+                          <span className={`text-xs px-1.5 py-0.5 rounded ${getPriorityColor(fb.priority)}`}>{getPriorityLabel(fb.priority)}</span>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{fb.message}</p>
+                        <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                          <span className="text-[10px] text-tahfidz-green font-medium">{fb.user.fullName}</span>
+                          <span className="text-[10px] text-gray-400">{fb.user.email}</span>
+                          <span className="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">{fb.user.role}</span>
+                          <span className="text-[10px] text-gray-400">🏫 {fb.school.name}</span>
+                          {fb.screenshot && <span className="text-[10px] text-blue-500">📎 Pièce jointe</span>}
+                          <span className="text-[10px] text-gray-400 ml-auto">{formatDate(fb.createdAt)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                })()}
+                {feedbackList.length > 0 && (
+                  <p className="text-[10px] text-gray-400 text-center pt-2">{feedbackList.length} feedback(s)</p>
+                )}
+              </div>
+            )}
+          </div>)}
         </div>
       </main>
 
@@ -1324,6 +1336,110 @@ export default function SuperAdminPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* ── Modal détail feedback ── */}
+      {showFeedbackDetail && selectedFeedback && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-bold px-2 py-0.5 rounded ${getFeedbackTypeColor(selectedFeedback.type)}`}>{getFeedbackTypeLabel(selectedFeedback.type)}</span>
+                <h3 className="font-bold text-gray-900 dark:text-gray-100">{selectedFeedback.title}</h3>
+              </div>
+              <button onClick={() => { setShowFeedbackDetail(false); setSelectedFeedback(null) }} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+            </div>
+            <div className="p-5 space-y-4">
+              {/* Infos envoyeur */}
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Expéditeur</p>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div><span className="text-gray-400">Nom:</span> <span className="font-medium text-gray-700 dark:text-gray-300">{selectedFeedback.user.fullName}</span></div>
+                  <div><span className="text-gray-400">Email:</span> <span className="font-medium text-gray-700 dark:text-gray-300">{selectedFeedback.user.email}</span></div>
+                  <div><span className="text-gray-400">Rôle:</span> <span className="font-medium text-gray-700 dark:text-gray-300">{selectedFeedback.user.role}</span></div>
+                  {selectedFeedback.user.phone && <div><span className="text-gray-400">Tél:</span> <span className="font-medium text-gray-700 dark:text-gray-300">{selectedFeedback.user.phone}</span></div>}
+                  <div><span className="text-gray-400">École:</span> <span className="font-medium text-gray-700 dark:text-gray-300">{selectedFeedback.school.name} ({selectedFeedback.school.slug})</span></div>
+                  <div><span className="text-gray-400">Date:</span> <span className="font-medium text-gray-700 dark:text-gray-300">{formatDate(selectedFeedback.createdAt)}</span></div>
+                </div>
+              </div>
+
+              {/* Message */}
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Message</p>
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{selectedFeedback.message}</p>
+                </div>
+              </div>
+
+              {/* Screenshot */}
+              {selectedFeedback.screenshot && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Capture d'écran</p>
+                  <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
+                    <img src={selectedFeedback.screenshot} alt="Screenshot" className="w-full max-h-80 object-contain bg-gray-50 dark:bg-gray-800" />
+                  </div>
+                </div>
+              )}
+
+              {/* Statut & Priorité */}
+              <div className="flex items-center gap-3">
+                <span className={`text-xs font-bold px-3 py-1 rounded ${getStatusColor(selectedFeedback.status)}`}>{getStatusLabel(selectedFeedback.status)}</span>
+                <span className={`text-xs font-bold px-3 py-1 rounded ${getPriorityColor(selectedFeedback.priority)}`}>{getPriorityLabel(selectedFeedback.priority)}</span>
+                {selectedFeedback.resolvedAt && <span className="text-xs text-gray-400">Résolu le {formatDate(selectedFeedback.resolvedAt)}</span>}
+              </div>
+
+              {/* Note admin */}
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Note admin</p>
+                <textarea
+                  value={adminNote}
+                  onChange={e => setAdminNote(e.target.value)}
+                  rows={3}
+                  placeholder="Ajouter une note interne..."
+                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green resize-none"
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-2">
+                <button onClick={() => { setShowFeedbackDetail(false); setSelectedFeedback(null) }}
+                  className="px-4 py-2 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">Fermer</button>
+                <button onClick={async () => {
+                  setUpdatingFeedback(true)
+                  await fetch("/api/feedback", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: selectedFeedback.id, adminNote }) })
+                  await loadFeedback()
+                  setUpdatingFeedback(false)
+                }} disabled={updatingFeedback}
+                  className="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 disabled:opacity-50 transition flex items-center gap-1.5">
+                  {updatingFeedback ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />} Sauvegarder note
+                </button>
+                <button onClick={async () => {
+                  setUpdatingFeedback(true)
+                  await fetch("/api/feedback", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: selectedFeedback.id, status: "IN_PROGRESS" }) })
+                  await loadFeedback()
+                  setUpdatingFeedback(false)
+                }} disabled={updatingFeedback || selectedFeedback.status === "IN_PROGRESS"}
+                  className="px-4 py-2 bg-amber-500 text-white text-sm rounded-lg hover:bg-amber-600 disabled:opacity-50 transition">En cours</button>
+                <button onClick={async () => {
+                  setUpdatingFeedback(true)
+                  await fetch("/api/feedback", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: selectedFeedback.id, status: "RESOLVED" }) })
+                  await loadFeedback()
+                  setUpdatingFeedback(false)
+                }} disabled={updatingFeedback || selectedFeedback.status === "RESOLVED"}
+                  className="px-4 py-2 bg-green-500 text-white text-sm rounded-lg hover:bg-green-600 disabled:opacity-50 transition flex items-center gap-1.5">
+                  {updatingFeedback ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />} Résolu
+                </button>
+                <button onClick={async () => {
+                  if (!confirm("Supprimer ce feedback ?")) return
+                  await fetch(`/api/feedback?id=${selectedFeedback.id}`, { method: "DELETE" })
+                  await loadFeedback()
+                  setShowFeedbackDetail(false)
+                  setSelectedFeedback(null)
+                }}
+                  className="px-4 py-2 bg-red-50 text-red-500 text-sm rounded-lg hover:bg-red-100 transition flex items-center gap-1.5"><Trash2 size={12} /> Supprimer</button>
+              </div>
+            </div>
           </div>
         </div>
       )}
