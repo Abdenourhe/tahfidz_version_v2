@@ -3,8 +3,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 
-// Types pour les actions d'audit
-type AuditAction = 
+type AuditAction =
   | "CREATE_SCHOOL"
   | "UPDATE_SCHOOL"
   | "DELETE_SCHOOL"
@@ -23,64 +22,82 @@ type AuditAction =
 interface AuditLogEntry {
   id: string
   action: AuditAction
-  actor: string          // email du super admin
-  actorId: string        // id du super admin
-  target: string         // nom de l'école ou de la cible
-  targetId: string       // id de l'école ou de la cible
+  actor: string
+  actorId: string
+  target: string
+  targetId: string
   targetType: "SCHOOL" | "REQUEST" | "USER" | "SYSTEM"
-  details: string | null // JSON stringifié des détails
+  details: string | null
   ipAddress: string | null
   userAgent: string | null
-  createdAt: Date
+  createdAt: string
 }
 
-// GET — Récupérer les logs d'audit
+function transformLog(log: any): AuditLogEntry {
+  const newValues = (log.newValues as Record<string, any>) || {}
+  const oldValues = (log.oldValues as Record<string, any>) || {}
+
+  return {
+    id: log.id,
+    action: log.action as AuditAction,
+    actor: newValues.actor || log.user?.email || log.user?.fullName || "Système",
+    actorId: log.userId,
+    target: newValues.target || oldValues.target || log.entityId || "—",
+    targetId: log.entityId || "—",
+    targetType: (log.entityType as any) || "SYSTEM",
+    details: newValues.details ? JSON.stringify(newValues.details) : null,
+    ipAddress: log.ipAddress,
+    userAgent: log.userAgent,
+    createdAt: log.createdAt.toISOString(),
+  }
+}
+
 export async function GET(request: Request) {
   try {
-    // Vérifier l'authentification super admin
     const session = await auth()
     if (!session?.user || session.user.role !== "SUPERADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
     }
 
-    // Récupérer les paramètres de filtrage
     const { searchParams } = new URL(request.url)
     const action = searchParams.get("action")
     const targetType = searchParams.get("targetType")
     const actorId = searchParams.get("actorId")
-    const limit = parseInt(searchParams.get("limit") || "100")
+    const limit = Math.min(parseInt(searchParams.get("limit") || "100"), 500)
     const offset = parseInt(searchParams.get("offset") || "0")
     const dateFrom = searchParams.get("dateFrom")
     const dateTo = searchParams.get("dateTo")
 
-    // Construire le where
     const where: any = {}
     if (action) where.action = action
-    if (targetType) where.targetType = targetType
-    if (actorId) where.actorId = actorId
+    if (targetType) where.entityType = targetType
+    if (actorId) where.userId = actorId
     if (dateFrom || dateTo) {
       where.createdAt = {}
       if (dateFrom) where.createdAt.gte = new Date(dateFrom)
       if (dateTo) where.createdAt.lte = new Date(dateTo)
     }
 
-    // Récupérer les logs
     const logs = await prisma.auditLog.findMany({
       where,
       orderBy: { createdAt: "desc" },
       take: limit,
       skip: offset,
+      include: {
+        user: { select: { email: true, fullName: true } },
+      },
     })
 
-    // Compter le total
     const total = await prisma.auditLog.count({ where })
 
+    const transformedLogs: AuditLogEntry[] = logs.map(transformLog)
+
     return NextResponse.json({
-      logs,
+      logs: transformedLogs,
       total,
       limit,
       offset,
-      hasMore: offset + logs.length < total
+      hasMore: offset + logs.length < total,
     })
 
   } catch (error) {
@@ -92,7 +109,6 @@ export async function GET(request: Request) {
   }
 }
 
-// POST — Créer un log d'audit (appelé par d'autres routes)
 export async function POST(request: Request) {
   try {
     const session = await auth()
@@ -114,24 +130,31 @@ export async function POST(request: Request) {
       details?: Record<string, any>
     } = await request.json()
 
-    // Récupérer IP et User-Agent
     const headersList = request.headers
-    const ipAddress = headersList.get("x-forwarded-for") || 
-                      headersList.get("x-real-ip") || 
+    const ipAddress = headersList.get("x-forwarded-for") ||
+                      headersList.get("x-real-ip") ||
                       "unknown"
     const userAgent = headersList.get("user-agent")
 
+    const newValues: Record<string, any> = {
+      actor: session.user.email || session.user.name || "unknown",
+      target,
+    }
+    if (details) {
+      newValues.details = details
+    }
+
     const log = await prisma.auditLog.create({
       data: {
-        schoolId:   session.user.schoolId,
-        userId:     session.user.id,
+        schoolId: session.user.schoolId || "system",
+        userId: session.user.id,
         action,
         entityType: targetType,
-        entityId:   targetId,
-        newValues:  details ? { actor: session.user.email, target, ...details } : { actor: session.user.email, target },
+        entityId: targetId,
+        newValues,
         ipAddress,
         userAgent,
-      }
+      },
     })
 
     return NextResponse.json({ success: true, log })
@@ -145,7 +168,6 @@ export async function POST(request: Request) {
   }
 }
 
-// DELETE — Supprimer les vieux logs (cleanup)
 export async function DELETE(request: Request) {
   try {
     const session = await auth()
@@ -156,19 +178,18 @@ export async function DELETE(request: Request) {
     const { searchParams } = new URL(request.url)
     const days = parseInt(searchParams.get("days") || "90")
 
-    // Supprimer les logs plus vieux que X jours
     const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
-    
+
     const result = await prisma.auditLog.deleteMany({
       where: {
-        createdAt: { lt: cutoffDate }
-      }
+        createdAt: { lt: cutoffDate },
+      },
     })
 
     return NextResponse.json({
       success: true,
       deleted: result.count,
-      message: `${result.count} log(s) supprimé(s) (plus vieux que ${days} jours)`
+      message: `${result.count} log(s) supprimé(s) (plus vieux que ${days} jours)`,
     })
 
   } catch (error) {

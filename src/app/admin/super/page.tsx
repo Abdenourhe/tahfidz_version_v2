@@ -14,6 +14,7 @@ import {
 import { signOut } from "next-auth/react"
 import { useDebounce } from "use-debounce"
 import { Toaster, toast } from "sonner"
+
 /* ─── Types ─────────────────────────────────────────────────────── */
 interface SchoolUser {
   id: string; fullName: string; email: string; role: string; isActive: boolean; createdAt: string
@@ -35,10 +36,22 @@ interface SchoolRequest {
 interface ApprovalResult {
   schoolName: string; slug: string; plan: string; adminEmail: string; adminName: string
 }
+
+// ✅ Interface AuditLog corrigée — tous les champs avec fallback
 interface AuditLog {
-  id: string; action: string; actor: string; target: string; details: string
+  id: string
+  action: string
+  actor: string | null
+  actorId: string | null
+  target: string | null
+  targetId: string | null
+  targetType: string | null
+  details: string | null
+  ipAddress: string | null
+  userAgent: string | null
   createdAt: string
 }
+
 interface SystemHealth {
   status: "healthy" | "warning" | "critical"; apiLatency: number; dbStatus: string
   lastError: string | null; errorCount24h: number
@@ -116,6 +129,48 @@ function formatDate(d: string | Date): string {
   return new Date(d).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
 }
 
+// ✅ NOUVEAU : Helper couleur selon l'action
+function getActionColor(action: string): string {
+  if (action.includes("DELETE")) return "bg-red-500"
+  if (action.includes("CREATE") || action.includes("APPROVE")) return "bg-emerald-500"
+  if (action.includes("UPDATE") || action.includes("EDIT")) return "bg-blue-500"
+  if (action.includes("REJECT") || action.includes("BAN")) return "bg-orange-500"
+  if (action.includes("LOGIN") || action.includes("IMPERSONATE")) return "bg-purple-500"
+  return "bg-gray-400"
+}
+
+// ✅ NOUVEAU : Helper label lisible pour l'action
+function getActionLabel(action: string): string {
+  const labels: Record<string, string> = {
+    CREATE_SCHOOL: "Création école",
+    UPDATE_SCHOOL: "Modification école",
+    DELETE_SCHOOL: "Suppression école",
+    TOGGLE_SCHOOL: "Activation/Désactivation",
+    APPROVE_REQUEST: "Approbation demande",
+    REJECT_REQUEST: "Rejet demande",
+    DELETE_REQUEST: "Suppression demande",
+    CREATE_USER: "Création utilisateur",
+    UPDATE_USER: "Modification utilisateur",
+    DELETE_USER: "Suppression utilisateur",
+    IMPERSONATE: "Impersonation",
+    BROADCAST: "Broadcast",
+    EXPORT_DATA: "Export données",
+    CLEAR_HISTORY: "Nettoyage historique",
+  }
+  return labels[action] || action.replace(/_/g, " ")
+}
+
+// ✅ NOUVEAU : Helper icône selon le type de cible
+function getTargetIcon(targetType: string | null): string {
+  if (!targetType) return "🔧"
+  const icons: Record<string, string> = {
+    SCHOOL: "🏫",
+    REQUEST: "📋",
+    USER: "👤",
+    SYSTEM: "⚙️",
+  }
+  return icons[targetType] || "🔧"
+}
 /* ─── RequestCard ────────────────────────────────────────────────── */
 function RequestCard({ r, processing, onApprove, onReject, onDelete }: {
   r: SchoolRequest; processing: string | null
@@ -214,15 +269,17 @@ export default function SuperAdminPage() {
   /* ── Filtres avancés ── */
   const [filterPlan, setFilterPlan] = useState<string>("ALL")
   const [filterStatus, setFilterStatus] = useState<string>("ALL")
+
   /* ── NOUVEAUX ÉTATS ── */
   // 2. Health & Monitoring
   const [health, setHealth] = useState<SystemHealth | null>(null)
   const [healthLoading, setHealthLoading] = useState(false)
 
-  // 3. Audit Log
+  // 3. Audit Log — ✅ CORRIGÉ : ajout de auditError
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([])
   const [auditLoading, setAuditLoading] = useState(false)
   const [auditFilter, setAuditFilter] = useState("")
+  const [auditError, setAuditError] = useState<string | null>(null)
 
   // 4. Analytics
   const [selectedSchools, setSelectedSchools] = useState<Set<string>>(new Set())
@@ -289,22 +346,47 @@ export default function SuperAdminPage() {
     if (tab === "health") loadHealth()
   }, [tab, loadHealth])
 
-  /* ── 3. Audit Log ── */
+  /* ── 3. Audit Log ── ✅ CORRIGÉ : gestion d'erreur + normalisation */
   const loadAudit = useCallback(async () => {
     setAuditLoading(true)
-    const res = await fetch("/api/admin/audit")
-    if (res.ok) {
+    setAuditError(null)
+    try {
+      const res = await fetch("/api/admin/audit")
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Erreur HTTP " + res.status }))
+        setAuditError(err.error || `Erreur ${res.status}`)
+        setAuditLogs([])
+        return
+      }
       const data = await res.json()
-      setAuditLogs(data.logs || [])
+      // ✅ Normaliser les données — s'assurer que tous les champs existent
+      const logs: AuditLog[] = (data.logs || []).map((log: any) => ({
+        id: log.id || String(Math.random()),
+        action: log.action || "UNKNOWN",
+        actor: log.actor || log.user?.email || log.user?.fullName || "Système",
+        actorId: log.actorId || log.userId || "—",
+        target: log.target || log.entityId || "—",
+        targetId: log.targetId || log.entityId || "—",
+        targetType: log.targetType || log.entityType || "SYSTEM",
+        details: log.details || null,
+        ipAddress: log.ipAddress || null,
+        userAgent: log.userAgent || null,
+        createdAt: log.createdAt || new Date().toISOString(),
+      }))
+      setAuditLogs(logs)
+    } catch (err) {
+      setAuditError("Impossible de charger les logs d'audit")
+      setAuditLogs([])
+    } finally {
+      setAuditLoading(false)
     }
-    setAuditLoading(false)
   }, [])
 
   useEffect(() => {
     if (tab === "audit") loadAudit()
   }, [tab, loadAudit])
 
-    /* ── Filtre + Pagination ── */
+  /* ── Filtre + Pagination ── */
   const filteredSchools = useMemo(() => {
     let result = [...schools]
     
@@ -348,8 +430,7 @@ export default function SuperAdminPage() {
   useEffect(() => {
     setCurrentPage(1)
   }, [search, filterPlan, filterStatus, itemsPerPage])
-
-  /* ── Actions existantes ── */
+    /* ── Actions existantes ── */
   const toggle = async (id: string, current: boolean) => {
     await fetch("/api/admin/schools", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "toggle", schoolId: id, isActive: !current }) })
     load()
@@ -476,7 +557,7 @@ export default function SuperAdminPage() {
     })
     if (res.ok) {
       const data = await res.json()
-      window.location.href = data.redirectUrl  // Redirection dans la même fenêtre
+      window.location.href = data.redirectUrl
     } else {
       setError("Erreur d'impersonation")
     }
@@ -523,16 +604,24 @@ export default function SuperAdminPage() {
   // Top schools
   const topSchools = [...schools].sort((a, b) => b._count.users - a._count.users).slice(0, 5)
 
-  // Audit filter
-  const filteredAudit = auditFilter.trim() ? auditLogs.filter(l => l.action.toLowerCase().includes(auditFilter.toLowerCase()) || l.actor.toLowerCase().includes(auditFilter.toLowerCase()) || l.target.toLowerCase().includes(auditFilter.toLowerCase())) : auditLogs
+  // ✅ Audit filter — recherche sur action, actor, target, targetType
+  const filteredAudit = useMemo(() => {
+    if (!auditFilter.trim()) return auditLogs
+    const q = auditFilter.toLowerCase()
+    return auditLogs.filter(l =>
+      l.action.toLowerCase().includes(q) ||
+      (l.actor || "").toLowerCase().includes(q) ||
+      (l.target || "").toLowerCase().includes(q) ||
+      (l.targetType || "").toLowerCase().includes(q)
+    )
+  }, [auditLogs, auditFilter])
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-950">
       <Loader2 className="animate-spin text-tahfidz-green" size={40} />
     </div>
   )
-
-  return (
+    return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <Toaster position="top-right" richColors />
       {/* ── Header ── */}
@@ -633,10 +722,9 @@ export default function SuperAdminPage() {
             ))}
           </div>
 
-
           {/* ── Tab Ecoles ── */}
           {tab === "schools" && (<>
-                        {/* Barre de filtres avancés */}
+            {/* Barre de filtres avancés */}
             <div className="p-4 border-b border-gray-50 dark:border-gray-800 space-y-3">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                 <div className="relative flex-1">
@@ -712,7 +800,6 @@ export default function SuperAdminPage() {
                     <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
                       <div className="w-full bg-tahfidz-green/20 dark:bg-tahfidz-green/30 rounded-t-sm transition-all hover:bg-tahfidz-green/40" style={{ height: `${(d.count / max) * 100}%` }} />
                       <span className="text-[8px] text-gray-400 rotate-45 origin-left translate-y-1">{d.date}</span>
-                      {/* Tooltip */}
                       <div className="absolute bottom-full mb-1 hidden group-hover:block bg-gray-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap z-10">{d.count} ecole(s)</div>
                     </div>
                   )
@@ -736,8 +823,7 @@ export default function SuperAdminPage() {
                 ))}
               </div>
             </div>
-
-            {/* Table */}
+                        {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
@@ -801,7 +887,8 @@ export default function SuperAdminPage() {
                 </tbody>
               </table>
             </div>
-                        {/* Pagination */}
+
+            {/* Pagination */}
             {filteredSchools.length > itemsPerPage && (
               <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
                 <div className="flex items-center gap-2">
@@ -850,12 +937,10 @@ export default function SuperAdminPage() {
               <div className="flex items-center justify-center py-12"><Loader2 size={32} className="animate-spin text-tahfidz-green" /></div>
             ) : health ? (
               <div className="space-y-6">
-                {/* Status global */}
                 <div className={`p-4 rounded-xl border flex items-center gap-3 ${health.status === "healthy" ? "bg-green-50 border-green-200 text-green-700" : health.status === "warning" ? "bg-yellow-50 border-yellow-200 text-yellow-700" : "bg-red-50 border-red-200 text-red-700"}`}>
                   <Activity size={24} />
                   <div><p className="font-semibold">Systeme {health.status === "healthy" ? "Sain" : health.status === "warning" ? "Attention" : "Critique"}</p><p className="text-xs">Dernier check : {formatDate(new Date())}</p></div>
                 </div>
-                {/* Metriques */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4">
                     <p className="text-xs text-gray-400 mb-1">Latence API</p>
@@ -871,7 +956,6 @@ export default function SuperAdminPage() {
                     <p className={`text-2xl font-bold ${health.errorCount24h === 0 ? "text-green-600" : health.errorCount24h < 10 ? "text-yellow-600" : "text-red-600"}`}>{health.errorCount24h}</p>
                   </div>
                 </div>
-                {/* Derniere erreur */}
                 {health.lastError && (
                   <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
                     <p className="text-xs font-semibold text-red-600 flex items-center gap-1.5 mb-2"><AlertTriangle size={12} /> Derniere erreur</p>
@@ -884,7 +968,7 @@ export default function SuperAdminPage() {
             )}
           </div>)}
 
-          {/* ── Tab Audit ── */}
+          {/* ── Tab Audit ── ✅ CORRIGÉ */}
           {tab === "audit" && (<div className="p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="relative flex-1">
@@ -894,26 +978,54 @@ export default function SuperAdminPage() {
               </div>
               <button onClick={loadAudit} className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-400 hover:text-tahfidz-green hover:border-tahfidz-green transition"><RefreshCw size={14} /></button>
             </div>
+            
+            {auditError && (
+              <div className="p-3 mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 text-sm flex items-center gap-2">
+                <AlertTriangle size={14} /> {auditError}
+              </div>
+            )}
+            
             {auditLoading ? (
               <div className="flex items-center justify-center py-12"><Loader2 size={32} className="animate-spin text-tahfidz-green" /></div>
             ) : (
               <div className="space-y-2">
                 {filteredAudit.length === 0 ? (
-                  <p className="text-center text-gray-400 py-8 text-sm">Aucun log trouve</p>
+                  <div className="text-center py-12">
+                    <Eye size={32} className="mx-auto text-gray-300 mb-2" />
+                    <p className="text-gray-400 text-sm">{auditFilter ? "Aucun log ne correspond au filtre" : "Aucun log d'audit trouvé"}</p>
+                    <p className="text-xs text-gray-300 mt-1">Les logs apparaissent lorsque des actions sont effectuées sur la plateforme</p>
+                  </div>
                 ) : filteredAudit.map(log => (
-                  <div key={log.id} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700">
-                    <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${log.action.includes("DELETE") ? "bg-red-500" : log.action.includes("CREATE") || log.action.includes("APPROVE") ? "bg-green-500" : log.action.includes("UPDATE") ? "bg-blue-500" : "bg-gray-400"}`} />
+                  <div key={log.id} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 transition">
+                    <div className={`w-2.5 h-2.5 rounded-full mt-2 shrink-0 ${getActionColor(log.action)}`} />
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{log.action}</span>
-                        <span className="text-[10px] text-gray-400">par {log.actor}</span>
+                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                        <span className="text-xs font-bold text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">{getActionLabel(log.action)}</span>
+                        <span className="text-[10px] text-gray-400">par</span>
+                        <span className="text-[11px] font-medium text-tahfidz-green">{log.actor || "Système"}</span>
+                        {log.targetType && (
+                          <span className="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">{getTargetIcon(log.targetType)} {log.targetType}</span>
+                        )}
                       </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Cible : {log.target}</p>
-                      {log.details && <p className="text-[10px] text-gray-400 mt-0.5 font-mono">{log.details}</p>}
+                      <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
+                        <span className="text-gray-400">Cible :</span> <span className="font-medium">{log.target || "—"}</span>
+                        {log.targetId && log.targetId !== "—" && (
+                          <span className="text-[10px] text-gray-400 ml-1">({log.targetId.slice(0, 8)}...)</span>
+                        )}
+                      </p>
+                      {log.details && (
+                        <p className="text-[10px] text-gray-400 mt-1 font-mono bg-gray-100 dark:bg-gray-700/50 p-1.5 rounded">{log.details}</p>
+                      )}
+                      {log.ipAddress && (
+                        <p className="text-[10px] text-gray-400 mt-1">IP: {log.ipAddress}</p>
+                      )}
                     </div>
-                    <span className="text-[10px] text-gray-400 shrink-0">{formatDate(log.createdAt)}</span>
+                    <span className="text-[10px] text-gray-400 shrink-0 whitespace-nowrap">{formatDate(log.createdAt)}</span>
                   </div>
                 ))}
+                {filteredAudit.length > 0 && (
+                  <p className="text-[10px] text-gray-400 text-center pt-2">{filteredAudit.length} log(s) affiché(s)</p>
+                )}
               </div>
             )}
           </div>)}
@@ -948,7 +1060,6 @@ export default function SuperAdminPage() {
               </form>
             </div>
 
-            {/* Historique des broadcasts (placeholder) */}
             <div className="mt-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-6">
               <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-1.5"><Bell size={14} className="text-amber-500" /> Derniers messages envoyes</h4>
               <div className="space-y-2">
@@ -1024,7 +1135,6 @@ export default function SuperAdminPage() {
             <form onSubmit={create} className="p-6 space-y-5">
               {error && <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-xs">{error}</div>}
 
-              {/* Logo upload */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Logo de l'ecole</label>
                 <div className="flex items-center gap-4">
@@ -1047,7 +1157,6 @@ export default function SuperAdminPage() {
                 </div>
               </div>
 
-              {/* Infos école */}
               <div className="space-y-3">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Informations de l'ecole</p>
                 <div>
@@ -1102,7 +1211,6 @@ export default function SuperAdminPage() {
                 </div>
               </div>
 
-              {/* Administrateur */}
               <div className="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-800">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Compte administrateur</p>
                 <div>
@@ -1165,7 +1273,6 @@ export default function SuperAdminPage() {
                   <input value={editForm.city} onChange={e => setEditForm(p => ({ ...p, city: e.target.value }))}
                     placeholder="Alger"
                     className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green" />
-                
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pays</label>
