@@ -2,7 +2,9 @@
 // src/components/admin/AdminDashboardClient.tsx
 
 import { useLanguage } from "@/contexts/LanguageContext"
-import { Users, BookOpen, GraduationCap, TrendingUp, Star } from "lucide-react"
+import { Users, BookOpen, GraduationCap, TrendingUp, Star, Bug } from "lucide-react"
+import { useState } from "react"
+import { FeedbackModal } from "@/components/shared/FeedbackModal"
 
 interface Evaluation {
   id: string
@@ -24,6 +26,7 @@ interface Announcement {
 
 interface Props {
   userName: string
+  userEmail: string
   totalStudents: number
   totalTeachers: number
   totalParents: number
@@ -36,7 +39,7 @@ interface Props {
 }
 
 export function AdminDashboardClient({
-  userName, totalStudents, totalTeachers, totalParents, totalGroups,
+  userName, userEmail, totalStudents, totalTeachers, totalParents, totalGroups,
   activeProgress, memorizedCount, recentEvaluations, recentAnnouncements, todayDate,
 }: Props) {
   const { locale, useT } = useLanguage()
@@ -73,6 +76,8 @@ export function AdminDashboardClient({
     return type === "GENERAL" ? "Général" : type === "EVENT" ? "Événement" : type === "ACHIEVEMENT" ? "Réussite" : "Urgent"
   }
 
+  const [showFeedback, setShowFeedback] = useState(false)
+
   const quickActions = [
     { label: locale === "ar" ? "إضافة طالب" : locale === "en" ? "Add student" : "Ajouter un élève",      href: "/admin/students/new",  icon: "🎓" },
     { label: locale === "ar" ? "إضافة معلم" : locale === "en" ? "Add teacher" : "Ajouter un enseignant",  href: "/admin/teachers/new",  icon: "👩‍🏫" },
@@ -83,12 +88,22 @@ export function AdminDashboardClient({
   return (
     <div className="space-y-8">
       {/* En-tête */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{tD("title")}</h1>
-        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-          {locale === "ar" ? `مرحباً، ${userName}` : locale === "en" ? `Welcome, ${userName}` : `Bienvenue, ${userName}`}
-          {" · "}{todayDate}
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{tD("title")}</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+            {locale === "ar" ? `مرحباً، ${userName}` : locale === "en" ? `Welcome, ${userName}` : `Bienvenue, ${userName}`}
+            {" · "}{todayDate}
+          </p>
+        </div>
+        <button
+          onClick={() => setShowFeedback(true)}
+          className="flex items-center gap-1.5 px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-lg text-xs font-medium hover:bg-red-100 transition"
+          title={locale === "ar" ? "الإبلاغ عن مشكلة" : locale === "en" ? "Report issue" : "Signaler un problème"}
+        >
+          <Bug size={14} />
+          <span className="hidden sm:inline">{locale === "ar" ? "إبلاغ" : locale === "en" ? "Report" : "Signaler"}</span>
+        </button>
       </div>
 
       {/* Cartes statistiques */}
@@ -206,6 +221,14 @@ export function AdminDashboardClient({
           ))}
         </div>
       </div>
+      <FeedbackModal
+        isOpen={showFeedback}
+        onClose={() => setShowFeedback(false)}
+        userRole="ADMIN"
+        userName={userName}
+        userEmail={userEmail} 
+        schoolName={undefined}
+      />
     </div>
   )
 }

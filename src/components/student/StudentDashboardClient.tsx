@@ -2,8 +2,11 @@
 // src/components/student/StudentDashboardClient.tsx
 
 import Link from "next/link"
+import { useState } from "react"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { ReadyToReciteButton } from "@/components/student/ReadyToReciteButton"
+import { FeedbackModal } from "@/components/shared/FeedbackModal"
+import { Bug } from "lucide-react"
 
 interface Progress {
   id: string
@@ -70,6 +73,9 @@ function attColor(status: string) {
 }
 
 export function StudentDashboardClient({
+  // eslint-disable-next-line
+  const [showFeedback, setShowFeedback] = useState(false)
+
   studentId, studentName, studentNameAr, groupName, teacherName,
   totalStars, currentStreak, memorizedCount, badgeCount,
   inProgress, badges, recentAttendance, announcements, formatAttDate,
@@ -120,6 +126,14 @@ export function StudentDashboardClient({
             <div className="text-2xl font-bold text-tahfidz-gold">⭐ {totalStars}</div>
             <div className="text-xs text-gray-400">{t("stars")}</div>
           </div>
+          <button
+            onClick={() => setShowFeedback(true)}
+            className="flex items-center gap-1.5 px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-lg text-xs font-medium hover:bg-red-100 transition"
+            title={L === "ar" ? "الإبلاغ عن مشكلة" : L === "en" ? "Report issue" : "Signaler un problème"}
+          >
+            <Bug size={14} />
+            <span className="hidden sm:inline">{L === "ar" ? "إبلاغ" : L === "en" ? "Report" : "Signaler"}</span>
+          </button>
         </div>
 
         <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-100 dark:border-gray-800">
@@ -245,6 +259,14 @@ export function StudentDashboardClient({
           </div>
         </div>
       )}
+      <FeedbackModal
+        isOpen={showFeedback}
+        onClose={() => setShowFeedback(false)}
+        userRole="STUDENT"
+        userName={studentName}
+        userEmail="" /* passer l'email si dispo dans les props */
+        schoolName={undefined}
+      />
     </div>
   )
 }

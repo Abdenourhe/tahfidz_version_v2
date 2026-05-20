@@ -7,8 +7,9 @@ import { useLanguage } from "@/contexts/LanguageContext"
 import { ParentProfileAttendance } from "@/components/parent/ParentProfileAttendance"
 import {
   Phone, Mail, Link2, BookOpen, Star, CalendarCheck, GraduationCap,
-  TrendingUp, Award, MessageSquare, User, ArrowRight
+  TrendingUp, Award, MessageSquare, User, ArrowRight, Bug
 } from "lucide-react"
+import { FeedbackModal } from "@/components/shared/FeedbackModal"
 
 interface ChildLink {
   id: string
@@ -71,6 +72,8 @@ export function ParentProfileClient({
   parent, totalChildren, totalMemorized, totalStars, totalBadges,
   formatDate, formatAge, statusLabel,
 }: Props) {
+  const [showFeedback, setShowFeedback] = useState(false)
+
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
@@ -161,6 +164,14 @@ export function ParentProfileClient({
               </div>
             ))}
           </div>
+          <button
+            onClick={() => setShowFeedback(true)}
+            className="flex items-center gap-1.5 px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-lg text-xs font-medium hover:bg-red-100 transition"
+            title={L === "ar" ? "الإبلاغ عن مشكلة" : L === "en" ? "Report issue" : "Signaler un problème"}
+          >
+            <Bug size={14} />
+            <span className="hidden sm:inline">{L === "ar" ? "إبلاغ" : L === "en" ? "Report" : "Signaler"}</span>
+          </button>
         </div>
       </div>
 
@@ -328,6 +339,14 @@ export function ParentProfileClient({
           </div>
         </>
       )}
+      <FeedbackModal
+        isOpen={showFeedback}
+        onClose={() => setShowFeedback(false)}
+        userRole="PARENT"
+        userName={parent.user.fullName}
+        userEmail={parent.user.email}
+        schoolName={undefined}
+      />
     </div>
   )
 }
