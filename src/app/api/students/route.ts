@@ -1,3 +1,5 @@
+//src/app/api/students/route.ts
+
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
@@ -5,12 +7,9 @@ import bcrypt from "bcryptjs"
 
 const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 
-// Génère un code élève unique
 async function generateStudentCode(schoolId: string): Promise<string> {
   const year = new Date().getFullYear()
-  const count = await prisma.student.count({ 
-    where: { user: { schoolId } } 
-  })
+  const count = await prisma.student.count({ where: { user: { schoolId } } })
   return `TAH-${year}-${String(count + 1).padStart(3, "0")}`
 }
 
@@ -20,52 +19,24 @@ export async function GET() {
     if (!session?.user?.schoolId) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
     }
-
     const { schoolId, role } = session.user
     if (!["ADMIN", "TEACHER", "SUPERADMIN"].includes(role)) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
     }
-
     const students = await prisma.student.findMany({
-      where: { 
-        user: { schoolId } 
-      },
+      where: { user: { schoolId } },
       include: {
-        user: { 
-          select: { 
-            id: true,
-            fullName: true, 
-            fullNameAr: true,
-            email: true, 
-            avatar: true, 
-            gender: true,
-            phone: true,
-          } 
-        },
+        user: { select: { id: true, fullName: true, fullNameAr: true, email: true, avatar: true, gender: true, phone: true } },
         group: { select: { id: true, name: true } },
-        teacher: { 
-          include: { 
-            user: { select: { fullName: true } } 
-          } 
-        },
-        _count: { 
-          select: { 
-            memorizationProgress: true, 
-            evaluations: true,
-            attendances: true,
-          } 
-        },
+        teacher: { include: { user: { select: { fullName: true } } } },
+        _count: { select: { memorizationProgress: true, evaluations: true, attendances: true } },
       },
       orderBy: { user: { fullName: "asc" } },
     })
-
     return NextResponse.json({ students }, { status: 200 })
   } catch (error) {
     console.error("[STUDENTS GET ERROR]", error)
-    return NextResponse.json(
-      { error: "Erreur serveur lors de la récupération des élèves" }, 
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
 }
 
@@ -75,30 +46,15 @@ export async function POST(req: Request) {
     if (!session?.user?.schoolId || !["ADMIN", "SUPERADMIN"].includes(session.user.role)) {
       return NextResponse.json({ error: "Non autorisé — Admin requis" }, { status: 403 })
     }
-
     const { schoolId, id: adminId } = session.user
 
-    // Parse body avec gestion d'erreur
     let body
-    try {
-      body = await req.json()
-    } catch {
+    try { body = await req.json() } catch {
       return NextResponse.json({ error: "Body JSON invalide" }, { status: 400 })
     }
 
-    const { 
-      email, 
-      password, 
-      fullName, 
-      fullNameAr, 
-      phone, 
-      gender, 
-      dateOfBirth, 
-      groupId, 
-      teacherId 
-    } = body
+    const { email, password, fullName, fullNameAr, phone, gender, dateOfBirth, groupId, teacherId } = body
 
-    // Validation
     if (!email || !isValidEmail(email)) {
       return NextResponse.json({ error: "Email invalide" }, { status: 400 })
     }
@@ -109,45 +65,31 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Nom complet requis" }, { status: 400 })
     }
 
-    // Vérifier email unique dans la même école
-    const existing = await prisma.user.findFirst({ 
-      where: { 
-        email: email.toLowerCase().trim(), 
-        schoolId 
-      } 
+    const existing = await prisma.user.findFirst({
+      where: { email: email.toLowerCase().trim(), schoolId }
     })
     if (existing) {
-      return NextResponse.json(
-        { error: "Cet email est déjà utilisé dans cette école" }, 
-        { status: 409 }
-      )
+      return NextResponse.json({ error: "Cet email est déjà utilisé" }, { status: 409 })
     }
 
-    // Vérifier groupe + forcer teacherId depuis le groupe
     let resolvedTeacherId = teacherId || null
     if (groupId) {
-      const group = await prisma.group.findFirst({ 
+      const group = await prisma.group.findFirst({
         where: { id: groupId, schoolId },
         select: { id: true, teacherId: true }
       })
-      if (!group) {
-        return NextResponse.json({ error: "Groupe introuvable" }, { status: 400 })
-      }
-      // Le teacher du groupe est toujours la source de vérité
+      if (!group) return NextResponse.json({ error: "Groupe introuvable" }, { status: 400 })
       resolvedTeacherId = group.teacherId
     } else if (teacherId) {
-      const teacher = await prisma.teacher.findFirst({ 
-        where: { id: teacherId, user: { schoolId } } 
+      const teacher = await prisma.teacher.findFirst({
+        where: { id: teacherId, user: { schoolId } }
       })
-      if (!teacher) {
-        return NextResponse.json({ error: "Enseignant introuvable" }, { status: 400 })
-      }
+      if (!teacher) return NextResponse.json({ error: "Enseignant introuvable" }, { status: 400 })
     }
 
     const hashedPassword = await bcrypt.hash(password, 12)
     const studentCode = await generateStudentCode(schoolId)
 
-    // Créer User + Student
     const user = await prisma.user.create({
       data: {
         email: email.toLowerCase().trim(),
@@ -173,21 +115,16 @@ export async function POST(req: Request) {
           },
         },
       },
-      include: { 
+      include: {
         studentProfile: {
           include: {
             group: { select: { name: true } },
-            teacher: { 
-              include: { 
-                user: { select: { fullName: true } } 
-              } 
-            },
+            teacher: { include: { user: { select: { fullName: true } } } },
           },
         },
       },
     })
 
-    // Créer les stats initiales (correspond à ton schéma exact)
     await prisma.studentStats.create({
       data: {
         studentId: user.studentProfile!.id,
@@ -204,16 +141,25 @@ export async function POST(req: Request) {
       },
     })
 
-    // Audit log
+    const studentProfileId = user.studentProfile?.id || user.id
+
+    // Audit log — CORRIGÉ avec entityType/entityId + valeurs par défaut
     await prisma.auditLog.create({
       data: {
         schoolId,
         userId: adminId,
         action: "CREATE_STUDENT",
+        actorId: adminId,
+        actorRole: session.user.role,
+        actorEmail: session.user.email || "admin@system.local",
+        actorName: session.user.name || session.user.email || "Administrateur",
         entityType: "student",
-        entityId: user.id,
-        newValues: { 
-          email: user.email, 
+        entityId: studentProfileId,
+        targetType: "student",
+        targetId: studentProfileId,
+        targetName: user.fullName,
+        newValues: {
+          email: user.email,
           fullName: user.fullName,
           studentCode,
           groupId: groupId || null,
@@ -221,25 +167,22 @@ export async function POST(req: Request) {
       },
     })
 
-    return NextResponse.json(
-      { 
-        success: true,
-        message: "Élève créé avec succès",
-        user: {
-          id: user.id,
-          email: user.email,
-          fullName: user.fullName,
-          fullNameAr: user.fullNameAr,
-          studentProfile: user.studentProfile,
-        }
-      }, 
-      { status: 201 }
-    )
+    return NextResponse.json({
+      success: true,
+      message: "Élève créé avec succès",
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        fullNameAr: user.fullNameAr,
+        studentProfile: user.studentProfile,
+      }
+    }, { status: 201 })
 
   } catch (error: any) {
     console.error("[STUDENTS POST ERROR]", error)
     return NextResponse.json(
-      { error: error.message || "Erreur serveur lors de la création de l'élève" }, 
+      { error: error.message || "Erreur serveur" },
       { status: 500 }
     )
   }

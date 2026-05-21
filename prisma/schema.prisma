@@ -1,5 +1,6 @@
 // schema.prisma — TAHFIDZ SaaS
 // Architecture multi-tenant : Row-Level Isolation par schoolId
+// CORRIGÉ : ENUMs remplacés par String pour éviter les problèmes de types PostgreSQL
 
 generator client {
   provider = "prisma-client-js"
@@ -11,11 +12,11 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// ==================== ENUMS ====================
+// ==================== ENUMS (natifs PostgreSQL — déjà existants) ====================
 
 enum UserRole {
-  SUPERADMIN  // Anthropique / plateforme — accès toutes écoles
-  ADMIN       // Directeur d'école
+  SUPERADMIN
+  ADMIN
   TEACHER
   PARENT
   STUDENT
@@ -76,29 +77,27 @@ model School {
   id        String     @id @default(uuid())
   name      String
   nameAr    String?
-  slug      String     @unique             // "tahfidz-demo" — identifiant de l'école
+  slug      String     @unique
   plan      SchoolPlan @default(FREE)
   isActive  Boolean    @default(true)
   settings  Json       @default("{}")
-  // Coordonnées de l'école
-  address   String?                        // Adresse locale
-  city      String?                        // Ville / Wilaya
-  country   String?    @default("DZ")      // Code pays ISO
-  phone     String?                        // Téléphone de l'admin / école
-  logo      String?                        // URL ou chemin vers le logo de l'école
+  address   String?
+  city      String?
+  country   String?    @default("DZ")
+  phone     String?
+  logo      String?
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
-  // Toutes les entités appartenant à cette école
   users          User[]
   groups         Group[]
   announcements  Announcement[]
   notifications  Notification[]
-  auditLogs      AuditLog[]
   exams          Exam[]
   directMessages DirectMessage[]
   badges         Badge[]
-  feedbacks      Feedback[]
+  auditLogs      AuditLog[] @relation("SchoolAuditLogs")
+  feedbacks      Feedback[] @relation("SchoolFeedbacks")
 
   @@index([slug])
   @@map("schools")
@@ -108,7 +107,7 @@ model School {
 
 model User {
   id            String    @id @default(uuid())
-  schoolId      String                        // tenant
+  schoolId      String
   email         String
   password      String
   fullName      String
@@ -125,22 +124,20 @@ model User {
 
   school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
-  // Profils selon le rôle
   adminProfile   Admin?
   teacherProfile Teacher?
   parentProfile  Parent?
   studentProfile Student?
 
-  // Notifications & sessions
   notifications    Notification[]
   sentMessages     DirectMessage[] @relation("SentMessages")
   receivedMessages DirectMessage[] @relation("ReceivedMessages")
   sessions         Session[]
-  auditLogs        AuditLog[]
   announcements    Announcement[]
-  feedbacks        Feedback[]
+  auditLogs        AuditLog[] @relation("UserAuditLogs")
+  feedbacks        Feedback[] @relation("UserFeedbacks")
 
-  @@unique([schoolId, email])           // même email autorisé dans 2 écoles
+  @@unique([schoolId, email])
   @@index([schoolId, role])
   @@index([schoolId, email])
   @@map("users")
@@ -204,7 +201,6 @@ model Student {
   groupId        String?
   teacherId      String?
 
-  // Progression
   currentSurahId    Int?
   totalStars        Int       @default(0)
   currentStreak     Int       @default(0)
@@ -212,7 +208,6 @@ model Student {
   lastActivityDate  DateTime?
   status            String    @default("active")
 
-  // Relations
   user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   group                Group?                @relation(fields: [groupId], references: [id])
   teacher              Teacher?              @relation(fields: [teacherId], references: [id])
@@ -235,7 +230,7 @@ model ParentStudentLink {
   id         String   @id @default(uuid())
   parentId   String
   studentId  String
-  relation   String   // father, mother, guardian
+  relation   String
   accessCode String
   isVerified Boolean  @default(false)
   createdAt  DateTime @default(now())
@@ -251,11 +246,11 @@ model ParentStudentLink {
 
 model Group {
   id          String   @id @default(uuid())
-  schoolId    String                        // tenant
+  schoolId    String
   name        String
   nameAr      String?
   teacherId   String
-  level       String   // beginner, intermediate, advanced
+  level       String
   schedule    Json?
   maxCapacity Int      @default(15)
   isActive    Boolean  @default(true)
@@ -273,7 +268,7 @@ model Group {
   @@map("groups")
 }
 
-// ==================== SOURATES (données globales) ====================
+// ==================== SOURATES ====================
 
 model Surah {
   id              Int    @id
@@ -282,7 +277,7 @@ model Surah {
   nameEn          String
   verseCount      Int
   juzNumber       Int
-  revelationType  String  // meccan, medinan
+  revelationType  String
   difficultyLevel Int     @default(3)
   orderInMushaf   Int
 
@@ -357,7 +352,7 @@ model Evaluation {
   studentId           String
   teacherId           String
   evaluatedAt         DateTime           @default(now())
-  evaluationType      String             // live, recorded, test
+  evaluationType      String
   memorizationScore   Int
   tajweedScore        Int
   fluencyScore        Int
@@ -406,14 +401,14 @@ model Attendance {
 
 model Badge {
   id            String      @id @default(uuid())
-  schoolId      String?                     // null = badge global (tous les tenants)
+  schoolId      String?
   name          String
   nameAr        String
   description   String
   descriptionAr String
   icon          String
   color         String
-  criteriaType  String      // surah_count, streak_days, total_stars, perfect_score, juz_complete, attendance
+  criteriaType  String
   criteriaValue Int
   rarity        BadgeRarity @default(COMMON)
 
@@ -443,7 +438,7 @@ model StarsLog {
   studentId    String
   amount       Int
   balanceAfter Int
-  sourceType   String   // memorization, attendance, streak, achievement, bonus, penalty
+  sourceType   String
   sourceId     String?
   reason       String
   awardedBy    String?
@@ -459,7 +454,7 @@ model StarsLog {
 
 model Announcement {
   id          String           @id @default(uuid())
-  schoolId    String                        // tenant
+  schoolId    String
   title       String
   titleAr     String?
   content     String           @db.Text
@@ -498,9 +493,9 @@ model GroupAnnouncement {
 
 model Notification {
   id        String    @id @default(uuid())
-  schoolId  String                        // tenant
+  schoolId  String
   userId    String
-  type      String    // progress_update, evaluation, announcement, reminder, achievement
+  type      String
   title     String
   titleAr   String?
   message   String
@@ -544,8 +539,8 @@ model ErrorLog {
   id        String   @id @default(uuid())
   message   String
   stack     String?
-  severity  String   @default("ERROR") // ERROR, WARNING, CRITICAL, INFO
-  source    String   @default("api")    // api, client, system
+  severity  String   @default("ERROR")
+  source    String   @default("api")
   metadata  Json?
   createdAt DateTime @default(now())
 
@@ -558,22 +553,40 @@ model ErrorLog {
 
 model AuditLog {
   id         String   @id @default(uuid())
-  schoolId   String                        // tenant
+  schoolId   String
   userId     String
+
   action     String
-  entityType String
-  entityId   String?
+  actorId    String
+  actorRole  String
+  actorEmail String?
+  actorName  String?
+
+  entityType String?   // ← AJOUTÉ (pour compatibilité avec l'ancienne base)
+  entityId   String?   // ← AJOUTÉ (pour compatibilité avec l'ancienne base)
+  
+  targetType String?
+  targetId   String?
+  targetName String?
+
+  details    String?
+  severity   String   @default("INFO")
   oldValues  Json?
   newValues  Json?
+
   ipAddress  String?
   userAgent  String?
   createdAt  DateTime @default(now())
 
-  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  school School @relation("SchoolAuditLogs", fields: [schoolId], references: [id], onDelete: Cascade)
+  user   User   @relation("UserAuditLogs", fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([schoolId, userId])
-  @@index([entityType, entityId])
+  @@index([schoolId, action])
+  @@index([action])
+  @@index([severity])
+  @@index([targetType, targetId])
+  @@index([createdAt])
   @@map("audit_logs")
 }
 
@@ -581,10 +594,10 @@ model AuditLog {
 
 model Broadcast {
   id          String   @id @default(uuid())
-  schoolId    String?                       // null = toutes les écoles
+  schoolId    String?
   title       String
   message     String   @db.Text
-  target      String   @default("all")       // all, active, inactive
+  target      String   @default("all")
   sentBy      String
   sentAt      DateTime @default(now())
   readCount   Int      @default(0)
@@ -599,7 +612,7 @@ model Broadcast {
 
 model Exam {
   id          String   @id @default(uuid())
-  schoolId    String                        // tenant
+  schoolId    String
   title       String
   titleAr     String?
   description String?  @db.Text
@@ -626,7 +639,7 @@ model Exam {
 
 model DirectMessage {
   id         String   @id @default(uuid())
-  schoolId   String                        // tenant
+  schoolId   String
   fromUserId String
   toUserId   String
   subject    String
@@ -658,14 +671,14 @@ model SchoolRequest {
   plan             SchoolPlan    @default(FREE)
   address          String?
   adminEmail       String
-  adminPassword    String        // bcrypt hash
+  adminPassword    String
   adminName        String
   classCount       Int
   studentsPerClass Int
-  adminPhone       String?       // numéro de téléphone admin
+  adminPhone       String?
   teachersCount    Int
   status           RequestStatus @default(PENDING)
-  slug             String?       // généré à l'approbation
+  slug             String?
   rejectionReason  String?
   createdAt        DateTime      @default(now())
   processedAt      DateTime?
@@ -675,46 +688,26 @@ model SchoolRequest {
 }
 
 // ==================== FEEDBACK / BUG REPORTS ====================
-
-enum FeedbackType {
-  BUG
-  SUGGESTION
-  FEEDBACK
-  OTHER
-}
-
-enum FeedbackStatus {
-  PENDING
-  IN_PROGRESS
-  RESOLVED
-  CLOSED
-}
-
-enum FeedbackPriority {
-  LOW
-  MEDIUM
-  HIGH
-  CRITICAL
-}
+// CORRIGÉ : ENUMs remplacés par String pour éviter les problèmes de types PostgreSQL
 
 model Feedback {
-  id          String           @id @default(uuid())
+  id          String   @id @default(uuid())
   schoolId    String
   userId      String
-  type        FeedbackType     @default(BUG)
-  category    String           @default("GENERAL") // UI, PERFORMANCE, FEATURE, BUG, OTHER
+  type        String   @default("BUG")           // BUG, SUGGESTION, FEEDBACK, OTHER
+  category    String   @default("GENERAL")       // UI, PERFORMANCE, FEATURE, BUG, OTHER
   title       String
-  message     String           @db.Text
-  screenshot  String?          // URL de la photo/screenshot
-  status      FeedbackStatus   @default(PENDING)
-  priority    FeedbackPriority @default(LOW)
-  adminNote   String?          @db.Text
+  message     String   @db.Text
+  screenshot  String?
+  status      String   @default("PENDING")       // PENDING, IN_PROGRESS, RESOLVED, CLOSED
+  priority    String   @default("LOW")           // LOW, MEDIUM, HIGH, CRITICAL
+  adminNote   String?  @db.Text
   resolvedAt  DateTime?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  school School @relation("SchoolFeedbacks", fields: [schoolId], references: [id], onDelete: Cascade)
+  user   User   @relation("UserFeedbacks", fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([schoolId, status])
   @@index([status, priority])
