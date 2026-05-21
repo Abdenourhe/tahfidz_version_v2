@@ -1,10 +1,10 @@
-//src/app/api/students/[id]/route.ts
+//src/app/api/students/[id]/toggle/route.ts
 
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
 
-export async function DELETE(
+export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -26,18 +26,19 @@ export async function DELETE(
       return NextResponse.json({ error: "Élève introuvable" }, { status: 404 })
     }
 
-    const deletedName = student.user.fullName
-    const deletedEmail = student.user.email
+    const newStatus = !student.user.isActive
 
-    // Supprimer le user (cascade supprime Student, StudentStats, etc.)
-    await prisma.user.delete({ where: { id: student.userId } })
+    await prisma.user.update({
+      where: { id: student.userId },
+      data: { isActive: newStatus },
+    })
 
     // Audit log — CORRIGÉ avec entityType/entityId + valeurs par défaut
     await prisma.auditLog.create({
       data: {
         schoolId,
         userId: session.user.id,
-        action: "DELETE_STUDENT",
+        action: newStatus ? "ACTIVATE_STUDENT" : "DEACTIVATE_STUDENT",
         actorId: session.user.id,
         actorRole: session.user.role,
         actorEmail: session.user.email || "admin@system.local",
@@ -46,20 +47,21 @@ export async function DELETE(
         entityId: id,
         targetType: "student",
         targetId: id,
-        targetName: deletedName,
-        oldValues: { email: deletedEmail, fullName: deletedName },
+        targetName: student.user.fullName,
+        newValues: { isActive: newStatus },
       },
     })
 
     return NextResponse.json({
       success: true,
-      message: "Élève supprimé définitivement"
+      message: newStatus ? "Élève activé" : "Élève désactivé",
+      isActive: newStatus
     })
 
   } catch (error: any) {
-    console.error("[DELETE STUDENT ERROR]", error)
+    console.error("[TOGGLE STUDENT ERROR]", error)
     return NextResponse.json(
-      { error: error.message || "Erreur lors de la suppression" },
+      { error: error.message || "Erreur lors du changement de statut" },
       { status: 500 }
     )
   }

@@ -2,13 +2,12 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { shortId } from "@/lib/utils"
 import { StudentsListClient } from "@/components/admin/StudentsListClient"
 
 export default async function AdminStudentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; page?: string; status?: string }>
+  searchParams: Promise<{ search?: string; page?: string; status?: string; groupId?: string; teacherId?: string }>
 }) {
   const session = await auth()
   const sp = await searchParams
@@ -19,22 +18,27 @@ export default async function AdminStudentsPage({
   const page = parseInt(sp.page || "1")
   const limit = 20
   const statusFilter = sp.status || "all"
+  const groupId = sp.groupId || ""
+  const teacherId = sp.teacherId || ""
 
-  const where: Record<string, unknown> = {}
-  if (statusFilter === "active")   where.user = { isActive: true, schoolId }
-  if (statusFilter === "inactive") where.user = { isActive: false, schoolId }
-  if (statusFilter === "all")      where.user = { schoolId }
-  if (search) {
-    where.user = {
-      ...(typeof where.user === "object" ? where.user as object : {}),
-      OR: [
-        { fullName: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
-      ],
-    }
+  // Construction du where
+  const where: any = {
+    user: { schoolId }
   }
 
-  const [students, total] = await Promise.all([
+  if (statusFilter === "active")   where.user.isActive = true
+  if (statusFilter === "inactive") where.user.isActive = false
+  if (groupId)                     where.groupId = groupId
+  if (teacherId)                   where.teacherId = teacherId
+
+  if (search) {
+    where.user.OR = [
+      { fullName: { contains: search, mode: "insensitive" } },
+      { email: { contains: search, mode: "insensitive" } },
+    ]
+  }
+
+  const [students, total, groups, teachers] = await Promise.all([
     prisma.student.findMany({
       where,
       include: {
@@ -48,6 +52,16 @@ export default async function AdminStudentsPage({
       take: limit,
     }),
     prisma.student.count({ where }),
+    prisma.group.findMany({
+      where: { schoolId },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.teacher.findMany({
+      where: { user: { schoolId } },
+      include: { user: { select: { fullName: true } } },
+      orderBy: { user: { fullName: "asc" } },
+    }),
   ])
 
   const totalPages = Math.ceil(total / limit)
@@ -60,6 +74,10 @@ export default async function AdminStudentsPage({
       totalPages={totalPages}
       search={search}
       statusFilter={statusFilter}
+      groupId={groupId}
+      teacherId={teacherId}
+      groups={groups}
+      teachers={teachers}
     />
   )
 }
