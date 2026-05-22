@@ -1,7 +1,7 @@
 "use client"
 // src/components/student/StudentProgressClient.tsx
 
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { VerseProgressTracker } from "@/components/student/VerseProgressTracker"
 
 interface Surah {
@@ -36,23 +36,7 @@ export function StudentProgressClient({ studentId, memorized, inProgress, format
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-  const T = {
-    title:        { fr: "Ma progression",           en: "My progress",           ar: "تقدمي" },
-    subtitle:     { fr: `${memorized.length} sourate${memorized.length>1?"s":""} mémorisée${memorized.length>1?"s":""} · ${inProgress.length} en cours`,
-                    en: `${memorized.length} surah${memorized.length>1?"s":""} memorized · ${inProgress.length} in progress`,
-                    ar: `${memorized.length} سورة محفوظة · ${inProgress.length} جارٍ` },
-    inProgress:   { fr: "Mémorisations en cours",   en: "In-progress memorizations", ar: "الحفظ الجاري" },
-    memorized:    { fr: "Sourates mémorisées ✓",    en: "Memorized surahs ✓",    ar: "السور المحفوظة ✓" },
-    noProgress:   { fr: "Aucune mémorisation commencée", en: "No memorization started", ar: "لم يبدأ أي حفظ" },
-    waitTeacher:  { fr: "Votre enseignant vous assignera des sourates à mémoriser.",
-                    en: "Your teacher will assign surahs for you to memorize.",
-                    ar: "سيقوم معلمك بتعيين السور لتحفيظها." },
-    juz:          { fr: "Juz",                      en: "Juz",                   ar: "جزء" },
-    verses:       { fr: "versets",                  en: "verses",                ar: "آيات" },
-    started:      { fr: "Commencé le",              en: "Started on",            ar: "بدأ في" },
-    history:      { fr: "Historique",               en: "History",               ar: "التاريخ" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("studentProgressClient")
 
   const total = memorized.length + inProgress.length
 

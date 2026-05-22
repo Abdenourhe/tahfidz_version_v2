@@ -7,7 +7,7 @@ import {
   X, Bug, Lightbulb, MessageSquare, Send, ImagePlus, Trash2,
   AlertTriangle, CheckCircle2, Loader2
 } from "lucide-react"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 interface Props {
   isOpen: boolean
@@ -37,44 +37,7 @@ export function FeedbackModal({ isOpen, onClose, userRole, userName, userEmail, 
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-  const T = {
-    title:        { fr: "Signaler un problème",       en: "Report an issue",       ar: "الإبلاغ عن مشكلة" },
-    subtitle:     { fr: "Votre retour aide à améliorer TAHFIDZ",
-                    en: "Your feedback helps improve TAHFIDZ",
-                    ar: "ملاحظاتك تساعد في تحسين تحفيظ" },
-    typeLabel:    { fr: "Type",                       en: "Type",                  ar: "النوع" },
-    categoryLabel:{ fr: "Catégorie",                  en: "Category",              ar: "الفئة" },
-    titleLabel:   { fr: "Titre",                      en: "Title",                 ar: "العنوان" },
-    titlePlaceholder: { fr: "Ex: Erreur lors de la création d'un élève",
-                        en: "Ex: Error when creating a student",
-                        ar: "مثال: خطأ أثناء إنشاء طالب" },
-    messageLabel:   { fr: "Description",                en: "Description",           ar: "الوصف" },
-    messagePlaceholder: { fr: "Décrivez le problème en détail...",
-                            en: "Describe the issue in detail...",
-                            ar: "صف المشكلة بالتفصيل..." },
-    screenshotLabel: { fr: "Capture d'écran (optionnel)",
-                        en: "Screenshot (optional)",
-                        ar: "لقطة شاشة (اختياري)" },
-    screenshotHint:  { fr: "Max 5 Mo — PNG, JPG, WEBP",
-                        en: "Max 5MB — PNG, JPG, WEBP",
-                        ar: "الحد الأقصى 5 ميغابايت — PNG, JPG, WEBP" },
-    removeImage:     { fr: "Retirer",                  en: "Remove",                ar: "إزالة" },
-    yourInfo:        { fr: "Vos coordonnées",          en: "Your details",          ar: "بياناتك" },
-    name:            { fr: "Nom",                      en: "Name",                  ar: "الاسم" },
-    email:           { fr: "Email",                    en: "Email",                 ar: "البريد" },
-    role:            { fr: "Rôle",                     en: "Role",                  ar: "الدور" },
-    school:          { fr: "École",                    en: "School",                ar: "المدرسة" },
-    send:            { fr: "Envoyer",                  en: "Send",                  ar: "إرسال" },
-    sending:         { fr: "Envoi...",                 en: "Sending...",            ar: "جاري الإرسال..." },
-    cancel:          { fr: "Annuler",                  en: "Cancel",                ar: "إلغاء" },
-    successTitle:    { fr: "Merci !",                  en: "Thank you!",            ar: "شكراً!" },
-    successMessage:  { fr: "Votre message a été envoyé au SuperAdmin. Nous vous répondrons rapidement.",
-                        en: "Your message has been sent to the SuperAdmin. We will reply soon.",
-                        ar: "تم إرسال رسالتك إلى المشرف. سنجيبك قريباً." },
-    close:           { fr: "Fermer",                   en: "Close",                 ar: "إغلاق" },
-    error:           { fr: "Erreur",                   en: "Error",                 ar: "خطأ" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("shared_feedbackModal")
 
   const [type, setType] = useState("BUG")
   const [category, setCategory] = useState("BUG")

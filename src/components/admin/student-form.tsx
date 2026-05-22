@@ -11,7 +11,7 @@ import {
   Loader2, ArrowLeft, CheckCircle2, Eye, EyeOff, Camera,
   AlertCircle,
 } from "lucide-react"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 const baseSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -56,55 +56,7 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
   const router = useRouter()
   const isEdit = mode === "edit"
 
-  const T = {
-    back:          { fr: "Retour",                              en: "Back",                           ar: "رجوع" },
-    titleCreate:   { fr: "Ajouter un élève",                   en: "Add a student",                  ar: "إضافة طالب" },
-    titleEdit:     { fr: "Modifier les coordonnées",           en: "Edit student details",           ar: "تعديل بيانات الطالب" },
-    subtitleCreate:{ fr: "Le code élève sera généré automatiquement", en: "Student code will be auto-generated", ar: "سيتم إنشاء رمز الطالب تلقائياً" },
-    subtitleEdit:  { fr: "Mettre à jour les informations de l'élève", en: "Update student information", ar: "تحديث معلومات الطالب" },
-    personalInfo:  { fr: "Informations personnelles",          en: "Personal information",           ar: "المعلومات الشخصية" },
-    fullName:      { fr: "Nom complet",                        en: "Full name",                      ar: "الاسم الكامل" },
-    fullNameAr:    { fr: "Nom en arabe",                       en: "Name in Arabic",                 ar: "الاسم بالعربية" },
-    dob:           { fr: "Date de naissance",                  en: "Date of birth",                  ar: "تاريخ الميلاد" },
-    gender:        { fr: "Genre",                              en: "Gender",                         ar: "الجنس" },
-    male:          { fr: "Masculin",                           en: "Male",                           ar: "ذكر" },
-    female:        { fr: "Féminin",                            en: "Female",                         ar: "أنثى" },
-    phone:         { fr: "Téléphone",                          en: "Phone",                          ar: "الهاتف" },
-    emergencyPhone:{ fr: "Numéro d'urgence",                   en: "Emergency phone",                ar: "هاتف الطوارئ" },
-    emergencyHint: { fr: "Numéro d'un parent ou tuteur en cas d'urgence", en: "Parent or guardian phone in case of emergency", ar: "رقم ولي أو وصي في حالة الطوارئ" },
-    address:       { fr: "Adresse",                            en: "Address",                        ar: "العنوان" },
-    city:          { fr: "Ville",                              en: "City",                           ar: "المدينة" },
-    postalCode:    { fr: "Code postal",                        en: "Postal code",                    ar: "الرمز البريدي" },
-    medicalNotes:  { fr: "Notes médicales / Allergies",        en: "Medical notes / Allergies",      ar: "ملاحظات طبية / حساسية" },
-    medicalHint:   { fr: "Informations importantes en cas d'urgence", en: "Important info in case of emergency", ar: "معلومات مهمة في حالة الطوارئ" },
-    uploadPhoto:   { fr: "Photo de l'élève",                   en: "Student photo",                  ar: "صورة الطالب" },
-    uploadHint:    { fr: "Cliquez pour télécharger ou prendre une photo", en: "Click to upload or take a photo", ar: "انقر لتحميل أو التقاط صورة" },
-    account:       { fr: "Compte & accès",                     en: "Account & access",               ar: "الحساب والوصول" },
-    email:         { fr: "Email",                              en: "Email",                          ar: "البريد" },
-    password:      { fr: "Mot de passe",                       en: "Password",                       ar: "كلمة المرور" },
-    passwordHint:  { fr: "Minimum 6 caractères",               en: "Minimum 6 characters",           ar: "6 أحرف على الأقل" },
-    status:        { fr: "Statut",                             en: "Status",                         ar: "الحالة" },
-    active:        { fr: "Actif",                              en: "Active",                         ar: "نشط" },
-    inactive:      { fr: "Inactif",                            en: "Inactive",                       ar: "غير نشط" },
-    pedagogy:      { fr: "Affectation pédagogique",            en: "Pedagogical assignment",         ar: "التعيين التربوي" },
-    group:         { fr: "Groupe",                             en: "Group",                          ar: "المجموعة" },
-    noGroup:       { fr: "— Sans groupe —",                    en: "— No group —",                   ar: "— بدون مجموعة —" },
-    teacherRef:    { fr: "Enseignant référent",                en: "Referent teacher",               ar: "المعلم المرجعي" },
-    lockedByGroup: { fr: "défini par le groupe",               en: "defined by group",               ar: "محدد من قبل المجموعة" },
-    noTeacher:     { fr: "— Aucun —",                          en: "— None —",                       ar: "— لا أحد —" },
-    cancel:        { fr: "Annuler",                            en: "Cancel",                         ar: "إلغاء" },
-    create:        { fr: "Créer l'élève",                      en: "Create student",                 ar: "إنشاء الطالب" },
-    creating:      { fr: "Création…",                          en: "Creating…",                      ar: "جارٍ الإنشاء…" },
-    save:          { fr: "Enregistrer les modifications",      en: "Save changes",                   ar: "حفظ التغييرات" },
-    saving:        { fr: "Enregistrement…",                    en: "Saving…",                        ar: "جارٍ الحفظ…" },
-    successCreate: { fr: "Élève créé avec succès !",           en: "Student created successfully!",  ar: "تم إنشاء الطالب بنجاح!" },
-    successEdit:   { fr: "Modifications enregistrées !",       en: "Changes saved!",                 ar: "تم حفظ التغييرات!" },
-    redirecting:   { fr: "Redirection…",                       en: "Redirecting…",                   ar: "جارٍ إعادة التوجيه…" },
-    loading:       { fr: "Chargement…",                        en: "Loading…",                       ar: "جارٍ التحميل…" },
-    error:         { fr: "Erreur",                             en: "Error",                          ar: "خطأ" },
-    notFound:      { fr: "Élève introuvable",                  en: "Student not found",              ar: "الطالب غير موجود" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("studentForm")
 
   const [groups, setGroups] = useState<Group[]>([])
   const [teachers, setTeachers] = useState<Teacher[]>([])

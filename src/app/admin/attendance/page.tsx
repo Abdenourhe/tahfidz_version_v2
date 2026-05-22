@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react"
 import { CalendarCheck, Loader2, Download, Calendar, FileSpreadsheet, CheckCircle2, AlertCircle } from "lucide-react"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 interface Group {
   id: string
@@ -43,50 +43,7 @@ export default function AdminAttendancePage() {
   const [error,     setError]     = useState<string | null>(null)
   const [success,   setSuccess]   = useState<string | null>(null)
 
-  const T = {
-    title:         { fr: "Rapports de présence",     en: "Attendance reports",    ar: "تقارير الحضور" },
-    subtitle:      { fr: "Téléchargez l'historique des présences au format CSV",
-                     en: "Download attendance history as CSV",
-                     ar: "تحميل سجل الحضور بصيغة CSV" },
-    periodTitle:   { fr: "Période du rapport",       en: "Report period",         ar: "فترة التقرير" },
-    day:           { fr: "Aujourd'hui",              en: "Today",                 ar: "اليوم" },
-    week:          { fr: "7 derniers jours",         en: "Last 7 days",           ar: "آخر 7 أيام" },
-    month:         { fr: "30 derniers jours",        en: "Last 30 days",          ar: "آخر 30 يوماً" },
-    custom:        { fr: "Personnalisé",             en: "Custom",                ar: "مخصص" },
-    dayDesc:       { fr: "Présences du jour",        en: "Today's attendance",    ar: "حضور اليوم" },
-    weekDesc:      { fr: "Une semaine",              en: "One week",              ar: "أسبوع" },
-    monthDesc:     { fr: "Un mois",                  en: "One month",             ar: "شهر" },
-    customDesc:    { fr: "Définir une période",      en: "Set a period",          ar: "تحديد فترة" },
-    from:          { fr: "Du",                       en: "From",                  ar: "من" },
-    to:            { fr: "Au",                       en: "To",                    ar: "إلى" },
-    periodRange:   { fr: "Période",                  en: "Period",                ar: "الفترة" },
-    groupTitle:    { fr: "Choisir le groupe",        en: "Choose group",          ar: "اختيار المجموعة" },
-    noGroup:       { fr: "Aucun groupe disponible",    en: "No group available",    ar: "لا توجد مجموعات" },
-    groupInfo:     { fr: "Groupe",                   en: "Group",                 ar: "المجموعة" },
-    teacher:       { fr: "Enseignant",               en: "Teacher",               ar: "المعلم" },
-    downloadTitle: { fr: "Télécharger",               en: "Download",              ar: "تحميل" },
-    downloadOne:   { fr: "Télécharger ce groupe",    en: "Download this group",   ar: "تحميل هذه المجموعة" },
-    downloadAll:   { fr: "Télécharger tous les groupes", en: "Download all groups", ar: "تحميل جميع المجموعات" },
-    generating:    { fr: "Génération…",              en: "Generating…",           ar: "جارٍ التوليد…" },
-    files:         { fr: "fichiers",                  en: "files",                 ar: "ملفات" },
-    format:        { fr: "Format : CSV compatible Excel · UTF-8 · séparateur point-virgule",
-                     en: "Format: Excel-compatible CSV · UTF-8 · semicolon separator",
-                     ar: "الصيغة: CSV متوافق مع Excel · UTF-8 · فاصل فاصلة منقوطة" },
-    browserTip:    { fr: "Pour télécharger plusieurs fichiers d'affilée, votre navigateur peut demander une autorisation. Cliquez sur « Autoriser » dans la barre d'adresse.",
-                     en: "To download multiple files in a row, your browser may ask for permission. Click « Allow » in the address bar.",
-                     ar: "لتحميل عدة ملفات متتالية، قد يطلب المتصفح إذناً. اضغط على « السماح » في شريط العنوان." },
-    errorGroups:   { fr: "Impossible de charger les groupes", en: "Failed to load groups", ar: "تعذر تحميل المجموعات" },
-    errorSelect:   { fr: "Sélectionnez un groupe",   en: "Select a group",          ar: "اختر مجموعة" },
-    errorPeriod:   { fr: "Période requise",          en: "Period required",         ar: "الفترة مطلوبة" },
-    errorDate:     { fr: "Date de début après date de fin", en: "Start date after end date", ar: "تاريخ البداية بعد تاريخ النهاية" },
-    errorEmpty:    { fr: "Fichier vide reçu",        en: "Empty file received",     ar: "تم استلام ملف فارغ" },
-    errorDownload: { fr: "Erreur de téléchargement", en: "Download error",        ar: "خطأ في التحميل" },
-    errorNoGroup:  { fr: "Aucun groupe disponible",  en: "No group available",    ar: "لا توجد مجموعات" },
-    successMsg:    { fr: "téléchargé(s)",            en: "downloaded",              ar: "تم التحميل" },
-    progressMsg:   { fr: "Téléchargement",           en: "Download",              ar: "تحميل" },
-    of:            { fr: "sur",                      en: "of",                    ar: "من" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("attendance")
 
   const PRESETS = [
     { id: "day" as Preset,    label: t("day"),    icon: "📅", desc: t("dayDesc") },

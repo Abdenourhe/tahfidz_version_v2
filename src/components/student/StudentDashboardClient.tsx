@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { useState } from "react"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { ReadyToReciteButton } from "@/components/student/ReadyToReciteButton"
 import { FeedbackModal } from "@/components/shared/FeedbackModal"
 import { Bug } from "lucide-react"
@@ -104,27 +104,7 @@ export function StudentDashboardClient({
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-  const T = {
-    welcome:       { fr: `Bienvenue, ${studentName}`,    en: `Welcome, ${studentName}`,    ar: `مرحباً، ${studentName}` },
-    noGroup:       { fr: "Sans groupe",                  en: "No group",                   ar: "بدون مجموعة" },
-    noTeacher:     { fr: "Pas d'enseignant",             en: "No teacher",                 ar: "بدون معلم" },
-    prof:          { fr: "Prof.",                        en: "Teacher",                    ar: "أ." },
-    stars:         { fr: "étoiles totales",              en: "total stars",                ar: "نجوم إجمالية" },
-    memorized:     { fr: "Mémorisées",                   en: "Memorized",                  ar: "محفوظة" },
-    daysStreak:    { fr: "Jours consécutifs",            en: "Consecutive days",           ar: "أيام متتالية" },
-    badges:        { fr: "Badges",                       en: "Badges",                     ar: "الشارات" },
-    inProgress:    { fr: "Mémorisation en cours",        en: "In-progress memorization",   ar: "الحفظ الجاري" },
-    seeAll:        { fr: "Voir tout →",                  en: "See all →",                  ar: "← عرض الكل" },
-    noProgress:    { fr: "Aucune mémorisation en cours", en: "No memorization in progress",ar: "لا يوجد حفظ جارٍ" },
-    verse:         { fr: "Verset",                       en: "Verse",                      ar: "آية" },
-    myBadges:      { fr: "Mes badges",                   en: "My badges",                  ar: "شاراتي" },
-    noBadge:       { fr: "Continuez vos efforts !",      en: "Keep it up!",                ar: "واصل جهودك!" },
-    recentAtt:     { fr: "Présences récentes",           en: "Recent attendance",          ar: "الحضور الأخير" },
-    noAtt:         { fr: "Aucune donnée",                en: "No data",                    ar: "لا توجد بيانات" },
-    announcements: { fr: "Annonces",                     en: "Announcements",              ar: "الإعلانات" },
-    pinned:        { fr: "Épinglé",                      en: "Pinned",                     ar: "مثبَّت" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("studentDashboardClient")
 
   const initials = studentName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
 

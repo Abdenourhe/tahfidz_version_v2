@@ -4,40 +4,14 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2, Link2, CheckCircle2, ArrowLeft, User } from "lucide-react"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 export default function ParentLinkPage() {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
   const router = useRouter()
 
-  const T = {
-    title:        { fr: "Lier mon enfant",          en: "Link my child",         ar: "ربط طفلي" },
-    subtitle:     { fr: "Entrez le code unique de votre enfant",
-                    en: "Enter your child's unique code",
-                    ar: "أدخل الرمز الفريد لطفلك" },
-    howTo:        { fr: "Comment obtenir le code ?", en: "How to get the code?", ar: "كيف تحصل على الرمز؟" },
-    howToDesc:    { fr: "Le code élève (format: TP-XXXXXX) est fourni par l'administrateur ou l'enseignant lors de l'inscription de votre enfant.",
-                    en: "The student code (format: TP-XXXXXX) is provided by the administrator or teacher during your child's enrollment.",
-                    ar: "يتم تقديم رمز الطالب (الصيغة: TP-XXXXXX) من قبل المدير أو المعلم أثناء تسجيل طفلك." },
-    linked:       { fr: "Lien établi !",            en: "Link established!",     ar: "تم الربط!" },
-    linkedTo:     { fr: "Vous êtes maintenant lié à", en: "You are now linked to", ar: "أنت الآن مرتبط بـ" },
-    viewDashboard:{ fr: "Voir le tableau de bord",  en: "View dashboard",        ar: "عرض لوحة التحكم" },
-    back:         { fr: "Retour",                   en: "Back",                  ar: "رجوع" },
-    codeLabel:    { fr: "Code de l'élève *",        en: "Student code *",        ar: "رمز الطالب *" },
-    codeHint:     { fr: "Le code commence par \"TP-\" suivi de 6 caractères",
-                    en: "The code starts with \"TP-\" followed by 6 characters",
-                    ar: "يبدأ الرمز بـ \"TP-\" متبوعاً بـ 6 أحرف" },
-    relation:     { fr: "Votre relation avec l'élève", en: "Your relation to the student", ar: "علاقتك بالطالب" },
-    father:       { fr: "Père",                     en: "Father",                ar: "أب" },
-    mother:       { fr: "Mère",                     en: "Mother",                ar: "أم" },
-    guardian:     { fr: "Tuteur",                   en: "Guardian",              ar: "ولي" },
-    link:         { fr: "Lier cet élève",           en: "Link this student",     ar: "ربط هذا الطالب" },
-    verifying:    { fr: "Vérification…",            en: "Verifying…",            ar: "جارٍ التحقق…" },
-    errorCode:    { fr: "Veuillez entrer un code élève", en: "Please enter a student code", ar: "الرجاء إدخال رمز الطالب" },
-    error:        { fr: "Erreur",                   en: "Error",                 ar: "خطأ" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("link")
 
   const [studentCode, setStudentCode] = useState("")
   const [relation, setRelation] = useState<"father" | "mother" | "guardian">("father")

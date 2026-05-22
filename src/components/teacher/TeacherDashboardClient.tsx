@@ -2,7 +2,7 @@
 // src/components/teacher/TeacherDashboardClient.tsx
 
 import Link from "next/link"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { Users, BookOpen, Star, AlertCircle } from "lucide-react"
 
 interface MemorizationProgress {
@@ -53,25 +53,7 @@ export function TeacherDashboardClient({ todayDate, totalStudents, totalMemorize
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-  const T = {
-    title:        { fr: "Mon espace enseignant", en: "My teacher space",      ar: "فضائي كمعلم" },
-    myStudents:   { fr: "Mes élèves",            en: "My students",           ar: "طلابي" },
-    myGroups:     { fr: "Mes groupes",           en: "My groups",             ar: "مجموعاتي" },
-    validated:    { fr: "Mémorisations validées",en: "Validated memorizations",ar: "الحفظ المُصادَق" },
-    readyRecite:  { fr: "Prêts à réciter",       en: "Ready to recite",       ar: "جاهزون للتسميع" },
-    alertTitle:   { fr: "Élèves prêts à réciter", en: "Students ready to recite", ar: "طلاب جاهزون للتسميع" },
-    evaluate:     { fr: "Évaluer",               en: "Evaluate",              ar: "تقييم" },
-    seeAll:       { fr: "Voir tout →",           en: "See all →",             ar: "← عرض الكل" },
-    allStudents:  { fr: "Tous les élèves →",     en: "All students →",        ar: "← جميع الطلاب" },
-    noGroup:      { fr: "Aucun groupe assigné",  en: "No group assigned",     ar: "لا توجد مجموعات" },
-    noStudent:    { fr: "Aucun élève",           en: "No students",           ar: "لا يوجد طلاب" },
-    noProgress:   { fr: "Aucune progression",    en: "No progress",           ar: "لا يوجد تقدم" },
-    recentActivity:{ fr: "Activité récente",     en: "Recent activity",       ar: "النشاط الأخير" },
-    places:       { fr: "places",                en: "places",                ar: "مقاعد" },
-    students:     { fr: "élève(s)",              en: "student(s)",            ar: "طالب/طلاب" },
-  }
-
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("teacherDashboardClient")
 
   const allStudents = groups.flatMap(g => g.students)
 

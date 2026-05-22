@@ -6,7 +6,7 @@ import {
   CalendarCheck, Save, Loader2, Check, Clock, BookOpen, X,
   ChevronLeft, ChevronRight, Download, FileSpreadsheet, AlertCircle, CheckCircle2
 } from "lucide-react"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 interface Student { id: string; user: { fullName: string; fullNameAr?: string | null } }
 interface Group   { id: string; name: string; students: Student[] }
@@ -15,43 +15,7 @@ export default function TeacherAttendancePage() {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-  const T = {
-    title:        { fr: "Présences",                en: "Attendance",            ar: "الحضور" },
-    subtitle:     { fr: "Enregistrez la présence de vos élèves",
-                    en: "Record your students' attendance",
-                    ar: "سجل حضور طلابك" },
-    download30:   { fr: "Télécharger 30 derniers jours (CSV)",
-                    en: "Download last 30 days (CSV)",
-                    ar: "تحميل آخر 30 يوماً (CSV)" },
-    generating:   { fr: "Génération…",              en: "Generating…",           ar: "جارٍ التوليد…" },
-    group:        { fr: "Groupe",                   en: "Group",                 ar: "المجموعة" },
-    noGroup:      { fr: "Aucun groupe",             en: "No group",              ar: "لا توجد مجموعات" },
-    date:         { fr: "Date",                     en: "Date",                  ar: "التاريخ" },
-    students:     { fr: "élève(s)",                 en: "student(s)",            ar: "طالب/طلاب" },
-    noStudent:    { fr: "Aucun élève dans ce groupe", en: "No students in this group", ar: "لا يوجد طلاب في هذه المجموعة" },
-    note:         { fr: "Note (optionnel)",         en: "Note (optional)",       ar: "ملاحظة (اختياري)" },
-    save:         { fr: "Enregistrer les présences", en: "Save attendance",      ar: "حفظ الحضور" },
-    saving:       { fr: "Enregistrement…",          en: "Saving…",               ar: "جارٍ الحفظ…" },
-    notify:       { fr: "Parents et élèves notifiés automatiquement",
-                    en: "Parents and students notified automatically",
-                    ar: "يتم إشعار أولياء الأمور والطلاب تلقائياً" },
-    errorGroups:  { fr: "Impossible de charger les groupes", en: "Failed to load groups", ar: "تعذر تحميل المجموعات" },
-    errorLoad:    { fr: "Erreur de chargement",     en: "Loading error",         ar: "خطأ في التحميل" },
-    errorNoStudent:{ fr: "Aucun élève dans ce groupe", en: "No students in this group", ar: "لا يوجد طلاب في هذه المجموعة" },
-    errorSave:    { fr: "Erreur d'enregistrement",  en: "Save error",            ar: "خطأ في الحفظ" },
-    present:      { fr: "Présent",                  en: "Present",               ar: "حاضر" },
-    late:         { fr: "Retard",                   en: "Late",                  ar: "متأخر" },
-    excused:      { fr: "Excusé",                   en: "Excused",               ar: "معذور" },
-    absent:       { fr: "Absent",                   en: "Absent",                ar: "غائب" },
-    selectGroup:  { fr: "Sélectionnez un groupe pour commencer", en: "Select a group to start", ar: "اختر مجموعة للبدء" },
-    student:      { fr: "Élève",                     en: "Student",               ar: "الطالب" },
-    notes:        { fr: "Notes",                     en: "Notes",                 ar: "ملاحظات" },
-    notesPlaceholder: { fr: "Ajouter une note…",    en: "Add a note…",           ar: "أضف ملاحظة…" },
-    successMsg:   { fr: "✓ Présences enregistrées. Parents notifiés.",
-                    en: "✓ Attendance saved. Parents notified.",
-                    ar: "✓ تم حفظ الحضور. تم إشعار أولياء الأمور." },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("attendance")
 
   const STATUS_OPTIONS = [
     { value: "PRESENT", label: t("present"), icon: Check,    active: "bg-green-500 text-white border-green-500",   inactive: "border-gray-200 text-gray-400 hover:border-green-300 hover:text-green-600" },

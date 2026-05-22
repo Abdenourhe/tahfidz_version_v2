@@ -8,7 +8,7 @@ import {
   Phone, Mail, TrendingUp, RefreshCw, Loader2, Bell,
   CheckCircle2, RotateCcw, X, Clock
 } from "lucide-react"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 interface Progress {
   id: string; surahId: number; currentVerse: number; completionPercentage: number
@@ -60,14 +60,7 @@ function VerseUpdater({ progressId, totalVerses, currentVerse, onUpdated }: {
 }) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
-  const T = {
-    update:   { fr: "Mettre à jour la progression", en: "Update progress", ar: "تحديث التقدم" },
-    verse:    { fr: "Verset", en: "Verse", ar: "آية" },
-    all:      { fr: "Tout", en: "All", ar: "الكل" },
-    saved:    { fr: "Enregistré", en: "Saved", ar: "تم الحفظ" },
-    error:    { fr: "Erreur", en: "Error", ar: "خطأ" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("parentChildProfileClient_1")
 
   const [draft, setDraft] = useState(String(currentVerse))
   const [saving, setSaving] = useState(false)
@@ -134,62 +127,7 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-  const T = {
-    loading:      { fr: "Chargement du profil…",    en: "Loading profile…",      ar: "جارٍ تحميل الملف…" },
-    notFound:     { fr: "Profil introuvable ou accès non autorisé",
-                    en: "Profile not found or unauthorized access",
-                    ar: "الملف غير موجود أو الوصول غير مصرح به" },
-    back:         { fr: "← Retour",                 en: "← Back",                ar: "→ رجوع" },
-    backProfile:  { fr: "Retour à mon profil",      en: "Back to my profile",    ar: "العودة إلى ملفي" },
-    sync:         { fr: "Synchro",                  en: "Sync",                  ar: "مزامنة" },
-    refresh:      { fr: "Actualiser",               en: "Refresh",               ar: "تحديث" },
-    stars:        { fr: "étoiles",                  en: "stars",                 ar: "نجوم" },
-    days:         { fr: "jours",                    en: "days",                  ar: "أيام" },
-    memorized:    { fr: "Mémorisées",               en: "Memorized",             ar: "محفوظة" },
-    inProgress:   { fr: "En cours",                 en: "In progress",           ar: "جارٍ" },
-    attendance30: { fr: "Présence 30j",             en: "Attendance 30d",        ar: "حضور 30 يوماً" },
-    avgScore:     { fr: "Score moyen",              en: "Avg. score",            ar: "متوسط الدرجات" },
-    teacher:      { fr: "Enseignant",               en: "Teacher",               ar: "المعلم" },
-    email:        { fr: "Envoyer un email",         en: "Send email",            ar: "إرسال بريد" },
-    memorization: { fr: "Mémorisation",             en: "Memorization",          ar: "الحفظ" },
-    evaluations:  { fr: "Évaluations",              en: "Evaluations",           ar: "التقييمات" },
-    attendance:   { fr: "Présences",                en: "Attendance",            ar: "الحضور" },
-    badges:       { fr: "Badges",                   en: "Badges",                ar: "الشارات" },
-    noMem:        { fr: "Aucune mémorisation enregistrée",
-                    en: "No memorization recorded",
-                    ar: "لا يوجد حفظ مسجل" },
-    inProgress2:  { fr: "En cours",                 en: "In progress",           ar: "جارٍ" },
-    memorized2:   { fr: "Mémorisées",               en: "Memorized",             ar: "محفوظة" },
-    noEval:       { fr: "Aucune évaluation",        en: "No evaluation",         ar: "لا توجد تقييمات" },
-    by:           { fr: "Par",                      en: "By",                    ar: "بواسطة" },
-    on:           { fr: "le",                       en: "on",                    ar: "في" },
-    noAtt:        { fr: "Aucune présence enregistrée",
-                    en: "No attendance recorded",
-                    ar: "لا يوجد حضور مسجل" },
-    noBadge:      { fr: "Aucun badge encore",       en: "No badges yet",         ar: "لا توجد شارات بعد" },
-    badgeDesc:    { fr: "Les badges sont attribués pour les efforts et la régularité",
-                    en: "Badges are awarded for effort and regularity",
-                    ar: "يتم منح الشارات للجهد والانتظام" },
-    present:      { fr: "Présent",                  en: "Present",               ar: "حاضر" },
-    late:         { fr: "Retard",                   en: "Late",                  ar: "متأخر" },
-    excused:      { fr: "Excusé",                   en: "Excused",               ar: "معذور" },
-    absent:       { fr: "Absent",                   en: "Absent",                ar: "غائب" },
-    approved:     { fr: "Approuvé",                 en: "Approved",              ar: "مُصادَق" },
-    revision:     { fr: "Révision",                 en: "Revision",              ar: "مراجعة" },
-    redo:         { fr: "À refaire",                en: "To redo",               ar: "لإعادة" },
-    verse:        { fr: "Verset",                   en: "Verse",                 ar: "آية" },
-    started:      { fr: "Commencé le",              en: "Started on",            ar: "بدأ في" },
-    tajweed:      { fr: "Tajweed",                  en: "Tajweed",               ar: "التجويد" },
-    fluency:      { fr: "Fluidité",                 en: "Fluency",               ar: "الطلاقة" },
-    makharij:     { fr: "Makharij",                 en: "Makharij",              ar: "المخارج" },
-    score:        { fr: "Score",                    en: "Score",                 ar: "درجة" },
-    notes:        { fr: "Notes",                    en: "Notes",                 ar: "ملاحظات" },
-    level:        { fr: "Niveau",                   en: "Level",                 ar: "المستوى" },
-    beginner:     { fr: "Débutants",                en: "Beginner",              ar: "مبتدئ" },
-    intermediate: { fr: "Intermédiaire",            en: "Intermediate",          ar: "متوسط" },
-    advanced:     { fr: "Avancé",                   en: "Advanced",              ar: "متقدم" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("parentChildProfileClient_2")
 
   const [student, setStudent] = useState<Student | null>(null)
   const [progress, setProgress] = useState<Progress[]>([])

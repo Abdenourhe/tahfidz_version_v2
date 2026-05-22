@@ -7,7 +7,7 @@ import {
   ClipboardList, Plus, Star, Pencil, Check, X, RotateCcw,
   Loader2, CheckCircle2, Bell, Calendar, Trash2, ChevronDown, ChevronUp, RefreshCw
 } from "lucide-react"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 interface Ev {
   id: string
@@ -288,75 +288,7 @@ export default function TeacherEvaluationsPage() {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-  const T = {
-    title:          { fr: "Évaluations & Examens",  en: "Evaluations & Exams",   ar: "التقييمات والاختبارات" },
-    readyRecite:    { fr: "élève(s) prêt(s) à réciter", en: "student(s) ready to recite", ar: "طالب/طلاب جاهزون للتسميع" },
-    sync:           { fr: "Synchro auto",             en: "Auto sync",             ar: "مزامنة تلقائية" },
-    refresh:        { fr: "Actualiser",               en: "Refresh",               ar: "تحديث" },
-    newEval:        { fr: "Nouvelle évaluation",      en: "New evaluation",        ar: "تقييم جديد" },
-    evaluations:    { fr: "Évaluations",              en: "Evaluations",           ar: "التقييمات" },
-    pending:        { fr: "En attente",               en: "Pending",               ar: "في الانتظار" },
-    exams:          { fr: "Examens planifiés",        en: "Scheduled exams",     ar: "الاختبارات المجدولة" },
-    all:            { fr: "Toutes",                   en: "All",                   ar: "الكل" },
-    approved:       { fr: "Approuvées",               en: "Approved",              ar: "مُصادَقة" },
-    revision:       { fr: "Révision",                 en: "Revision",              ar: "مراجعة" },
-    rejected:       { fr: "À refaire",                en: "To redo",               ar: "لإعادة" },
-    noEval:         { fr: "Aucune évaluation",        en: "No evaluations",        ar: "لا توجد تقييمات" },
-    createFirst:    { fr: "Créer une première évaluation", en: "Create first evaluation", ar: "إنشاء تقييم أول" },
-    noPending:      { fr: "Aucun élève en attente",   en: "No pending students",   ar: "لا يوجد طلاب في الانتظار" },
-    pendingDesc:    { fr: "Les élèves apparaissent ici quand ils signalent être prêts à réciter",
-                      en: "Students appear here when they signal being ready to recite",
-                      ar: "يظهر الطلاب هنا عندما يشيرون إلى استعدادهم للتسميع" },
-    pendingNotify:  { fr: "élève(s) attend(ent) votre validation",
-                      en: "student(s) awaiting your validation",
-                      ar: "طالب/طلاب ينتظرون تصديقك" },
-    verses:         { fr: "versets",                  en: "verses",                ar: "آيات" },
-    updated:        { fr: "Mis à jour",               en: "Updated",               ar: "تم التحديث" },
-    close:          { fr: "Fermer",                   en: "Close",                 ar: "إغلاق" },
-    edit:           { fr: "Modifier",                   en: "Edit",                  ar: "تعديل" },
-    memorization:   { fr: "Mémorisation (×0.4)",      en: "Memorization (×0.4)",   ar: "الحفظ (×0.4)" },
-    tajweed:        { fr: "Tajweed (×0.3)",           en: "Tajweed (×0.3)",        ar: "التجويد (×0.3)" },
-    fluency:        { fr: "Fluidité (×0.2)",            en: "Fluency (×0.2)",        ar: "الطلاقة (×0.2)" },
-    makharij:       { fr: "Makharij (×0.1)",            en: "Makharij (×0.1)",       ar: "المخارج (×0.1)" },
-    calculatedScore:{ fr: "Score calculé",            en: "Calculated score",      ar: "الدرجة المحسوبة" },
-    notes:          { fr: "Notes / Observations",       en: "Notes / Observations",  ar: "ملاحظات / مراقبات" },
-    notesPlaceholder:{ fr: "Conseils, points à améliorer, encouragements…",
-                       en: "Tips, points to improve, encouragement…",
-                       ar: "نصائح، نقاط للتحسين، تشجيع…" },
-    finalDecision:  { fr: "Décision finale",            en: "Final decision",        ar: "القرار النهائي" },
-    cancel:         { fr: "Annuler",                    en: "Cancel",                ar: "إلغاء" },
-    updating:       { fr: "Mise à jour…",               en: "Updating…",             ar: "جارٍ التحديث…" },
-    validateNotify: { fr: "Valider et notifier l'élève", en: "Validate and notify student", ar: "تصديق وإشعار الطالب" },
-    scheduleExam:   { fr: "Planifier un nouvel examen", en: "Schedule new exam",     ar: "جدولة اختبار جديد" },
-    titleRequired:  { fr: "Le titre est requis",        en: "Title is required",     ar: "العنوان مطلوب" },
-    selectGroup:    { fr: "Sélectionnez un groupe",     en: "Select a group",        ar: "اختر مجموعة" },
-    dateRequired:   { fr: "La date et l'heure sont requises", en: "Date and time are required", ar: "التاريخ والوقت مطلوبان" },
-    invalidDate:    { fr: "Format de date invalide",    en: "Invalid date format",   ar: "صيغة التاريخ غير صالحة" },
-    serverError:    { fr: "Erreur serveur",             en: "Server error",          ar: "خطأ في الخادم" },
-    titleFr:        { fr: "Titre (français)",           en: "Title (French)",        ar: "العنوان (فرنسي)" },
-    titleAr:        { fr: "Titre (arabe)",              en: "Title (Arabic)",        ar: "العنوان (عربي)" },
-    titlePlaceholder:{ fr: "ex: Examen mensuel — Juz 30", en: "e.g. Monthly exam — Juz 30", ar: "مثال: اختبار شهري — جزء 30" },
-    titleArPlaceholder:{ fr: "اختبار شهري",             en: "Monthly exam",          ar: "اختبار شهري" },
-    duration:       { fr: "Durée (minutes)",            en: "Duration (minutes)",    ar: "المدة (دقائق)" },
-    dateTime:       { fr: "Date et heure",              en: "Date and time",         ar: "التاريخ والوقت" },
-    instructions:   { fr: "Instructions (optionnel)",   en: "Instructions (optional)", ar: "تعليمات (اختياري)" },
-    instructionsPlaceholder:{ fr: "Sourates concernées, matériaux autorisés…",
-                              en: "Surahs concerned, allowed materials…",
-                              ar: "السور المعنية، المواد المسموحة…" },
-    autoNotify:     { fr: "Élèves + parents notifiés automatiquement",
-                      en: "Students + parents notified automatically",
-                      ar: "يتم إشعار الطلاب وأولياء الأمور تلقائياً" },
-    scheduling:     { fr: "Planification…",             en: "Scheduling…",           ar: "جارٍ الجدولة…" },
-    examScheduled:  { fr: "Examen planifié · Élèves et parents notifiés !",
-                      en: "Exam scheduled · Students and parents notified!",
-                      ar: "تم جدولة الاختبار · تم إشعار الطلاب وأولياء الأمور!" },
-    loading:        { fr: "Chargement…",                en: "Loading…",              ar: "جارٍ التحميل…" },
-    past:           { fr: "Passé",                      en: "Past",                  ar: "منتهٍ" },
-    upcoming:       { fr: "À venir",                    en: "Upcoming",              ar: "قادم" },
-    delete:         { fr: "Supprimer",                  en: "Delete",                ar: "حذف" },
-    evaluate:       { fr: "Évaluer",                     en: "Evaluate",              ar: "تقييم" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("evaluations")
 
   const [evaluations, setEvaluations] = useState<Ev[]>([])
   const [exams, setExams] = useState<Exam[]>([])

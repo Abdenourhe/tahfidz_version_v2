@@ -2,7 +2,7 @@
 // src/components/teacher/TeacherStudentDetailClient.tsx
 
 import Link from "next/link"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { ArrowLeft, Star, BookOpen, CalendarCheck, ClipboardList } from "lucide-react"
 
 interface Props {
@@ -26,28 +26,7 @@ export function TeacherStudentDetailClient({
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-  const T = {
-    back:         { fr: "Retour",                   en: "Back",                  ar: "رجوع" },
-    evaluateNow:  { fr: "Évaluer maintenant",       en: "Evaluate now",          ar: "تقييم الآن" },
-    group:        { fr: "Groupe",                   en: "Group",                 ar: "المجموعة" },
-    age:          { fr: "Âge",                      en: "Age",                   ar: "العمر" },
-    phone:        { fr: "Tél.",                     en: "Phone",                 ar: "الهاتف" },
-    stars:        { fr: "Étoiles",                  en: "Stars",                 ar: "النجوم" },
-    memorized2:   { fr: "Mémorisées",               en: "Memorized",             ar: "محفوظة" },
-    attendance:   { fr: "Présence",                 en: "Attendance",            ar: "الحضور" },
-    badges:       { fr: "Badges",                   en: "Badges",                ar: "الشارات" },
-    inProgress2:  { fr: "Mémorisation en cours",    en: "In-progress memorization", ar: "الحفظ الجاري" },
-    noProgress:   { fr: "Aucune progression active", en: "No active progress",   ar: "لا يوجد تقدم نشط" },
-    verse:        { fr: "versets",                  en: "verses",                ar: "آيات" },
-    evaluate:     { fr: "Évaluer",                  en: "Evaluate",              ar: "تقييم" },
-    memorized3:   { fr: "Mémorisées",               en: "Memorized",             ar: "محفوظة" },
-    contacts:     { fr: "Contacts parents",         en: "Parent contacts",       ar: "جهات اتصال أولياء الأمور" },
-    father:       { fr: "Père",                     en: "Father",                ar: "أب" },
-    mother:       { fr: "Mère",                     en: "Mother",                ar: "أم" },
-    guardian:     { fr: "Tuteur",                   en: "Guardian",              ar: "ولي" },
-    recentAtt:    { fr: "Présences récentes",       en: "Recent attendance",     ar: "الحضور الأخير" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("teacherStudentDetailClient")
 
   const ATT_STYLE: Record<string, string> = {
     PRESENT: "bg-green-100 text-green-700",

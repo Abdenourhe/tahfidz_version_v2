@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { Plus, BookOpen, Users } from "lucide-react"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { shortId } from "@/lib/utils"  // ← IMPORT DIRECT ICI
 
 interface Group {
@@ -27,26 +27,7 @@ export function GroupsListClient({ groups }: Props) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-  const T = {
-    title:        { fr: "Groupes",                  en: "Groups",                ar: "المجموعات" },
-    subtitle:     { fr: `${groups.length} groupe${groups.length>1?"s":""}`,
-                    en: `${groups.length} group${groups.length>1?"s":""}`,
-                    ar: `${groups.length} مجموعة` },
-    add:          { fr: "Créer un groupe",          en: "Create group",          ar: "إنشاء مجموعة" },
-    noGroup:      { fr: "Aucun groupe créé",        en: "No groups created",     ar: "لا توجد مجموعات" },
-    level:        { fr: "Niveau",                   en: "Level",                 ar: "المستوى" },
-    beginner:     { fr: "Débutant",                 en: "Beginner",              ar: "مبتدئ" },
-    intermediate: { fr: "Intermédiaire",            en: "Intermediate",          ar: "متوسط" },
-    advanced:     { fr: "Avancé",                   en: "Advanced",              ar: "متقدم" },
-    teacher:      { fr: "Enseignant",               en: "Teacher",               ar: "المعلم" },
-    students:     { fr: "élèves",                   en: "students",              ar: "طلاب" },
-    capacity:     { fr: "Capacité",                 en: "Capacity",              ar: "الطاقة" },
-    avgStars:     { fr: "moy.",                     en: "avg.",                  ar: "متوسط" },
-    manage:       { fr: "Gérer →",                  en: "Manage →",              ar: "← إدارة" },
-    statusActive: { fr: "Actif",                    en: "Active",                ar: "نشط" },
-    statusInact:  { fr: "Inactif",                  en: "Inactive",              ar: "غير نشط" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("groupsListClient")
 
   const levelMap: Record<string, { label: string; color: string }> = {
     beginner:     { label: t("beginner"),     color: "bg-green-100 text-green-700" },

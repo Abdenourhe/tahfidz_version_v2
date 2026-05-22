@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Shield, Plus, Mail, Phone, Calendar, Loader2, Trash2, AlertTriangle, X } from "lucide-react"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 interface Admin {
   id: string; fullName: string; fullNameAr?: string | null
@@ -16,37 +16,7 @@ export default function AdminsPage() {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-  const T = {
-    title:        { fr: "Administrateurs",          en: "Administrators",        ar: "المدراء" },
-    subtitle:     { fr: "administrateur",           en: "administrator",         ar: "مدير" },
-    add:          { fr: "Ajouter un administrateur",  en: "Add administrator",     ar: "إضافة مدير" },
-    close:        { fr: "Fermer",                   en: "Close",                 ar: "إغلاق" },
-    newAccount:   { fr: "Nouveau compte administrateur", en: "New admin account", ar: "حساب مدير جديد" },
-    name:         { fr: "Nom complet *",            en: "Full name *",           ar: "الاسم الكامل *" },
-    nameAr:       { fr: "Nom (arabe)",              en: "Name (Arabic)",         ar: "الاسم (عربي)" },
-    email:        { fr: "Email *",                  en: "Email *",               ar: "البريد *" },
-    phone:        { fr: "Téléphone",                en: "Phone",                 ar: "الهاتف" },
-    password:     { fr: "Mot de passe * (8+ caractères)", en: "Password * (8+ chars)", ar: "كلمة المرور * (8+ أحرف)" },
-    warning:      { fr: "Cet administrateur aura les mêmes droits que vous (gestion totale).",
-                    en: "This admin will have the same rights as you (full management).",
-                    ar: "سيكون لهذا المدير نفس الصلاحيات التي لديك (إدارة كاملة)." },
-    cancel:       { fr: "Annuler",                  en: "Cancel",                ar: "إلغاء" },
-    create:       { fr: "Créer l'administrateur",    en: "Create administrator",  ar: "إنشاء المدير" },
-    creating:     { fr: "Création…",                en: "Creating…",             ar: "جارٍ الإنشاء…" },
-    noAdmin:      { fr: "Aucun administrateur",     en: "No administrators",     ar: "لا يوجد مدراء" },
-    admin:        { fr: "Admin",                    en: "Admin",                 ar: "مدير" },
-    inactive:     { fr: "Inactif",                  en: "Inactive",              ar: "غير نشط" },
-    created:      { fr: "Créé",                     en: "Created",               ar: "تم الإنشاء" },
-    lastLogin:    { fr: "Dernière connexion",       en: "Last login",            ar: "آخر تسجيل دخول" },
-    delete:       { fr: "Supprimer",                en: "Delete",                ar: "حذف" },
-    confirm:      { fr: "Confirmer",                en: "Confirm",               ar: "تأكيد" },
-    cancel2:      { fr: "Annuler",                  en: "Cancel",                ar: "إلغاء" },
-    createdSuccess:{ fr: "Administrateur créé !",   en: "Admin created!",        ar: "تم إنشاء المدير!" },
-    errorName:    { fr: "Nom, email et mot de passe requis", en: "Name, email and password required", ar: "الاسم والبريد وكلمة المرور مطلوبة" },
-    errorPwd:     { fr: "Le mot de passe doit faire au moins 8 caractères", en: "Password must be at least 8 characters", ar: "يجب أن تكون كلمة المرور 8 أحرف على الأقل" },
-    error:        { fr: "Erreur",                   en: "Error",                 ar: "خطأ" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("admins")
 
   const [admins,    setAdmins]    = useState<Admin[]>([])
   const [loading,   setLoading]   = useState(true)
