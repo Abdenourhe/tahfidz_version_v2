@@ -2,7 +2,7 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { ParentsListClient } from "@/components/admin/ParentsListClient"
+import { ParentsListClient } from "@/components/admin/parents"
 
 export default async function AdminParentsPage({
   searchParams,

@@ -2,7 +2,6 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { statusLabel, formatDate } from "@/lib/utils"
 import { StudentProgressClient } from "@/components/student/StudentProgressClient"
 
 export default async function StudentProgressPage() {
@@ -33,8 +32,7 @@ export default async function StudentProgressPage() {
       studentId={student.id}
       memorized={memorized}
       inProgress={inProgress}
-      formatDate={formatDate}
-      statusLabel={statusLabel}
+      // ✅ SUPPRIMÉ : formatDate et statusLabel des props
     />
   )
 }

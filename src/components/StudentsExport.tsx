@@ -38,7 +38,7 @@ export function StudentsExport({ role }: Props) {
       if (teacherId) params.set("teacherId", teacherId)
       if (groupId)   params.set("groupId", groupId)
 
-      const res = await fetch(`/api/students/export?${params}`)
+      const res = await fetch(`/api/students?export=true&${params}`)
       if (!res.ok) throw new Error("Erreur de téléchargement")
 
       const blob = await res.blob()

@@ -3,7 +3,7 @@ import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { readFile } from "fs/promises"
 import { join } from "path"
-import { CertificateTemplateEditorI18n } from "@/components/admin/CertificateTemplateEditorI18n"
+import { CertificateTemplateEditor } from "@/components/admin/certificate"
 
 export default async function CertificateTemplatesPage() {
   const session = await auth()
@@ -15,5 +15,13 @@ export default async function CertificateTemplatesPage() {
     templates = JSON.parse(raw)
   } catch {}
 
-  return <CertificateTemplateEditorI18n initialTemplates={templates} />
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Modèles de certificats</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Personnalisez les certificats selon le niveau</p>
+      </div>
+      <CertificateTemplateEditor initialTemplates={templates} />
+    </div>
+  )
 }

@@ -2,7 +2,6 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { formatDate } from "@/lib/utils"
 import { StudentAttendanceClient } from "@/components/student/StudentAttendanceClient"
 
 export default async function StudentAttendancePage() {
@@ -44,7 +43,7 @@ export default async function StudentAttendancePage() {
       excused={excused}
       rate={rate}
       byMonth={byMonth}
-      formatDate={formatDate}
+      // ✅ SUPPRIMÉ : formatDate des props
     />
   )
 }

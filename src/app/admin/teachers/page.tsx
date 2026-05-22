@@ -2,7 +2,7 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { TeachersListClient } from "@/components/admin/TeachersListClient"
+import { TeachersListClient } from "@/components/admin/teachers"
 
 export default async function AdminTeachersPage({
   searchParams,
