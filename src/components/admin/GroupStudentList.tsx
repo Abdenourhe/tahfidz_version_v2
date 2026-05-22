@@ -5,7 +5,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { ArrowRight, Users } from "lucide-react"
 import { statusLabel } from "@/lib/utils"
-import { TransferStudentModal } from "./TransferStudentModal"
+// TODO: TransferStudentModal was removed during cleanup — restore or rebuild if needed
 
 interface Student {
   id: string
@@ -97,13 +97,8 @@ export function GroupStudentList({ students, groupId, groupName }: Props) {
         )}
       </div>
 
-      {transferStudent && (
-        <TransferStudentModal
-          student={transferStudent}
-          currentGroupId={groupId}
-          onClose={() => setTransferStudent(null)}
-        />
-      )}
+      {/* TODO: TransferStudentModal was removed during cleanup */}
+      {transferStudent && null}
     </>
   )
 }
