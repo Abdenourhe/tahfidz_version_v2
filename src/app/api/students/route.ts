@@ -1,189 +1,219 @@
-//src/app/api/students/route.ts
+// src/app/api/students/route.ts
+// GET (liste + ?export=true) | POST (création)
+// Fusion de : route.ts + export/route.ts
 
+import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
-import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 
-const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+// ═════════════════════════════════════════════════════════════════════════════
+// GET — Liste des élèves OU export CSV (query param ?export=true)
+// ═════════════════════════════════════════════════════════════════════════════
+export async function GET(req: NextRequest) {
+  const session = await auth()
+  if (!session?.user || !["ADMIN", "TEACHER", "SUPERADMIN"].includes(session.user.role)) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
+  }
 
-async function generateStudentCode(schoolId: string): Promise<string> {
-  const year = new Date().getFullYear()
-  const count = await prisma.student.count({ where: { user: { schoolId } } })
-  return `TAH-${year}-${String(count + 1).padStart(3, "0")}`
-}
+  const { searchParams } = new URL(req.url)
+  const exportMode = searchParams.get("export") === "true"
+  const groupId   = searchParams.get("groupId")  || undefined
+  const teacherId = searchParams.get("teacherId") || undefined
+  const status    = searchParams.get("status") || ""
 
-export async function GET() {
-  try {
-    const session = await auth()
-    if (!session?.user?.schoolId) {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+  // ════════════════════════════════════════════════════════════════════════════
+  // EXPORT CSV
+  // ════════════════════════════════════════════════════════════════════════════
+  if (exportMode) {
+    const where: Record<string, unknown> = {}
+
+    // Teachers can only export their own students
+    if (session.user.role === "TEACHER") {
+      const teacher = await prisma.teacher.findUnique({ where: { userId: session.user.id } })
+      if (!teacher) return NextResponse.json({ error: "Profil enseignant introuvable" }, { status: 404 })
+      where.teacherId = teacher.id
+    } else {
+      // Admin can filter by teacher or group
+      if (teacherId) where.teacherId = teacherId
+      if (groupId)   where.groupId   = groupId
     }
-    const { schoolId, role } = session.user
-    if (!["ADMIN", "TEACHER", "SUPERADMIN"].includes(role)) {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
-    }
+
     const students = await prisma.student.findMany({
-      where: { user: { schoolId } },
+      where,
       include: {
-        user: { select: { id: true, fullName: true, fullNameAr: true, email: true, avatar: true, gender: true, phone: true } },
-        group: { select: { id: true, name: true } },
+        user:    { select: { fullName: true, fullNameAr: true, email: true, phone: true, gender: true, isActive: true } },
+        group:   { select: { name: true } },
         teacher: { include: { user: { select: { fullName: true } } } },
-        _count: { select: { memorizationProgress: true, evaluations: true, attendances: true } },
+        parentLinks: {
+          where: { isVerified: true },
+          include: { parent: { include: { user: { select: { fullName: true, phone: true, email: true } } } } },
+          take: 1,
+        },
+        memorizationProgress: {
+          where: { status: "MEMORIZED" },
+          select: { id: true },
+        },
+        _count: { select: { memorizedSurahs: true, attendances: true } },
       },
       orderBy: { user: { fullName: "asc" } },
     })
-    return NextResponse.json({ students }, { status: 200 })
-  } catch (error) {
-    console.error("[STUDENTS GET ERROR]", error)
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
+
+    // Get filter context for header
+    const ctx: string[] = []
+    if (teacherId) {
+      const t = await prisma.teacher.findUnique({ where: { id: teacherId }, include: { user: { select: { fullName: true } } } })
+      if (t) ctx.push(`Enseignant: ${t.user.fullName}`)
+    }
+    if (groupId) {
+      const g = await prisma.group.findUnique({ where: { id: groupId } })
+      if (g) ctx.push(`Groupe: ${g.name}`)
+    }
+    if (session.user.role === "TEACHER") ctx.push("Mes élèves")
+
+    const SEP    = ";"
+    const escape = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`
+
+    const headers = [
+      "Code élève", "Nom complet", "Nom arabe", "Email", "Téléphone élève", "Genre", "Statut",
+      "Groupe", "Enseignant",
+      "Sourates mémorisées", "Étoiles", "Streak", "Présences",
+      "Parent (nom)", "Parent (téléphone)", "Parent (email)",
+    ]
+
+    const rows = students.map(s => {
+      const parent = s.parentLinks[0]?.parent
+      return [
+        s.studentCode,
+        s.user.fullName,
+        s.user.fullNameAr ?? "",
+        s.user.email,
+        s.user.phone ?? "",
+        s.user.gender ?? "",
+        s.user.isActive ? "Actif" : "Inactif",
+        s.group?.name ?? "Sans groupe",
+        s.teacher?.user.fullName ?? "Sans enseignant",
+        s._count.memorizedSurahs,
+        s.totalStars,
+        s.currentStreak,
+        s._count.attendances,
+        parent?.user.fullName ?? "",
+        parent?.user.phone ?? "",
+        parent?.user.email ?? "",
+      ].map(escape).join(SEP)
+    })
+
+    const BOM   = "﻿"
+    const lines = [
+      escape("Liste des élèves — TAHFIDZ"),
+      ...ctx.map(c => escape(c)),
+      escape(`Total: ${students.length} élèves`),
+      escape(`Généré le: ${new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}`),
+      "",
+      headers.map(escape).join(SEP),
+      ...rows,
+    ]
+
+    const csv   = BOM + lines.join("\r\n")
+    const fname = `eleves_${groupId || teacherId || "tous"}_${new Date().toISOString().split("T")[0]}.csv`
+
+    return new NextResponse(csv, {
+      headers: {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": `attachment; filename="${fname}"`,
+      },
+    })
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // LISTE JSON
+  // ════════════════════════════════════════════════════════════════════════════
+  try {
+    const schoolId = session.user.schoolId
+    const where: Record<string, unknown> = { user: { schoolId } }
+    if (status === "active")   where.user = { schoolId, isActive: true }
+    if (status === "inactive") where.user = { schoolId, isActive: false }
+
+    const students = await prisma.student.findMany({
+      where,
+      include: {
+        user: { select: { id: true, fullName: true, fullNameAr: true, email: true, phone: true, gender: true, avatar: true, isActive: true, createdAt: true } },
+        group:   { select: { id: true, name: true, level: true } },
+        teacher: { include: { user: { select: { fullName: true } } } },
+        parentLinks: { include: { parent: { include: { user: { select: { fullName: true } } } } }, where: { isVerified: true } },
+        _count: { select: { memorizedSurahs: true } },
+      },
+      orderBy: { user: { createdAt: "desc" } },
+    })
+
+    return NextResponse.json({ students, total: students.length })
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || "Erreur serveur" }, { status: 500 })
   }
 }
 
-export async function POST(req: Request) {
+// ═════════════════════════════════════════════════════════════════════════════
+// POST — Créer un élève
+// ═════════════════════════════════════════════════════════════════════════════
+export async function POST(req: NextRequest) {
   try {
     const session = await auth()
-    if (!session?.user?.schoolId || !["ADMIN", "SUPERADMIN"].includes(session.user.role)) {
-      return NextResponse.json({ error: "Non autorisé — Admin requis" }, { status: 403 })
-    }
-    const { schoolId, id: adminId } = session.user
-
-    let body
-    try { body = await req.json() } catch {
-      return NextResponse.json({ error: "Body JSON invalide" }, { status: 400 })
+    if (!session?.user || !["ADMIN", "SUPERADMIN"].includes(session.user.role)) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
     }
 
-    const { email, password, fullName, fullNameAr, phone, gender, dateOfBirth, groupId, teacherId } = body
+    const body = await req.json()
+    const {
+      fullName, fullNameAr, email, password, gender, dateOfBirth,
+      phone, emergencyPhone, groupId, teacherId,
+      address, city, postalCode, medicalNotes, photo,
+    } = body
 
-    if (!email || !isValidEmail(email)) {
-      return NextResponse.json({ error: "Email invalide" }, { status: 400 })
-    }
-    if (!password || password.length < 6) {
-      return NextResponse.json({ error: "Mot de passe min 6 caractères" }, { status: 400 })
-    }
-    if (!fullName || fullName.trim().length < 2) {
-      return NextResponse.json({ error: "Nom complet requis" }, { status: 400 })
-    }
+    const schoolId = session.user.schoolId
 
-    const existing = await prisma.user.findFirst({
-      where: { email: email.toLowerCase().trim(), schoolId }
-    })
-    if (existing) {
-      return NextResponse.json({ error: "Cet email est déjà utilisé" }, { status: 409 })
+    if (!fullName || !email || !password) {
+      return NextResponse.json({ error: "Nom, email et mot de passe sont requis" }, { status: 400 })
     }
 
-    let resolvedTeacherId = teacherId || null
-    if (groupId) {
-      const group = await prisma.group.findFirst({
-        where: { id: groupId, schoolId },
-        select: { id: true, teacherId: true }
+    const existingUser = await prisma.user.findFirst({ where: { email, schoolId } })
+    if (existingUser) {
+      return NextResponse.json({ error: "Cet email est déjà utilisé dans cette école" }, { status: 409 })
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10)
+
+    const result = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          fullName, fullNameAr: fullNameAr || null, email, password: hashedPassword,
+          gender: gender || null, role: "STUDENT", phone: phone || null,
+          avatar: photo || null, isActive: true, schoolId,
+        },
       })
-      if (!group) return NextResponse.json({ error: "Groupe introuvable" }, { status: 400 })
-      resolvedTeacherId = group.teacherId
-    } else if (teacherId) {
-      const teacher = await prisma.teacher.findFirst({
-        where: { id: teacherId, user: { schoolId } }
+
+      const count = await tx.student.count({ where: { user: { schoolId } } })
+      const year  = new Date().getFullYear()
+      const studentCode = `TAH-${year}-${String(count + 1).padStart(3, "0")}`
+
+      const student = await tx.student.create({
+        data: {
+          userId: user.id, studentCode,
+          groupId: groupId || null, teacherId: teacherId || null,
+          emergencyPhone: emergencyPhone || null,
+          dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+          address: address || null, city: city || null,
+          postalCode: postalCode || null, medicalNotes: medicalNotes || null,
+        },
+        include: { user: true, group: true, teacher: { include: { user: true } } },
       })
-      if (!teacher) return NextResponse.json({ error: "Enseignant introuvable" }, { status: 400 })
-    }
 
-    const hashedPassword = await bcrypt.hash(password, 12)
-    const studentCode = await generateStudentCode(schoolId)
-
-    const user = await prisma.user.create({
-      data: {
-        email: email.toLowerCase().trim(),
-        password: hashedPassword,
-        fullName: fullName.trim(),
-        fullNameAr: fullNameAr?.trim() || null,
-        phone: phone?.trim() || null,
-        gender: gender || "MALE",
-        role: "STUDENT",
-        schoolId,
-        studentProfile: {
-          create: {
-            studentCode,
-            dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
-            groupId: groupId || null,
-            teacherId: resolvedTeacherId,
-            currentSurahId: null,
-            totalStars: 0,
-            currentStreak: 0,
-            longestStreak: 0,
-            lastActivityDate: null,
-            status: "active",
-          },
-        },
-      },
-      include: {
-        studentProfile: {
-          include: {
-            group: { select: { name: true } },
-            teacher: { include: { user: { select: { fullName: true } } } },
-          },
-        },
-      },
+      return student
     })
 
-    await prisma.studentStats.create({
-      data: {
-        studentId: user.studentProfile!.id,
-        totalSurahsMemorized: 0,
-        totalVersesMemorized: 0,
-        totalEvaluationScore: 0,
-        evaluationCount: 0,
-        averageScore: 0,
-        attendanceRate: 0,
-        currentStreakStart: null,
-        longestStreakStart: null,
-        longestStreakEnd: null,
-        lastCalculatedAt: new Date(),
-      },
-    })
-
-    const studentProfileId = user.studentProfile?.id || user.id
-
-    // Audit log — CORRIGÉ avec entityType/entityId + valeurs par défaut
-    await prisma.auditLog.create({
-      data: {
-        schoolId,
-        userId: adminId,
-        action: "CREATE_STUDENT",
-        actorId: adminId,
-        actorRole: session.user.role,
-        actorEmail: session.user.email || "admin@system.local",
-        actorName: session.user.name || session.user.email || "Administrateur",
-        entityType: "student",
-        entityId: studentProfileId,
-        targetType: "student",
-        targetId: studentProfileId,
-        targetName: user.fullName,
-        newValues: {
-          email: user.email,
-          fullName: user.fullName,
-          studentCode,
-          groupId: groupId || null,
-        },
-      },
-    })
-
-    return NextResponse.json({
-      success: true,
-      message: "Élève créé avec succès",
-      user: {
-        id: user.id,
-        email: user.email,
-        fullName: user.fullName,
-        fullNameAr: user.fullNameAr,
-        studentProfile: user.studentProfile,
-      }
-    }, { status: 201 })
+    return NextResponse.json({ message: "Élève créé avec succès", student: result }, { status: 201 })
 
   } catch (error: any) {
-    console.error("[STUDENTS POST ERROR]", error)
-    return NextResponse.json(
-      { error: error.message || "Erreur serveur" },
-      { status: 500 }
-    )
+    console.error("[STUDENT POST ERROR]", error)
+    return NextResponse.json({ error: error.message || "Erreur lors de la création" }, { status: 500 })
   }
 }

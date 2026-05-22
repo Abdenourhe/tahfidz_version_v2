@@ -1,60 +1,56 @@
 // src/app/admin/students/page.tsx
+"use server"
+
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { StudentsListClient } from "@/components/admin/StudentsListClient"
+import { StudentTableClient } from "@/components/admin/students"
 
-export default async function AdminStudentsPage({
+export default async function StudentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; page?: string; status?: string; groupId?: string; teacherId?: string }>
+  searchParams: Promise<{ status?: string }>
 }) {
   const session = await auth()
-  const sp = await searchParams
-  if (!session?.user || session.user.role !== "ADMIN") redirect("/login")
+  if (!session?.user || !["ADMIN", "TEACHER"].includes(session.user.role)) redirect("/login")
 
+  const { status } = await searchParams
   const schoolId = session.user.schoolId
-  const search = sp.search || ""
-  const page = parseInt(sp.page || "1")
-  const limit = 20
-  const statusFilter = sp.status || "all"
-  const groupId = sp.groupId || ""
-  const teacherId = sp.teacherId || ""
 
-  // Construction du where
-  const where: any = {
-    user: { schoolId }
-  }
-
-  if (statusFilter === "active")   where.user.isActive = true
-  if (statusFilter === "inactive") where.user.isActive = false
-  if (groupId)                     where.groupId = groupId
-  if (teacherId)                   where.teacherId = teacherId
-
-  if (search) {
-    where.user.OR = [
-      { fullName: { contains: search, mode: "insensitive" } },
-      { email: { contains: search, mode: "insensitive" } },
-    ]
-  }
-
-  const [students, total, groups, teachers] = await Promise.all([
+  const [students, groups, teachers] = await Promise.all([
     prisma.student.findMany({
-      where,
+      where: {
+        user: { schoolId },
+        ...(status === "active" ? { user: { isActive: true } } : {}),
+        ...(status === "inactive" ? { user: { isActive: false } } : {}),
+      },
       include: {
-        user: { select: { fullName: true, email: true, avatar: true, isActive: true, createdAt: true } },
-        group: { select: { id: true, name: true } },
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            fullNameAr: true,
+            email: true,
+            phone: true,
+            gender: true,
+            avatar: true,
+            isActive: true,
+            createdAt: true,
+          },
+        },
+        group: { select: { id: true, name: true, level: true } },
         teacher: { include: { user: { select: { fullName: true } } } },
+        parentLinks: {
+          include: { parent: { include: { user: { select: { fullName: true } } } } },
+          where: { isVerified: true },
+        },
         _count: { select: { memorizedSurahs: true } },
       },
-      orderBy: { enrollmentDate: "desc" },
-      skip: (page - 1) * limit,
-      take: limit,
+      orderBy: { user: { createdAt: "desc" } },
     }),
-    prisma.student.count({ where }),
     prisma.group.findMany({
       where: { schoolId },
-      select: { id: true, name: true },
+      select: { id: true, name: true, level: true },
       orderBy: { name: "asc" },
     }),
     prisma.teacher.findMany({
@@ -64,20 +60,13 @@ export default async function AdminStudentsPage({
     }),
   ])
 
-  const totalPages = Math.ceil(total / limit)
-
+  // ← PAS DE TITRE ICI — le titre est dans StudentTableClient
   return (
-    <StudentsListClient
+    <StudentTableClient
       students={students}
-      total={total}
-      page={page}
-      totalPages={totalPages}
-      search={search}
-      statusFilter={statusFilter}
-      groupId={groupId}
-      teacherId={teacherId}
       groups={groups}
       teachers={teachers}
+      statusFilter={status}
     />
   )
 }

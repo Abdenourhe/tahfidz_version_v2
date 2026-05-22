@@ -1,9 +1,10 @@
+//src/app/api/groups/route.ts
+
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
 import { z } from "zod"
 
-// Schéma de validation inline (évite les dépendances externes)
 const createGroupSchema = z.object({
   name: z.string().min(2, "Nom trop court"),
   nameAr: z.string().optional(),
@@ -24,13 +25,11 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url)
     const mine = searchParams.get("mine") === "true"
 
-    // Base : filtrer par école
     const where: Record<string, unknown> = { 
       schoolId,
       isActive: true 
     }
 
-    // Teacher : ne voit que ses propres groupes
     if (mine && role === "TEACHER") {
       const teacher = await prisma.teacher.findUnique({ 
         where: { userId } 
@@ -72,7 +71,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
     }
 
-    const { schoolId } = session.user
+    const { schoolId, id: adminId } = session.user
     const body = await req.json()
     const parsed = createGroupSchema.safeParse(body)
     if (!parsed.success) {
@@ -90,6 +89,25 @@ export async function POST(req: Request) {
         schedule: schedule ?? {},
         schoolId,
         teacherId,
+      },
+    })
+
+    // Audit log — CORRIGÉ avec tous les champs requis
+    await prisma.auditLog.create({
+      data: {
+        schoolId,
+        userId: adminId,
+        action: "CREATE_GROUP",
+        actorId: adminId,
+        actorRole: session.user.role,
+        actorEmail: session.user.email || "admin@system.local",
+        actorName: session.user.name || session.user.email || "Administrateur",
+        entityType: "group",
+        entityId: group.id,
+        targetType: "group",
+        targetId: group.id,
+        targetName: group.name,
+        newValues: { name, nameAr, level, maxCapacity, teacherId },
       },
     })
 

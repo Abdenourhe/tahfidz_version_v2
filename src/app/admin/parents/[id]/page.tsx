@@ -2,7 +2,7 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect, notFound } from "next/navigation"
-import { ParentDetailClient } from "@/components/admin/ParentDetailClient"
+import { ParentDetailClient } from "@/components/admin/parents"
 
 export default async function AdminParentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth()

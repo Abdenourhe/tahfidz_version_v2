@@ -198,8 +198,16 @@ model Student {
   studentCode    String    @default(cuid())
   dateOfBirth    DateTime?
   enrollmentDate DateTime  @default(now())
+  emergencyPhone  String?
+  // ← AJOUTÉ : Adresse complète
+  address         String?
+  city            String?
+  postalCode      String?
+  // ← AJOUTÉ : Notes médicales
+  medicalNotes    String?   @db.Text
   groupId        String?
   teacherId      String?
+
 
   currentSurahId    Int?
   totalStars        Int       @default(0)
@@ -564,7 +572,7 @@ model AuditLog {
 
   entityType String?   // ← AJOUTÉ (pour compatibilité avec l'ancienne base)
   entityId   String?   // ← AJOUTÉ (pour compatibilité avec l'ancienne base)
-  
+
   targetType String?
   targetId   String?
   targetName String?

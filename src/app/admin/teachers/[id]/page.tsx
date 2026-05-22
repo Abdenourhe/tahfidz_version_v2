@@ -2,7 +2,7 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect, notFound } from "next/navigation"
-import { TeacherDetailClient } from "@/components/admin/TeacherDetailClient"
+import { TeacherDetailClient } from "@/components/admin/teachers"
 
 export default async function AdminTeacherDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth()

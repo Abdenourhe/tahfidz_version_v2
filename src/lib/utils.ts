@@ -71,8 +71,13 @@ export function generateStudentCode(): string {
 }
 
 /** Formate une date en français */
-export function formatDate(date: Date | string, options?: Intl.DateTimeFormatOptions): string {
-  return new Intl.DateTimeFormat("fr-FR", {
+export function formatDate(date: Date | string, locale?: string, options?: Intl.DateTimeFormatOptions): string {
+  const localeMap: Record<string, string> = {
+    fr: "fr-FR",
+    en: "en-US",
+    ar: "ar-SA",
+  }
+  return new Intl.DateTimeFormat(localeMap[locale || "fr"] || "fr-FR", {
     day: "2-digit",
     month: "long",
     year: "numeric",

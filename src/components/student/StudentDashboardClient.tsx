@@ -48,7 +48,6 @@ interface Props {
   badges: Badge[]
   recentAttendance: Attendance[]
   announcements: Announcement[]
-  formatAttDate: (d: Date | string) => string
 }
 
 function statusBadge(status: string, locale: string) {
@@ -72,14 +71,36 @@ function attColor(status: string) {
     : "bg-red-100 text-red-500"
 }
 
-export function StudentDashboardClient({
-  // eslint-disable-next-line
-  const [showFeedback, setShowFeedback] = useState(false)
+// ✅ AJOUTÉ : Fonction formatAttDate dans le Client Component
+function formatAttDate(d: Date | string): string {
+  const date = typeof d === "string" ? new Date(d) : d
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
 
-  studentId, studentName, studentNameAr, groupName, teacherName,
-  totalStars, currentStreak, memorizedCount, badgeCount,
-  inProgress, badges, recentAttendance, announcements, formatAttDate,
+  if (days === 0) return "Aujourd'hui"
+  if (days === 1) return "Hier"
+  if (days < 7) return `Il y a ${days} jours`
+
+  return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })
+}
+
+export function StudentDashboardClient({
+  studentId,
+  studentName,
+  studentNameAr,
+  groupName,
+  teacherName,
+  totalStars,
+  currentStreak,
+  memorizedCount,
+  badgeCount,
+  inProgress,
+  badges,
+  recentAttendance,
+  announcements,
 }: Props) {
+  const [showFeedback, setShowFeedback] = useState(false)
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 

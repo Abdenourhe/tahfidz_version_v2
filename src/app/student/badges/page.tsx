@@ -2,7 +2,6 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { formatDate } from "@/lib/utils"
 import { StudentBadgesClient } from "@/components/student/StudentBadgesClient"
 
 export default async function StudentBadgesPage() {
@@ -28,7 +27,7 @@ export default async function StudentBadgesPage() {
       earnedBadges={student.studentBadges}
       allBadges={allBadges}
       totalStars={student.totalStars}
-      formatDate={formatDate}
+      // ✅ SUPPRIMÉ : formatDate des props
     />
   )
 }

@@ -44,21 +44,30 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 })
   }
 
-  const existing = await prisma.group.findUnique({ where: { id: (await params).id } })
+  const groupId = (await params).id
+  const existing = await prisma.group.findUnique({ where: { id: groupId } })
   if (!existing) return NextResponse.json({ error: "Introuvable" }, { status: 404 })
 
   const updated = await prisma.group.update({
-    where: { id: (await params).id },
+    where: { id: groupId },
     data: parsed.data,
   })
 
+  // Audit log — CORRIGÉ avec tous les champs requis
   await prisma.auditLog.create({
     data: {
       schoolId: session.user.schoolId,
       userId: session.user.id,
-      action: "update",
+      action: "UPDATE_GROUP",
+      actorId: session.user.id,
+      actorRole: session.user.role,
+      actorEmail: session.user.email || "admin@system.local",
+      actorName: session.user.name || session.user.email || "Administrateur",
       entityType: "group",
-      entityId: (await params).id,
+      entityId: groupId,
+      targetType: "group",
+      targetId: groupId,
+      targetName: updated.name,
       oldValues: { name: existing.name, nameAr: existing.nameAr },
       newValues: parsed.data,
     },
@@ -73,20 +82,34 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
   }
 
-  const studentCount = await prisma.student.count({ where: { groupId: (await params).id } })
+  const groupId = (await params).id
+  const studentCount = await prisma.student.count({ where: { groupId } })
   if (studentCount > 0) {
     return NextResponse.json({ error: `Impossible : ${studentCount} élève(s) dans ce groupe. Transférez-les d'abord.` }, { status: 400 })
   }
 
-  await prisma.group.update({ where: { id: (await params).id }, data: { isActive: false } })
+  const existing = await prisma.group.findUnique({ where: { id: groupId } })
+  if (!existing) return NextResponse.json({ error: "Introuvable" }, { status: 404 })
 
+  await prisma.group.update({ where: { id: groupId }, data: { isActive: false } })
+
+  // Audit log — CORRIGÉ avec tous les champs requis
   await prisma.auditLog.create({
     data: {
       schoolId: session.user.schoolId,
       userId: session.user.id,
-      action: "deactivate",
+      action: "DEACTIVATE_GROUP",
+      actorId: session.user.id,
+      actorRole: session.user.role,
+      actorEmail: session.user.email || "admin@system.local",
+      actorName: session.user.name || session.user.email || "Administrateur",
       entityType: "group",
-      entityId: (await params).id,
+      entityId: groupId,
+      targetType: "group",
+      targetId: groupId,
+      targetName: existing.name,
+      oldValues: { isActive: true },
+      newValues: { isActive: false },
     },
   })
 

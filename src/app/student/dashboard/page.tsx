@@ -2,7 +2,6 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { formatDate } from "@/lib/utils"
 import { StudentDashboardClient } from "@/components/student/StudentDashboardClient"
 
 async function getStudentData(userId: string) {
@@ -57,8 +56,8 @@ export default async function StudentDashboard() {
     ["IN_PROGRESS", "UNDER_REVIEW", "READY_FOR_RECITATION"].includes(p.status)
   )
 
-  const formatAttDate = (d: Date | string) =>
-    formatDate(new Date(d), { weekday: "short" })
+  // ✅ SUPPRIMÉ : formatAttDate n'est plus passé en prop
+  // La fonction est maintenant dans le Client Component
 
   return (
     <StudentDashboardClient
@@ -75,7 +74,7 @@ export default async function StudentDashboard() {
       badges={student.studentBadges}
       recentAttendance={recentAttendance}
       announcements={announcements}
-      formatAttDate={formatAttDate}
+      // ✅ SUPPRIMÉ : formatAttDate={formatAttDate}
     />
   )
 }
