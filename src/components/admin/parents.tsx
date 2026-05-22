@@ -4,7 +4,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 import {
   Plus, Search, Users, ArrowLeft, Phone, Mail, Link2,
 } from "lucide-react"
@@ -43,30 +43,7 @@ export function ParentsListClient({ parents, total, page, totalPages, search }: 
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-  const T = {
-    title:        { fr: "Parents",                  en: "Parents",               ar: "أولياء الأمور" },
-    subtitle:     { fr: `${total} parent${total>1?"s":""} enregistré${total>1?"s":""}`,
-                    en: `${total} parent${total>1?"s":""} registered`,
-                    ar: `${total} ولي أمر مسجل` },
-    add:          { fr: "Ajouter un parent",        en: "Add parent",            ar: "إضافة ولي أمر" },
-    search:       { fr: "Rechercher par nom ou email…", en: "Search by name or email…", ar: "بحث بالاسم أو البريد…" },
-    noParent:     { fr: "Aucun parent trouvé",      en: "No parents found",      ar: "لا يوجد أولياء أمور" },
-    children:     { fr: "Enfant(s) lié(s)",         en: "Linked child(ren)",     ar: "طفل/أطفال مرتبطون" },
-    noChild:      { fr: "Aucun enfant lié",         en: "No linked child",       ar: "لا يوجد طفل مرتبط" },
-    father:       { fr: "Père",                     en: "Father",                ar: "أب" },
-    mother:       { fr: "Mère",                     en: "Mother",                ar: "أم" },
-    guardian:     { fr: "Tuteur",                   en: "Guardian",              ar: "ولي" },
-    statusActive: { fr: "Actif",                    en: "Active",                ar: "نشط" },
-    statusInact:  { fr: "Inactif",                  en: "Inactive",              ar: "غير نشط" },
-    enrolled:     { fr: "Inscrit le",               en: "Enrolled on",           ar: "تاريخ التسجيل" },
-    view:         { fr: "Voir →",                   en: "View →",                ar: "← عرض" },
-    pageOf:       { fr: `Page ${page} sur ${totalPages} · ${total} parents`,
-                    en: `Page ${page} of ${totalPages} · ${total} parents`,
-                    ar: `صفحة ${page} من ${totalPages} · ${total} ولي أمر` },
-    prev:         { fr: "← Précédent",              en: "← Previous",           ar: "→ السابق" },
-    next:         { fr: "Suivant →",                en: "Next →",                ar: "← التالي" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("parents_1")
 
   const relationLabel = (rel: string) => {
     if (rel === "father") return t("father")
@@ -191,37 +168,7 @@ export function ParentDetailClient({ parent, school }: DetailProps) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-  const T = {
-    back:         { fr: "Retour",                   en: "Back",                  ar: "رجوع" },
-    active:       { fr: "Actif",                    en: "Active",                ar: "نشط" },
-    inactive:     { fr: "Inactif",                  en: "Inactive",              ar: "غير نشط" },
-    phone:        { fr: "Téléphone",                en: "Phone",                 ar: "الهاتف" },
-    notProvided:  { fr: "Non renseigné",            en: "Not provided",          ar: "غير محدد" },
-    email:        { fr: "Email",                    en: "Email",                 ar: "البريد" },
-    gender:       { fr: "Genre",                    en: "Gender",                ar: "الجنس" },
-    male:         { fr: "Masculin",                 en: "Male",                  ar: "ذكر" },
-    female:       { fr: "Féminin",                  en: "Female",                ar: "أنثى" },
-    unknown:      { fr: "—",                        en: "—",                     ar: "—" },
-    enrolled:     { fr: "Inscrit le",               en: "Enrolled on",           ar: "تاريخ التسجيل" },
-    lastLogin:    { fr: "Dernière connexion",       en: "Last login",            ar: "آخر تسجيل دخول" },
-    children:     { fr: "Enfants liés",             en: "Linked children",       ar: "الأطفال المرتبطون" },
-    school:       { fr: "École",                    en: "School",                ar: "المدرسة" },
-    linkedChildren:{ fr: "Enfants liés",            en: "Linked children",       ar: "الأطفال المرتبطون" },
-    noChild:      { fr: "Aucun enfant lié",         en: "No linked child",       ar: "لا يوجد طفل مرتبط" },
-    linkDesc:     { fr: "Le parent peut lier ses enfants via son tableau de bord",
-                    en: "The parent can link their children via their dashboard",
-                    ar: "يمكن للوالي ربط أطفاله عبر لوحة التحكم" },
-    relation:     { fr: "Relation",                 en: "Relation",              ar: "العلاقة" },
-    father:       { fr: "Père",                     en: "Father",                ar: "أب" },
-    mother:       { fr: "Mère",                     en: "Mother",                ar: "أم" },
-    guardian:     { fr: "Tuteur",                   en: "Guardian",              ar: "ولي" },
-    group:        { fr: "Groupe",                   en: "Group",                 ar: "المجموعة" },
-    teacher:      { fr: "Enseignant",               en: "Teacher",               ar: "المعلم" },
-    memorized:    { fr: "mémorisées",               en: "memorized",             ar: "محفوظة" },
-    inProgress:   { fr: "En cours",                 en: "In progress",           ar: "جارٍ" },
-    viewProfile:  { fr: "Voir le profil",           en: "View profile",          ar: "عرض الملف" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("parents_2")
 
   const genderLabel = (g: string | null) => {
     if (g === "MALE") return t("male")

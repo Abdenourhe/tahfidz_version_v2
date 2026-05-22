@@ -2,7 +2,7 @@
 // src/components/teacher/TeacherGroupDetailClient.tsx
 
 import Link from "next/link"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { ArrowLeft, Star, CalendarCheck, Users } from "lucide-react"
 import { TeacherGroupAttendance } from "@/components/teacher/TeacherGroupAttendance"
 
@@ -16,23 +16,7 @@ export function TeacherGroupDetailClient({ group, formatDate, statusLabel }: Pro
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-  const T = {
-    back:         { fr: "Retour",                   en: "Back",                  ar: "رجوع" },
-    students:     { fr: "Élèves",                   en: "Students",              ar: "الطلاب" },
-    max:          { fr: "Max",                      en: "Max",                   ar: "الحد الأقصى" },
-    schedule:     { fr: "Horaires",                 en: "Schedule",              ar: "الجدول الزمني" },
-    todayAtt:     { fr: "Présences du jour",        en: "Today's attendance",    ar: "حضور اليوم" },
-    assignSurahs: { fr: "Assigner sourates",        en: "Assign surahs",         ar: "تعيين السور" },
-    noStudent:    { fr: "Aucun élève",              en: "No students",           ar: "لا يوجد طلاب" },
-    inProgress:   { fr: "En cours",                 en: "In progress",           ar: "جارٍ" },
-    surahs:       { fr: "sour.",                    en: "surahs",                ar: "سورة" },
-    view:         { fr: "Voir",                     en: "View",                  ar: "عرض" },
-    level:        { fr: "Niveau",                   en: "Level",                 ar: "المستوى" },
-    beginner:     { fr: "Débutant",                 en: "Beginner",              ar: "مبتدئ" },
-    intermediate: { fr: "Intermédiaire",            en: "Intermediate",          ar: "متوسط" },
-    advanced:     { fr: "Avancé",                   en: "Advanced",              ar: "متقدم" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("teacherGroupDetailClient")
 
   const levelLabel = (lvl: string) => {
     if (lvl === "beginner") return t("beginner")

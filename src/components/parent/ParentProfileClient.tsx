@@ -3,7 +3,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { ParentProfileAttendance } from "@/components/parent/ParentProfileAttendance"
 import {
   Phone, Mail, Link2, BookOpen, Star, CalendarCheck, GraduationCap,
@@ -77,40 +77,7 @@ export function ParentProfileClient({
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-  const T = {
-    title:        { fr: "Mon profil",               en: "My profile",            ar: "ملفي الشخصي" },
-    welcome:      { fr: "Bienvenue",                en: "Welcome",               ar: "مرحباً" },
-    memberSince:  { fr: "Membre depuis",            en: "Member since",          ar: "عضو منذ" },
-    parent:       { fr: "Parent",                   en: "Parent",                ar: "ولي الأمر" },
-    children:     { fr: "Enfants",                  en: "Children",              ar: "أبناء" },
-    memorized:    { fr: "Mémorisées",               en: "Memorized",             ar: "محفوظة" },
-    stars:        { fr: "Étoiles",                  en: "Stars",                 ar: "نجوم" },
-    badges:       { fr: "Badges",                   en: "Badges",                ar: "شارات" },
-    noChild:      { fr: "Aucun enfant lié à votre compte",
-                    en: "No child linked to your account",
-                    ar: "لا يوجد طفل مرتبط بحسابك" },
-    linkChild:    { fr: "Liez votre enfant en utilisant son code élève",
-                    en: "Link your child using their student code",
-                    ar: "اربط طفلك باستخدام رمزه" },
-    link:         { fr: "Lier un enfant",           en: "Link a child",          ar: "ربط طفل" },
-    myChildren:   { fr: "Mes enfants",              en: "My children",           ar: "أبنائي" },
-    progress:     { fr: "Progression",              en: "Progress",              ar: "التقدم" },
-    inProgress:   { fr: "en cours",                 en: "in progress",           ar: "جارٍ" },
-    noActive:     { fr: "Aucune sourate active",    en: "No active surah",       ar: "لا توجد سورة نشطة" },
-    attendance7:  { fr: "Présences (7 derniers)",   en: "Attendance (last 7)",   ar: "الحضور (آخر 7)" },
-    noData:       { fr: "Aucune donnée",            en: "No data",               ar: "لا توجد بيانات" },
-    recentBadges: { fr: "Badges récents",           en: "Recent badges",         ar: "شارات حديثة" },
-    teacher:      { fr: "Enseignant",               en: "Teacher",               ar: "المعلم" },
-    phone:        { fr: "Téléphone",                en: "Phone",                 ar: "الهاتف" },
-    email:        { fr: "Email",                    en: "Email",                   ar: "البريد" },
-    markAttendance:{ fr: "Marquer les présences de mes enfants",
-                    en: "Mark my children's attendance",
-                    ar: "تسجيل حضور أبنائي" },
-    viewProfile:  { fr: "Voir le profil",           en: "View profile",          ar: "عرض الملف" },
-    noGroup:      { fr: "Sans groupe",              en: "No group",              ar: "بدون مجموعة" },
-    age:          { fr: "Âge",                      en: "Age",                   ar: "العمر" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("parentProfileClient")
 
   const relationLabel = (rel: string) => RELATION_LABELS[rel]?.[L] ?? rel
 

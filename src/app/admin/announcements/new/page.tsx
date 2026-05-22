@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2, ArrowLeft, CheckCircle2, Pin, XCircle } from "lucide-react"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 interface Group { id: string; name: string }
 
@@ -13,45 +13,7 @@ export default function NewAnnouncementPage() {
   const L = locale as "fr" | "en" | "ar"
   const router = useRouter()
 
-  const T = {
-    back:         { fr: "Retour",                   en: "Back",                  ar: "رجوع" },
-    title:        { fr: "Nouvelle annonce",         en: "New announcement",      ar: "إعلان جديد" },
-    subtitle:     { fr: "Publier une annonce pour les utilisateurs",
-                    en: "Publish an announcement for users",
-                    ar: "نشر إعلان للمستخدمين" },
-    typeTitle:    { fr: "Type d'annonce",           en: "Announcement type",     ar: "نوع الإعلان" },
-    general:      { fr: "Général",                  en: "General",               ar: "عام" },
-    event:        { fr: "Événement",                en: "Event",                 ar: "حدث" },
-    achievement:  { fr: "Réussite",                 en: "Achievement",           ar: "إنجاز" },
-    urgent:       { fr: "Urgent",                   en: "Urgent",                ar: "عاجل" },
-    contentTitle: { fr: "Contenu",                  en: "Content",               ar: "المحتوى" },
-    titleFr:      { fr: "Titre (français) *",       en: "Title (French) *",      ar: "العنوان (فرنسي) *" },
-    titleAr:      { fr: "Titre (arabe)",            en: "Title (Arabic)",          ar: "العنوان (عربي)" },
-    contentFr:    { fr: "Contenu (français) *",     en: "Content (French) *",    ar: "المحتوى (فرنسي) *" },
-    contentAr:    { fr: "Contenu (arabe)",          en: "Content (Arabic)",        ar: "المحتوى (عربي)" },
-    recipients:   { fr: "Destinataires",            en: "Recipients",            ar: "المستلمون" },
-    targetRoles:  { fr: "Rôles ciblés *",           en: "Target roles *",        ar: "الأدوار المستهدفة *" },
-    admin:        { fr: "Administrateurs",            en: "Administrators",        ar: "المدراء" },
-    teacher:      { fr: "Enseignants",              en: "Teachers",              ar: "المعلمون" },
-    parent:       { fr: "Parents",                  en: "Parents",               ar: "أولياء الأمور" },
-    student:      { fr: "Élèves",                   en: "Students",              ar: "الطلاب" },
-    targetGroups: { fr: "Groupes spécifiques (optionnel)", en: "Specific groups (optional)", ar: "مجموعات محددة (اختياري)" },
-    options:      { fr: "Options",                  en: "Options",               ar: "الخيارات" },
-    pin:          { fr: "Épingler cette annonce",   en: "Pin this announcement", ar: "تثبيت هذا الإعلان" },
-    pinDesc:      { fr: "Apparaîtra en haut de la liste", en: "Will appear at the top", ar: "سيظهر في أعلى القائمة" },
-    expires:      { fr: "Date d'expiration (optionnel)", en: "Expiration date (optional)", ar: "تاريخ الانتهاء (اختياري)" },
-    expiresDesc:  { fr: "L'annonce sera masquée après cette date", en: "Will be hidden after this date", ar: "سيتم إخفاء الإعلان بعد هذا التاريخ" },
-    cancel:       { fr: "Annuler",                  en: "Cancel",                ar: "إلغاء" },
-    publish:      { fr: "Publier l'annonce",        en: "Publish announcement",  ar: "نشر الإعلان" },
-    publishing:   { fr: "Publication…",             en: "Publishing…",           ar: "جارٍ النشر…" },
-    published:    { fr: "Annonce publiée !",        en: "Announcement published!", ar: "تم نشر الإعلان!" },
-    redirecting:  { fr: "Redirection…",             en: "Redirecting…",          ar: "جارٍ إعادة التوجيه…" },
-    errorTitle:   { fr: "Le titre est requis",      en: "Title is required",     ar: "العنوان مطلوب" },
-    errorContent: { fr: "Le contenu est requis",    en: "Content is required",   ar: "المحتوى مطلوب" },
-    errorRoles:   { fr: "Sélectionnez au moins un destinataire", en: "Select at least one recipient", ar: "اختر مستلماً واحداً على الأقل" },
-    error:        { fr: "Erreur",                   en: "Error",                 ar: "خطأ" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("announcements_new")
 
   const [groups, setGroups]               = useState<Group[]>([])
   const [selectedRoles, setSelectedRoles] = useState<string[]>(["ADMIN", "TEACHER", "PARENT", "STUDENT"])

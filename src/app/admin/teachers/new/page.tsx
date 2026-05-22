@@ -7,46 +7,14 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { createUserSchema, type CreateUserInput } from "@/lib/validations/auth"
 import { Loader2, ArrowLeft, CheckCircle2, Eye, EyeOff } from "lucide-react"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 export default function NewTeacherPage() {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
   const router = useRouter()
 
-  const T = {
-    back:         { fr: "Retour",                   en: "Back",                  ar: "رجوع" },
-    title:        { fr: "Ajouter un enseignant",    en: "Add a teacher",         ar: "إضافة معلم" },
-    subtitle:     { fr: "Créer un compte enseignant", en: "Create a teacher account", ar: "إنشاء حساب معلم" },
-    identity:     { fr: "Identité",                 en: "Identity",              ar: "الهوية" },
-    fullName:     { fr: "Nom complet *",            en: "Full name *",           ar: "الاسم الكامل *" },
-    fullNamePlaceholder: { fr: "Sheikh Ahmed",      en: "Sheikh Ahmed",          ar: "الشيخ أحمد" },
-    fullNameAr:   { fr: "Nom en arabe",             en: "Name in Arabic",        ar: "الاسم بالعربية" },
-    fullNameArPlaceholder: { fr: "الشيخ أحمد",     en: "الشيخ أحمد",            ar: "الشيخ أحمد" },
-    gender:       { fr: "Genre",                    en: "Gender",                ar: "الجنس" },
-    choose:       { fr: "— Choisir —",              en: "— Choose —",            ar: "— اختر —" },
-    male:         { fr: "Masculin",                 en: "Male",                  ar: "ذكر" },
-    female:       { fr: "Féminin",                  en: "Female",                ar: "أنثى" },
-    phone:        { fr: "Téléphone",                en: "Phone",                 ar: "الهاتف" },
-    phonePlaceholder: { fr: "+212 6XX XXX XXX",    en: "+212 6XX XXX XXX",      ar: "+212 6XX XXX XXX" },
-    profile:      { fr: "Profil pédagogique",       en: "Teaching profile",      ar: "الملف التربوي" },
-    specialization:{ fr: "Spécialisation",          en: "Specialization",        ar: "التخصص" },
-    specPlaceholder:{ fr: "ex: Tajweed et mémorisation enfants", en: "e.g. Tajweed and children memorization", ar: "مثال: التجويد وحفظ الأطفال" },
-    maxCapacity:  { fr: "Capacité maximale d'élèves", en: "Max student capacity", ar: "الطاقة القصوى للطلاب" },
-    maxCapacityDesc:{ fr: "Nombre maximum d'élèves que cet enseignant peut gérer", en: "Maximum number of students this teacher can manage", ar: "الحد الأقصى لعدد الطلاب الذي يمكن لهذا المعلم إدارته" },
-    account:      { fr: "Accès au compte",          en: "Account access",        ar: "الوصول إلى الحساب" },
-    email:        { fr: "Email *",                  en: "Email *",               ar: "البريد *" },
-    emailPlaceholder: { fr: "enseignant@example.com", en: "teacher@example.com", ar: "معلم@example.com" },
-    password:     { fr: "Mot de passe *",           en: "Password *",            ar: "كلمة المرور *" },
-    passwordPlaceholder: { fr: "Minimum 8 caractères", en: "Minimum 8 characters", ar: "8 أحرف على الأقل" },
-    cancel:       { fr: "Annuler",                  en: "Cancel",                ar: "إلغاء" },
-    create:       { fr: "Créer l'enseignant",       en: "Create teacher",        ar: "إنشاء المعلم" },
-    creating:     { fr: "Création…",                en: "Creating…",             ar: "جارٍ الإنشاء…" },
-    created:      { fr: "Enseignant créé !",        en: "Teacher created!",      ar: "تم إنشاء المعلم!" },
-    redirecting:  { fr: "Redirection…",             en: "Redirecting…",          ar: "جارٍ إعادة التوجيه…" },
-    error:        { fr: "Erreur",                   en: "Error",                 ar: "خطأ" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("teachers_new")
 
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)

@@ -1,7 +1,7 @@
 "use client"
 // src/components/student/StudentAttendanceClient.tsx
 
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 interface Attendance {
   id: string
@@ -25,25 +25,7 @@ export function StudentAttendanceClient({ attendances, total, present, absent, e
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-  const T = {
-    title:        { fr: "Mes présences",            en: "My attendance",         ar: "حضوري" },
-    subtitle:     { fr: `${total} sessions enregistrées`,
-                    en: `${total} sessions recorded`,
-                    ar: `${total} جلسة مسجلة` },
-    rate:         { fr: "Taux de présence",         en: "Attendance rate",       ar: "معدل الحضور" },
-    present:      { fr: "Présent / Retard",         en: "Present / Late",        ar: "حاضر / متأخر" },
-    absent:       { fr: "Absent",                   en: "Absent",                ar: "غائب" },
-    excused:      { fr: "Excusé",                   en: "Excused",               ar: "معذور" },
-    attendanceRate:{ fr: "Taux de présence",        en: "Attendance rate",       ar: "معدل الحضور" },
-    noAtt:        { fr: "Aucune présence enregistrée",
-                    en: "No attendance recorded",
-                    ar: "لا يوجد حضور مسجل" },
-    waitSessions: { fr: "Vos présences apparaîtront ici après les sessions.",
-                    en: "Your attendance will appear here after sessions.",
-                    ar: "سيظهر حضورك هنا بعد الجلسات." },
-    sessions:     { fr: "sessions",                 en: "sessions",              ar: "جلسات" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("studentAttendanceClient")
 
   const statusConfig: Record<string, { label: string; icon: string; color: string; bg: string }> = {
     PRESENT: { label: L === "ar" ? "حاضر" : L === "en" ? "Present" : "Présent", icon: "✓", color: "text-green-700", bg: "bg-green-100" },

@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { Search, Users } from "lucide-react"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 interface Student {
   id: string
@@ -40,24 +40,7 @@ export function TeacherStudentsListClient({ students, search, statusFilter, calc
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-  const T = {
-    title:       { fr: "Mes élèves",               en: "My students",           ar: "طلابي" },
-    subtitle:    { fr: `${students.length} élève${students.length>1?"s":""}`,
-                    en: `${students.length} student${students.length>1?"s":""}`,
-                    ar: `${students.length} طالب` },
-    search:      { fr: "Rechercher un élève…",     en: "Search a student…",     ar: "بحث عن طالب…" },
-    noStudent:   { fr: "Aucun élève",              en: "No students",           ar: "لا يوجد طلاب" },
-    noStudentStatus: { fr: " avec ce statut",      en: " with this status",     ar: " بهذه الحالة" },
-    years:       { fr: "ans",                      en: "yrs",                   ar: "سنة" },
-    months:      { fr: "mois",                     en: "mo",                    ar: "شهر" },
-    noGroup:     { fr: "Sans groupe",              en: "No group",              ar: "بدون مجموعة" },
-    surahs:      { fr: "sour.",                    en: "surahs",                ar: "سورة" },
-    noProgress:  { fr: "Aucune progression active", en: "No active progress", ar: "لا يوجد تقدم نشط" },
-    viewProfile: { fr: "Voir le profil",           en: "View profile",          ar: "عرض الملف" },
-    evaluate:    { fr: "Évaluer",                  en: "Evaluate",              ar: "تقييم" },
-    progress:    { fr: "Progression",              en: "Progress",              ar: "التقدم" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("teacherStudentsListClient")
 
   const statusLabelMap: Record<string, { label: string; bg: string; color: string }> = {
     IN_PROGRESS:              { label: L === "ar" ? "جارٍ" : L === "en" ? "In progress" : "En cours",       bg: "bg-blue-100",   color: "text-blue-700" },

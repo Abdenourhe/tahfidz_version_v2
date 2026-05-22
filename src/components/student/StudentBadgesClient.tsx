@@ -1,7 +1,7 @@
 "use client"
 // src/components/student/StudentBadgesClient.tsx
 
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 interface Badge {
   id: string
@@ -28,20 +28,7 @@ export function StudentBadgesClient({ earnedBadges, allBadges, totalStars, forma
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-  const T = {
-    title:        { fr: "Mes badges",               en: "My badges",             ar: "شاراتي" },
-    subtitle:     { fr: `${earnedBadges.length} / ${allBadges.length} badges obtenus · ⭐ ${totalStars} étoiles`,
-                    en: `${earnedBadges.length} / ${allBadges.length} badges earned · ⭐ ${totalStars} stars`,
-                    ar: `${earnedBadges.length} / ${allBadges.length} شارة محصلة · ⭐ ${totalStars} نجمة` },
-    earned:       { fr: "Badges obtenus",           en: "Earned badges",         ar: "الشارات المحصلة" },
-    toUnlock:     { fr: "Badges à débloquer",       en: "Badges to unlock",      ar: "الشارات المطلوب فتحها" },
-    earnedOn:     { fr: "Obtenu le",                en: "Earned on",             ar: "تم الحصول عليها في" },
-    unknown:      { fr: "???",                      en: "???",                   ar: "???" },
-    desc:         { fr: "Les badges sont attribués pour les efforts et la régularité",
-                    en: "Badges are awarded for effort and regularity",
-                    ar: "يتم منح الشارات للجهد والانتظام" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("studentBadgesClient")
 
   const rarityConfig: Record<string, { label: string; gradient: string; border: string }> = {
     COMMON:    { label: L === "ar" ? "شائع" : L === "en" ? "Common" : "Commun", gradient: "from-gray-100 to-gray-200", border: "border-gray-300" },

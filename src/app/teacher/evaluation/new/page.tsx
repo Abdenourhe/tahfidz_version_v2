@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Loader2, CheckCircle2, Star, Users, User, Calendar, ArrowLeft } from "lucide-react"
 import { calculateFinalScore } from "@/lib/utils"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 interface Student { id: string; user: { fullName: string }; group: { name: string } | null }
 interface Group   { id: string; name: string; students: { id: string; user: { fullName: string } }[] }
@@ -31,85 +31,7 @@ export default function NewEvaluationPage() {
   const L = locale as "fr" | "en" | "ar"
   const router=useRouter(); const sp=useSearchParams()
 
-  const T = {
-    back:         { fr: "Retour",                   en: "Back",                  ar: "رجوع" },
-    titleSelect:  { fr: "Évaluation / Examen",      en: "Evaluation / Exam",     ar: "تقييم / اختبار" },
-    titleStudent: { fr: "Évaluation individuelle",  en: "Individual evaluation", ar: "تقييم فردي" },
-    titleGroup:   { fr: "Évaluation de groupe",     en: "Group evaluation",      ar: "تقييم جماعي" },
-    titleExam:    { fr: "Planifier un examen",      en: "Schedule an exam",      ar: "جدولة اختبار" },
-    byStudent:    { fr: "Par élève",                en: "By student",            ar: "حسب الطالب" },
-    byStudentDesc:{ fr: "Évaluer un élève individuellement sur une sourate précise",
-                    en: "Evaluate a student individually on a specific surah",
-                    ar: "تقييم طالب فردياً على سورة محددة" },
-    byGroup:      { fr: "Par groupe",               en: "By group",              ar: "حسب المجموعة" },
-    byGroupDesc:  { fr: "Saisir les notes pour tous les élèves d'un groupe",
-                    en: "Enter grades for all students in a group",
-                    ar: "إدخال الدرجات لجميع طلاب مجموعة" },
-    scheduleExam: { fr: "Planifier examen",         en: "Schedule exam",         ar: "جدولة اختبار" },
-    scheduleDesc: { fr: "Prévoir un examen et notifier élèves et parents",
-                    en: "Plan an exam and notify students and parents",
-                    ar: "تخطيط اختبار وإشعار الطلاب وأولياء الأمور" },
-    studentSurah: { fr: "Élève et sourate",         en: "Student and surah",     ar: "الطالب والسورة" },
-    selectStudent:{ fr: "— Choisir un élève —",     en: "— Choose a student —",  ar: "— اختر طالباً —" },
-    noActive:     { fr: "Aucune sourate active. Assignez une sourate depuis « Progression ».",
-                    en: "No active surah. Assign a surah from « Progress ».",
-                    ar: "لا توجد سورة نشطة. عين سورة من « التقدم »." },
-    type:         { fr: "Type",                     en: "Type",                  ar: "النوع" },
-    live:         { fr: "🎤 Direct",                en: "🎤 Live",               ar: "🎤 مباشر" },
-    recorded:     { fr: "🎵 Enregistrement",        en: "🎵 Recording",          ar: "🎵 تسجيل" },
-    test:         { fr: "📝 Test",                  en: "📝 Test",               ar: "📝 اختبار" },
-    criteria:     { fr: "Critères",                 en: "Criteria",              ar: "المعايير" },
-    memorization: { fr: "Mémorisation",             en: "Memorization",          ar: "الحفظ" },
-    memorizationDesc:{ fr: "Précision et complétude", en: "Accuracy and completeness", ar: "الدقة والاكتمال" },
-    tajweed:      { fr: "Tajweed",                  en: "Tajweed",               ar: "التجويد" },
-    tajweedDesc:  { fr: "Application des règles",   en: "Rule application",      ar: "تطبيق القواعد" },
-    fluency:      { fr: "Fluidité",                 en: "Fluency",               ar: "الطلاقة" },
-    fluencyDesc:  { fr: "Rythme et aisance",        en: "Rhythm and ease",       ar: "الإيقاع والسلاسة" },
-    makharij:     { fr: "Makharij",                 en: "Makharij",              ar: "المخارج" },
-    makharijDesc: { fr: "Prononciation",            en: "Pronunciation",         ar: "النطق" },
-    finalScore:   { fr: "Score final",              en: "Final score",           ar: "الدرجة النهائية" },
-    scoreFormula: { fr: "Mémo 40% · Tajweed 30% · Fluidité 20% · Makharij 10%",
-                    en: "Memo 40% · Tajweed 30% · Fluency 20% · Makharij 10%",
-                    ar: "الحفظ 40% · التجويد 30% · الطلاقة 20% · المخارج 10%" },
-    teacherNotes: { fr: "Notes enseignant",         en: "Teacher notes",         ar: "ملاحظات المعلم" },
-    observations: { fr: "Observations…",            en: "Observations…",         ar: "ملاحظات…" },
-    decision:     { fr: "Décision",                 en: "Decision",              ar: "القرار" },
-    approved:     { fr: "✓ Approuvé",               en: "✓ Approved",            ar: "✓ مُصادَق" },
-    revision:     { fr: "↺ Révision",               en: "↺ Revision",            ar: "↺ مراجعة" },
-    rejected:     { fr: "✗ Rejeté",                 en: "✗ Rejected",            ar: "✗ مرفوض" },
-    save:         { fr: "Enregistrer l'évaluation",  en: "Save evaluation",       ar: "حفظ التقييم" },
-    saving:       { fr: "Enregistrement…",          en: "Saving…",               ar: "جارٍ الحفظ…" },
-    backBtn:      { fr: "Retour",                   en: "Back",                  ar: "رجوع" },
-    groupSelect:  { fr: "Groupe",                   en: "Group",                 ar: "المجموعة" },
-    gradesByStudent:{ fr: "Notes par élève",        en: "Grades by student",     ar: "الدرجات حسب الطالب" },
-    init75:       { fr: "Initialiser à 75",         en: "Initialize to 75",      ar: "تهيئة إلى 75" },
-    memorization2:{ fr: "Mémorisation",             en: "Memorization",          ar: "الحفظ" },
-    tajweed2:     { fr: "Tajweed",                  en: "Tajweed",               ar: "التجويد" },
-    saveGroup:    { fr: "Enregistrer le groupe",    en: "Save group",            ar: "حفظ المجموعة" },
-    examDetails:  { fr: "Détails de l'examen",      en: "Exam details",          ar: "تفاصيل الاختبار" },
-    titleFr:      { fr: "Titre (français) *",       en: "Title (French) *",      ar: "العنوان (فرنسي) *" },
-    titleAr:      { fr: "Titre (arabe)",            en: "Title (Arabic)",          ar: "العنوان (عربي)" },
-    examGroup:    { fr: "Groupe *",                 en: "Group *",               ar: "المجموعة *" },
-    dateTime:     { fr: "Date et heure *",          en: "Date and time *",       ar: "التاريخ والوقت *" },
-    duration:     { fr: "Durée (minutes)",          en: "Duration (minutes)",    ar: "المدة (دقائق)" },
-    instructions: { fr: "Instructions",             en: "Instructions",          ar: "التعليمات" },
-    instructionsPlaceholder:{ fr: "Sourates, matériaux autorisés…", en: "Surahs, allowed materials…", ar: "السور، المواد المسموحة…" },
-    autoNotify:   { fr: "Notification automatique → élèves du groupe + leurs parents.",
-                    en: "Auto notification → group students + their parents.",
-                    ar: "إشعار تلقائي → طلاب المجموعة + أولياء أمورهم." },
-    schedule:     { fr: "Planifier l'examen",       en: "Schedule exam",         ar: "جدولة الاختبار" },
-    scheduling:   { fr: "Planification…",           en: "Scheduling…",           ar: "جارٍ الجدولة…" },
-    redirecting:  { fr: "Redirection…",              en: "Redirecting…",           ar: "جارٍ التحويل…" },
-    saved:        { fr: "Évaluation enregistrée !",  en: "Evaluation saved!",     ar: "تم حفظ التقييم!" },
-    examSaved:    { fr: "Examen planifié ! Élèves et parents notifiés.",
-                    en: "Exam scheduled! Students and parents notified.",
-                    ar: "تم جدولة الاختبار! تم إشعار الطلاب وأولياء الأمور." },
-    errorSelect:  { fr: "Sélectionnez un élève et une sourate", en: "Select a student and a surah", ar: "اختر طالباً وسورة" },
-    errorGrade:   { fr: "Saisissez au moins une note", en: "Enter at least one grade", ar: "أدخل درجة واحدة على الأقل" },
-    errorExam:    { fr: "Titre, groupe et date requis", en: "Title, group and date required", ar: "العنوان والمجموعة والتاريخ مطلوبة" },
-    error:        { fr: "Erreur",                   en: "Error",                 ar: "خطأ" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("evaluation_new")
 
   const initSid=sp.get("studentId")||""; const initPid=sp.get("progressId")||""
   const [mode,setMode]=useState<Mode>(initSid?"student":"select")

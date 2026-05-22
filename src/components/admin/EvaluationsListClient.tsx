@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { ArrowLeft, ClipboardList, Star, Check, RotateCcw, X } from "lucide-react"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 interface Evaluation {
   id: string
@@ -40,24 +40,7 @@ export function EvaluationsListClient({ evaluations, teachers, stats, decisionFi
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-  const T = {
-    title:        { fr: "Toutes les évaluations",   en: "All evaluations",      ar: "جميع التقييمات" },
-    subtitle:     { fr: "évaluations · Score moyen", en: "evaluations · Avg score", ar: "تقييمات · متوسط الدرجات" },
-    all:          { fr: "Toutes",                   en: "All",                  ar: "الكل" },
-    approved:     { fr: "Approuvées",              en: "Approved",             ar: "مُصادَقة" },
-    revision:     { fr: "Révision",                 en: "Revision",             ar: "مراجعة" },
-    rejected:     { fr: "Rejetées",                 en: "Rejected",             ar: "مرفوضة" },
-    avg:          { fr: "Score moy.",               en: "Avg. score",           ar: "متوسط الدرجات" },
-    total:        { fr: "Total",                    en: "Total",                ar: "الإجمالي" },
-    noEval:       { fr: "Aucune évaluation",        en: "No evaluations",         ar: "لا توجد تقييمات" },
-    student:      { fr: "Élève",                    en: "Student",              ar: "الطالب" },
-    group:        { fr: "Groupe",                   en: "Group",                ar: "المجموعة" },
-    teacher:      { fr: "Prof.",                    en: "Teacher",              ar: "أ." },
-    by:           { fr: "par",                      en: "by",                   ar: "بواسطة" },
-    date:         { fr: "Date",                     en: "Date",                 ar: "التاريخ" },
-    outOf:        { fr: "/100",                     en: "/100",                 ar: "/100" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("evaluationsListClient")
 
   const DECISIONS: Record<string, { label: string; cls: string; icon: any }> = {
     APPROVED:       { label: L === "ar" ? "مُصادَق" : L === "en" ? "Approved" : "Approuvé",  cls: "bg-green-100 text-green-700 border-green-300",   icon: Check },

@@ -4,7 +4,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 import {
   Plus, Search, Users, ArrowLeft, BookOpen, Star,
   ClipboardList,
@@ -39,23 +39,7 @@ export function TeachersListClient({ teachers, total, search }: ListProps) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-  const T = {
-    title:        { fr: "Enseignants",              en: "Teachers",              ar: "المعلمون" },
-    subtitle:     { fr: `${total} enseignant${total>1?"s":""}`,
-                    en: `${total} teacher${total>1?"s":""}`,
-                    ar: `${total} معلم` },
-    add:          { fr: "Ajouter un enseignant",    en: "Add teacher",           ar: "إضافة معلم" },
-    search:       { fr: "Rechercher par nom ou email…", en: "Search by name or email…", ar: "بحث بالاسم أو البريد…" },
-    noTeacher:    { fr: "Aucun enseignant",         en: "No teachers",           ar: "لا يوجد معلمون" },
-    students:     { fr: "élèves",                   en: "students",              ar: "طلاب" },
-    groups:       { fr: "groupes",                  en: "groups",                ar: "مجموعات" },
-    evaluations:  { fr: "évaluations",              en: "evaluations",           ar: "تقييمات" },
-    statusActive: { fr: "Actif",                    en: "Active",                ar: "نشط" },
-    statusInact:  { fr: "Inactif",                  en: "Inactive",              ar: "غير نشط" },
-    enrolled:     { fr: "Inscrit le",               en: "Enrolled on",           ar: "تاريخ التسجيل" },
-    view:         { fr: "Voir →",                   en: "View →",                ar: "← عرض" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("teachers_1")
 
   return (
     <div className="space-y-6">
@@ -144,33 +128,7 @@ export function TeacherDetailClient({ teacher, school, avgScore }: DetailProps) 
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-  const T = {
-    back:           { fr: "Retour",                   en: "Back",                  ar: "رجوع" },
-    active:         { fr: "Actif",                    en: "Active",                ar: "نشط" },
-    inactive:       { fr: "Inactif",                  en: "Inactive",              ar: "غير نشط" },
-    specialization: { fr: "Spécialisation",           en: "Specialization",        ar: "التخصص" },
-    phone:          { fr: "Téléphone",                en: "Phone",                 ar: "الهاتف" },
-    gender:         { fr: "Genre",                    en: "Gender",                ar: "الجنس" },
-    male:           { fr: "Masculin",                 en: "Male",                  ar: "ذكر" },
-    female:         { fr: "Féminin",                  en: "Female",                ar: "أنثى" },
-    unknown:        { fr: "—",                        en: "—",                     ar: "—" },
-    enrolled:       { fr: "Inscrit le",               en: "Enrolled on",           ar: "تاريخ التسجيل" },
-    lastLogin:      { fr: "Dernière connexion",       en: "Last login",            ar: "آخر تسجيل دخول" },
-    school:         { fr: "École",                    en: "School",                ar: "المدرسة" },
-    groups:         { fr: "Groupes",                  en: "Groups",                ar: "المجموعات" },
-    students:       { fr: "Élèves",                   en: "Students",              ar: "الطلاب" },
-    evaluations:    { fr: "Évaluations",              en: "Evaluations",           ar: "التقييمات" },
-    avgScore:       { fr: "Score moyen",              en: "Average score",         ar: "المعدل" },
-    recentEval:     { fr: "Évaluations récentes",     en: "Recent evaluations",    ar: "التقييمات الأخيرة" },
-    student:        { fr: "Élève",                    en: "Student",               ar: "الطالب" },
-    surah:          { fr: "Sourate",                  en: "Surah",                 ar: "السورة" },
-    score:          { fr: "Score",                    en: "Score",                 ar: "النتيجة" },
-    noEval:         { fr: "Aucune évaluation",        en: "No evaluation",         ar: "لا يوجد تقييم" },
-    manageGroup:    { fr: "Gérer →",                  en: "Manage →",              ar: "← إدارة" },
-    viewStudent:    { fr: "Voir →",                   en: "View →",                ar: "← عرض" },
-    memorized:      { fr: "sourates mémorisées",      en: "memorized surahs",      ar: "سور محفوظة" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("teachers_2")
 
   const genderLabel = (g: string | null) => {
     if (g === "MALE") return t("male")

@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Megaphone, Pin, Plus, Pencil, Trash2, Loader2 } from "lucide-react"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 interface Announcement {
   id: string; title: string; titleAr?: string | null; type: string
@@ -25,24 +25,7 @@ export default function AdminAnnouncementsPage() {
   const [deleting, setDeleting] = useState<string | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
 
-  const T = {
-    title:        { fr: "Annonces",                 en: "Announcements",         ar: "الإعلانات" },
-    subtitle:     { fr: "annonce",                  en: "announcement",          ar: "إعلان" },
-    new:          { fr: "Nouvelle annonce",         en: "New announcement",      ar: "إعلان جديد" },
-    noAnn:        { fr: "Aucune annonce",           en: "No announcements",      ar: "لا توجد إعلانات" },
-    edit:         { fr: "Modifier",                 en: "Edit",                  ar: "تعديل" },
-    delete:       { fr: "Supprimer",                en: "Delete",                ar: "حذف" },
-    confirm:      { fr: "Confirmer",                en: "Confirm",               ar: "تأكيد" },
-    cancel:       { fr: "Annuler",                  en: "Cancel",                ar: "إلغاء" },
-    by:           { fr: "Par",                      en: "By",                    ar: "بواسطة" },
-    on:           { fr: "le",                       en: "on",                    ar: "في" },
-    expires:      { fr: "Expire le",                en: "Expires on",            ar: "ينتهي في" },
-    target:       { fr: "Cible",                    en: "Target",                ar: "الهدف" },
-    pinned:       { fr: "Épinglé",                  en: "Pinned",                ar: "مثبَّت" },
-    draft:        { fr: "Brouillon",                en: "Draft",                 ar: "مسودة" },
-    expired:      { fr: "Expirée",                  en: "Expired",               ar: "منتهية" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("announcements")
 
   const TYPE_CONFIG: Record<string, { label: string; color: string }> = {
     GENERAL:     { label: L === "ar" ? "عام" : L === "en" ? "General" : "Général",   color: "bg-gray-100 text-gray-600" },

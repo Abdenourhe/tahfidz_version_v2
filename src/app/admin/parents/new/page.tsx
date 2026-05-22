@@ -14,7 +14,7 @@ import {
   EyeOff,
   AlertCircle
 } from "lucide-react"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 const schema = z.object({
   email: z.string().email("Email invalide"),
@@ -33,39 +33,7 @@ export default function NewParentPage() {
   const L = locale as "fr" | "en" | "ar"
   const router = useRouter()
 
-  const T = {
-    back:         { fr: "Retour",                   en: "Back",                  ar: "رجوع" },
-    title:        { fr: "Ajouter un parent",        en: "Add a parent",          ar: "إضافة ولي أمر" },
-    subtitle:     { fr: "Le parent pourra ensuite lier son enfant via le code élève",
-                    en: "The parent can then link their child via the student code",
-                    ar: "سيتمكن الولي من ربط طفله لاحقاً عبر رمز الطالب" },
-    personalInfo: { fr: "Informations personnelles", en: "Personal information", ar: "المعلومات الشخصية" },
-    fullName:     { fr: "Nom complet *",            en: "Full name *",           ar: "الاسم الكامل *" },
-    fullNamePlaceholder: { fr: "Hassan Benali",     en: "Hassan Benali",         ar: "حسن بن علي" },
-    fullNameAr:   { fr: "Nom en arabe",             en: "Name in Arabic",        ar: "الاسم بالعربية" },
-    fullNameArPlaceholder: { fr: "حسن بن علي",     en: "حسن بن علي",            ar: "حسن بن علي" },
-    gender:       { fr: "Genre",                    en: "Gender",                ar: "الجنس" },
-    male:         { fr: "Masculin",                 en: "Male",                  ar: "ذكر" },
-    female:       { fr: "Féminin",                  en: "Female",                ar: "أنثى" },
-    phone:        { fr: "Téléphone",                en: "Phone",                 ar: "الهاتف" },
-    phonePlaceholder: { fr: "+1 418-XXX-XXXX",     en: "+1 418-XXX-XXXX",       ar: "+1 418-XXX-XXXX" },
-    account:      { fr: "Accès au compte",          en: "Account access",        ar: "الوصول إلى الحساب" },
-    email:        { fr: "Adresse email *",          en: "Email address *",       ar: "عنوان البريد *" },
-    emailPlaceholder: { fr: "parent@example.com",  en: "parent@example.com",    ar: "ولي@example.com" },
-    password:     { fr: "Mot de passe *",           en: "Password *",            ar: "كلمة المرور *" },
-    passwordPlaceholder: { fr: "Minimum 6 caractères", en: "Minimum 6 characters", ar: "6 أحرف على الأقل" },
-    linkInfo:     { fr: "Liaison avec les enfants",  en: "Linking with children", ar: "الربط مع الأطفال" },
-    linkDesc:     { fr: "Une fois le compte créé, le parent pourra se connecter et lier ses enfants en saisissant leur code élève depuis son tableau de bord.",
-                    en: "Once the account is created, the parent can log in and link their children by entering their student code from their dashboard.",
-                    ar: "بمجرد إنشاء الحساب، سيتمكن الولي من تسجيل الدخول وربط أطفاله بإدخال رمز الطالب من لوحة التحكم." },
-    cancel:       { fr: "Annuler",                  en: "Cancel",                ar: "إلغاء" },
-    create:       { fr: "Créer le parent",          en: "Create parent",         ar: "إنشاء الولي" },
-    creating:     { fr: "Création…",                en: "Creating…",             ar: "جارٍ الإنشاء…" },
-    created:      { fr: "Parent créé avec succès !", en: "Parent created successfully!", ar: "تم إنشاء الولي بنجاح!" },
-    redirecting:  { fr: "Redirection…",             en: "Redirecting…",          ar: "جارٍ إعادة التوجيه…" },
-    error:        { fr: "Erreur",                   en: "Error",                 ar: "خطأ" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("parents_new")
 
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)

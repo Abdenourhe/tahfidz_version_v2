@@ -1198,6 +1198,53 @@ export const translations = {
     places:          { fr: "places", en: "places", ar: "مقاعد" },
     students:        { fr: "élève(s)", en: "student(s)", ar: "طالب/طلاب" },
   },
+
+  // ─── groupDetailClient (components/admin/GroupDetailClient.tsx) ─────────────────────────────────────────────
+  groupDetailClient: {
+    back:            { fr: "Retour", en: "Back", ar: "رجوع" },
+    active:          { fr: "Actif", en: "Active", ar: "نشط" },
+    inactive:        { fr: "Inactif", en: "Inactive", ar: "غير نشط" },
+    info:            { fr: "Informations", en: "Information", ar: "المعلومات" },
+    teacher:         { fr: "Enseignant", en: "Teacher", ar: "المعلم" },
+    viewProfile:     { fr: "Voir le profil", en: "View profile", ar: "عرض الملف" },
+    occupation:      { fr: "Occupation", en: "Occupation", ar: "الإشغال" },
+    memorized:       { fr: "Mémorisées", en: "Memorized", ar: "محفوظة" },
+    avgStars:        { fr: "Moy. étoiles", en: "Avg. stars", ar: "متوسط النجوم" },
+    schedule:        { fr: "Horaires", en: "Schedule", ar: "الجدول الزمني" },
+    editSchedule:    { fr: "Modifier les horaires", en: "Edit schedule", ar: "تعديل الجدول" },
+    saveSchedule:    { fr: "Enregistrer", en: "Save", ar: "حفظ" },
+    cancel:          { fr: "Annuler", en: "Cancel", ar: "إلغاء" },
+    noSchedule:      { fr: "Aucun horaire défini", en: "No schedule set", ar: "لا يوجد جدول" },
+    actions:         { fr: "Actions", en: "Actions", ar: "الإجراءات" },
+    attendance:      { fr: "Présences", en: "Attendance", ar: "الحضور" },
+    addStudent:      { fr: "Ajouter un élève", en: "Add student", ar: "إضافة طالب" },
+    level:           { fr: "Niveau", en: "Level", ar: "المستوى" },
+    beginner:        { fr: "Débutant", en: "Beginner", ar: "مبتدئ" },
+    intermediate:    { fr: "Intermédiaire", en: "Intermediate", ar: "متوسط" },
+    advanced:        { fr: "Avancé", en: "Advanced", ar: "متقدم" },
+    students:        { fr: "Élèves", en: "Students", ar: "الطلاب" },
+  },
+
+  // ─── studentDashboardClient (components/student/StudentDashboardClient.tsx) ─────────────────────────────────────────────
+  studentDashboardClient: {
+    noGroup:         { fr: "Sans groupe", en: "No group", ar: "بدون مجموعة" },
+    noTeacher:       { fr: "Pas d'enseignant", en: "No teacher", ar: "بدون معلم" },
+    prof:            { fr: "Prof.", en: "Teacher", ar: "أ." },
+    stars:           { fr: "étoiles totales", en: "total stars", ar: "نجوم إجمالية" },
+    memorized:       { fr: "Mémorisées", en: "Memorized", ar: "محفوظة" },
+    daysStreak:      { fr: "Jours consécutifs", en: "Consecutive days", ar: "أيام متتالية" },
+    badges:          { fr: "Badges", en: "Badges", ar: "الشارات" },
+    inProgress:      { fr: "Mémorisation en cours", en: "In-progress memorization", ar: "الحفظ الجاري" },
+    seeAll:          { fr: "Voir tout →", en: "See all →", ar: "← عرض الكل" },
+    noProgress:      { fr: "Aucune mémorisation en cours", en: "No memorization in progress", ar: "لا يوجد حفظ جارٍ" },
+    verse:           { fr: "Verset", en: "Verse", ar: "آية" },
+    myBadges:        { fr: "Mes badges", en: "My badges", ar: "شاراتي" },
+    noBadge:         { fr: "Continuez vos efforts !", en: "Keep it up!", ar: "واصل جهودك!" },
+    recentAtt:       { fr: "Présences récentes", en: "Recent attendance", ar: "الحضور الأخير" },
+    noAtt:           { fr: "Aucune donnée", en: "No data", ar: "لا توجد بيانات" },
+    announcements:   { fr: "Annonces", en: "Announcements", ar: "الإعلانات" },
+    pinned:          { fr: "Épinglé", en: "Pinned", ar: "مثبَّت" },
+  },
 } as const
 
 // Type helpers

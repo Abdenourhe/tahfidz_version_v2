@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { BookOpen, Users } from "lucide-react"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 interface Group {
   id: string
@@ -28,24 +28,7 @@ export function TeacherGroupsListClient({ groups }: Props) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-  const T = {
-    title:        { fr: "Mes groupes",              en: "My groups",             ar: "مجموعاتي" },
-    subtitle:     { fr: `${groups.length} groupe${groups.length>1?"s":""}`,
-                    en: `${groups.length} group${groups.length>1?"s":""}`,
-                    ar: `${groups.length} مجموعة` },
-    noGroup:      { fr: "Aucun groupe assigné",     en: "No group assigned",     ar: "لا توجد مجموعات مخصصة" },
-    level:        { fr: "Niveau",                   en: "Level",                 ar: "المستوى" },
-    beginner:     { fr: "Débutant",                 en: "Beginner",              ar: "مبتدئ" },
-    intermediate: { fr: "Intermédiaire",            en: "Intermediate",          ar: "متوسط" },
-    advanced:     { fr: "Avancé",                   en: "Advanced",              ar: "متقدم" },
-    students:     { fr: "Élèves",                   en: "Students",              ar: "الطلاب" },
-    avgSurahs:    { fr: "Moy. sour.",               en: "Avg. surahs",           ar: "متوسط السور" },
-    max:          { fr: "Max",                      en: "Max",                   ar: "الحد الأقصى" },
-    occupation:   { fr: "Occupation",               en: "Occupation",            ar: "الإشغال" },
-    manage:       { fr: "Gérer le groupe",           en: "Manage group",          ar: "إدارة المجموعة" },
-    noStudent:    { fr: "Aucun élève",              en: "No students",           ar: "لا يوجد طلاب" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("teacherGroupsListClient")
 
   const levelMap: Record<string, { label: string; color: string }> = {
     beginner:     { label: t("beginner"),     color: "bg-green-100 text-green-700" },

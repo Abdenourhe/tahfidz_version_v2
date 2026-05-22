@@ -4,7 +4,7 @@
 import Link from "next/link"
 import { useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { ArrowLeft, CalendarCheck, Users, Pencil, Check, X, Loader2 } from "lucide-react"
 import { GroupStudentList } from "@/components/admin/GroupStudentList"
 import { GroupRename } from "@/components/admin/GroupRename"
@@ -26,31 +26,7 @@ export function GroupDetailClient({ group }: Props) {
   const [savingSchedule, setSavingSchedule]   = useState(false)
   const [scheduleError, setScheduleError]     = useState<string | null>(null)
 
-  const T = {
-    back:         { fr: "Retour",                   en: "Back",                  ar: "رجوع" },
-    active:       { fr: "Actif",                    en: "Active",                ar: "نشط" },
-    inactive:     { fr: "Inactif",                  en: "Inactive",              ar: "غير نشط" },
-    info:         { fr: "Informations",             en: "Information",           ar: "المعلومات" },
-    teacher:      { fr: "Enseignant",               en: "Teacher",               ar: "المعلم" },
-    viewProfile:  { fr: "Voir le profil",           en: "View profile",          ar: "عرض الملف" },
-    occupation:   { fr: "Occupation",               en: "Occupation",            ar: "الإشغال" },
-    memorized:    { fr: "Mémorisées",               en: "Memorized",             ar: "محفوظة" },
-    avgStars:     { fr: "Moy. étoiles",             en: "Avg. stars",            ar: "متوسط النجوم" },
-    schedule:     { fr: "Horaires",                 en: "Schedule",              ar: "الجدول الزمني" },
-    editSchedule: { fr: "Modifier les horaires",    en: "Edit schedule",         ar: "تعديل الجدول" },
-    saveSchedule: { fr: "Enregistrer",              en: "Save",                  ar: "حفظ" },
-    cancel:       { fr: "Annuler",                  en: "Cancel",                ar: "إلغاء" },
-    noSchedule:   { fr: "Aucun horaire défini",     en: "No schedule set",       ar: "لا يوجد جدول" },
-    actions:      { fr: "Actions",                  en: "Actions",               ar: "الإجراءات" },
-    attendance:   { fr: "Présences",                en: "Attendance",            ar: "الحضور" },
-    addStudent:   { fr: "Ajouter un élève",         en: "Add student",           ar: "إضافة طالب" },
-    level:        { fr: "Niveau",                   en: "Level",                 ar: "المستوى" },
-    beginner:     { fr: "Débutant",                 en: "Beginner",              ar: "مبتدئ" },
-    intermediate: { fr: "Intermédiaire",            en: "Intermediate",          ar: "متوسط" },
-    advanced:     { fr: "Avancé",                   en: "Advanced",              ar: "متقدم" },
-    students:     { fr: "Élèves",                   en: "Students",              ar: "الطلاب" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("groupDetailClient")
 
   const DAY_LABELS: Record<string, { fr: string; en: string; ar: string }> = {
     monday:    { fr: "Lundi",    en: "Monday",    ar: "الإثنين" },

@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { createGroupSchema } from "@/lib/validations/auth"
 import { z } from "zod"
 import { Loader2, ArrowLeft, CheckCircle2, Plus, X } from "lucide-react"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 type CreateGroupInput = z.input<typeof createGroupSchema>
 
@@ -19,37 +19,7 @@ export default function NewGroupPage() {
   const L = locale as "fr" | "en" | "ar"
   const router = useRouter()
 
-  const T = {
-    back:         { fr: "Retour",                   en: "Back",                  ar: "رجوع" },
-    title:        { fr: "Créer un groupe",          en: "Create a group",        ar: "إنشاء مجموعة" },
-    subtitle:     { fr: "Configurer un nouveau groupe de mémorisation",
-                    en: "Configure a new memorization group",
-                    ar: "إعداد مجموعة حفظ جديدة" },
-    info:         { fr: "Informations du groupe",   en: "Group information",     ar: "معلومات المجموعة" },
-    name:         { fr: "Nom du groupe *",          en: "Group name *",          ar: "اسم المجموعة *" },
-    namePlaceholder:{ fr: "Groupe Avancé A",       en: "Advanced Group A",      ar: "المجموعة المتقدمة أ" },
-    nameAr:       { fr: "Nom en arabe",             en: "Name in Arabic",        ar: "الاسم بالعربية" },
-    nameArPlaceholder:{ fr: "المجموعة أ",          en: "المجموعة أ",            ar: "المجموعة أ" },
-    level:        { fr: "Niveau *",                 en: "Level *",               ar: "المستوى *" },
-    beginner:     { fr: "Débutant",                 en: "Beginner",              ar: "مبتدئ" },
-    intermediate: { fr: "Intermédiaire",            en: "Intermediate",          ar: "متوسط" },
-    advanced:     { fr: "Avancé",                   en: "Advanced",              ar: "متقدم" },
-    maxCapacity:  { fr: "Capacité maximale *",      en: "Max capacity *",        ar: "الطاقة القصوى *" },
-    teacher:      { fr: "Enseignant responsable *",  en: "Responsible teacher *", ar: "المعلم المسؤول *" },
-    selectTeacher:{ fr: "— Sélectionner un enseignant —", en: "— Select a teacher —", ar: "— اختر معلماً —" },
-    teacherPlaceholder:{ fr: "Choisir un enseignant", en: "Choose a teacher", ar: "اختر معلماً" },
-    schedule:     { fr: "Horaires des sessions",    en: "Session schedules",     ar: "جداول الجلسات" },
-    scheduleDesc: { fr: "Ajoutez les jours et horaires de ce groupe", en: "Add the days and times for this group", ar: "أضف أيام وأوقات هذه المجموعة" },
-    day:          { fr: "Jour",                     en: "Day",                   ar: "اليوم" },
-    selectDay:    { fr: "Jour",                     en: "Day",                   ar: "اليوم" },
-    time:         { fr: "Heure",                    en: "Time",                  ar: "الوقت" },
-    cancel:       { fr: "Annuler",                  en: "Cancel",                ar: "إلغاء" },
-    create:       { fr: "Créer le groupe",          en: "Create group",          ar: "إنشاء المجموعة" },
-    creating:     { fr: "Création…",                en: "Creating…",             ar: "جارٍ الإنشاء…" },
-    created:      { fr: "Groupe créé !",            en: "Group created!",        ar: "تم إنشاء المجموعة!" },
-    error:        { fr: "Erreur",                   en: "Error",                 ar: "خطأ" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("groups_new")
 
   const DAYS = [
     { key: "monday",    label: L === "ar" ? "الإثنين" : L === "en" ? "Monday" : "Lundi" },

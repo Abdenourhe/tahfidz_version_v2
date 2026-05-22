@@ -1,7 +1,7 @@
 "use client"
 // src/components/parent/ParentDashboardClient.tsx
 
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 interface Progress {
   id: string
@@ -44,24 +44,7 @@ export function ParentDashboardClient({ todayDate, children }: Props) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-  const T = {
-    title:          { fr: "Suivi de mes enfants", en: "My children's progress", ar: "متابعة أبنائي" },
-    noChild:        { fr: "Aucun enfant lié",       en: "No linked child",       ar: "لا يوجد طفل مرتبط" },
-    noChildDesc:    { fr: "Demandez à l'administrateur de lier votre compte.",
-                      en: "Ask the administrator to link your account.",
-                      ar: "اطلب من المدير ربط حسابك بحساب طفلك." },
-    memorized:      { fr: "Mémorisées",             en: "Memorized",             ar: "محفوظة" },
-    streak:         { fr: "Streak",                 en: "Streak",                ar: "التسلسل" },
-    badges:         { fr: "Badges",                 en: "Badges",                ar: "الشارات" },
-    stars:          { fr: "étoiles",                en: "stars",                 ar: "نجوم" },
-    inProgress:     { fr: "Mémorisations en cours", en: "In-progress memorizations", ar: "الحفظ الجاري" },
-    noProgress:     { fr: "Aucune mémorisation en cours", en: "No memorization in progress", ar: "لا يوجد حفظ جارٍ" },
-    lastBadges:     { fr: "Derniers badges",        en: "Latest badges",         ar: "آخر الشارات" },
-    noGroup:        { fr: "Sans groupe",            en: "No group",              ar: "بدون مجموعة" },
-    noTeacher:      { fr: "Pas d'enseignant",       en: "No teacher",            ar: "بدون معلم" },
-    prof:           { fr: "Prof.",                  en: "Teacher",               ar: "أ." },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("parentDashboardClient")
 
   return (
     <div className="space-y-8">

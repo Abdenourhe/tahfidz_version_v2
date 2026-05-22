@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { useState } from "react"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { Users, BookOpen, Star, ClipboardList, Phone, Mail, GraduationCap, CalendarCheck, Bug } from "lucide-react"
 import { FeedbackModal } from "@/components/shared/FeedbackModal"
 
@@ -60,35 +60,7 @@ export function TeacherProfileClient({ teacher, totalMemorized, avgScore, format
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-  const T = {
-    title:        { fr: "Mon profil",               en: "My profile",            ar: "ملفي الشخصي" },
-    memberSince:  { fr: "Membre depuis",            en: "Member since",          ar: "عضو منذ" },
-    lastLogin:    { fr: "Dernière connexion",       en: "Last login",            ar: "آخر تسجيل دخول" },
-    maxCapacity:  { fr: "Capacité max.",            en: "Max capacity",          ar: "الطاقة القصوى" },
-    students:     { fr: "Élèves",                   en: "Students",              ar: "الطلاب" },
-    groups:       { fr: "Groupes",                  en: "Groups",                ar: "المجموعات" },
-    memorized:    { fr: "Mémorisées",               en: "Memorized",             ar: "محفوظة" },
-    avgScore:     { fr: "Score moy.",               en: "Avg. score",            ar: "متوسط الدرجات" },
-    myGroups:     { fr: "Mes groupes",              en: "My groups",             ar: "مجموعاتي" },
-    noGroup:      { fr: "Aucun groupe assigné",     en: "No group assigned",     ar: "لا توجد مجموعات مخصصة" },
-    manage:       { fr: "Gérer →",                  en: "Manage →",              ar: "← إدارة" },
-    students2:    { fr: "Élèves",                   en: "Students",              ar: "طلاب" },
-    avgSurahs:    { fr: "Moy. sour.",               en: "Avg. surahs",           ar: "متوسط السور" },
-    avgStars:     { fr: "Moy. ★",                   en: "Avg. stars",            ar: "متوسط النجوم" },
-    quickActions: { fr: "Actions rapides",          en: "Quick actions",         ar: "إجراءات سريعة" },
-    myStudents:   { fr: "Mes élèves",               en: "My students",           ar: "طلابي" },
-    attendance:   { fr: "Présences",                en: "Attendance",            ar: "الحضور" },
-    progress:     { fr: "Progression",              en: "Progress",              ar: "التقدم" },
-    myEvaluations:{ fr: "Mes évaluations",          en: "My evaluations",        ar: "تقييماتي" },
-    recentEvals:  { fr: "Évaluations récentes",      en: "Recent evaluations",    ar: "التقييمات الأخيرة" },
-    seeAll:       { fr: "Voir tout →",              en: "See all →",             ar: "← عرض الكل" },
-    approved:     { fr: "Approuvé",                 en: "Approved",              ar: "مُصادَق" },
-    revision:     { fr: "Révision",                 en: "Revision",              ar: "مراجعة" },
-    male:         { fr: "Masculin",                 en: "Male",                  ar: "ذكر" },
-    female:       { fr: "Féminin",                  en: "Female",                ar: "أنثى" },
-    unknown:      { fr: "—",                        en: "—",                     ar: "—" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("teacherProfileClient")
 
   const levelMap: Record<string, string> = {
     beginner: L === "ar" ? "مبتدئ" : L === "en" ? "Beginner" : "Débutant",

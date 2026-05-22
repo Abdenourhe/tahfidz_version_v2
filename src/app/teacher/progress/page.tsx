@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { Loader2, Plus, Search } from "lucide-react"
 import { statusLabel } from "@/lib/utils"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 interface Surah { id: number; nameFr: string; nameAr: string; verseCount: number; juzNumber: number; difficultyLevel: number }
 interface Student { id: string; user: { fullName: string }; group: { name: string } | null }
@@ -24,33 +24,7 @@ export default function TeacherProgressPage() {
   const L = locale as "fr" | "en" | "ar"
   const { data: session } = useSession()
 
-  const T = {
-    title:        { fr: "Suivi mémorisation",       en: "Memorization tracking", ar: "متابعة الحفظ" },
-    subtitle:     { fr: "Assigner des sourates et mettre à jour la progression",
-                    en: "Assign surahs and update progress",
-                    ar: "تعيين السور وتحديث التقدم" },
-    selectStudent:{ fr: "Sélectionner un élève",    en: "Select a student",      ar: "اختيار طالب" },
-    search:       { fr: "Rechercher…",              en: "Search…",               ar: "بحث…" },
-    noStudent:    { fr: "Aucun élève",              en: "No students",           ar: "لا يوجد طلاب" },
-    progress:     { fr: "Progression",              en: "Progress",              ar: "التقدم" },
-    of:           { fr: "de",                       en: "of",                    ar: "من" },
-    noProgress:   { fr: "Aucune sourate assignée",  en: "No surah assigned",     ar: "لا توجد سور معينة" },
-    selectFirst:  { fr: "Sélectionnez un élève",    en: "Select a student",      ar: "اختر طالباً" },
-    assign:       { fr: "Assigner une sourate",     en: "Assign a surah",        ar: "تعيين سورة" },
-    searchSurah:  { fr: "Nom, numéro…",             en: "Name, number…",         ar: "اسم، رقم…" },
-    selectFirst2: { fr: "Sélectionnez un élève d'abord", en: "Select a student first", ar: "اختر طالباً أولاً" },
-    allAssigned:  { fr: "Toutes les sourates sont déjà assignées", en: "All surahs already assigned", ar: "تم تعيين جميع السور" },
-    assigned:     { fr: "Sourate assignée !",       en: "Surah assigned!",       ar: "تم تعيين السورة!" },
-    toReview:     { fr: "→ En révision",            en: "→ Under review",        ar: "→ قيد المراجعة" },
-    noGroup:      { fr: "Sans groupe",               en: "No group",              ar: "بلا مجموعة" },
-    memorized:    { fr: "✓ Mémorisé",               en: "✓ Memorized",           ar: "✓ محفوظ" },
-    revision:     { fr: "↺ Révision",               en: "↺ Revision",            ar: "↺ مراجعة" },
-    approve:      { fr: "✓ Approuver",              en: "✓ Approve",             ar: "✓ تصديق" },
-    verse:        { fr: "versets",                  en: "verses",                ar: "آيات" },
-    juz:          { fr: "Juz",                      en: "Juz",                   ar: "جزء" },
-    started:      { fr: "Commencé le",              en: "Started on",            ar: "بدأ في" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("progress")
 
   const [students, setStudents] = useState<Student[]>([])
   const [surahs, setSurahs] = useState<Surah[]>([])

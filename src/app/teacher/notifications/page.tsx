@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react"
 import { formatDate } from "@/lib/utils"
 import { Bell, CheckCheck, BookOpen, Star, Award, Megaphone, Link2, Trash2, Loader2 } from "lucide-react"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 interface Notification {
   id: string; type: string; title: string; titleAr?: string | null
@@ -15,16 +15,7 @@ export default function TeacherNotificationsPage() {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-  const T = {
-    title:        { fr: "Notifications",            en: "Notifications",         ar: "الإشعارات" },
-    unread:       { fr: "non lue",                  en: "unread",                ar: "غير مقروءة" },
-    markAllRead:  { fr: "Tout lire",                en: "Mark all read",         ar: "تحديد الكل مقروء" },
-    deleteAll:    { fr: "Tout supprimer",           en: "Delete all",            ar: "حذف الكل" },
-    noNotif:      { fr: "Aucune notification",      en: "No notifications",      ar: "لا توجد إشعارات" },
-    delete:       { fr: "Supprimer",                en: "Delete",                ar: "حذف" },
-    loading:      { fr: "Chargement…",              en: "Loading…",              ar: "جارٍ التحميل…" },
-  }
-  const t = (k: keyof typeof T) => T[k][L] ?? T[k].fr
+    const t = useT("notifications")
 
   const TYPE_CONFIG: Record<string, { label: string; color: string; bg: string; icon: typeof Bell }> = {
     progress_update: { label: L === "ar" ? "تقدم" : L === "en" ? "Progress" : "Progression", color: "text-tahfidz-green", bg: "bg-tahfidz-green-light", icon: BookOpen },
