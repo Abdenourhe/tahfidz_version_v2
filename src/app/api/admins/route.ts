@@ -76,8 +76,8 @@ export async function POST(req: Request) {
       action: "create",
       entityType: "admin",
       entityId: user.id,
-      newValues: { email, fullName },
-    },
+      newValues: { email, fullName } as any,
+    } as any,
   })
 
   return NextResponse.json({ user: { id: user.id, email, fullName } }, { status: 201 })

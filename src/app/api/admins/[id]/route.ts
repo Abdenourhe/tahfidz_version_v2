@@ -33,7 +33,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
       action:     "deactivate",
       entityType: "admin",
       entityId:   (await params).id,
-    },
+    } as any,
   })
 
   return NextResponse.json({ success: true })

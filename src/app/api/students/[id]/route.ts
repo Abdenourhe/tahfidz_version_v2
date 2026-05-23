@@ -252,6 +252,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
     }
 
+    // ✅ CORRIGÉ : Timeout augmenté à 10000ms pour éviter l'erreur transaction
     await prisma.$transaction(async (tx) => {
       await tx.statusHistory.deleteMany({ where: { progress: { studentId: id } } }).catch(() => {})
       await tx.evaluation.deleteMany({ where: { studentId: id } }).catch(() => {})
@@ -264,7 +265,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
       await tx.studentStats.deleteMany({ where: { studentId: id } }).catch(() => {})
       await tx.student.delete({ where: { id } })
       await tx.user.delete({ where: { id: student.user.id } })
-    })
+    }, { maxWait: 5000, timeout: 10000 })  // ← AJOUTÉ : timeout 10000ms
 
     return NextResponse.json({ ok: true, message: "Élève supprimé avec succès" })
   } catch (error: any) {

@@ -151,10 +151,10 @@ export async function POST(request: Request) {
         action,
         entityType: targetType,
         entityId: targetId,
-        newValues,
+        newValues: newValues as any,
         ipAddress,
         userAgent,
-      },
+      } as any,
     })
 
     return NextResponse.json({ success: true, log })

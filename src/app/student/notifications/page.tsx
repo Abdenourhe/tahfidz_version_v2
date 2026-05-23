@@ -15,7 +15,7 @@ export default function StudentNotificationsPage() {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-    const t = useT("notifications")
+    const t = useT("notificationsXX")
 
   const typeIcon: Record<string, { icon: typeof Bell; color: string; bg: string }> = {
     progress_update: { icon: BookOpen,  color: "text-tahfidz-green",  bg: "bg-tahfidz-green-light" },

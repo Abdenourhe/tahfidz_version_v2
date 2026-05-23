@@ -24,7 +24,7 @@ export default function TeacherProgressPage() {
   const L = locale as "fr" | "en" | "ar"
   const { data: session } = useSession()
 
-    const t = useT("progress")
+    const t = useT("progressX")
 
   const [students, setStudents] = useState<Student[]>([])
   const [surahs, setSurahs] = useState<Surah[]>([])

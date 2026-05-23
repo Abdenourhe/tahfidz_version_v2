@@ -41,7 +41,7 @@ export async function PATCH(req: Request) {
       action: "password_change",
       entityType: "user",
       entityId: session.user.id,
-    },
+    } as any,
   })
 
   return NextResponse.json({ success: true })

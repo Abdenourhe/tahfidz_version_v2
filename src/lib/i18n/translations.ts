@@ -1257,7 +1257,9 @@ export function t(
   key: keyof TranslationKey[SectionKey],
   locale: Locale = "fr"
 ): string {
-  const entry = translations[section][key as keyof (typeof translations)[typeof section]]
+  const sect = translations[section]
+  if (!sect) return String(key)
+  const entry = sect[key as keyof typeof sect]
   if (!entry) return String(key)
   return (entry as Record<Locale, string>)[locale] ?? (entry as Record<Locale, string>).fr ?? String(key)
 }

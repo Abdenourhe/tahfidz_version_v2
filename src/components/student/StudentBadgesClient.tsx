@@ -2,6 +2,7 @@
 // src/components/student/StudentBadgesClient.tsx
 
 import { useLanguage, useT } from "@/contexts/LanguageContext"
+import { formatDate } from "@/lib/utils"
 
 interface Badge {
   id: string
@@ -21,10 +22,9 @@ interface Props {
   earnedBadges: EarnedBadge[]
   allBadges: Badge[]
   totalStars: number
-  formatDate: (d: Date, opts?: Intl.DateTimeFormatOptions) => string
 }
 
-export function StudentBadgesClient({ earnedBadges, allBadges, totalStars, formatDate }: Props) {
+export function StudentBadgesClient({ earnedBadges, allBadges, totalStars }: Props) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 

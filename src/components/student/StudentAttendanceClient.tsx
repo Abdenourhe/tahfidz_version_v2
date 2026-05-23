@@ -2,6 +2,7 @@
 // src/components/student/StudentAttendanceClient.tsx
 
 import { useLanguage, useT } from "@/contexts/LanguageContext"
+import { formatDate } from "@/lib/utils"
 
 interface Attendance {
   id: string
@@ -18,10 +19,9 @@ interface Props {
   excused: number
   rate: number
   byMonth: Record<string, Attendance[]>
-  formatDate: (d: Date, opts?: Intl.DateTimeFormatOptions) => string
 }
 
-export function StudentAttendanceClient({ attendances, total, present, absent, excused, rate, byMonth, formatDate }: Props) {
+export function StudentAttendanceClient({ attendances, total, present, absent, excused, rate, byMonth }: Props) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 

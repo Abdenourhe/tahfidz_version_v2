@@ -46,5 +46,5 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
 
   if (!student) notFound()
 
-  return <StudentDetailClient student={student} />
+  return <StudentDetailClient student={student as any} />
 }

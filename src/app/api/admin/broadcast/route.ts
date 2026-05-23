@@ -50,8 +50,8 @@ export async function POST(request: Request) {
         action:     "BROADCAST",
         entityType: "SYSTEM",
         entityId:   null,
-        newValues:  { message: message.slice(0, 200), target, schoolCount: schools.length, notifCount: totalNotifs },
-      },
+        newValues:  { message: message.slice(0, 200), target, schoolCount: schools.length, notifCount: totalNotifs } as any,
+      } as any,
     }).catch(() => {})
 
     return NextResponse.json({

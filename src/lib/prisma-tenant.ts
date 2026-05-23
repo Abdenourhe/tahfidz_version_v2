@@ -72,3 +72,6 @@ export function tenantPrisma(schoolId: string) {
 }
 
 export type TenantPrisma = ReturnType<typeof tenantPrisma>
+
+// Alias legacy pour compatibilité
+export { tenantPrisma as tenantClient, prisma }
