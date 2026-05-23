@@ -44,6 +44,9 @@ export async function createAuditLog(data: AuditLogData) {
     const actorEmail = session?.user?.email || "system@tahfidz.com"
     const actorName = (session?.user as any)?.name || actorEmail
 
+    const schoolId = (session?.user as any)?.schoolId || "system"
+    const userId = session?.user?.id || "system"
+
     const log = await prisma.auditLog.create({
       data: {
         action: data.action,
@@ -58,6 +61,8 @@ export async function createAuditLog(data: AuditLogData) {
         severity: data.severity || "INFO",
         ipAddress: ipAddress.length > 45 ? ipAddress.slice(0, 45) : ipAddress,
         userAgent: userAgent.length > 255 ? userAgent.slice(0, 255) : userAgent,
+        schoolId,
+        userId,
       },
     })
 
@@ -138,6 +143,10 @@ export function setupAuditMiddleware(prismaClient: typeof prisma) {
     if (params.model === "School" && params.action !== "create") severity = "CRITICAL"
     if (params.model === "User" && params.action === "delete") severity = "CRITICAL"
 
+    // Extraire schoolId/userId si possible
+    const schoolId = params.args?.data?.schoolId || params.args?.where?.schoolId || "system"
+    const userId = params.args?.data?.userId || params.args?.where?.userId || actorId
+
     // Créer le log (fire-and-forget)
     prismaClient.auditLog.create({
       data: {
@@ -153,6 +162,8 @@ export function setupAuditMiddleware(prismaClient: typeof prisma) {
         severity,
         ipAddress: "auto",
         userAgent: "prisma-middleware",
+        schoolId: schoolId as string,
+        userId: userId as string,
       },
     }).catch(() => {
       // Silencieux

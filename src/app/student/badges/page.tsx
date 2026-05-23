@@ -27,7 +27,6 @@ export default async function StudentBadgesPage() {
       earnedBadges={student.studentBadges}
       allBadges={allBadges}
       totalStars={student.totalStars}
-      // ✅ SUPPRIMÉ : formatDate des props
     />
   )
 }

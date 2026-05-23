@@ -87,7 +87,7 @@ export const authConfig: NextAuthConfig = {
         // 2. Résoudre l'école par slug
         const school = await prisma.school.findUnique({
           where: { slug },
-          select: { id: true, slug: true, isActive: true },
+          select: { id: true, slug: true, name: true, isActive: true },
         });
         if (!school || !school.isActive) return null;
 
@@ -95,12 +95,12 @@ export const authConfig: NextAuthConfig = {
         //    L'unicité est (schoolId, email) — même email peut exister dans 2 écoles
         const user = await prisma.user.findUnique({
           where:  { schoolId_email: { schoolId: school.id, email } },
-          select: { id: true, hashedPassword: true, role: true, isActive: true },
+          select: { id: true, password: true, role: true, isActive: true },
         });
-        if (!user || !user.isActive || !user.hashedPassword) return null;
+        if (!user || !user.isActive || !user.password) return null;
 
         // 4. Vérification du mot de passe
-        const valid = await bcrypt.compare(password, user.hashedPassword);
+        const valid = await bcrypt.compare(password, user.password);
         if (!valid) return null;
 
         // 5. Mise à jour du lastLoginAt (fire-and-forget)
@@ -115,6 +115,7 @@ export const authConfig: NextAuthConfig = {
           email,
           schoolId:    school.id,
           schoolSlug:  school.slug,
+          schoolName:  school.name,
           role:        user.role,
         };
       },

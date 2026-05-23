@@ -16,11 +16,15 @@ export const metadata = {
 
 export interface AuditLogItem {
   id: string
+  schoolId?: string
+  userId?: string
   action: string
   actorId: string
   actorRole: string
-  actorEmail: string
-  actorName: string
+  actorEmail: string | null
+  actorName: string | null
+  entityType?: string | null
+  entityId?: string | null
   targetType: string | null
   targetId: string | null
   targetName: string | null

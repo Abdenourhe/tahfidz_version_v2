@@ -2,6 +2,7 @@
 // src/components/student/StudentProgressClient.tsx
 
 import { useLanguage, useT } from "@/contexts/LanguageContext"
+import { formatDate, statusLabel } from "@/lib/utils"
 import { VerseProgressTracker } from "@/components/student/VerseProgressTracker"
 
 interface Surah {
@@ -28,11 +29,9 @@ interface Props {
   studentId: string
   memorized: Progress[]
   inProgress: Progress[]
-  formatDate: (d: Date, opts?: Intl.DateTimeFormatOptions) => string
-  statusLabel: (status: string) => { label: string; bg: string; color: string }
 }
 
-export function StudentProgressClient({ studentId, memorized, inProgress, formatDate, statusLabel }: Props) {
+export function StudentProgressClient({ studentId, memorized, inProgress }: Props) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 

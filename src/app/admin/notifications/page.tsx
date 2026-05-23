@@ -20,7 +20,7 @@ export default function AdminNotificationsPage() {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
-    const t = useT("notifications")
+    const t = useT("notificationsXXX")
 
   const TYPE_CONFIG: Record<string, { label: string; color: string; bg: string; icon: typeof Bell }> = {
     progress_update: { label: L === "ar" ? "تقدم" : L === "en" ? "Progress" : "Progression", color: "text-tahfidz-green", bg: "bg-tahfidz-green-light", icon: BookOpen },

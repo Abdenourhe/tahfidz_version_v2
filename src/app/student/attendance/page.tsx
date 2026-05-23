@@ -43,7 +43,6 @@ export default async function StudentAttendancePage() {
       excused={excused}
       rate={rate}
       byMonth={byMonth}
-      // ✅ SUPPRIMÉ : formatDate des props
     />
   )
 }

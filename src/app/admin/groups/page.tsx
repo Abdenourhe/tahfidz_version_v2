@@ -59,14 +59,6 @@ export default async function AdminGroupsPage({
   return (
     <GroupsListClient
       groups={groups}
-      total={total}
-      page={page}
-      totalPages={totalPages}
-      search={search}
-      statusFilter={statusFilter}
-      levelFilter={levelFilter}
-      teacherId={teacherId}
-      teachers={teachers}
     />
   )
 }

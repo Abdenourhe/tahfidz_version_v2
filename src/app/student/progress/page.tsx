@@ -32,7 +32,6 @@ export default async function StudentProgressPage() {
       studentId={student.id}
       memorized={memorized}
       inProgress={inProgress}
-      // ✅ SUPPRIMÉ : formatDate et statusLabel des props
     />
   )
 }
