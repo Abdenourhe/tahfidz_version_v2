@@ -3,7 +3,7 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { calculateAge } from "@/lib/utils"
+
 import { TeacherStudentsListClient } from "@/components/teacher/TeacherStudentsListClient"
 
 export default async function TeacherStudentsPage({
@@ -40,6 +40,11 @@ export default async function TeacherStudentsPage({
           ? { status: statusFilter as any }
           : { status: { notIn: ["MEMORIZED"] } },
       },
+      dailyLogs: {
+        orderBy: { date: "desc" },
+        take: 1,
+        select: { id: true, date: true, attendanceStatus: true, globalScore: true, hifzFromSurahId: true, hifzNote: true },
+      },
       _count: { select: { memorizedSurahs: true } },
     },
     orderBy: { enrollmentDate: "desc" },
@@ -54,7 +59,6 @@ export default async function TeacherStudentsPage({
       students={filteredStudents as any}
       search={search}
       statusFilter={statusFilter}
-      calculateAge={calculateAge}
     />
   )
 }

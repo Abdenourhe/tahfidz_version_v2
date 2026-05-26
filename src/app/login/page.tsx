@@ -50,13 +50,18 @@ function LoginForm() {
   const [slugCleared, setSlugCleared] = useState(false)
   const [superMode, setSuperMode]     = useState(false)
 
+  const registered = searchParams.get("registered") === "true"
+  const linked     = searchParams.get("linked") === "true"
+  const prefillEmail     = searchParams.get("email") || ""
+  const prefillSchoolSlug = searchParams.get("schoolSlug") || ""
+
   const schoolForm = useForm<SchoolInput>({
     resolver: zodResolver(schoolSchema),
-    defaultValues: { schoolSlug: "", email: "", password: "" },
+    defaultValues: { schoolSlug: prefillSchoolSlug, email: prefillEmail, password: "" },
   })
   const superForm = useForm<SuperInput>({
     resolver: zodResolver(superSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: prefillEmail, password: "" },
   })
 
   useEffect(() => {
@@ -179,6 +184,20 @@ function LoginForm() {
                   : "Accedez a l'espace de gestion de votre ecole"}
               </p>
             </div>
+
+            {registered && (
+              <div className="mb-5 p-3.5 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm flex items-start gap-2">
+                <span className="mt-0.5">✅</span>
+                <span>Compte cree avec succes ! Connectez-vous pour acceder a votre tableau de bord.</span>
+              </div>
+            )}
+
+            {linked && (
+              <div className="mb-5 p-3.5 bg-blue-50 border border-blue-200 rounded-xl text-blue-700 text-sm flex items-start gap-2">
+                <span className="mt-0.5">🔗</span>
+                <span>Nouvel enfant lie a votre compte ! Connectez-vous pour le consulter.</span>
+              </div>
+            )}
 
             {error && (
               <div className="mb-5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-start gap-2">

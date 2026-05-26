@@ -14,7 +14,7 @@ type Params = { params: Promise<{ id: string }> }
 export async function GET(req: NextRequest, { params }: Params) {
   try {
     const session = await auth()
-    if (!session?.user || !["ADMIN", "SUPERADMIN", "TEACHER"].includes(session.user.role)) {
+    if (!session?.user) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
     }
 
@@ -22,7 +22,18 @@ export async function GET(req: NextRequest, { params }: Params) {
 
     const student = await prisma.student.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        emergencyPhone: true,
+        dateOfBirth: true,
+        address: true,
+        city: true,
+        postalCode: true,
+        medicalNotes: true,
+        totalStars: true,
+        currentStreak: true,
+        groupId: true,
+        teacherId: true,
         user: {
           select: {
             id: true, fullName: true, fullNameAr: true, email: true,
@@ -30,9 +41,9 @@ export async function GET(req: NextRequest, { params }: Params) {
           },
         },
         group:   { select: { id: true, name: true, level: true } },
-        teacher: { include: { user: { select: { fullName: true } } } },
+        teacher: { include: { user: { select: { fullName: true, phone: true, email: true } } } },
         parentLinks: {
-          include: { parent: { include: { user: { select: { fullName: true } } } } },
+          include: { parent: { include: { user: { select: { fullName: true, phone: true, email: true } } } } },
           where: { isVerified: true },
         },
         _count: { select: { memorizedSurahs: true } },
@@ -41,7 +52,15 @@ export async function GET(req: NextRequest, { params }: Params) {
 
     if (!student) return NextResponse.json({ error: "Élève non trouvé" }, { status: 404 })
 
-    return NextResponse.json(student)
+    const isAuthorized =
+      ["ADMIN", "SUPERADMIN", "TEACHER"].includes(session.user.role) ||
+      (session.user.role === "PARENT" && student.parentLinks.some((l: any) => l.parent.userId === session.user.id))
+
+    if (!isAuthorized) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
+    }
+
+    return NextResponse.json({ student })
   } catch (error: any) {
     console.error("[STUDENT GET ERROR]", error)
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })

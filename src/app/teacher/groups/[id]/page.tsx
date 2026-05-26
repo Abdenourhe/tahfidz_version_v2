@@ -2,7 +2,7 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect, notFound } from "next/navigation"
-import { formatDate, statusLabel } from "@/lib/utils"
+
 import { TeacherGroupDetailClient } from "@/components/teacher/TeacherGroupDetailClient"
 
 export default async function TeacherGroupDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -34,8 +34,6 @@ export default async function TeacherGroupDetailPage({ params }: { params: Promi
   return (
     <TeacherGroupDetailClient
       group={group}
-      formatDate={formatDate}
-      statusLabel={statusLabel}
     />
   )
 }

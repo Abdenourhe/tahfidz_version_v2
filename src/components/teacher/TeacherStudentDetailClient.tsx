@@ -1,9 +1,13 @@
 "use client"
 // src/components/teacher/TeacherStudentDetailClient.tsx
 
+import { useState } from "react"
 import Link from "next/link"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
-import { ArrowLeft, Star, BookOpen, CalendarCheck, ClipboardList } from "lucide-react"
+import { ArrowLeft, Star, BookOpen, CalendarCheck, ClipboardList, NotebookPen } from "lucide-react"
+import { formatDate, statusLabel, scoreToGrade, formatAge } from "@/lib/utils"
+import { AvatarLightbox } from "@/components/AvatarLightbox"
+import { TeacherDailyLogModal } from "@/components/teacher/TeacherDailyLogModal"
 
 interface Props {
   student: any
@@ -13,20 +17,16 @@ interface Props {
   totalAtt: number
   presentAtt: number
   attRate: number
-  formatDate: (d: Date, opts?: Intl.DateTimeFormatOptions) => string
-  statusLabel: (status: string) => { label: string; bg: string; color: string }
-  scoreToGrade: (score: number) => { label: string; color: string }
-  formatAge: (dob: Date | null) => string
 }
 
 export function TeacherStudentDetailClient({
   student, memorized, inProgress, readyToRecite, totalAtt, presentAtt, attRate,
-  formatDate, statusLabel, scoreToGrade, formatAge,
 }: Props) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
     const t = useT("teacherStudentDetailClient")
+  const [showLogModal, setShowLogModal] = useState(false)
 
   const ATT_STYLE: Record<string, string> = {
     PRESENT: "bg-green-100 text-green-700",
@@ -52,20 +52,34 @@ export function TeacherStudentDetailClient({
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{student.user.fullName}</h1>
           {student.user.fullNameAr && <p className="arabic text-gray-500 dark:text-gray-400">{student.user.fullNameAr}</p>}
         </div>
-        {readyToRecite && (
-          <Link href={`/teacher/evaluation/new?progressId=${readyToRecite.id}&studentId=${student.id}`}
-            className="px-4 py-2 gradient-tahfidz text-white text-sm font-semibold rounded-lg hover:opacity-90 transition">
-            {t("evaluateNow")} →
-          </Link>
-        )}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowLogModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition"
+          >
+            <NotebookPen size={16} /> {t("dailyLog")}
+          </button>
+          {readyToRecite && (
+            <Link href={`/teacher/evaluation/new?progressId=${readyToRecite.id}&studentId=${student.id}`}
+              className="px-4 py-2 gradient-tahfidz text-white text-sm font-semibold rounded-lg hover:opacity-90 transition">
+              {t("evaluateNow")} →
+            </Link>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="space-y-4">
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5">
             <div className="flex flex-col items-center text-center mb-4">
-              <div className="w-14 h-14 rounded-2xl gradient-tahfidz flex items-center justify-center mb-3">
-                <span className="text-white font-bold text-xl">{student.user.fullName.charAt(0)}</span>
+              <div className="w-14 h-14 rounded-2xl gradient-tahfidz flex items-center justify-center mb-3 overflow-hidden">
+                <AvatarLightbox
+                  src={student.user.avatar}
+                  alt={student.user.fullName}
+                  fallback={<span className="text-white font-bold text-xl">{student.user.fullName.charAt(0)}</span>}
+                  className="w-full h-full"
+                  imgClassName="w-full h-full"
+                />
               </div>
               <p className="font-bold text-gray-900 dark:text-gray-100">{student.user.fullName}</p>
               <p className="text-xs text-gray-400 mt-0.5">{student.user.email}</p>
@@ -74,6 +88,7 @@ export function TeacherStudentDetailClient({
               <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">{t("group")}</span><span className="font-medium text-gray-700 dark:text-gray-300">{student.group?.name ?? "—"}</span></div>
               <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">{t("age")}</span><span className="font-medium text-gray-700 dark:text-gray-300">{formatAge(student.dateOfBirth)}</span></div>
               {student.user.phone && <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">{t("phone")}</span><span className="font-medium text-gray-700 dark:text-gray-300">{student.user.phone}</span></div>}
+              {student.emergencyPhone && <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">{t("emergencyPhone") || "Urgence"}</span><span className="font-medium text-gray-700 dark:text-gray-300">{student.emergencyPhone}</span></div>}
             </div>
           </div>
 
@@ -199,6 +214,14 @@ export function TeacherStudentDetailClient({
           )}
         </div>
       </div>
+
+      {showLogModal && (
+        <TeacherDailyLogModal
+          studentId={student.id}
+          studentName={student.user.fullName}
+          onClose={() => setShowLogModal(false)}
+        />
+      )}
     </div>
   )
 }

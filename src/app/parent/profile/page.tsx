@@ -2,7 +2,6 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { formatDate, statusLabel, formatAge } from "@/lib/utils"
 import { ParentProfileClient } from "@/components/parent/ParentProfileClient"
 
 export default async function ParentProfilePage() {
@@ -12,7 +11,7 @@ export default async function ParentProfilePage() {
   const parent = await prisma.parent.findUnique({
     where: { userId: session.user.id },
     include: {
-      user: { select: { fullName: true, fullNameAr: true, email: true, phone: true, createdAt: true } },
+      user: { select: { fullName: true, fullNameAr: true, email: true, phone: true, avatar: true, createdAt: true } },
       childrenLinks: {
         where: { isVerified: true },
         include: {
@@ -51,9 +50,6 @@ export default async function ParentProfilePage() {
       totalMemorized={totalMemorized}
       totalStars={totalStars}
       totalBadges={totalBadges}
-      formatDate={formatDate}
-      formatAge={formatAge}
-      statusLabel={statusLabel}
     />
   )
 }

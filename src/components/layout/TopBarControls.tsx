@@ -1,69 +1,117 @@
 "use client"
 // src/components/layout/TopBarControls.tsx
-// Barre de contrôles en haut : changement de langue + mode sombre
+// Barre de contrôles en haut : changement de langue + mode sombre (animé)
 
+import { useState, useEffect } from "react"
+import { useTheme } from "next-themes"
 import { useLanguage } from "@/contexts/LanguageContext"
-import { useEffect, useState } from "react"
 import { Sun, Moon } from "lucide-react"
 import ReactCountryFlag from "react-country-flag"
+import { motion, AnimatePresence } from "framer-motion"
 
-const LANGS = [
-  { code: "fr" as const, countryCode: "FR", label: "FR" },
-  { code: "en" as const, countryCode: "GB", label: "EN" },
-  { code: "ar" as const, countryCode: "SA", label: "AR" },
-]
+interface TopBarControlsProps {
+  dropdownAlign?: "left" | "right"
+}
 
-export function TopBarControls() {
+export function TopBarControls({ dropdownAlign = "right" }: TopBarControlsProps) {
+  const { theme, setTheme } = useTheme()
   const { locale, setLocale } = useLanguage()
-  const [dark, setDark] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const [langMenuOpen, setLangMenuOpen] = useState(false)
 
-  // Sync with current theme on mount
   useEffect(() => {
-    setDark(document.documentElement.classList.contains("dark"))
+    setMounted(true)
   }, [])
 
-  const toggleDark = () => {
-    const isDark = document.documentElement.classList.toggle("dark")
-    setDark(isDark)
-    localStorage.setItem("theme", isDark ? "dark" : "light")
-  }
-
   return (
-    <div className="flex items-center gap-2 flex-shrink-0">
-      {/* Language buttons */}
-      <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
-        {LANGS.map(({ code, countryCode, label }) => (
-          <button
-            key={code}
-            onClick={() => setLocale(code)}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all ${
-              locale === code
-                ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-gray-200 dark:ring-gray-600"
-                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-gray-700/50"
-            }`}
-            title={code === "fr" ? "Français" : code === "en" ? "English" : "العربية"}
-          >
-            <ReactCountryFlag
-              countryCode={countryCode}
-              svg
-              style={{
-                width: "1.2em",
-                height: "1.2em",
-              }}
-              title={countryCode === "FR" ? "France" : countryCode === "GB" ? "United Kingdom" : "Saudi Arabia"}
-            />
-            <span>{label}</span>
-          </button>
-        ))}
+    <div className="flex items-center gap-2">
+      {/* Language Switcher avec dropdown animé */}
+      <div className="relative">
+        <button
+          onClick={() => setLangMenuOpen(!langMenuOpen)}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition text-xs font-medium"
+          aria-label="Change language"
+        >
+          <ReactCountryFlag
+            countryCode={locale === "fr" ? "FR" : locale === "en" ? "GB" : "SA"}
+            svg
+            style={{ width: "1.2em", height: "1.2em" }}
+          />
+        </button>
+
+        <AnimatePresence>
+          {langMenuOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-40"
+                onClick={() => setLangMenuOpen(false)}
+              />
+              <motion.div
+                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className={`absolute ${dropdownAlign === "right" ? "right-0" : "left-0"} top-full mt-2 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-xl p-1 z-50 min-w-[140px]`}
+              >
+                {(["fr", "en", "ar"] as const).map((lang) => (
+                  <button
+                    key={lang}
+                    onClick={() => {
+                      setLocale(lang)
+                      setLangMenuOpen(false)
+                    }}
+                    className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm transition ${
+                      locale === lang
+                        ? "bg-tahfidz-green/10 text-tahfidz-green font-medium"
+                        : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    }`}
+                  >
+                    <ReactCountryFlag
+                      countryCode={lang === "fr" ? "FR" : lang === "en" ? "GB" : "SA"}
+                      svg
+                      style={{ width: "1.2em", height: "1.2em" }}
+                    />
+                    <span className="uppercase">{lang}</span>
+                  </button>
+                ))}
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* Dark mode toggle */}
+      {/* Dark Mode Toggle avec animation */}
       <button
-        onClick={toggleDark}
-        className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-        title={dark ? "Mode clair" : "Mode sombre"}
+        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+        className="relative w-9 h-9 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition overflow-hidden"
+        aria-label="Toggle theme"
       >
-        {dark ? <Sun size={15} /> : <Moon size={15} />}
+        <AnimatePresence mode="wait">
+          {mounted && theme === "dark" ? (
+            <motion.div
+              key="sun"
+              initial={{ y: 20, rotate: -90 }}
+              animate={{ y: 0, rotate: 0 }}
+              exit={{ y: -20, rotate: 90 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Sun size={16} className="text-yellow-500" />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="moon"
+              initial={{ y: 20, rotate: 90 }}
+              animate={{ y: 0, rotate: 0 }}
+              exit={{ y: -20, rotate: -90 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Moon size={16} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </button>
     </div>
   )

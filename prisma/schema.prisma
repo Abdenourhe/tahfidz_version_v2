@@ -36,12 +36,20 @@ enum Gender {
 
 enum MemorizationStatus {
   NOT_STARTED
+  ASSIGNED
   IN_PROGRESS
   UNDER_REVIEW
   READY_FOR_RECITATION
   PENDING_TEACHER_APPROVAL
   MEMORIZED
   NEEDS_REVISION
+}
+
+enum ProgressQuality {
+  EXCELLENT
+  GOOD
+  NEEDS_WORK
+  POOR
 }
 
 enum AttendanceStatus {
@@ -98,6 +106,7 @@ model School {
   badges         Badge[]
   auditLogs      AuditLog[] @relation("SchoolAuditLogs")
   feedbacks      Feedback[] @relation("SchoolFeedbacks")
+  parentInvites  ParentInvite[]
 
   @@index([slug])
   @@map("schools")
@@ -136,6 +145,9 @@ model User {
   announcements    Announcement[]
   auditLogs        AuditLog[] @relation("UserAuditLogs")
   feedbacks        Feedback[] @relation("UserFeedbacks")
+  parentAttendances ParentAttendance[]
+  dailyLogsCreated  DailyProgressLog[]
+  dailyLogComments  DailyLogComment[]
 
   @@unique([schoolId, email])
   @@index([schoolId, role])
@@ -173,11 +185,12 @@ model Teacher {
   maxStudents    Int     @default(20)
   isActive       Boolean @default(true)
 
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  groups      Group[]
-  evaluations Evaluation[]
-  students    Student[]
-  exams       Exam[]
+  user                    User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groups                  Group[]
+  evaluations             Evaluation[]
+  students                Student[]
+  exams                   Exam[]
+  memorizationAssignments MemorizationProgress[]
 
   @@map("teachers")
 }
@@ -195,7 +208,7 @@ model Parent {
 model Student {
   id             String    @id @default(uuid())
   userId         String    @unique
-  studentCode    String    @default(cuid())
+  studentCode    String    @unique
   dateOfBirth    DateTime?
   enrollmentDate DateTime  @default(now())
   emergencyPhone  String?
@@ -220,17 +233,19 @@ model Student {
   group                Group?                @relation(fields: [groupId], references: [id])
   teacher              Teacher?              @relation(fields: [teacherId], references: [id])
   parentLinks          ParentStudentLink[]
+  parentInvites        ParentInvite[]
   memorizationProgress MemorizationProgress[]
   memorizedSurahs      MemorizedSurah[]
   attendances          Attendance[]
+  parentAttendances    ParentAttendance[]
   studentBadges        StudentBadge[]
   starsLogs            StarsLog[]
   evaluations          Evaluation[]
+  dailyLogs            DailyProgressLog[]
   stats                StudentStats?
 
   @@index([groupId])
   @@index([teacherId])
-  @@index([studentCode])
   @@map("students")
 }
 
@@ -248,6 +263,26 @@ model ParentStudentLink {
 
   @@unique([parentId, studentId])
   @@map("parent_student_links")
+}
+
+// ==================== INVITATIONS PARENT ====================
+
+model ParentInvite {
+  id         String   @id @default(cuid())
+  code       String   @unique
+  studentId  String   @unique
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  schoolId   String
+  school     School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  used       Boolean  @default(false)
+  usedAt     DateTime?
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([code])
+  @@index([studentId])
+  @@index([schoolId])
+  @@map("parent_invites")
 }
 
 // ==================== GROUPES ====================
@@ -300,35 +335,46 @@ model Surah {
 model MemorizationProgress {
   id                   String             @id @default(uuid())
   studentId            String
+  teacherId            String?
   surahId              Int
   startVerse           Int                @default(1)
   endVerse             Int
+  versesFrom           Int?
+  versesTo             Int?
   targetDate           DateTime?
+  dueDate              DateTime?
   status               MemorizationStatus @default(NOT_STARTED)
   currentVerse         Int                @default(1)
   completionPercentage Float              @default(0)
+  revisionCount        Int                @default(0)
+  lastRevisedAt        DateTime?
+  notes                String?            @db.Text
   startedAt            DateTime           @default(now())
   completedAt          DateTime?
   updatedAt            DateTime           @updatedAt
 
   student       Student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher       Teacher?           @relation(fields: [teacherId], references: [id])
   surah         Surah              @relation(fields: [surahId], references: [id])
   evaluation    Evaluation?
   statusHistory StatusHistory[]
 
   @@unique([studentId, surahId, startVerse, endVerse])
   @@index([studentId, status])
+  @@index([teacherId])
   @@map("memorization_progress")
 }
 
 model StatusHistory {
-  id         String             @id @default(uuid())
-  progressId String
-  oldStatus  MemorizationStatus
-  newStatus  MemorizationStatus
-  changedBy  String
-  changedAt  DateTime           @default(now())
-  note       String?
+  id               String             @id @default(uuid())
+  progressId       String
+  oldStatus        MemorizationStatus
+  newStatus        MemorizationStatus
+  changedBy        String
+  versesMemorized  Int?
+  quality          ProgressQuality?
+  changedAt        DateTime           @default(now())
+  note             String?
 
   progress MemorizationProgress @relation(fields: [progressId], references: [id], onDelete: Cascade)
 
@@ -352,6 +398,76 @@ model MemorizedSurah {
   @@map("memorized_surahs")
 }
 
+// ==================== CARNET QUOTIDIEN ====================
+
+model DailyProgressLog {
+  id                 String   @id @default(uuid())
+  studentId          String
+  date               DateTime @db.Date
+  createdById        String
+
+  // Hifz
+  hifzFromSurahId    Int?
+  hifzFromVerse      Int?
+  hifzToSurahId      Int?
+  hifzToVerse        Int?
+  hifzNote           String?  @db.Text
+
+  // Muraja'a
+  murajaFromSurahId  Int?
+  murajaFromVerse    Int?
+  murajaToSurahId    Int?
+  murajaToVerse      Int?
+  murajaNote         String?  @db.Text
+
+  // Talqin
+  talqinFromSurahId  Int?
+  talqinFromVerse    Int?
+  talqinToSurahId    Int?
+  talqinToVerse      Int?
+  talqinNote         String?  @db.Text
+
+  // Cours scientifique
+  courseBook         String?
+  courseFromPage     Int?
+  courseToPage       Int?
+  courseNote         String?  @db.Text
+
+  // Assiduité / Observations
+  attendanceStatus   String?
+  teacherObservation String?  @db.Text
+  parentObservation  String?  @db.Text
+
+  // Global
+  globalScore        Int?
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdBy User    @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  comments  DailyLogComment[]
+
+  @@unique([studentId, date])
+  @@index([studentId, date])
+  @@map("daily_progress_logs")
+}
+
+model DailyLogComment {
+  id         String   @id @default(uuid())
+  dailyLogId String
+  section    String   // HIFZ, MURAJA, TALQIN, COURSE, ATTENDANCE, GENERAL
+  userId     String
+  message    String   @db.Text
+  createdAt  DateTime @default(now())
+
+  dailyLog DailyProgressLog @relation(fields: [dailyLogId], references: [id], onDelete: Cascade)
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([dailyLogId, section])
+  @@map("daily_log_comments")
+}
+
 // ==================== ÉVALUATIONS ====================
 
 model Evaluation {
@@ -362,6 +478,10 @@ model Evaluation {
   evaluatedAt         DateTime           @default(now())
   evaluationType      String
   memorizationScore   Int
+  tajwid              Int                @default(0)
+  makhraj             Int                @default(0)
+  waqf                Int                @default(0)
+  tarteel             Int                @default(0)
   tajweedScore        Int
   fluencyScore        Int
   makharijScore       Int?
@@ -403,6 +523,26 @@ model Attendance {
   @@index([date])
   @@index([groupId])
   @@map("attendances")
+}
+
+model ParentAttendance {
+  id           String           @id @default(uuid())
+  studentId    String
+  parentId     String
+  date         DateTime         @db.Date
+  status       AttendanceStatus
+  reason       String?
+  validatedBy  String?
+  validatedAt  DateTime?
+  createdAt    DateTime         @default(now())
+
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  parent    User    @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, date])
+  @@index([parentId, date])
+  @@index([status, validatedBy])
+  @@map("parent_attendances")
 }
 
 // ==================== BADGES & RÉCOMPENSES ====================

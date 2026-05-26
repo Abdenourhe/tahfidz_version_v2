@@ -17,15 +17,10 @@ async function getParentData(userId: string) {
               user: { select: { fullName: true, fullNameAr: true, avatar: true } },
               group: { select: { name: true } },
               teacher: { include: { user: { select: { fullName: true } } } },
-              memorizationProgress: {
-                orderBy: { updatedAt: "desc" },
-                take: 5,
-                include: { surah: { select: { nameFr: true, nameAr: true } } },
-              },
               studentBadges: {
                 include: { badge: { select: { icon: true, name: true } } },
                 orderBy: { earnedAt: "desc" },
-                take: 3,
+                take: 5,
               },
               _count: { select: { memorizedSurahs: true } },
             },
@@ -43,12 +38,14 @@ export default async function ParentDashboard() {
   const parent = await getParentData(session.user.id)
   if (!parent) redirect("/login")
 
-  const children = parent.childrenLinks.map(link => link.student)
+  const children = parent.childrenLinks.map((link) => link.student)
 
   return (
-    <ParentDashboardClient
-      todayDate={formatDate(new Date())}
-      children={children}
-    />
+    <div className="max-w-3xl mx-auto">
+      <ParentDashboardClient
+        todayDate={formatDate(new Date())}
+        children={children}
+      />
+    </div>
   )
 }

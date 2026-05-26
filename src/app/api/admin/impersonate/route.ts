@@ -1,98 +1,111 @@
 // src/app/api/admin/impersonate/route.ts
+// POST — Créer une session d'impersonation sécurisée (HMAC)
+// DELETE — Arrêter l'impersonation
+
 import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
-import { cookies } from "next/headers"
+import { setImpersonation, clearImpersonation, getImpersonation } from "@/lib/impersonation"
 
-// POST — Créer une session d'impersonation
+// POST — Démarrer l'impersonation
 export async function POST(request: Request) {
   try {
-    // Vérifier que c'est un SUPERADMIN
     const session = await auth()
     if (!session?.user || session.user.role !== "SUPERADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+      return NextResponse.json({ error: "Unauthorized: Superadmin only" }, { status: 403 })
     }
 
     const { schoolId } = await request.json()
-    if (!schoolId) {
+    if (!schoolId || typeof schoolId !== "string") {
       return NextResponse.json({ error: "schoolId required" }, { status: 400 })
     }
 
-    // Récupérer l'école et son admin
-    const school = await prisma.school.findUnique({
-      where: { id: schoolId },
-      include: {
-        users: {
-          where: { role: { in: ["ADMIN", "SUPERADMIN"] } },
-          take: 1,
-        }
-      }
+    // Vérifier que l'admin existe et appartient à l'école
+    const admin = await prisma.user.findFirst({
+      where: {
+        schoolId,
+        role: "ADMIN",
+        isActive: true,
+      },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, email: true, fullName: true, schoolId: true },
     })
 
-    if (!school?.users[0]) {
-      return NextResponse.json({ error: "No admin found" }, { status: 404 })
+    if (!admin) {
+      return NextResponse.json({ error: "No active admin found for this school" }, { status: 404 })
     }
 
-    const admin = school.users[0]
-
-    // Créer les cookies
-    const cookieStore = await cookies()
-
-    // Cookie 1 : ID de l'école (httpOnly = sécurisé)
-    cookieStore.set("impersonate_school_id", schoolId, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 3600, // 1 heure
-      path: "/"
+    // Créer le contexte sécurisé
+    await setImpersonation({
+      targetAdminId: admin.id,
+      targetSchoolId: schoolId,
+      superadminId: session.user.id,
+      createdAt: Date.now(),
     })
 
-    // Cookie 2 : Infos pour l'affichage (accessible par JS)
-    cookieStore.set("impersonate_info", JSON.stringify({
-      schoolName: school.name,
-      schoolSlug: school.slug,
-      adminEmail: admin.email,
-      adminName: admin.fullName,
-      originalAdmin: session.user.email,
-      startedAt: new Date().toISOString()
-    }), {
-      httpOnly: false, // ← Accessible par le banner
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 3600,
-      path: "/"
-    })
-
-    // Logger dans l'audit
-    await fetch(`${process.env.NEXTAUTH_URL || ""}/api/admin/audit`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    // Audit log
+    await prisma.auditLog.create({
+      data: {
+        schoolId: admin.schoolId,
+        userId: session.user.id,
         action: "IMPERSONATE",
-        target: school.name,
-        targetId: school.id,
-        targetType: "SCHOOL",
-        details: { adminEmail: admin.email, originalAdmin: session.user.email }
-      })
-    }).catch(() => {}) // Silencieux si échoue
+        actorId: session.user.id,
+        actorRole: "SUPERADMIN",
+        actorEmail: session.user.email,
+        actorName: session.user.name,
+        entityType: "SCHOOL",
+        entityId: schoolId,
+        targetType: "USER",
+        targetId: admin.id,
+        targetName: admin.fullName,
+        newValues: {
+          actor: session.user.email || session.user.name || "unknown",
+          target: admin.fullName,
+          details: { adminEmail: admin.email, originalAdmin: session.user.email },
+        } as any,
+      } as any,
+    }).catch(() => {}) // Silencieux si échec
 
     return NextResponse.json({
       success: true,
-      redirectUrl: "/admin/dashboard", 
-      school: { id: school.id, name: school.name, slug: school.slug }
+      redirectUrl: "/admin/dashboard",
+      school: { id: schoolId },
     })
 
   } catch (error) {
-    console.error("Impersonate error:", error)
-    return NextResponse.json({ error: "Failed" }, { status: 500 })
+    console.error("Impersonate POST error:", error)
+    return NextResponse.json({ error: "Failed to start impersonation" }, { status: 500 })
   }
 }
 
 // DELETE — Arrêter l'impersonation
 export async function DELETE() {
-  const cookieStore = await cookies()
-  cookieStore.delete("impersonate_school_id")
-  cookieStore.delete("impersonate_info")
+  try {
+    const imp = await getImpersonation()
+    await clearImpersonation()
 
-  return NextResponse.json({ success: true })
+    // Audit log de sortie
+    if (imp) {
+      await prisma.auditLog.create({
+        data: {
+          schoolId: imp.targetSchoolId,
+          userId: imp.superadminId,
+          action: "IMPERSONATE",
+          actorId: imp.superadminId,
+          actorRole: "SUPERADMIN",
+          entityType: "SCHOOL",
+          entityId: imp.targetSchoolId,
+          newValues: {
+            action: "END_IMPERSONATION",
+            target: imp.targetAdminId,
+          } as any,
+        } as any,
+      }).catch(() => {})
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error("Impersonate DELETE error:", error)
+    return NextResponse.json({ error: "Failed to stop impersonation" }, { status: 500 })
+  }
 }

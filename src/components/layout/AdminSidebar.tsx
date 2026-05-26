@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils"
 import { NotificationNavItem } from "@/components/layout/NotificationNavItem"
 import { useLanguage } from "@/contexts/LanguageContext"
 
+
 interface AdminSidebarProps {
   user: {
     name: string
@@ -23,9 +24,11 @@ interface AdminSidebarProps {
   }
   schoolName?: string
   schoolLogo?: string
+  schoolSlug?: string
+  schoolCity?: string
 }
 
-export function AdminSidebar({ user, schoolName, schoolLogo }: AdminSidebarProps) {
+export function AdminSidebar({ user, schoolName, schoolLogo, schoolSlug, schoolCity }: AdminSidebarProps) {
   const pathname = usePathname()
   const { useT, locale } = useLanguage()
   const tNav  = (k: string) => useT("nav", k)
@@ -43,6 +46,8 @@ export function AdminSidebar({ user, schoolName, schoolLogo }: AdminSidebarProps
           labelFallback: locale === "ar" ? "الإعلانات" : locale === "en" ? "Announcements" : "Annonces" },
         { labelKey: "notifications", href: "/admin/notifications", icon: Bell,         color: "text-purple-600",
           labelFallback: locale === "ar" ? "الإشعارات" : locale === "en" ? "Notifications" : "Notifications" },
+        { labelKey: "profile", href: "/admin/profile", icon: Users, color: "text-gray-600",
+          labelFallback: locale === "ar" ? "ملفي" : locale === "en" ? "My Profile" : "Mon profil" },
       ],
     },
     {
@@ -109,7 +114,12 @@ export function AdminSidebar({ user, schoolName, schoolLogo }: AdminSidebarProps
           </div>
           <div className="min-w-0">
             <p className="font-bold text-gray-900 text-sm tracking-tight truncate">{displayName}</p>
-            <p className="text-xs text-gray-400">
+            <p className="text-[10px] text-gray-500 mt-0.5">
+              {schoolSlug && <span className="font-mono text-tahfidz-green">{schoolSlug}</span>}
+              {schoolSlug && schoolCity && <span className="mx-1 text-gray-300">·</span>}
+              {schoolCity && <span>{schoolCity}</span>}
+            </p>
+            <p className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-wider">
               {locale === "ar" ? "الإدارة" : locale === "en" ? "Administration" : "Administration"}
             </p>
           </div>
@@ -140,6 +150,10 @@ export function AdminSidebar({ user, schoolName, schoolLogo }: AdminSidebarProps
                       inactiveClass="text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                       iconActiveClass={item.color}
                       iconInactiveClass="text-gray-500 group-hover:text-gray-700"
+                      iconContainerClass={cn(
+                        "w-7 h-7 rounded-lg flex items-center justify-center transition-colors flex-shrink-0",
+                        isActive ? "bg-emerald-100" : "bg-gray-100 group-hover:bg-gray-200"
+                      )}
                     />
                   )
                 }
@@ -177,11 +191,16 @@ export function AdminSidebar({ user, schoolName, schoolLogo }: AdminSidebarProps
         ))}
       </nav>
 
-      {/* User footer */}
-      <div className="px-3 py-3 border-t border-gray-100">
-        <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-gray-50 transition group">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-bold text-xs">{initials}</span>
+      {/* Footer : Dark mode + User */}
+      <div className="px-3 py-3 border-t border-gray-100 dark:border-gray-800 space-y-2">
+
+        <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition group">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
+            {user.avatar ? (
+              <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-white font-bold text-xs">{initials}</span>
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-gray-800 truncate">{user.name}</p>

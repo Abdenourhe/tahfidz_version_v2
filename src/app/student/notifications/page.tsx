@@ -24,6 +24,10 @@ export default function StudentNotificationsPage() {
     announcement:    { icon: Megaphone, color: "text-blue-600",       bg: "bg-blue-50" },
     exam:            { icon: BookOpen,  color: "text-orange-500",       bg: "bg-orange-50" },
     attendance:      { icon: Bell,      color: "text-blue-500",         bg: "bg-blue-50" },
+    memorization_assigned:      { icon: BookOpen, color: "text-tahfidz-green", bg: "bg-tahfidz-green-light" },
+    memorization_progress_updated: { icon: Star,    color: "text-tahfidz-gold",  bg: "bg-tahfidz-gold-light" },
+    attendance_absent_reported:  { icon: Bell,     color: "text-red-500",       bg: "bg-red-50" },
+    attendance_validated:        { icon: CheckCheck, color: "text-green-600",   bg: "bg-green-50" },
   }
 
   const [notifications, setNotifications] = useState<Notification[]>([])

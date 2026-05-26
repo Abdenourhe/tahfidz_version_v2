@@ -20,14 +20,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         const parsed = LoginSchema.safeParse(credentials)
         if (!parsed.success) return null
-        const { email, password, schoolSlug } = parsed.data
+        const { email: rawEmail, password, schoolSlug } = parsed.data
+        const email = rawEmail.toLowerCase().trim()
 
         // SUPERADMIN bypass — pas besoin de slug
         const superAdmin = await prisma.user.findFirst({
           where: { email, role: "SUPERADMIN", isActive: true },
           select: {
             id: true, password: true, fullName: true, avatar: true, schoolId: true,
-            school: { select: { slug: true, name: true } },
+            school: { select: { slug: true, name: true, logo: true, city: true } },
           },
         })
         if (superAdmin) {
@@ -46,6 +47,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             schoolId:   superAdmin.schoolId ?? "",
             schoolSlug: superAdmin.school?.slug ?? "platform",
             schoolName: superAdmin.school?.name ?? "TAHFIDZ Platform",
+            schoolLogo: superAdmin.school?.logo ?? undefined,
+            schoolCity: superAdmin.school?.city ?? undefined,
           }
         }
 
@@ -54,7 +57,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const school = await prisma.school.findFirst({
           where:  { slug: { equals: schoolSlug, mode: "insensitive" } },
-          select: { id: true, slug: true, name: true, isActive: true },
+          select: { id: true, slug: true, name: true, logo: true, city: true, isActive: true },
         })
         if (!school?.isActive) return null
 
@@ -66,6 +69,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const valid = await bcrypt.compare(password, user.password)
         if (!valid) return null
+
+        // Récupérer studentCode si c'est un élève
+        let studentCode: string | undefined
+        if (user.role === "STUDENT") {
+          const studentProfile = await prisma.student.findUnique({
+            where: { userId: user.id },
+            select: { studentCode: true },
+          })
+          studentCode = studentProfile?.studentCode
+        }
 
         prisma.user.update({
           where: { id: user.id },
@@ -81,6 +94,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           schoolId:   school.id,
           schoolSlug: school.slug,
           schoolName: school.name,
+          schoolLogo: school.logo ?? undefined,
+          schoolCity: school.city ?? undefined,
+          studentCode,
         }
       },
     }),
@@ -89,25 +105,47 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         const u = user as typeof user & {
-          role: string; schoolId: string; schoolSlug: string; schoolName: string; avatar?: string
+          role: string; schoolId: string; schoolSlug: string; schoolName: string; avatar?: string; schoolLogo?: string; schoolCity?: string; studentCode?: string
         }
-        token.id         = u.id
-        token.role       = u.role
-        token.avatar     = u.avatar
-        token.schoolId   = u.schoolId
-        token.schoolSlug = u.schoolSlug
-        token.schoolName = u.schoolName
+        token.id          = u.id
+        token.role        = u.role
+        token.avatar      = u.avatar
+        token.schoolId    = u.schoolId
+        token.schoolSlug  = u.schoolSlug
+        token.schoolName  = u.schoolName
+        token.schoolLogo  = u.schoolLogo
+        token.schoolCity  = u.schoolCity
+        token.studentCode = u.studentCode
+      }
+      // Fallback pour les tokens existants (sans reconnexion)
+      if (!token.schoolLogo && token.schoolId) {
+        const school = await prisma.school.findUnique({
+          where: { id: token.schoolId as string },
+          select: { logo: true, city: true },
+        })
+        token.schoolLogo = school?.logo ?? undefined
+        token.schoolCity = school?.city ?? undefined
+      }
+      if (!token.studentCode && token.role === "STUDENT" && token.id) {
+        const studentProfile = await prisma.student.findUnique({
+          where: { userId: token.id as string },
+          select: { studentCode: true },
+        })
+        token.studentCode = studentProfile?.studentCode ?? undefined
       }
       return token
     },
     async session({ session, token }) {
       const u = session.user as any
-      u.id         = token.id         as string
-      u.role       = token.role       as string
-      u.avatar     = token.avatar     as string | undefined
-      u.schoolId   = token.schoolId   as string
-      u.schoolSlug = token.schoolSlug as string
-      u.schoolName = token.schoolName as string
+      u.id          = token.id          as string
+      u.role        = token.role        as string
+      u.avatar      = token.avatar      as string | undefined
+      u.schoolId    = token.schoolId    as string
+      u.schoolSlug  = token.schoolSlug  as string
+      u.schoolName  = token.schoolName  as string
+      u.schoolLogo  = token.schoolLogo  as string | undefined
+      u.schoolCity  = token.schoolCity  as string | undefined
+      u.studentCode = token.studentCode as string | undefined
       return session
     },
   },
@@ -115,22 +153,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
 declare module "next-auth" {
   interface User {
-    role:       string
-    avatar?:    string
-    schoolId:   string
-    schoolSlug: string
-    schoolName: string
+    role:        string
+    avatar?:     string
+    schoolId:    string
+    schoolSlug:  string
+    schoolName:  string
+    schoolLogo?: string
+    schoolCity?: string
+    studentCode?: string
   }
   interface Session {
     user: {
-      id:         string
-      name:       string
-      email:      string
-      role:       string
-      avatar?:    string
-      schoolId:   string
-      schoolSlug: string
-      schoolName: string
+      id:          string
+      name:        string
+      email:       string
+      role:        string
+      avatar?:     string
+      schoolId:    string
+      schoolSlug:  string
+      schoolName:  string
+      schoolLogo?: string
+      schoolCity?: string
+      studentCode?: string
     }
   }
 }

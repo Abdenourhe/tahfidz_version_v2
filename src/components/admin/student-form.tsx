@@ -18,6 +18,7 @@ const baseSchema = z.object({
   fullName: z.string().min(2, "Nom trop court"),
   fullNameAr: z.string().optional(),
   phone: z.string().optional(),
+  emergencyPhone: z.string().optional(),
   gender: z.enum(["MALE", "FEMALE"]).optional(),
   role: z.literal("STUDENT"),
   groupId: z.string().optional(),
@@ -110,6 +111,7 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
             fullName: s.user.fullName,
             fullNameAr: s.user.fullNameAr || "",
             phone: s.user.phone || "",
+            emergencyPhone: s.emergencyPhone || "",
             gender: (s.user.gender as any) || "MALE",
             role: "STUDENT",
             groupId: s.groupId || "",
@@ -151,6 +153,13 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
     setSuccess(false)
     try {
       const payload: any = { ...data }
+      if (photoPreview) {
+        payload.photo = photoPreview
+        if (isEdit) {
+          payload.avatar = photoPreview
+          delete payload.photo
+        }
+      }
       if (isEdit && !payload.password) delete payload.password
       const url = isEdit ? `/api/students/${studentId}` : "/api/students"
       const method = isEdit ? "PATCH" : "POST"
@@ -268,9 +277,15 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
               </select>
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("phone")}</label>
-            <input type="tel" className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green text-sm" {...register("phone")} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("phone")}</label>
+              <input type="tel" className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green text-sm" {...register("phone")} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("emergencyPhone") || "Téléphone d'urgence"}</label>
+              <input type="tel" className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green text-sm" {...register("emergencyPhone")} />
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("address")}</label>

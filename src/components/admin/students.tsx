@@ -12,8 +12,9 @@ import {
   Pencil, Trash2, FileSpreadsheet, UserPlus, Plus,
   User, GraduationCap, Users, Search, Filter,
   Award, Eye, Power, PowerOff, X, Mail, Phone,
-  Shield, ShieldOff, AlertTriangle, CheckCircle,
+  Shield, ShieldOff, AlertTriangle, CheckCircle, Printer,
 } from "lucide-react"
+import { AvatarLightbox } from "@/components/AvatarLightbox"
 
 // ─── Types ────────────────────────────────────────────────────────────────
 export interface StudentRow {
@@ -57,8 +58,11 @@ const UI: Record<string, { fr: string; en: string; ar: string }> = {
   filters:             { fr: "Filtres",                    en: "Filters",                  ar: "فلاتر" },
   years:               { fr: "ans",                        en: "yrs",                      ar: "سنة" },
   notProvided:         { fr: "Non renseigné",              en: "Not set",                  ar: "غير محدد" },
+  subtitle:            { fr: "Gestion des inscriptions et suivis", en: "Enrollment and tracking management", ar: "إدارة التسجيلات والمتابعة" },
   certificate:         { fr: "Certificat",                 en: "Certificate",              ar: "شهادة" },
+  registrationCard:    { fr: "Fiche d'inscription",        en: "Registration card",        ar: "بطاقة التسجيل" },
   viewProfile:         { fr: "Voir le profil",             en: "View profile",             ar: "عرض الملف" },
+  edit:                { fr: "Modifier",                   en: "Edit",                     ar: "تعديل" },
   activate:            { fr: "Activer",                    en: "Activate",                 ar: "تفعيل" },
   deactivate:          { fr: "Désactiver",                 en: "Deactivate",               ar: "تعطيل" },
   delete:              { fr: "Supprimer",                  en: "Delete",                   ar: "حذف" },
@@ -66,6 +70,13 @@ const UI: Record<string, { fr: string; en: string; ar: string }> = {
   activeStudents:      { fr: "Actifs",                     en: "Active",                   ar: "نشط" },
   inactiveStudents:    { fr: "Inactifs",                   en: "Inactive",                 ar: "غير نشط" },
   modalDeleteTitle:    { fr: "Confirmer la suppression",   en: "Confirm deletion",         ar: "تأكيد الحذف" },
+  colEnrolled:         { fr: "Inscrit",                    en: "Enrolled",                 ar: "تاريخ التسجيل" },
+  colEmergency:        { fr: "Urgence",                    en: "Emergency",                ar: "الطوارئ" },
+  colParent:           { fr: "Parent",                     en: "Parent",                   ar: "ولي الأمر" },
+  colTeacher:          { fr: "Enseignant",                 en: "Teacher",                  ar: "المعلم" },
+  noStudents:          { fr: "Aucun élève trouvé",         en: "No students found",        ar: "لم يتم العثور على طلاب" },
+  reset:               { fr: "Réinitialiser",              en: "Reset",                    ar: "إعادة تعيين" },
+  pagination:          { fr: "élèves",                     en: "students",                 ar: "طالب" },
   modalDeleteDesc:     { fr: "Cette action est irréversible. L'élève sera définitivement supprimé.", en: "This action is irreversible.", ar: "هذا الإجراء لا رجعة فيه." },
   modalDeactTitle:     { fr: "Désactiver l'élève",         en: "Deactivate student",       ar: "تعطيل الطالب" },
   modalDeactDesc:      { fr: "L'élève ne pourra plus se connecter. Vous pourrez le réactiver.", en: "The student will not be able to log in.", ar: "لن يتمكن الطالب من تسجيل الدخول." },
@@ -141,8 +152,9 @@ function ActionMenu({ studentId, isActive, onToggle, onDelete, locale }: {
 
   const actions = [
     { Icon: Award,  label: u("certificate", locale),  href: `/admin/students/${studentId}/certificate`, color: "text-amber-600", bg: "hover:bg-amber-50" },
+    { Icon: Printer, label: u("registrationCard", locale), href: `/admin/students/${studentId}/registration-card`, color: "text-emerald-600", bg: "hover:bg-emerald-50" },
     { Icon: Eye,    label: u("viewProfile", locale),   href: `/admin/students/${studentId}`,             color: "text-blue-600",  bg: "hover:bg-blue-50" },
-    { Icon: Pencil, label: "Modifier",                 href: `/admin/students/${studentId}/edit`,        color: "text-gray-600",  bg: "hover:bg-gray-50" },
+    { Icon: Pencil, label: u("edit", locale),                 href: `/admin/students/${studentId}/edit`,        color: "text-gray-600",  bg: "hover:bg-gray-50" },
     { Icon: isActive ? PowerOff : Power, label: isActive ? u("deactivate", locale) : u("activate", locale), onClick: onToggle, color: isActive ? "text-orange-600" : "text-green-600", bg: isActive ? "hover:bg-orange-50" : "hover:bg-green-50" },
     { Icon: Trash2, label: u("delete", locale),        onClick: onDelete,                                color: "text-red-600",   bg: "hover:bg-red-50" },
   ]
@@ -276,7 +288,7 @@ export function StudentTableClient({ students, groups, teachers, statusFilter: i
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">{u("totalStudents", L)}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Gestion des inscriptions et suivis</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{u("subtitle", L)}</p>
         </div>
         <Link href="/admin/students/new" className="flex items-center gap-2 px-5 py-2.5 bg-tahfidz-green hover:bg-tahfidz-green-dark text-white text-sm font-semibold rounded-xl transition shadow-lg shadow-tahfidz-green/20">
           <UserPlus size={18} />{u("addStudent", L)}
@@ -338,7 +350,7 @@ export function StudentTableClient({ students, groups, teachers, statusFilter: i
           </select>
           {(groupFilter || levelFilter || statusFilter) && (
             <button onClick={() => { setGroupFilter(""); setLevelFilter(""); setStatusFilter("") }} className="flex items-center gap-1.5 px-4 py-2 rounded-lg border text-sm text-gray-500 hover:bg-white transition">
-              <X size={14} />Reset
+              <X size={14} />{u("reset", L)}
             </button>
           )}
         </div>
@@ -349,17 +361,20 @@ export function StudentTableClient({ students, groups, teachers, statusFilter: i
         {filtered.length === 0 ? (
           <div className="text-center py-16 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
             <User size={48} className="mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500 text-lg">Aucun élève trouvé</p>
+            <p className="text-gray-500 text-lg">{u("noStudents", L)}</p>
           </div>
         ) : filtered.map(s => (
           <div key={s.id} className="group bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-all">
             <div className="flex items-center gap-4">
               <div className="relative flex-shrink-0">
                 <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-tahfidz-green/20 to-tahfidz-green/5 flex items-center justify-center">
-                  {s.user.avatar
-                    ? <img src={s.user.avatar} alt="" className="w-full h-full object-cover" />
-                    : <User size={20} className="text-tahfidz-green" />
-                  }
+                  <AvatarLightbox
+                    src={s.user.avatar}
+                    alt={s.user.fullName}
+                    fallback={<User size={20} className="text-tahfidz-green" />}
+                    className="w-full h-full"
+                    imgClassName="w-full h-full"
+                  />
                 </div>
                 <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-gray-900 ${s.user.isActive ? "bg-green-500" : "bg-gray-400"}`} />
               </div>
@@ -379,12 +394,12 @@ export function StudentTableClient({ students, groups, teachers, statusFilter: i
               <div className="hidden lg:flex items-center gap-5 text-xs">
                 {s.teacher && (
                   <div className="text-center min-w-[80px]">
-                    <p className="text-gray-400 mb-0.5 text-[10px] uppercase tracking-wider">Enseignant</p>
+                    <p className="text-gray-400 mb-0.5 text-[10px] uppercase tracking-wider">{u("colTeacher", L)}</p>
                     <p className="text-gray-700 dark:text-gray-300 font-medium">{s.teacher.user.fullName}</p>
                   </div>
                 )}
                 <div className="text-center min-w-[80px]">
-                  <p className="text-gray-400 mb-0.5 text-[10px] uppercase tracking-wider">Parent</p>
+                  <p className="text-gray-400 mb-0.5 text-[10px] uppercase tracking-wider">{u("colParent", L)}</p>
                   {s.parentLinks?.[0] ? (
                     <p className="text-purple-600 dark:text-purple-400 font-medium">{s.parentLinks[0].parent.user.fullName}</p>
                   ) : (
@@ -393,12 +408,12 @@ export function StudentTableClient({ students, groups, teachers, statusFilter: i
                 </div>
                 {s.emergencyPhone && (
                   <div className="text-center min-w-[80px]">
-                    <p className="text-gray-400 mb-0.5 text-[10px] uppercase tracking-wider">Urgence</p>
+                    <p className="text-gray-400 mb-0.5 text-[10px] uppercase tracking-wider">{u("colEmergency", L)}</p>
                     <p className="text-red-500 font-medium flex items-center justify-center gap-1"><Phone size={11} />{s.emergencyPhone}</p>
                   </div>
                 )}
                 <div className="text-center min-w-[60px]">
-                  <p className="text-gray-400 mb-0.5 text-[10px] uppercase tracking-wider">Inscrit</p>
+                  <p className="text-gray-400 mb-0.5 text-[10px] uppercase tracking-wider">{u("colEnrolled", L)}</p>
                   <p className="text-gray-700 dark:text-gray-300 font-medium">{new Date(s.user.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "2-digit" })}</p>
                 </div>
               </div>
@@ -417,7 +432,7 @@ export function StudentTableClient({ students, groups, teachers, statusFilter: i
         ))}
       </div>
 
-      <p className="text-xs text-gray-400 text-center">{filtered.length} sur {students.length} élèves</p>
+      <p className="text-xs text-gray-400 text-center">{filtered.length} / {students.length} {u("pagination", L)}</p>
     </div>
   )
 }

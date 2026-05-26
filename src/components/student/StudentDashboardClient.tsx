@@ -178,7 +178,7 @@ export function StudentDashboardClient({
                     <div className="flex items-center gap-2">
                       <span className={`text-xs px-2.5 py-1 rounded-full ${sl.bg} ${sl.color}`}>{sl.label}</span>
                       {prog.status === "IN_PROGRESS" && (
-                        <ReadyToReciteButton studentId={studentId} surahId={Number(prog.surahId)} />
+                        <ReadyToReciteButton progressId={prog.id} studentId={studentId} surahId={Number(prog.surahId)} />
                       )}
                     </div>
                   </div>

@@ -243,3 +243,26 @@
 .dark ::-webkit-scrollbar-track { background: hsl(240 10% 8%); }
 .dark ::-webkit-scrollbar-thumb { background: hsl(240 6% 20%); border-radius: 4px; }
 .dark ::-webkit-scrollbar-thumb:hover { background: hsl(240 5% 28%); }
+@layer utilities {
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .safe-area-pt {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .safe-area-pl {
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+  .safe-area-pr {
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+}
+
+@layer utilities {
+  .tap-feedback {
+    @apply active:scale-95 transition-transform duration-150;
+  }
+  .tap-highlight-none {
+    -webkit-tap-highlight-color: transparent;
+  }
+}

@@ -1,11 +1,13 @@
-// src/middleware.ts — Simplifié, PAS de jwtVerify
+// src/middleware.ts — Vérification impersonation HMAC + protection routes
 import { auth } from "@/auth"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
+import { verifyImpersonationCookie } from "@/lib/impersonation"
 
 const PUBLIC_PATHS = [
   "/login",
   "/register-school",
+  "/parent/register",
   "/api/register-school",
   "/api/auth",
 ]
@@ -41,10 +43,27 @@ export default auth((req) => {
 
   const role = session.user.role ?? ""
 
-  // 🔴 BLOCAGE : Si en mode impersonation, INTERDIRE /admin/super
-  // (pour éviter que l'admin impersonné retourne au super admin)
-  const impersonateInfo = req.cookies.get("impersonate_info")?.value
-  if (impersonateInfo && pathname.startsWith("/admin/super")) {
+  // 🔐 Vérification impersonation
+  const impRaw = req.cookies.get("impersonation_ctx")?.value
+  const imp = impRaw ? verifyImpersonationCookie(impRaw) : null
+
+  // Cookie présent mais invalide/expiré → suppression
+  if (impRaw && !imp) {
+    const response = NextResponse.redirect(new URL("/admin/dashboard", req.url))
+    response.cookies.delete("impersonation_ctx")
+    return response
+  }
+
+  // Impersonation active mais superadmin déconnecté (session manquante) → suppression
+  // (déjà géré par le bloc "pas de session" ci-dessus, mais on garde la logique explicite)
+  if (imp && !session?.user) {
+    const response = NextResponse.redirect(new URL("/login", req.url))
+    response.cookies.delete("impersonation_ctx")
+    return response
+  }
+
+  // Bloquer /admin/super en mode impersonation
+  if (imp && pathname.startsWith("/admin/super")) {
     return NextResponse.redirect(new URL("/admin/dashboard", req.url))
   }
 

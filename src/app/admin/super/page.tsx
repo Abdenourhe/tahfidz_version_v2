@@ -20,6 +20,7 @@ import {
   CreateSchoolModal, EditSchoolModal, ApprovalResultModal,
   ImpersonateModal, FeedbackDetailModal,
 } from "@/components/admin/superadmin/modals"
+import { impersonateSchoolAdmin } from "./actions"
 
 export default function SuperAdminPage() {
   /* ── Core state ── */
@@ -365,18 +366,8 @@ export default function SuperAdminPage() {
   }
 
   const confirmImpersonate = async () => {
-    if (!impersonateSchool) return
-    const res = await fetch("/api/admin/impersonate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ schoolId: impersonateSchool.id }),
-    })
-    if (res.ok) {
-      const data = await res.json()
-      window.location.href = data.redirectUrl
-    } else {
-      setError("Erreur d'impersonation")
-    }
+    // La soumission est gérée par le <form action={impersonateSchoolAdmin}>
+    // Cette fonction n'est plus utilisée directement
   }
 
   /* ── Broadcast ── */
@@ -561,7 +552,7 @@ export default function SuperAdminPage() {
         open={showImpersonate}
         school={impersonateSchool}
         onClose={() => { setShowImpersonate(false); setImpersonateSchool(null) }}
-        onConfirm={confirmImpersonate}
+        action={impersonateSchoolAdmin}
       />
 
       <FeedbackDetailModal

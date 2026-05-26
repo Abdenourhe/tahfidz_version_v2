@@ -1,18 +1,17 @@
 "use client"
 // src/components/admin/certificate.tsx
-// Fusionne : CertificateTemplateEditor.tsx + CertificatePrint.tsx
-// Export : CertTemplate (type), Templates (type), CertificateTemplateEditor, CertificatePrint
+// Version professionnelle améliorée — design certificat premium
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { useLanguage } from "@/contexts/LanguageContext"
 import {
   ArrowLeft, Save, CheckCircle2, Loader2, RotateCcw, Eye, Palette, Type,
-  Sparkles, BookOpen, LayoutTemplate, UserCheck, Printer, Star, Award, Users, QrCode,
+  Sparkles, BookOpen, LayoutTemplate, UserCheck, Printer, Award, QrCode,
 } from "lucide-react"
 
 // ═══════════════════════════════════════════════════════════════════════════
-// TYPES (ex-CertificateTemplateEditor.tsx — réexportés)
+// TYPES
 // ═══════════════════════════════════════════════════════════════════════════
 
 export type CertTemplate = {
@@ -46,17 +45,21 @@ export type Templates = {
   intermediate: CertTemplate
   advanced: CertTemplate
   expert: CertTemplate
+  attendance: CertTemplate
+  participation: CertTemplate
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// CONSTANTES PARTAGÉES
+// MÉTADONNÉES DES TEMPLATES
 // ═══════════════════════════════════════════════════════════════════════════
 
-const LEVEL_META = {
-  beginner:     { label: { fr: "🌱 Débutant",     en: "🌱 Beginner",     ar: "🌱 مبتدئ" },  emoji: "🌱", style: "islamic" },
-  intermediate: { label: { fr: "⭐ Intermédiaire", en: "⭐ Intermediate", ar: "⭐ متوسط" },  emoji: "⭐", style: "andalous" },
-  advanced:     { label: { fr: "🏆 Avancé",       en: "🏆 Advanced",     ar: "🏆 متقدم" },  emoji: "🏆", style: "ottoman" },
-  expert:       { label: { fr: "👑 Expert",        en: "👑 Expert",       ar: "👑 خبير" },   emoji: "👑", style: "mamlouk" },
+const TEMPLATE_META = {
+  beginner:      { label: { fr: "🌱 Débutant",      en: "🌱 Beginner",      ar: "🌱 مبتدئ" },      emoji: "🌱", style: "islamic" },
+  intermediate:  { label: { fr: "⭐ Intermédiaire",  en: "⭐ Intermediate",  ar: "⭐ متوسط" },      emoji: "⭐", style: "andalous" },
+  advanced:      { label: { fr: "🏆 Avancé",        en: "🏆 Advanced",      ar: "🏆 متقدم" },      emoji: "🏆", style: "ottoman" },
+  expert:        { label: { fr: "👑 Expert",         en: "👑 Expert",        ar: "👑 خبير" },       emoji: "👑", style: "mamlouk" },
+  attendance:    { label: { fr: "📅 Assiduité",      en: "📅 Attendance",     ar: "📅 الحضور" },     emoji: "📅", style: "islamic" },
+  participation: { label: { fr: "🤝 Participation",  en: "🤝 Participation", ar: "🤝 المشاركة" },   emoji: "🤝", style: "andalous" },
 }
 
 const STYLE_PRESETS: Record<string, { name: string; colors: string[]; pattern: string; font: string; fontAr: string }> = {
@@ -107,79 +110,31 @@ const DEFAULTS: Templates = {
     decorativePattern: "architectural", signatureStyle: "imperial", paperTexture: "linen", orientation: "landscape",
     directorName: "Directeur", directorNameAr: "المدير", showTeacher: true, teacherName: "", teacherNameAr: "",
   },
+  attendance: {
+    id: "islamic", title: "Certificat d'Assiduité", titleAr: "شَهَادَةُ الْحُضُور",
+    subtitle: "Reconnaissance de présence",
+    bodyText: "Pour avoir fait preuve d'une assiduité exemplaire et d'un engagement constant dans son parcours d'apprentissage du Saint Coran.",
+    arabicVerse: "إِنَّمَا يَخْشَى اللَّهَ مِنْ عِبَادِهِ الْعُلَمَاءُ",
+    primaryColor: "#065f46", accentColor: "#10b981", lightColor: "#ecfdf5", textColor: "#064e3b",
+    badgeEmoji: "📅", borderStyle: "islamic", fontFamily: "Georgia", fontFamilyAr: "Amiri",
+    decorativePattern: "geometric", signatureStyle: "elegant", paperTexture: "parchment", orientation: "portrait",
+    directorName: "Directeur", directorNameAr: "المدير", showTeacher: false, teacherName: "", teacherNameAr: "",
+  },
+  participation: {
+    id: "andalous", title: "Certificat de Participation", titleAr: "شَهَادَةُ الْمُشَارَكَة",
+    subtitle: "Engagement et contribution",
+    bodyText: "Pour avoir démontré un esprit de participation active, de collaboration fraternelle et d'implication remarquable dans la vie de l'école.",
+    arabicVerse: "وَاعْتَصِمُوا بِحَبْلِ اللَّهِ جَمِيعًا وَلَا تَفَرَّقُوا",
+    primaryColor: "#1e40af", accentColor: "#3b82f6", lightColor: "#eff6ff", textColor: "#1e3a8a",
+    badgeEmoji: "🤝", borderStyle: "andalous", fontFamily: "Georgia", fontFamilyAr: "Amiri",
+    decorativePattern: "floral", signatureStyle: "calligraphic", paperTexture: "cream", orientation: "portrait",
+    directorName: "Directeur", directorNameAr: "المدير", showTeacher: false, teacherName: "", teacherNameAr: "",
+  },
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// ÉLÉMENTS SVG PARTAGÉS
+// TEXTURES DE PAPIER
 // ═══════════════════════════════════════════════════════════════════════════
-
-const BORDER_PATTERNS: Record<string, JSX.Element> = {
-  islamic: (
-    <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
-      <defs>
-        <pattern id="border-islamic" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
-          <rect width="60" height="60" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.15"/>
-          <polygon points="30,5 55,30 30,55 5,30" fill="none" stroke="currentColor" strokeWidth="0.8" opacity="0.2"/>
-          <circle cx="30" cy="30" r="8" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.1"/>
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#border-islamic)"/>
-    </svg>
-  ),
-  andalous: (
-    <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
-      <defs>
-        <pattern id="border-andalous" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
-          <path d="M20 40 Q40 20 60 40 Q40 60 20 40" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.15"/>
-          <circle cx="40" cy="40" r="15" fill="none" stroke="currentColor" strokeWidth="0.8" opacity="0.1"/>
-          <path d="M40 10 Q50 25 40 40 Q30 25 40 10" fill="currentColor" opacity="0.08"/>
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#border-andalous)"/>
-    </svg>
-  ),
-  ottoman: (
-    <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
-      <defs>
-        <pattern id="border-ottoman" x="0" y="0" width="100" height="40" patternUnits="userSpaceOnUse">
-          <path d="M0 20 Q25 5 50 20 Q75 35 100 20" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.2"/>
-          <path d="M0 20 Q25 35 50 20 Q75 5 100 20" fill="none" stroke="currentColor" strokeWidth="0.8" opacity="0.1"/>
-          <circle cx="50" cy="20" r="4" fill="currentColor" opacity="0.15"/>
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#border-ottoman)"/>
-    </svg>
-  ),
-  mamlouk: (
-    <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
-      <defs>
-        <pattern id="border-mamlouk" x="0" y="0" width="70" height="70" patternUnits="userSpaceOnUse">
-          <path d="M15 70 L15 35 Q35 15 55 35 L55 70" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.15"/>
-          <rect x="30" y="25" width="10" height="12" fill="currentColor" opacity="0.1"/>
-          <circle cx="35" cy="50" r="3" fill="currentColor" opacity="0.12"/>
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#border-mamlouk)"/>
-    </svg>
-  ),
-}
-
-const ORNAMENT_TOP = (
-  <svg width="200" height="24" viewBox="0 0 200 24" className="mx-auto">
-    <path d="M0 12 L80 12" stroke="currentColor" strokeWidth="0.8" opacity="0.3"/>
-    <path d="M120 12 L200 12" stroke="currentColor" strokeWidth="0.8" opacity="0.3"/>
-    <circle cx="100" cy="12" r="5" fill="currentColor" opacity="0.25"/>
-    <path d="M100 7 L100 17 M95 12 L105 12" stroke="currentColor" strokeWidth="0.5" opacity="0.4"/>
-  </svg>
-)
-
-const ORNAMENT_BOTTOM = (
-  <svg width="160" height="16" viewBox="0 0 160 16" className="mx-auto">
-    <path d="M0 8 L60 8" stroke="currentColor" strokeWidth="0.6" opacity="0.3"/>
-    <path d="M100 8 L160 8" stroke="currentColor" strokeWidth="0.6" opacity="0.3"/>
-    <circle cx="80" cy="8" r="3" fill="currentColor" opacity="0.2"/>
-  </svg>
-)
 
 const PAPER_TEXTURES: Record<string, string> = {
   parchment: `radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.8) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(200,180,140,0.1) 0%, transparent 50%), linear-gradient(135deg, #f5f0e6 0%, #faf8f3 50%, #f0ebe0 100%)`,
@@ -189,44 +144,7 @@ const PAPER_TEXTURES: Record<string, string> = {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// QR CODE BLOCK (sous-composant interne)
-// ═══════════════════════════════════════════════════════════════════════════
-
-function QRCodeBlock({ value, color }: { value: string; color: string }) {
-  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
-  const [error, setError] = useState(false)
-
-  useEffect(() => {
-    import("qrcode").then((QRCode) => {
-      QRCode.toDataURL(value, { width: 80, margin: 1, color: { dark: color, light: "#ffffff" } })
-        .then(setQrDataUrl).catch(() => setError(true))
-    }).catch(() => setError(true))
-  }, [value, color])
-
-  if (error) {
-    return (
-      <div className="w-20 h-20 border-2 border-dashed rounded flex items-center justify-center" style={{ borderColor: color + "40" }}>
-        <QrCode size={20} style={{ color: color + "60" }} />
-      </div>
-    )
-  }
-  if (!qrDataUrl) {
-    return (
-      <div className="w-20 h-20 border-2 border-dashed rounded flex items-center justify-center animate-pulse" style={{ borderColor: color + "40" }}>
-        <div className="w-12 h-12 rounded" style={{ background: color + "20" }} />
-      </div>
-    )
-  }
-  return (
-    <div className="text-center">
-      <img src={qrDataUrl} alt="QR Code" className="w-20 h-20" />
-      <p className="text-[8px] mt-1 tracking-wider uppercase" style={{ color: color + "80" }}>Scanner pour vérifier</p>
-    </div>
-  )
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// CERTIFICATE PRINT
+// DONNÉES ÉTUDIANT / ÉCOLE
 // ═══════════════════════════════════════════════════════════════════════════
 
 interface StudentData {
@@ -239,8 +157,12 @@ interface StudentData {
   teacherName?: string
   memorizedCount: number
   totalStars: number
+  currentStreak?: number
   memorizedSurahs: { id: number; nameFr: string; nameAr: string }[]
   studentCode?: string
+  avgScore?: number
+  tajwidScore?: number
+  attendanceRate?: number
 }
 
 interface SchoolData {
@@ -251,61 +173,276 @@ interface SchoolData {
   slug?: string
 }
 
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CERTIFICATE PRINT — VERSION PROFESSIONNELLE AMÉLIORÉE
+// ═══════════════════════════════════════════════════════════════════════════
+
 interface CertificatePrintProps {
   student: StudentData
   school: SchoolData
-  template: CertTemplate
+  templates: Templates
+  activeKey?: keyof Templates
 }
 
 const DEFAULT_TEMPLATE: CertTemplate = DEFAULTS.beginner
 
-export function CertificatePrint({ student, school, template = DEFAULT_TEMPLATE }: CertificatePrintProps) {
-  const [note, setNote]           = useState("")
+export function CertificatePrint({ student, school, templates, activeKey: initialKey = "beginner" }: CertificatePrintProps) {
+  const { locale } = useLanguage()
+  const [activeKey, setActiveKey] = useState<keyof Templates>(initialKey)
+  const [note, setNote] = useState("")
   const [isPrinting, setIsPrinting] = useState(false)
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
   const certRef = useRef<HTMLDivElement>(null)
 
-  const t           = template
+  const t = templates[activeKey] ?? DEFAULT_TEMPLATE
   const isLandscape = t.orientation === "landscape"
   const pageWidth   = isLandscape ? "297mm" : "210mm"
   const pageHeight  = isLandscape ? "210mm" : "297mm"
-  const printSize   = isLandscape ? "A4 landscape" : "A4 portrait"
+  const printSize   = isLandscape ? "297mm 210mm" : "210mm 297mm"
 
-  const handlePrint = () => {
-    setIsPrinting(true)
-    setTimeout(() => { window.print(); setIsPrinting(false) }, 100)
-  }
-
-  const today   = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
   const qrValue = student.studentCode && school.slug
     ? `${student.studentCode}|${school.slug}`
     : student.id
 
-  const borderPattern = BORDER_PATTERNS[t.borderStyle] || BORDER_PATTERNS.islamic
-  const paperBg       = PAPER_TEXTURES[t.paperTexture] || PAPER_TEXTURES.parchment
+  useEffect(() => {
+    import("qrcode").then((QRCode) => {
+      QRCode.toDataURL(qrValue, { width: 80, margin: 1, color: { dark: t.primaryColor, light: "#ffffff" } })
+        .then(setQrDataUrl)
+        .catch(() => setQrDataUrl(null))
+    }).catch(() => setQrDataUrl(null))
+  }, [qrValue, t.primaryColor])
 
-  const printStyles = `
-    @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Scheherazade+New:wght@400;700&family=Reem+Kufi:wght@400;700&display=swap');
-    @media print {
-      @page { size: ${printSize}; margin: 0; }
-      html, body { width: ${pageWidth} !important; height: ${pageHeight} !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; background: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-      body * { visibility: hidden !important; }
-      #certificate-area, #certificate-area * { visibility: visible !important; }
-      #certificate-area { position: fixed !important; inset: 0 !important; width: ${pageWidth} !important; height: ${pageHeight} !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; box-shadow: none !important; background: white !important; }
-      .no-print { display: none !important; }
+  // ─── Traductions certificat ───
+  const certLabels = {
+    fr: {
+      awardedTo: "Ce certificat est décerné à",
+      director: "Directeur",
+      teacher: "Enseignant",
+      date: "Date",
+      verify: "Vérifier",
+      presence: "Présence",
+      series: "Série",
+      stars: "Étoiles",
+      level: "Niveau",
+      surahs: "Sourates",
+      average: "Moyenne",
+      tajwid: "Tajwīd",
+      group: "Groupe",
+      footer: "TAHFIDZ",
+    },
+    en: {
+      awardedTo: "This certificate is awarded to",
+      director: "Director",
+      teacher: "Teacher",
+      date: "Date",
+      verify: "Verify",
+      presence: "Attendance",
+      series: "Streak",
+      stars: "Stars",
+      level: "Level",
+      surahs: "Surahs",
+      average: "Average",
+      tajwid: "Tajwid",
+      group: "Group",
+      footer: "TAHFIDZ",
+    },
+    ar: {
+      awardedTo: "تُمنح هذه الشهادة لـ",
+      director: "المدير",
+      teacher: "المعلم",
+      date: "التاريخ",
+      verify: "تحقق",
+      presence: "الحضور",
+      series: "السلسلة",
+      stars: "النجوم",
+      level: "المستوى",
+      surahs: "السور",
+      average: "المعدل",
+      tajwid: "التجويد",
+      group: "المجموعة",
+      footer: "TAHFIDZ",
+    },
+  }
+  const L = (locale as "fr" | "en" | "ar") ?? "fr"
+  const cl = certLabels[L]
+
+  const handlePrint = useCallback(() => {
+    if (!certRef.current) return
+    setIsPrinting(true)
+
+    const clone = certRef.current.cloneNode(true) as HTMLElement
+    clone.id = "certificate-print-clone"
+    clone.style.position = "fixed"
+    clone.style.top = "0"
+    clone.style.left = "0"
+    clone.style.margin = "0"
+    clone.style.padding = "0"
+    clone.style.boxShadow = "none"
+    clone.style.zIndex = "99999"
+    document.body.appendChild(clone)
+
+    const style = document.createElement("style")
+    style.id = "certificate-print-style"
+    style.innerHTML = `
+      @media print {
+        @page { size: ${printSize}; margin: 0; }
+        html, body { margin: 0 !important; padding: 0 !important; width: 100% !important; height: 100% !important; overflow: hidden !important; background: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        body > * { visibility: hidden !important; }
+        #certificate-print-clone, #certificate-print-clone * { visibility: visible !important; }
+        #certificate-print-clone {
+          position: fixed !important; top: 0 !important; left: 0 !important;
+          width: ${pageWidth} !important; height: ${pageHeight} !important;
+          margin: 0 !important; padding: 0 !important;
+          overflow: hidden !important; box-shadow: none !important;
+          page-break-inside: avoid !important;
+        }
+        .no-print { display: none !important; }
+      }
+    `
+    document.head.appendChild(style)
+
+    setTimeout(() => {
+      window.print()
+      setTimeout(() => {
+        const s = document.getElementById("certificate-print-style")
+        if (s) document.head.removeChild(s)
+        if (document.body.contains(clone)) document.body.removeChild(clone)
+        setIsPrinting(false)
+      }, 800)
+    }, 400)
+  }, [pageWidth, pageHeight, printSize])
+
+  const today   = new Date().toLocaleDateString(L === "ar" ? "ar-SA" : "fr-FR", { day: "numeric", month: "long", year: "numeric" })
+  const todayAr = new Date().toLocaleDateString("ar-SA", { day: "numeric", month: "long", year: "numeric" })
+
+  const paperBg = PAPER_TEXTURES[t.paperTexture] || PAPER_TEXTURES.parchment
+
+  const isAttendance = activeKey === "attendance"
+  const isParticipation = activeKey === "participation"
+
+  const stats = isAttendance
+    ? [
+        ...(student.attendanceRate !== undefined ? [{ label: cl.presence, value: student.attendanceRate + "%", color: "#10b981", big: true }] : []),
+        ...(student.currentStreak !== undefined && student.currentStreak > 0 ? [{ label: cl.series, value: student.currentStreak + (L === "ar" ? " أيام" : L === "en" ? " days" : " jours"), color: "#f59e0b" }] : []),
+        { label: cl.stars, value: student.totalStars, color: t.accentColor },
+      ]
+    : isParticipation
+    ? [
+        { label: cl.stars, value: student.totalStars, color: t.accentColor, big: true },
+        ...(student.currentStreak !== undefined && student.currentStreak > 0 ? [{ label: cl.series, value: student.currentStreak + (L === "ar" ? " أيام" : L === "en" ? " days" : " jours"), color: "#f59e0b" }] : []),
+        { label: cl.level, value: student.level === "Débutant" || student.level === "beginner" ? "1" : student.level === "Intermédiaire" || student.level === "intermediate" ? "2" : student.level === "Avancé" || student.level === "advanced" ? "3" : "4", color: t.primaryColor },
+      ]
+    : [
+        { label: cl.surahs, value: student.memorizedCount, color: t.primaryColor },
+        { label: cl.stars,  value: student.totalStars,     color: t.accentColor },
+        { label: cl.level,   value: student.level === "Débutant" || student.level === "beginner" ? "1" : student.level === "Intermédiaire" || student.level === "intermediate" ? "2" : student.level === "Avancé" || student.level === "advanced" ? "3" : "4", color: t.primaryColor },
+        ...(student.avgScore !== undefined ? [{ label: cl.average, value: student.avgScore + "%", color: t.primaryColor }] : []),
+        ...(student.attendanceRate !== undefined ? [{ label: cl.presence, value: student.attendanceRate + "%", color: "#10b981" }] : []),
+        ...(student.tajwidScore !== undefined ? [{ label: cl.tajwid, value: student.tajwidScore + "%", color: t.accentColor }] : []),
+      ]
+
+
+  // ─── SVG PROFESSIONNELS ───
+
+  const cornerSvg = (color: string, pos: "tl"|"tr"|"bl"|"br") => {
+    const transform = pos === "tr" ? "scaleX(-1)" : pos === "bl" ? "scaleY(-1)" : pos === "br" ? "scale(-1)" : undefined
+    const style: React.CSSProperties = {
+      position: "absolute",
+      width: "90px",
+      height: "90px",
+      color,
+      pointerEvents: "none",
+      zIndex: 5,
+      ...(pos.startsWith("t") ? { top: "10px" } : { bottom: "10px" }),
+      ...(pos.endsWith("l") ? { left: "10px" } : { right: "10px" }),
+      ...(transform ? { transform } : {}),
     }
-  `
+    return (
+      <svg width="90" height="90" viewBox="0 0 90 90" style={style}>
+        <path d="M0 36 Q0 0 36 0" fill="none" stroke="currentColor" strokeWidth="2.5" opacity="0.55"/>
+        <path d="M0 22 Q0 0 22 0" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.45"/>
+        <path d="M0 50 L16 50 L16 38 Q16 16 38 16 L50 16 L50 0" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.4"/>
+        <circle cx="12" cy="12" r="4" fill="currentColor" opacity="0.35"/>
+        <path d="M28 0 L28 14 L14 14 L14 28 L0 28" fill="none" stroke="currentColor" strokeWidth="0.9" opacity="0.35"/>
+        <path d="M44 0 L44 7 L7 7 L7 44 L0 44" fill="none" stroke="currentColor" strokeWidth="0.7" opacity="0.25"/>
+        <circle cx="40" cy="7" r="2.5" fill="currentColor" opacity="0.3"/>
+        <circle cx="7" cy="40" r="2.5" fill="currentColor" opacity="0.3"/>
+        {/* Motif géométrique intérieur */}
+        <path d="M20 20 L30 30 L20 40 L10 30 Z" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.2"/>
+      </svg>
+    )
+  }
+
+  const sealSvg = (color: string, accent: string) => (
+    <svg width="100" height="100" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="46" fill="none" stroke={accent} strokeWidth="3" opacity="0.9"/>
+      <circle cx="50" cy="50" r="40" fill="none" stroke={accent} strokeWidth="1.2" opacity="0.5" strokeDasharray="5 3"/>
+      <circle cx="50" cy="50" r="34" fill={accent} opacity="0.08"/>
+      <text x="50" y="38" textAnchor="middle" fill={color} fontSize="11" fontWeight="bold" letterSpacing="2" fontFamily="Georgia,serif">TAHFIDZ</text>
+      <text x="50" y="55" textAnchor="middle" fill={color} fontSize="10" fontWeight="bold" letterSpacing="1.2" fontFamily="Georgia,serif">AWARD</text>
+      <path d="M38 65 L50 82 L62 65" fill="none" stroke={accent} strokeWidth="2.5" opacity="0.85"/>
+      <path d="M40 67 L50 78 L60 67" fill={accent} opacity="0.4"/>
+      <circle cx="50" cy="22" r="3" fill={accent} opacity="0.6"/>
+      <circle cx="50" cy="78" r="3" fill={accent} opacity="0.6"/>
+      {/* Étoiles décoratives */}
+      <polygon points="50,8 52,14 58,14 53,18 55,24 50,20 45,24 47,18 42,14 48,14" fill={accent} opacity="0.5"/>
+    </svg>
+  )
+
+  const lineSvg = (color: string) => (
+    <svg width="220" height="16" viewBox="0 0 220 16" style={{ display: "block", margin: "0 auto" }}>
+      <path d="M0 8 L85 8" stroke={color} strokeWidth="1" opacity="0.4"/>
+      <path d="M135 8 L220 8" stroke={color} strokeWidth="1" opacity="0.4"/>
+      <circle cx="110" cy="8" r="5" fill={color} opacity="0.35"/>
+      <circle cx="110" cy="8" r="2" fill="white" opacity="0.9"/>
+      {/* Petits ornements */}
+      <circle cx="95" cy="8" r="2" fill={color} opacity="0.2"/>
+      <circle cx="125" cy="8" r="2" fill={color} opacity="0.2"/>
+    </svg>
+  )
+
+  const watermarkPattern = (color: string) => (
+    <svg width="100%" height="100%" style={{ position: "absolute", inset: 0, opacity: 0.04, pointerEvents: "none", zIndex: 1 }}>
+      <defs>
+        <pattern id="wm" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+          <circle cx="30" cy="30" r="20" fill="none" stroke={color} strokeWidth="0.6"/>
+          <path d="M30 10 L30 50 M10 30 L50 30" stroke={color} strokeWidth="0.4"/>
+          <circle cx="30" cy="30" r="4" fill={color} opacity="0.6"/>
+          <path d="M30 14 L34 30 L30 46 L26 30 Z" fill="none" stroke={color} strokeWidth="0.3" opacity="0.5"/>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#wm)"/>
+    </svg>
+  )
+
+  const borderFrameSvg = (color: string) => (
+    <svg width="100%" height="100%" style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 2 }}>
+      <rect x="18" y="18" width="calc(100% - 36px)" height="calc(100% - 36px)" fill="none" stroke={color} strokeWidth="2" opacity="0.35" rx="2"/>
+      <rect x="24" y="24" width="calc(100% - 48px)" height="calc(100% - 48px)" fill="none" stroke={color} strokeWidth="0.8" opacity="0.2" rx="1"/>
+      {/* Coins doubles */}
+      <path d="M18 40 L18 18 L40 18" fill="none" stroke={color} strokeWidth="2.5" opacity="0.5"/>
+      <path d={`Mcalc(100% - 40px) 18 Lcalc(100% - 18px) 18 Lcalc(100% - 18px) 40`} fill="none" stroke={color} strokeWidth="2.5" opacity="0.5"/>
+      <path d={`M18 calc(100% - 40px) L18 calc(100% - 18px) L40 calc(100% - 18px)`} fill="none" stroke={color} strokeWidth="2.5" opacity="0.5"/>
+      <path d={`Mcalc(100% - 40px) calc(100% - 18px) Lcalc(100% - 18px) calc(100% - 18px) Lcalc(100% - 18px) calc(100% - 40px)`} fill="none" stroke={color} strokeWidth="2.5" opacity="0.5"/>
+    </svg>
+  )
+
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{ __html: printStyles }} />
-
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      {/*  PANNEAU DE CONTRÔLE (no-print)                               */}
+      {/* ═══════════════════════════════════════════════════════════════ */}
       <div className="space-y-4 no-print">
         <div className="flex items-center gap-3">
           <Link href={`/admin/students/${student.id}`} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition">
             <ArrowLeft size={18} className="text-gray-500" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Certificat</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              {L === "ar" ? "الشهادة" : L === "en" ? "Certificate" : "Certificat"}
+            </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">{student.fullName}</p>
           </div>
         </div>
@@ -313,14 +450,42 @@ export function CertificatePrint({ student, school, template = DEFAULT_TEMPLATE 
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-3 flex items-center gap-3">
           <div className="border-2 border-current rounded flex-shrink-0" style={{ color: t.primaryColor, width: isLandscape ? "28px" : "20px", height: isLandscape ? "20px" : "28px" }}/>
           <div>
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Format : {isLandscape ? "Paysage (A4 horizontal)" : "Portrait (A4 vertical)"}</p>
-            <p className="text-xs text-gray-400">{isLandscape ? "297mm x 210mm" : "210mm x 297mm"}</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {L === "ar" ? "التنسيق" : L === "en" ? "Format" : "Format"} : {isLandscape 
+                ? (L === "ar" ? "أفقي (A4 أفقي)" : L === "en" ? "Landscape (A4 horizontal)" : "Paysage (A4 horizontal)")
+                : (L === "ar" ? "عمودي (A4 رأسي)" : L === "en" ? "Portrait (A4 vertical)" : "Portrait (A4 vertical)")}
+            </p>
+            <p className="text-xs text-gray-400">{isLandscape ? "297mm × 210mm" : "210mm × 297mm"}</p>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 space-y-3">
+          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+            {L === "ar" ? "نوع الشهادة" : L === "en" ? "Certificate type" : "Type de certificat"}
+          </label>
+          <div className="flex gap-2 flex-wrap">
+            {(Object.keys(TEMPLATE_META) as (keyof Templates)[]).map(key => (
+              <button key={key} onClick={() => setActiveKey(key)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border-2 transition ${activeKey === key ? "border-transparent text-white" : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 bg-white dark:bg-gray-900"}`}
+                style={activeKey === key ? { background: templates[key].primaryColor } : {}}>
+                {TEMPLATE_META[key].emoji} {key === "beginner" ? (L === "ar" ? "الحفظ" : L === "en" ? "Memorization" : "Mémorisation")
+                  : key === "intermediate" ? (L === "ar" ? "التفوق" : L === "en" ? "Excellence" : "Excellence")
+                  : key === "advanced" ? (L === "ar" ? "الشرف" : L === "en" ? "Honor" : "Honneur")
+                  : key === "expert" ? (L === "ar" ? "الإتقان" : L === "en" ? "Mastery" : "Maîtrise")
+                  : key === "attendance" ? (L === "ar" ? "الحضور" : L === "en" ? "Attendance" : "Assiduité")
+                  : (L === "ar" ? "المشاركة" : L === "en" ? "Participation" : "Participation")}
+              </button>
+            ))}
           </div>
         </div>
 
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 space-y-2">
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Note personnalisée <span className="font-normal text-gray-400">(optionnelle)</span></label>
-          <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={200} placeholder="Félicitations…" className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none transition"/>
+          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+            {L === "ar" ? "ملاحظة شخصية" : L === "en" ? "Personal note" : "Note personnalisée"} <span className="font-normal text-gray-400">({L === "ar" ? "اختياري" : L === "en" ? "optional" : "optionnelle"})</span>
+          </label>
+          <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={200} 
+            placeholder={L === "ar" ? "تهانينا..." : L === "en" ? "Congratulations..." : "Félicitations…"} 
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none transition"/>
           <p className="text-xs text-gray-400 text-right">{note.length}/200</p>
         </div>
 
@@ -328,155 +493,415 @@ export function CertificatePrint({ student, school, template = DEFAULT_TEMPLATE 
           <button onClick={handlePrint} disabled={isPrinting}
             className="flex items-center gap-2 px-5 py-2.5 text-white font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-60 shadow-lg text-sm"
             style={{ background: `linear-gradient(to right, ${t.primaryColor}, ${t.accentColor})` }}>
-            <Printer size={16} /> Imprimer
+            <Printer size={16} /> {L === "ar" ? "طباعة" : L === "en" ? "Print" : "Imprimer"}
           </button>
           <p className="text-xs text-gray-400">{printSize}</p>
         </div>
       </div>
 
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      {/*  CERTIFICAT PROFESSIONNEL — RENDU FINAL                       */}
+      {/* ═══════════════════════════════════════════════════════════════ */}
       <div id="certificate-area" ref={certRef}
-        className="mt-4 relative overflow-hidden shadow-2xl print:shadow-none"
-        style={{ width: pageWidth, height: pageHeight, boxSizing: "border-box", background: paperBg, fontFamily: `${t.fontFamily}, Georgia, serif` }}>
+        style={{
+          width: pageWidth,
+          height: pageHeight,
+          position: "relative",
+          overflow: "hidden",
+          boxSizing: "border-box",
+          background: paperBg,
+          fontFamily: `${t.fontFamily}, Georgia, serif`,
+          marginTop: "16px",
+          boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
+        }}>
 
-        <div className="absolute inset-0 text-current opacity-30 pointer-events-none" style={{ color: t.primaryColor }}>
-          {borderPattern}
-        </div>
-        <div className="absolute inset-4 border-2 rounded-lg pointer-events-none" style={{ borderColor: t.accentColor + "40" }}>
-          <div className="absolute inset-1 border pointer-events-none" style={{ borderColor: t.primaryColor + "20" }}>
-            <div className="absolute inset-1 border border-dashed pointer-events-none" style={{ borderColor: t.accentColor + "15" }}/>
+        {/* Watermark subtil */}
+        {watermarkPattern(t.primaryColor)}
+
+        {/* Cadre de bordure SVG professionnel */}
+        {borderFrameSvg(t.accentColor)}
+
+        {/* Bordures doubles (fallback CSS) */}
+        <div style={{
+          position: "absolute",
+          inset: "12px",
+          border: `2.5px solid ${t.accentColor}40`,
+          borderRadius: "2px",
+          pointerEvents: "none",
+          zIndex: 3,
+        }} />
+        <div style={{
+          position: "absolute",
+          inset: "20px",
+          border: `0.5px solid ${t.primaryColor}15`,
+          pointerEvents: "none",
+          zIndex: 3,
+        }} />
+
+        {/* Coins ornementaux améliorés */}
+        {cornerSvg(t.accentColor, "tl")}
+        {cornerSvg(t.accentColor, "tr")}
+        {cornerSvg(t.accentColor, "bl")}
+        {cornerSvg(t.accentColor, "br")}
+
+        {/* Contenu principal */}
+        <div style={{
+          position: "relative",
+          zIndex: 10,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          height: "100%",
+          padding: isLandscape ? "22px 52px" : "28px 40px",
+        }}>
+
+          {/* ═══ HEADER : Logo centré, QR à droite ═══ */}
+          <div style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            width: "100%",
+            marginBottom: "8px",
+          }}>
+            {/* ESPACEUR gauche (pour centrer le logo) */}
+            <div style={{ width: "56px" }} />
+
+            {/* ESPACE CENTRAL */}
+            <div style={{ width: "100px" }} />
+
+            {/* ESPACEUR droite (pour centrer le logo) */}
+            <div style={{ width: "56px" }} />
           </div>
-        </div>
 
-        <div className="relative z-10 flex flex-col items-center"
-          style={{ height: pageHeight, padding: isLandscape ? "28px 40px" : "36px 32px" }}>
-
-          {/* Verset arabe + ornement */}
-          <div className="text-center w-full" style={{ marginBottom: "16px" }}>
-            <p dir="rtl" style={{ color: t.primaryColor, fontFamily: `${t.fontFamilyAr}, 'Scheherazade New', serif`, fontSize: "1.15rem", lineHeight: 1.6, marginBottom: "8px", letterSpacing: "0.02em" }}>
-              {t.arabicVerse}
-            </p>
-            <div style={{ color: t.accentColor }}>{ORNAMENT_TOP}</div>
+          {/* Ligne décorative */}
+          <div style={{ width: "100%", marginBottom: "8px" }}>
+            {lineSvg(t.accentColor)}
           </div>
 
-          {/* École + QR */}
-          <div className="flex items-center justify-between w-full mb-4" style={{ padding: "0 20px" }}>
-            <div className="flex items-center gap-3">
-              {school.logo ? (
-                <img src={school.logo} alt={school.name} className="w-12 h-12 object-contain rounded-lg border p-1" style={{ borderColor: t.accentColor + "30" }}/>
-              ) : (
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center shadow" style={{ background: `linear-gradient(135deg, ${t.primaryColor}, ${t.accentColor})` }}>
-                  <span className="text-white font-bold text-xl">{school.name.charAt(0)}</span>
-                </div>
-              )}
-              <div className="text-center">
-                <p className="font-bold text-base" style={{ color: t.textColor, letterSpacing: "0.01em" }}>{school.name}</p>
-                {school.nameAr && <p className="text-sm" dir="rtl" style={{ color: t.primaryColor, fontFamily: `${t.fontFamilyAr}, serif` }}>{school.nameAr}</p>}
+          {/* Verset arabe */}
+          <p dir="rtl" style={{
+            color: t.primaryColor,
+            fontFamily: `${t.fontFamilyAr}, 'Scheherazade New', serif`,
+            fontSize: "0.95rem", lineHeight: 1.5, letterSpacing: "0.04em",
+            opacity: 0.75, marginBottom: "10px", textAlign: "center",
+            fontWeight: 500,
+          }}>
+            {t.arabicVerse}
+          </p>
+
+          {/* LOGO + NOM ÉCOLE + VILLE */}
+          <div style={{ 
+            display: "flex", 
+            alignItems: "center", 
+            gap: "10px",
+            justifyContent: "center",
+            marginBottom: "8px",
+          }}>
+            {school.logo ? (
+              <img src={school.logo} alt={school.name} style={{
+                width: "40px", height: "40px", objectFit: "contain",
+                borderRadius: "6px",
+              }} />
+            ) : (
+              <div style={{
+                width: "40px", height: "40px", borderRadius: "6px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: `linear-gradient(135deg, ${t.primaryColor}, ${t.accentColor})`,
+              }}>
+                <span style={{ color: "white", fontWeight: "bold", fontSize: "16px" }}>{school.name.charAt(0)}</span>
               </div>
-            </div>
-            <QRCodeBlock value={qrValue} color={t.primaryColor} />
-          </div>
-
-          {/* Titre */}
-          <div className="text-center w-full" style={{ marginBottom: "20px" }}>
-            <p style={{ color: t.accentColor, fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: "6px" }}>{t.subtitle}</p>
-            <h1 style={{ color: t.textColor, fontSize: "2.2rem", fontWeight: 700, letterSpacing: "0.02em", lineHeight: 1.2, marginBottom: "4px" }}>{t.title}</h1>
-            <p dir="rtl" style={{ color: t.primaryColor, fontFamily: `${t.fontFamilyAr}, 'Scheherazade New', serif`, fontSize: "1.5rem", fontWeight: 700, lineHeight: 1.3 }}>{t.titleAr}</p>
-          </div>
-
-          <div className="flex-1 flex flex-col items-center w-full" style={{ maxWidth: "520px" }}>
-            <div className="text-center w-full" style={{ marginBottom: "20px", maxWidth: "460px", marginLeft: "auto", marginRight: "auto" }}>
-              <p style={{ color: t.textColor, fontSize: "0.95rem", lineHeight: 1.5, fontStyle: "italic" }}>&ldquo;{t.bodyText}&rdquo;</p>
-            </div>
-
-            <div className="w-full flex items-center gap-3" style={{ marginBottom: "20px" }}>
-              <div className="flex-1 h-px" style={{ background: `linear-gradient(to right, transparent, ${t.accentColor})` }}/>
-              <div style={{ color: t.accentColor }}>{ORNAMENT_BOTTOM}</div>
-              <div className="flex-1 h-px" style={{ background: `linear-gradient(to left, transparent, ${t.accentColor})` }}/>
-            </div>
-
-            <div className="text-center w-full" style={{ marginBottom: "20px" }}>
-              <p style={{ color: "#9ca3af", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: "4px" }}>Ce certificat est décerné à</p>
-              <h2 style={{ color: t.textColor, fontSize: "1.8rem", fontWeight: 700, lineHeight: 1.2 }}>{student.fullName}</h2>
-              {student.fullNameAr && (
-                <p dir="rtl" style={{ color: t.primaryColor, fontFamily: `${t.fontFamilyAr}, serif`, fontSize: "1.2rem", marginTop: "4px" }}>{student.fullNameAr}</p>
+            )}
+            <div style={{ textAlign: "left" }}>
+              <p style={{
+                fontWeight: 700, fontSize: "0.85rem", color: t.textColor,
+                lineHeight: 1.1, letterSpacing: "0.04em",
+                fontFamily: "'Playfair Display', Georgia, serif",
+              }}>
+                {school.name}
+              </p>
+              {school.city && (
+                <p style={{ fontSize: "0.6rem", color: t.primaryColor, fontWeight: 600, letterSpacing: "0.08em" }}>
+                  {school.city.toUpperCase()}
+                </p>
               )}
             </div>
+          </div>
 
-            <div className="flex justify-center gap-5" style={{ marginBottom: "16px" }}>
-              {[
-                { icon: BookOpen, label: "Sourates", value: student.memorizedCount, color: t.primaryColor },
-                { icon: Star,     label: "Étoiles",  value: student.totalStars,     color: t.accentColor },
-                { icon: Award,    label: "Niveau",   value: student.level === "beginner" ? "1" : student.level === "intermediate" ? "2" : student.level === "advanced" ? "3" : "4", color: t.primaryColor },
-              ].map((stat, i) => (
-                <div key={i} className="text-center px-5 py-3 rounded-lg border" style={{ borderColor: t.accentColor + "18", background: "rgba(255,255,255,0.6)" }}>
-                  <stat.icon size={18} style={{ color: stat.color }} className="mx-auto mb-1.5"/>
-                  <p style={{ color: t.textColor, fontSize: "1.3rem", fontWeight: 700, lineHeight: 1 }}>{stat.value}</p>
-                  <p style={{ color: "#9ca3af", fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.15em" }}>{stat.label}</p>
+          {/* Ligne décorative */}
+          <div style={{ width: "100%", marginBottom: "8px" }}>
+            {lineSvg(t.accentColor)}
+          </div>
+
+          {/* Sous-titre */}
+          <p style={{
+            color: t.accentColor, fontSize: "0.55rem", fontWeight: 700,
+            letterSpacing: "0.45em", textTransform: "uppercase", marginBottom: "6px",
+          }}>
+            {t.subtitle}
+          </p>
+
+          {/* Titre principal */}
+          <h1 style={{
+            color: t.textColor, fontSize: isLandscape ? "1.8rem" : "2rem",
+            fontWeight: 700, letterSpacing: "0.12em", lineHeight: 1.05,
+            marginBottom: "3px", fontFamily: "'Playfair Display', Georgia, serif",
+            textTransform: "uppercase",
+            textShadow: `0 1px 2px ${t.primaryColor}10`,
+          }}>
+            {t.title}
+          </h1>
+          <p dir="rtl" style={{
+            color: t.primaryColor, fontFamily: `${t.fontFamilyAr}, 'Scheherazade New', serif`,
+            fontSize: "1.25rem", fontWeight: 700, lineHeight: 1.2, marginBottom: "8px",
+            letterSpacing: "0.02em",
+          }}>
+            {t.titleAr}
+          </p>
+
+          {/* Ligne dorée sous titre */}
+          <div style={{ width: "60px", height: "3px", background: t.accentColor, opacity: 0.7, marginBottom: "10px", borderRadius: "2px" }} />
+
+
+          {/* ═══ CORPS — Nom + Texte + Stats ═══ */}
+          <div style={{
+            flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
+            width: "100%", maxWidth: isLandscape ? "85%" : "440px",
+          }}>
+
+            {/* "Décerné à" */}
+            <p style={{
+              color: "#9ca3af", fontSize: "0.52rem", textTransform: "uppercase",
+              letterSpacing: "0.35em", marginBottom: "6px", fontWeight: 600,
+            }}>
+              {cl.awardedTo}
+            </p>
+
+            {/* Nom calligraphie */}
+            <h2 style={{
+              color: t.textColor, fontSize: isLandscape ? "1.6rem" : "1.8rem",
+              fontWeight: 400, lineHeight: 1.15,
+              fontFamily: "'Playfair Display', 'Cormorant Garamond', Georgia, serif",
+              fontStyle: "italic", letterSpacing: "0.04em",
+              textShadow: `0 1px 3px ${t.primaryColor}08`,
+            }}>
+              {student.fullName}
+            </h2>
+            {student.fullNameAr && (
+              <p dir="rtl" style={{
+                color: t.primaryColor, fontFamily: `${t.fontFamilyAr}, serif`,
+                fontSize: "1rem", marginTop: "4px", opacity: 0.85, fontWeight: 500,
+              }}>
+                {student.fullNameAr}
+              </p>
+            )}
+
+            {/* Ligne sous nom */}
+            <div style={{
+              width: "55%", maxWidth: "220px", height: "2px",
+              background: `linear-gradient(to right, transparent, ${t.accentColor}, transparent)`,
+              margin: "8px 0 10px", borderRadius: "1px",
+            }} />
+
+            {/* Texte corps */}
+            <p style={{
+              color: t.textColor, fontSize: "0.78rem", lineHeight: 1.55,
+              fontStyle: "italic", fontFamily: "'Cormorant Garamond', Georgia, serif",
+              textAlign: "center", marginBottom: "10px", opacity: 0.88,
+              maxWidth: "90%",
+            }}>
+              « {t.bodyText} »
+            </p>
+
+            {/* Stats adaptées avec style premium */}
+            <div style={{
+              display: "flex", justifyContent: "center", gap: "20px",
+              flexWrap: "wrap", marginBottom: "10px",
+            }}>
+              {(stats as any[]).map((stat, i) => (
+                <div key={i} style={{ 
+                  textAlign: "center",
+                  padding: "6px 14px",
+                  borderRadius: "10px",
+                  background: `linear-gradient(135deg, ${stat.color}08, ${stat.color}03)`,
+                  border: `1px solid ${stat.color}15`,
+                }}>
+                  <p style={{
+                    color: stat.color, fontSize: stat.big ? "1.4rem" : "0.92rem",
+                    fontWeight: 700, lineHeight: 1,
+                  }}>
+                    {stat.value}
+                  </p>
+                  <p style={{
+                    color: "#9ca3af", fontSize: "0.48rem",
+                    textTransform: "uppercase", letterSpacing: "0.12em", marginTop: "3px",
+                    fontWeight: 600,
+                  }}>
+                    {stat.label}
+                  </p>
                 </div>
               ))}
             </div>
 
             {student.groupName && (
-              <div className="flex items-center justify-center gap-2 mb-4 px-4 py-2 rounded-full border"
-                style={{ borderColor: t.accentColor + "30", background: `linear-gradient(135deg, ${t.primaryColor}15, ${t.accentColor}15)`, display: "inline-flex", margin: "0 auto 16px" }}>
-                <Users size={14} style={{ color: t.primaryColor }}/>
-                <span style={{ color: t.textColor, fontSize: "0.75rem", fontWeight: 600, letterSpacing: "0.05em" }}>{student.groupName}</span>
-              </div>
-            )}
-
-            {student.memorizedSurahs.length > 0 && (
-              <div className="w-full p-3 rounded-lg border mb-3" style={{ background: "rgba(255,255,255,0.5)", borderColor: t.accentColor + "12" }}>
-                <p className="text-center mb-2" style={{ color: t.textColor, fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.2em" }}>Sourates mémorisées</p>
-                <div className="flex flex-wrap justify-center gap-1.5">
-                  {student.memorizedSurahs.slice(0, 10).map(s => (
-                    <span key={s.id} className="inline-flex items-center gap-1 px-2 py-1 bg-white rounded border text-xs" style={{ borderColor: t.primaryColor + "15" }}>
-                      <span className="w-5 h-5 rounded-full text-white flex items-center justify-center font-bold text-[10px]" style={{ background: t.primaryColor }}>{s.id}</span>
-                      <span style={{ color: t.textColor, fontWeight: 500 }}>{s.nameFr}</span>
-                    </span>
-                  ))}
-                  {student.memorizedSurahs.length > 10 && <span className="text-xs text-gray-400">+{student.memorizedSurahs.length - 10}</span>}
-                </div>
+              <div style={{
+                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                gap: "8px", marginBottom: "8px", padding: "5px 16px",
+                borderRadius: "9999px", border: `1.5px solid ${t.accentColor}25`,
+                background: `linear-gradient(135deg, ${t.primaryColor}06, ${t.accentColor}06)`,
+              }}>
+                <span style={{ color: t.textColor, fontSize: "0.65rem", fontWeight: 600, letterSpacing: "0.05em" }}>
+                  {cl.group} : {student.groupName}
+                </span>
               </div>
             )}
 
             {note && (
-              <div className="w-full p-3 rounded-lg border mb-3" style={{ background: "rgba(255,255,255,0.7)", borderColor: t.accentColor + "15" }}>
-                <p className="text-center text-sm italic" style={{ color: t.textColor + "cc", lineHeight: 1.5 }}>&ldquo;{note}&rdquo;</p>
+              <div style={{
+                width: "100%", padding: "8px 16px", borderRadius: "8px",
+                border: `1.5px solid ${t.accentColor}12`, background: "rgba(255,255,255,0.55)",
+                marginBottom: "8px",
+              }}>
+                <p style={{
+                  textAlign: "center", fontSize: "0.75rem", fontStyle: "italic",
+                  color: t.textColor + "cc", lineHeight: 1.35,
+                  fontFamily: "'Cormorant Garamond', Georgia, serif",
+                }}>
+                  « {note} »
+                </p>
               </div>
             )}
           </div>
 
-          {/* Pied de page — signatures */}
-          <div className="w-full" style={{ marginTop: "auto", paddingTop: "6px" }}>
-            <div className="w-full mb-4" style={{ maxWidth: "600px", margin: "0 auto 16px" }}>
-              <div className="h-px" style={{ background: `linear-gradient(to right, transparent, ${t.accentColor}30, transparent)` }}/>
+          {/* ═══ PIED DE PAGE : QR à gauche + Signatures + Sceau à droite ═══ */}
+          <div style={{ width: "100%", marginTop: "auto", zIndex: 10 }}>
+            <div style={{
+              width: "100%", marginBottom: "8px",
+              maxWidth: isLandscape ? "85%" : "440px",
+              marginLeft: "auto", marginRight: "auto",
+            }}>
+              <div style={{
+                height: "1.5px",
+                background: `linear-gradient(to right, transparent, ${t.accentColor}25, transparent)`,
+                borderRadius: "1px",
+              }} />
             </div>
-            <div className="flex items-start justify-between" style={{ padding: "0 40px" }}>
-              <div className="text-center" style={{ width: "100px" }}>
-                <div className="w-full h-px mb-2" style={{ background: `linear-gradient(to right, transparent, ${t.accentColor}40, transparent)` }}/>
-                <p style={{ color: "#9ca3af", fontSize: "0.55rem", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "2px" }}>Directeur</p>
-                <p style={{ color: t.textColor, fontSize: "0.8rem", fontWeight: 600, lineHeight: 1.2 }}>{t.directorName}</p>
-                {t.directorNameAr && <p dir="rtl" style={{ color: t.primaryColor, fontFamily: `${t.fontFamilyAr}, serif`, fontSize: "0.7rem", marginTop: "1px" }}>{t.directorNameAr}</p>}
+
+            <div style={{
+              display: "flex",
+              alignItems: "flex-end",
+              justifyContent: "space-between",
+              gap: "16px",
+              padding: "0 14px",
+            }}>
+              {/* QR CODE À GAUCHE (même niveau que TAHFIDZ AWARD) */}
+              <div style={{ width: "100px", textAlign: "center" }}>
+                {qrDataUrl ? (
+                  <div style={{
+                    padding: "6px",
+                  }}>
+                    <img src={qrDataUrl} alt="QR" style={{ width: "72px", height: "72px", display: "block" }} />
+                    <p style={{
+                      fontSize: "6px", marginTop: "2px", textAlign: "center",
+                      letterSpacing: "0.1em", textTransform: "uppercase",
+                      color: t.primaryColor + "50", fontWeight: 600,
+                    }}>
+                      {cl.verify}
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{
+                    width: "84px", height: "84px",
+                    border: `1.5px dashed ${t.accentColor}15`,
+                    borderRadius: "6px",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <span style={{ fontSize: "8px", color: t.primaryColor + "30" }}>QR</span>
+                  </div>
+                )}
               </div>
-              {t.showTeacher && (
-                <div className="text-center" style={{ width: "100px" }}>
-                  <div className="w-full h-px mb-2" style={{ background: `linear-gradient(to right, transparent, ${t.accentColor}40, transparent)` }}/>
-                  <p style={{ color: "#9ca3af", fontSize: "0.55rem", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "2px" }}>Enseignant</p>
-                  <p style={{ color: t.textColor, fontSize: "0.8rem", fontWeight: 600, lineHeight: 1.2 }}>{t.teacherName || student.teacherName || "Enseignant"}</p>
-                  {t.teacherNameAr && <p dir="rtl" style={{ color: t.primaryColor, fontFamily: `${t.fontFamilyAr}, serif`, fontSize: "0.7rem", marginTop: "1px" }}>{t.teacherNameAr}</p>}
+
+              {/* SIGNATURES AU CENTRE */}
+              <div style={{
+                display: "flex",
+                alignItems: "flex-end",
+                justifyContent: "center",
+                gap: isLandscape ? "60px" : "32px",
+                flex: 1,
+              }}>
+                {/* Directeur */}
+                <div style={{ textAlign: "center", width: "130px" }}>
+                  <div style={{
+                    width: "100%", height: "2px",
+                    background: t.accentColor, opacity: 0.45, marginBottom: "6px", borderRadius: "1px",
+                  }} />
+                  <p style={{ color: "#9ca3af", fontSize: "0.5rem", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: "3px", fontWeight: 600 }}>
+                    {cl.director}
+                  </p>
+                  <p style={{ color: t.textColor, fontSize: "0.75rem", fontWeight: 600, lineHeight: 1.25 }}>
+                    {t.directorName}
+                  </p>
+                  {t.directorNameAr && (
+                    <p dir="rtl" style={{ color: t.primaryColor, fontFamily: `${t.fontFamilyAr}, serif`, fontSize: "0.62rem", marginTop: "2px", fontWeight: 500 }}>
+                      {t.directorNameAr}
+                    </p>
+                  )}
                 </div>
-              )}
-              <div className="text-center" style={{ width: "100px" }}>
-                <div className="w-full h-px mb-2" style={{ background: `linear-gradient(to right, transparent, ${t.accentColor}40, transparent)` }}/>
-                <p style={{ color: "#9ca3af", fontSize: "0.55rem", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "2px" }}>Date</p>
-                <p style={{ color: t.textColor, fontSize: "0.8rem", fontWeight: 600, lineHeight: 1.2 }}>{today}</p>
-                <p style={{ color: "#9ca3af", fontSize: "0.6rem", marginTop: "4px" }}>{new Date().toLocaleDateString("ar-SA", { day: "numeric", month: "long", year: "numeric" })}</p>
+
+                {/* Enseignant */}
+                <div style={{ textAlign: "center", width: "130px" }}>
+                  <div style={{
+                    width: "100%", height: "2px",
+                    background: t.accentColor, opacity: 0.45, marginBottom: "6px", borderRadius: "1px",
+                  }} />
+                  <p style={{ color: "#9ca3af", fontSize: "0.5rem", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: "3px", fontWeight: 600 }}>
+                    {cl.teacher}
+                  </p>
+                  <p style={{ color: t.textColor, fontSize: "0.75rem", fontWeight: 600, lineHeight: 1.25 }}>
+                    {t.teacherName || student.teacherName || "—"}
+                  </p>
+                  {t.teacherNameAr && (
+                    <p dir="rtl" style={{ color: t.primaryColor, fontFamily: `${t.fontFamilyAr}, serif`, fontSize: "0.62rem", marginTop: "2px", fontWeight: 500 }}>
+                      {t.teacherNameAr}
+                    </p>
+                  )}
+                </div>
+
+                {/* Date */}
+                <div style={{ textAlign: "center", width: "130px" }}>
+                  <div style={{
+                    width: "100%", height: "2px",
+                    background: t.accentColor, opacity: 0.45, marginBottom: "6px", borderRadius: "1px",
+                  }} />
+                  <p style={{ color: "#9ca3af", fontSize: "0.5rem", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: "3px", fontWeight: 600 }}>
+                    {cl.date}
+                  </p>
+                  <p style={{ color: t.textColor, fontSize: "0.75rem", fontWeight: 600, lineHeight: 1.25 }}>
+                    {today}
+                  </p>
+                  <p style={{ color: "#9ca3af", fontSize: "0.55rem", marginTop: "3px", fontFamily: `${t.fontFamilyAr}, serif` }}>{todayAr}</p>
+                </div>
+              </div>
+
+              {/* SCEAU TAHFIDZ AWARD À DROITE */}
+              <div style={{ opacity: 0.85, marginBottom: "4px" }}>
+                {sealSvg(t.primaryColor, t.accentColor)}
               </div>
             </div>
-            <div className="mt-3 flex items-center gap-2" style={{ maxWidth: "600px", margin: "12px auto 0" }}>
-              <div className="flex-1 h-px" style={{ background: `linear-gradient(to right, transparent, ${t.primaryColor})` }}/>
-              <span style={{ color: t.accentColor + "60", fontSize: "0.5rem", letterSpacing: "0.2em", textTransform: "uppercase", whiteSpace: "nowrap" }}>{school.name} — TAHFIDZ</span>
-              <div className="flex-1 h-px" style={{ background: `linear-gradient(to left, transparent, ${t.primaryColor})` }}/>
+
+            {/* Footer école premium */}
+            <div style={{
+              marginTop: "10px",
+              display: "flex", alignItems: "center", gap: "10px",
+              maxWidth: "460px", margin: "10px auto 0",
+            }}>
+              <div style={{ flex: 1, height: "1.5px", background: `linear-gradient(to right, transparent, ${t.primaryColor})`, borderRadius: "1px" }} />
+              <span style={{
+                color: t.accentColor + "50", fontSize: "0.46rem",
+                letterSpacing: "0.25em", textTransform: "uppercase", whiteSpace: "nowrap", fontWeight: 600,
+              }}>
+                {school.name}{school.city ? ` — ${school.city}` : ""} — {cl.footer}
+              </span>
+              <div style={{ flex: 1, height: "1.5px", background: `linear-gradient(to left, transparent, ${t.primaryColor})`, borderRadius: "1px" }} />
             </div>
           </div>
         </div>
@@ -485,8 +910,9 @@ export function CertificatePrint({ student, school, template = DEFAULT_TEMPLATE 
   )
 }
 
+
 // ═══════════════════════════════════════════════════════════════════════════
-// CERTIFICATE TEMPLATE EDITOR
+// CERTIFICATE TEMPLATE EDITOR — VERSION PROFESSIONNELLE
 // ═══════════════════════════════════════════════════════════════════════════
 
 const EDITOR_UI: Record<string, { fr: string; en: string; ar: string }> = {
@@ -539,10 +965,12 @@ export function CertificateTemplateEditor({ initialTemplates, locale }: EditorPr
   const u = (k: keyof typeof EDITOR_UI) => EDITOR_UI[k][L] ?? EDITOR_UI[k].fr
 
   const [templates, setTemplates] = useState<Templates>({
-    beginner:     { ...DEFAULTS.beginner,     ...(initialTemplates.beginner     ?? {}) },
-    intermediate: { ...DEFAULTS.intermediate, ...(initialTemplates.intermediate ?? {}) },
-    advanced:     { ...DEFAULTS.advanced,     ...(initialTemplates.advanced     ?? {}) },
-    expert:       { ...DEFAULTS.expert,       ...(initialTemplates.expert       ?? {}) },
+    beginner:      { ...DEFAULTS.beginner,      ...(initialTemplates.beginner      ?? {}) },
+    intermediate:  { ...DEFAULTS.intermediate,  ...(initialTemplates.intermediate  ?? {}) },
+    advanced:      { ...DEFAULTS.advanced,      ...(initialTemplates.advanced      ?? {}) },
+    expert:        { ...DEFAULTS.expert,        ...(initialTemplates.expert        ?? {}) },
+    attendance:    { ...DEFAULTS.attendance,    ...(initialTemplates.attendance    ?? {}) },
+    participation: { ...DEFAULTS.participation, ...(initialTemplates.participation ?? {}) },
   })
   const [activeLevel, setActiveLevel] = useState<keyof Templates>("beginner")
   const [saving, setSaving] = useState(false)
@@ -651,11 +1079,11 @@ export function CertificateTemplateEditor({ initialTemplates, locale }: EditorPr
 
       {/* Onglets niveau */}
       <div className="flex gap-2 flex-wrap">
-        {(Object.keys(LEVEL_META) as (keyof Templates)[]).map(lvl => (
+        {(Object.keys(TEMPLATE_META) as (keyof Templates)[]).map(lvl => (
           <button key={lvl} onClick={() => setActiveLevel(lvl)}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition border-2 ${activeLevel === lvl ? "border-transparent text-white shadow-md" : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 bg-white dark:bg-gray-900"}`}
             style={activeLevel === lvl ? { background: templates[lvl].primaryColor } : {}}>
-            {LEVEL_META[lvl].label[L] ?? LEVEL_META[lvl].label.fr}
+            {TEMPLATE_META[lvl].label[L] ?? TEMPLATE_META[lvl].label.fr}
           </button>
         ))}
       </div>
@@ -808,7 +1236,7 @@ export function CertificateTemplateEditor({ initialTemplates, locale }: EditorPr
           </p>
           <p className="text-xs text-gray-400 mb-3">{u("previewNote")}</p>
 
-          <div className="rounded-2xl overflow-hidden shadow-2xl border-2" style={{ borderColor: t.accentColor + "60", background: t.lightColor, maxWidth: previewMaxW, margin: "0 auto" }}>
+          <div className="rounded-2xl overflow-hidden shadow-2xl border-2" style={{ borderColor: t.accentColor + "60", background: t.lightColor, maxWidth: previewMaxW, margin: "0 auto", aspectRatio: isLandscape ? "297/210" : "210/297" }}>
             <div className="relative">
               {renderPattern()}
               <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/80"/>

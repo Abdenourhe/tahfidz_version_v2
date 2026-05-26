@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { redirect, notFound } from "next/navigation"
 import { readFileSync } from "fs"
 import { join } from "path"
-import { CertificatePrint, type CertTemplate, type Templates } from "@/components/admin/certificate"
+import { CertificatePrint, type Templates } from "@/components/admin/certificate"
 
 const LEVEL_LABEL: Record<string, string> = {
   beginner:     "Débutant",
@@ -27,7 +27,7 @@ const DEFAULT_TEMPLATES: Templates = {
     subtitle: "Niveau Débutant",
     bodyText: "Pour avoir accompli avec sérieux et persévérance son programme de mémorisation du Saint Coran.",
     arabicVerse: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-    primaryColor: "#10b981", accentColor: "#059669", lightColor: "#d1fae5", textColor: "#065f46",
+    primaryColor: "#1a5f4a", accentColor: "#c9a227", lightColor: "#f0f7f4", textColor: "#0d3326",
     badgeEmoji: "🌱",
     borderStyle: "islamic", fontFamily: "Amiri", fontFamilyAr: "Scheherazade New",
     decorativePattern: "geometric", signatureStyle: "elegant", paperTexture: "parchment",
@@ -40,7 +40,7 @@ const DEFAULT_TEMPLATES: Templates = {
     subtitle: "Niveau Intermédiaire",
     bodyText: "Pour avoir accompli avec brio son programme de mémorisation du Saint Coran.",
     arabicVerse: "وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا",
-    primaryColor: "#d97706", accentColor: "#b45309", lightColor: "#fef3c7", textColor: "#78350f",
+    primaryColor: "#2d5a3d", accentColor: "#d4a843", lightColor: "#f5f0e6", textColor: "#1a3d2e",
     badgeEmoji: "⭐",
     borderStyle: "andalous", fontFamily: "Georgia", fontFamilyAr: "Amiri",
     decorativePattern: "floral", signatureStyle: "calligraphic", paperTexture: "cream",
@@ -53,7 +53,7 @@ const DEFAULT_TEMPLATES: Templates = {
     subtitle: "Niveau Avancé",
     bodyText: "Pour avoir maîtrisé avec distinction son programme avancé de mémorisation du Saint Coran.",
     arabicVerse: "إِنَّ هَذَا الْقُرْآنَ يَهْدِي لِلَّتِي هِيَ أَقْوَمُ",
-    primaryColor: "#7c3aed", accentColor: "#6d28d9", lightColor: "#ede9fe", textColor: "#4c1d95",
+    primaryColor: "#8b4513", accentColor: "#daa520", lightColor: "#faf5ef", textColor: "#3d2314",
     badgeEmoji: "🏆",
     borderStyle: "ottoman", fontFamily: "Georgia", fontFamilyAr: "Scheherazade New",
     decorativePattern: "ornate", signatureStyle: "royal", paperTexture: "vintage",
@@ -74,13 +74,39 @@ const DEFAULT_TEMPLATES: Templates = {
     directorName: "Directeur", directorNameAr: "المدير",
     showTeacher: true, teacherName: "", teacherNameAr: "",
   },
+  attendance: {
+    id: "islamic", title: "Certificat d'Assiduité", titleAr: "شَهَادَةُ الْحُضُور",
+    subtitle: "Reconnaissance de présence",
+    bodyText: "Pour avoir fait preuve d'une assiduité exemplaire et d'un engagement constant dans son parcours d'apprentissage du Saint Coran.",
+    arabicVerse: "إِنَّمَا يَخْشَى اللَّهَ مِنْ عِبَادِهِ الْعُلَمَاءُ",
+    primaryColor: "#065f46", accentColor: "#10b981", lightColor: "#ecfdf5", textColor: "#064e3b",
+    badgeEmoji: "📅",
+    borderStyle: "islamic", fontFamily: "Georgia", fontFamilyAr: "Amiri",
+    decorativePattern: "geometric", signatureStyle: "elegant", paperTexture: "parchment",
+    orientation: "portrait",
+    directorName: "Directeur", directorNameAr: "المدير",
+    showTeacher: false, teacherName: "", teacherNameAr: "",
+  },
+  participation: {
+    id: "andalous", title: "Certificat de Participation", titleAr: "شَهَادَةُ الْمُشَارَكَة",
+    subtitle: "Engagement et contribution",
+    bodyText: "Pour avoir démontré un esprit de participation active, de collaboration fraternelle et d'implication remarquable dans la vie de l'école.",
+    arabicVerse: "وَاعْتَصِمُوا بِحَبْلِ اللَّهِ جَمِيعًا وَلَا تَفَرَّقُوا",
+    primaryColor: "#1e40af", accentColor: "#3b82f6", lightColor: "#eff6ff", textColor: "#1e3a8a",
+    badgeEmoji: "🤝",
+    borderStyle: "andalous", fontFamily: "Georgia", fontFamilyAr: "Amiri",
+    decorativePattern: "floral", signatureStyle: "calligraphic", paperTexture: "cream",
+    orientation: "portrait",
+    directorName: "Directeur", directorNameAr: "المدير",
+    showTeacher: false, teacherName: "", teacherNameAr: "",
+  },
 }
 
 function loadTemplates(): Templates {
   try {
     const raw = readFileSync(join(process.cwd(), "src/data/certificateTemplates.json"), "utf-8")
     const parsed = JSON.parse(raw)
-    if (parsed.beginner && parsed.intermediate && parsed.advanced && parsed.expert) return parsed as Templates
+    if (parsed.beginner && parsed.intermediate && parsed.advanced && parsed.expert && parsed.attendance && parsed.participation) return parsed as Templates
     return DEFAULT_TEMPLATES
   } catch {
     return DEFAULT_TEMPLATES
@@ -104,6 +130,9 @@ export default async function StudentCertificatePage({
       group: { select: { name: true, level: true } },
       memorizedSurahs: { include: { surah: { select: { nameFr: true, nameAr: true } } } },
       teacher: { include: { user: { select: { fullName: true, fullNameAr: true } } } },
+      evaluations: { select: { finalScore: true, tajwid: true, makhraj: true, waqf: true, tarteel: true } },
+      attendances: { select: { status: true } },
+      memorizationProgress: { include: { surah: { select: { nameFr: true } } }, where: { status: "MEMORIZED" } },
     },
   })
 
@@ -118,7 +147,6 @@ export default async function StudentCertificatePage({
   const levelKey = student.group?.level
     ? (LEVEL_KEY_MAP[student.group.level] ?? "beginner")
     : "beginner"
-  const template: CertTemplate = templates[levelKey] ?? templates.beginner
 
   return (
     <CertificatePrint
@@ -127,6 +155,7 @@ export default async function StudentCertificatePage({
         fullName: student.user.fullName,
         fullNameAr: student.user.fullNameAr ?? undefined,
         totalStars: student.totalStars,
+        currentStreak: student.currentStreak,
         memorizedCount: student.memorizedSurahs.length,
         level: student.group?.level ? (LEVEL_LABEL[student.group.level] ?? student.group.level) : "beginner",
         groupName: student.group?.name ?? undefined,
@@ -137,6 +166,15 @@ export default async function StudentCertificatePage({
           nameFr: m.surah.nameFr,
           nameAr: m.surah.nameAr,
         })),
+        avgScore: student.evaluations.length > 0
+          ? Math.round(student.evaluations.reduce((s, e) => s + e.finalScore, 0) / student.evaluations.length)
+          : undefined,
+        tajwidScore: student.evaluations.length > 0
+          ? Math.round(student.evaluations.reduce((s, e) => s + (e.tajwid || 0), 0) / student.evaluations.length)
+          : undefined,
+        attendanceRate: student.attendances.length > 0
+          ? Math.round((student.attendances.filter(a => a.status === "PRESENT" || a.status === "LATE").length / student.attendances.length) * 100)
+          : undefined,
       }}
       school={{ 
         name: school?.name ?? "TAHFIDZ", 
@@ -145,7 +183,8 @@ export default async function StudentCertificatePage({
         city: school?.city ?? undefined,
         slug: school?.slug ?? undefined,
       }}
-      template={template}
+      templates={templates}
+      activeKey={levelKey}
     />
   )
 }
