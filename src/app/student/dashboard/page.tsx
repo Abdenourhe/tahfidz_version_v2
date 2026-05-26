@@ -3,6 +3,7 @@ import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { StudentDashboardClient } from "@/components/student/StudentDashboardClient"
+import StudentMemorizationTracker from "@/components/student/StudentMemorizationTracker"
 
 async function getStudentData(userId: string) {
   const student = await prisma.student.findUnique({
@@ -60,21 +61,25 @@ export default async function StudentDashboard() {
   // La fonction est maintenant dans le Client Component
 
   return (
-    <StudentDashboardClient
-      studentId={student.id}
-      studentName={student.user.fullName}
-      studentNameAr={student.user.fullNameAr}
-      groupName={student.group?.name ?? null}
-      teacherName={student.teacher?.user.fullName ?? null}
-      totalStars={student.totalStars}
-      currentStreak={student.currentStreak}
-      memorizedCount={student._count.memorizedSurahs}
-      badgeCount={student._count.studentBadges}
-      inProgress={inProgress as any}
-      badges={student.studentBadges}
-      recentAttendance={recentAttendance}
-      announcements={announcements}
-      // ✅ SUPPRIMÉ : formatAttDate={formatAttDate}
-    />
+    <div className="space-y-6">
+      <StudentDashboardClient
+        studentId={student.id}
+        studentName={student.user.fullName}
+        studentNameAr={student.user.fullNameAr}
+        groupName={student.group?.name ?? null}
+        teacherName={student.teacher?.user.fullName ?? null}
+        totalStars={student.totalStars}
+        currentStreak={student.currentStreak}
+        memorizedCount={student._count.memorizedSurahs}
+        badgeCount={student._count.studentBadges}
+        inProgress={inProgress as any}
+        badges={student.studentBadges}
+        recentAttendance={recentAttendance}
+        announcements={announcements}
+      />
+      <section className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4">
+        <StudentMemorizationTracker />
+      </section>
+    </div>
   )
 }

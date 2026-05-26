@@ -2,8 +2,8 @@
 // src/app/teacher/progress/page.tsx
 
 import { useState, useEffect } from "react"
-import { useSession } from "next-auth/react"
-import { Loader2, Plus, Search } from "lucide-react"
+import { useSearchParams } from "next/navigation"
+import { Loader2, Plus, Search, BookOpen } from "lucide-react"
 import { statusLabel } from "@/lib/utils"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 
@@ -22,27 +22,38 @@ interface Progress {
 export default function TeacherProgressPage() {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
-  const { data: session } = useSession()
+  const searchParams = useSearchParams()
+  const urlStudentId = searchParams.get("studentId")
 
-    const t = useT("progressX")
+  const t = useT("progressX")
 
   const [students, setStudents] = useState<Student[]>([])
   const [surahs, setSurahs] = useState<Surah[]>([])
-  const [selectedStudent, setSelectedStudent] = useState("")
+  const [selectedStudent, setSelectedStudent] = useState(urlStudentId || "")
   const [studentProgress, setStudentProgress] = useState<Progress[]>([])
   const [search, setSearch] = useState("")
   const [surahSearch, setSurahSearch] = useState("")
   const [assigning, setAssigning] = useState(false)
   const [updating, setUpdating] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch("/api/students").then(r => r.json()).then(d => setStudents(d.students || []))
-    fetch("/api/surahs").then(r => r.json()).then(d => setSurahs(d.surahs || []))
+    Promise.all([
+      fetch("/api/students").then(r => r.json()),
+      fetch("/api/surahs").then(r => r.json()),
+    ]).then(([sd, qd]) => {
+      setStudents(sd.students || [])
+      setSurahs(qd.surahs || [])
+      setLoading(false)
+    })
   }, [])
 
   useEffect(() => {
-    if (!selectedStudent) return
+    if (!selectedStudent) {
+      setStudentProgress([])
+      return
+    }
     fetch(`/api/progress?studentId=${selectedStudent}`)
       .then(r => r.json())
       .then(d => setStudentProgress(d.progress || []))
@@ -96,7 +107,13 @@ export default function TeacherProgressPage() {
      s.id.toString().includes(surahSearch))
   )
 
-  const fmtDate = (d: string) => new Date(d).toLocaleDateString(L === "ar" ? "ar-SA" : L === "en" ? "en-US" : "fr-FR", { day: "2-digit", month: "short" })
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[40vh]">
+        <Loader2 size={28} className="animate-spin text-tahfidz-green" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -112,7 +129,7 @@ export default function TeacherProgressPage() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Sélection élève */}
+        {/* ── Colonne 1 : Sélection élève ── */}
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5">
           <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">{t("selectStudent")}</h2>
           <div className="relative mb-3">
@@ -132,16 +149,19 @@ export default function TeacherProgressPage() {
           </div>
         </div>
 
-        {/* Progression actuelle */}
+        {/* ── Colonne 2 : Progression actuelle ── */}
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5">
           <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">
-            {currentStudent ? `${t("progress")} ${t("of")} ${currentStudent.user.fullName}` : t("progress")}
+            {currentStudent ? `${t("progress")} — ${currentStudent.user.fullName}` : t("progress")}
           </h2>
 
           {!selectedStudent ? (
             <p className="text-sm text-gray-400 text-center py-8">{t("selectFirst")}</p>
           ) : studentProgress.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-8">{t("noProgress")}</p>
+            <div className="text-center py-8">
+              <BookOpen size={32} className="mx-auto text-gray-300 mb-2" />
+              <p className="text-sm text-gray-400">{t("noProgress")}</p>
+            </div>
           ) : (
             <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
               {studentProgress.map(prog => {
@@ -181,6 +201,52 @@ export default function TeacherProgressPage() {
                 )
               })}
             </div>
+          )}
+        </div>
+
+        {/* ── Colonne 3 : Assigner une sourah ── */}
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5">
+          <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">
+            {t("assign")}
+          </h2>
+
+          {!selectedStudent ? (
+            <p className="text-sm text-gray-400 text-center py-8">{t("selectFirst")}</p>
+          ) : (
+            <>
+              <div className="relative mb-3">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input type="text" value={surahSearch} onChange={e => setSurahSearch(e.target.value)}
+                  placeholder={t("searchSurah") || "Rechercher une sourah..."}
+                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green" />
+              </div>
+
+              <div className="space-y-1 max-h-[420px] overflow-y-auto pr-1">
+                {filteredSurahs.length === 0 ? (
+                  <p className="text-xs text-gray-400 text-center py-4">
+                    {progressSurahIds.size === 0 ? t("noProgress") : t("allAssigned")}
+                  </p>
+                ) : (
+                  filteredSurahs.map(s => (
+                    <div key={s.id} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{s.id}. {s.nameFr}</p>
+                        <p className="arabic text-xs text-tahfidz-green">{s.nameAr}</p>
+                        <p className="text-[10px] text-gray-400">{s.verseCount} versets</p>
+                      </div>
+                      <button
+                        onClick={() => assignSurah(s.id)}
+                        disabled={assigning}
+                        className="flex items-center gap-1 text-xs px-2.5 py-1.5 bg-tahfidz-green text-white rounded-lg hover:opacity-90 transition disabled:opacity-50 flex-shrink-0"
+                      >
+                        {assigning ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                        {t("assign")}
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
           )}
         </div>
       </div>

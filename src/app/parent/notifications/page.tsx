@@ -15,6 +15,10 @@ const typeIcon: Record<string, { icon: typeof Bell; color: string; bg: string }>
   achievement:     { icon: Award,    color: "text-purple-600",    bg: "bg-purple-50" },
   attendance:      { icon: Bell,     color: "text-blue-600",      bg: "bg-blue-50" },
   announcement:    { icon: Bell,     color: "text-orange-500",    bg: "bg-orange-50" },
+  memorization_assigned:      { icon: BookOpen, color: "text-tahfidz-green", bg: "bg-tahfidz-green-light" },
+  memorization_progress_updated: { icon: Star,    color: "text-tahfidz-gold",  bg: "bg-tahfidz-gold-light" },
+  attendance_absent_reported:  { icon: Bell,     color: "text-red-500",       bg: "bg-red-50" },
+  attendance_validated:        { icon: CheckCheck, color: "text-green-600",   bg: "bg-green-50" },
 }
 
 export default function ParentNotificationsPage() {

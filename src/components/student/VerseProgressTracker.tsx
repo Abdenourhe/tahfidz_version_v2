@@ -94,10 +94,10 @@ export function VerseProgressTracker({
   const notifyTeacher = async () => {
     setNotifying(true); setError(null)
     try {
-      const res = await fetch("/api/progress", {
-        method: "POST",
+      const res = await fetch(`/api/progress/${progressId}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ studentId, surahId, status: "READY_FOR_RECITATION" }),
+        body: JSON.stringify({ status: "READY_FOR_RECITATION" }),
       })
       if (!res.ok) throw new Error("Erreur notification")
       setNotified(true)

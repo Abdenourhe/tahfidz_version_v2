@@ -4,15 +4,14 @@
 import Link from "next/link"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { ArrowLeft, Star, CalendarCheck, Users } from "lucide-react"
+import { statusLabel } from "@/lib/utils"
 import { TeacherGroupAttendance } from "@/components/teacher/TeacherGroupAttendance"
 
 interface Props {
   group: any
-  formatDate: (d: Date, opts?: Intl.DateTimeFormatOptions) => string
-  statusLabel: (status: string) => { label: string; bg: string; color: string }
 }
 
-export function TeacherGroupDetailClient({ group, formatDate, statusLabel }: Props) {
+export function TeacherGroupDetailClient({ group }: Props) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 

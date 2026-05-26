@@ -91,13 +91,12 @@ export async function POST(req: Request) {
     }
   }
 
-  // Calculer le score final
-  const finalScore = calculateFinalScore({
-    memorizationScore: data.memorizationScore,
-    tajweedScore: data.tajweedScore,
-    fluencyScore: data.fluencyScore,
-    makharijScore: data.makharijScore,
-  })
+  // Calculer le score final (nouveaux critères + compatibilité anciens)
+  const tajwid  = data.tajwid  ?? data.tajweedScore
+  const makhraj = data.makhraj ?? data.makharijScore ?? 0
+  const waqf    = data.waqf    ?? data.fluencyScore
+  const tarteel = data.tarteel ?? data.memorizationScore
+  const finalScore = Math.round((tajwid + makhraj + waqf + tarteel) / 4)
 
   const teacherId = teacher?.id || (
     await prisma.teacher.findFirst({ where: { userId: session.user.id } })
@@ -113,6 +112,10 @@ export async function POST(req: Request) {
       studentId: data.studentId,
       teacherId,
       evaluationType: data.evaluationType,
+      tajwid: tajwid,
+      makhraj: makhraj,
+      waqf: waqf,
+      tarteel: tarteel,
       memorizationScore: data.memorizationScore,
       tajweedScore: data.tajweedScore,
       fluencyScore: data.fluencyScore,

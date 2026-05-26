@@ -24,6 +24,10 @@ export default function TeacherNotificationsPage() {
     announcement:    { label: L === "ar" ? "إعلان" : L === "en" ? "Announcement" : "Annonce", color: "text-blue-600", bg: "bg-blue-50", icon: Megaphone },
     parent_link:     { label: L === "ar" ? "ربط ولي" : L === "en" ? "Parent link" : "Parent", color: "text-orange-600", bg: "bg-orange-50", icon: Link2 },
     reminder:        { label: L === "ar" ? "تذكير" : L === "en" ? "Reminder" : "Rappel", color: "text-gray-500", bg: "bg-gray-50", icon: Bell },
+    memorization_assigned:      { label: L === "ar" ? "حفظ معين" : L === "en" ? "Assigned" : "Mémorisation assignée", color: "text-tahfidz-green", bg: "bg-tahfidz-green-light", icon: BookOpen },
+    memorization_progress_updated: { label: L === "ar" ? "تحديث تقدم" : L === "en" ? "Progress update" : "Progression mise à jour", color: "text-tahfidz-gold", bg: "bg-tahfidz-gold-light", icon: Star },
+    attendance_absent_reported:  { label: L === "ar" ? "غياب مسجل" : L === "en" ? "Absence reported" : "Absence signalée", color: "text-red-500", bg: "bg-red-50", icon: Bell },
+    attendance_validated:        { label: L === "ar" ? "حضور محقق" : L === "en" ? "Attendance validated" : "Présence validée", color: "text-green-600", bg: "bg-green-50", icon: CheckCheck },
   }
 
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -152,6 +156,14 @@ export default function TeacherNotificationsPage() {
                   <p className="text-xs text-gray-500 mt-1 truncate">{notif.message}</p>
                   <p className="text-xs text-gray-400 mt-1">{new Date(notif.createdAt).toLocaleDateString()}</p>
                 </div>
+                <button
+                  onClick={() => deleteOne(notif.id)}
+                  disabled={deleting === notif.id}
+                  className="p-2 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-500 transition disabled:opacity-50"
+                  title={t("delete")}
+                >
+                  {deleting === notif.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                </button>
               </div>
             )
           })}

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { formatDate } from "@/lib/utils"
 import { AdminDashboardClient } from "@/components/admin/AdminDashboardClient"
+import AdminAttendanceAlerts from "@/components/admin/AdminAttendanceAlerts"
 
 async function getStats(schoolId: string) {
   const [
@@ -49,11 +50,14 @@ export default async function AdminDashboard() {
   const todayDate = formatDate(new Date())
 
   return (
-    <AdminDashboardClient
-      userName={(session.user as any).name ?? session.user.email ?? ""}
-      userEmail={session.user.email ?? ""}
-      todayDate={todayDate}
-      {...stats}
-    />
+    <div className="space-y-6">
+      <AdminDashboardClient
+        userName={(session.user as any).name ?? session.user.email ?? ""}
+        userEmail={session.user.email ?? ""}
+        todayDate={todayDate}
+        {...stats}
+      />
+      <AdminAttendanceAlerts />
+    </div>
   )
 }

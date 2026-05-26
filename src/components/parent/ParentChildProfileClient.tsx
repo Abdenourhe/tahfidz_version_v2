@@ -31,7 +31,7 @@ interface Badge {
 }
 interface Student {
   id: string; totalStars: number; currentStreak: number; longestStreak: number
-  studentCode: string; dateOfBirth?: string | null; enrollmentDate: string
+  studentCode: string; dateOfBirth?: string | null; enrollmentDate: string; emergencyPhone?: string | null
   user: { fullName: string; fullNameAr?: string | null; email: string; phone?: string | null; gender?: string | null }
   group?: { name: string; nameAr?: string | null; level: string } | null
   teacher?: { user: { fullName: string; phone?: string | null; email: string } } | null
@@ -257,6 +257,9 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
               )}
               {formatAge(student.dateOfBirth, L) && (
                 <span className="flex items-center gap-1"><Clock size={13} className="text-blue-400" />{formatAge(student.dateOfBirth, L)}</span>
+              )}
+              {student.emergencyPhone && (
+                <span className="flex items-center gap-1"><Phone size={13} className="text-red-400" />{student.emergencyPhone}</span>
               )}
             </div>
           </div>

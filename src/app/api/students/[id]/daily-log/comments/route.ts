@@ -1,0 +1,100 @@
+// src/app/api/students/[id]/daily-log/comments/route.ts
+// GET: List comments for a daily log section
+// POST: Add a comment
+
+import { NextResponse } from "next/server"
+import { auth } from "@/auth"
+import { prisma } from "@/lib/prisma"
+
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth()
+    if (!session?.user) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+    }
+
+    const { id: studentId } = await params
+    const { searchParams } = new URL(req.url)
+    const dailyLogId = searchParams.get("dailyLogId")
+    const section = searchParams.get("section")
+
+    if (!dailyLogId || !section) {
+      return NextResponse.json({ error: "dailyLogId et section requis" }, { status: 400 })
+    }
+
+    const comments = await prisma.dailyLogComment.findMany({
+      where: { dailyLogId, section },
+      include: {
+        user: { select: { id: true, fullName: true, fullNameAr: true, role: true, avatar: true } },
+      },
+      orderBy: { createdAt: "asc" },
+    })
+
+    return NextResponse.json({ comments })
+  } catch (error: any) {
+    console.error("[DAILY_LOG_COMMENTS GET]", error)
+    return NextResponse.json({ error: error.message || "Erreur serveur" }, { status: 500 })
+  }
+}
+
+export async function POST(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth()
+    if (!session?.user) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+    }
+
+    const { id: studentId } = await params
+    const body = await req.json()
+    const { dailyLogId, section, message } = body
+
+    if (!dailyLogId || !section || !message?.trim()) {
+      return NextResponse.json({ error: "Champs requis manquants" }, { status: 400 })
+    }
+
+    // Verify user has access to this student
+    const student = await prisma.student.findUnique({
+      where: { id: studentId },
+      include: {
+        teacher: { select: { userId: true } },
+        parentLinks: { where: { isVerified: true }, include: { parent: { select: { userId: true } } } },
+      },
+    })
+    if (!student) {
+      return NextResponse.json({ error: "Élève introuvable" }, { status: 404 })
+    }
+
+    const isAuthorized =
+      session.user.role === "ADMIN" ||
+      session.user.role === "SUPERADMIN" ||
+      student.teacher?.userId === session.user.id ||
+      student.parentLinks.some((l) => l.parent.userId === session.user.id)
+
+    if (!isAuthorized) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
+    }
+
+    const comment = await prisma.dailyLogComment.create({
+      data: {
+        dailyLogId,
+        section,
+        userId: session.user.id,
+        message: message.trim(),
+      },
+      include: {
+        user: { select: { id: true, fullName: true, fullNameAr: true, role: true, avatar: true } },
+      },
+    })
+
+    return NextResponse.json({ comment }, { status: 201 })
+  } catch (error: any) {
+    console.error("[DAILY_LOG_COMMENTS POST]", error)
+    return NextResponse.json({ error: error.message || "Erreur serveur" }, { status: 500 })
+  }
+}

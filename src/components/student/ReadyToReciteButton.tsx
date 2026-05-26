@@ -6,11 +6,12 @@ import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 
 interface Props {
+  progressId: string
   studentId: string
   surahId: number
 }
 
-export function ReadyToReciteButton({ studentId, surahId }: Props) {
+export function ReadyToReciteButton({ progressId, studentId, surahId }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [done, setDone]       = useState(false)
@@ -18,10 +19,10 @@ export function ReadyToReciteButton({ studentId, surahId }: Props) {
   const handleClick = async () => {
     setLoading(true)
     try {
-      await fetch("/api/progress", {
-        method: "POST",
+      await fetch(`/api/progress/${progressId}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ studentId, surahId, status: "READY_FOR_RECITATION" }),
+        body: JSON.stringify({ status: "READY_FOR_RECITATION" }),
       })
       setDone(true)
       router.refresh()

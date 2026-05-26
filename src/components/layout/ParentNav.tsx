@@ -1,9 +1,11 @@
-"use client"
 // src/components/layout/ParentNav.tsx
+"use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
+import { useSession } from "next-auth/react"
 import { LayoutDashboard, Link2, Bell, LogOut, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/contexts/LanguageContext"
@@ -17,8 +19,13 @@ interface ParentNavProps {
 export function ParentNav({ user }: ParentNavProps) {
   const pathname = usePathname()
   const { locale, useT } = useLanguage()
+  const { data: session } = useSession()
   const tN = (k: string) => useT("nav", k)
   const tA = (k: string) => useT("auth", k)
+
+  const schoolName = session?.user?.schoolName || "TAHFIDZ"
+  const schoolLogo = session?.user?.schoolLogo
+  const schoolSlug = session?.user?.schoolSlug
 
   const navItems = [
     { label: tN("dashboard"),   href: "/parent/dashboard",      icon: LayoutDashboard },
@@ -28,22 +35,28 @@ export function ParentNav({ user }: ParentNavProps) {
   ]
 
   return (
-    <header className="bg-white border-b border-gray-100">
-      <div className="max-w-4xl mx-auto px-6 py-0">
+    <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 sticky top-0 z-40">
+      <div className="max-w-5xl mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
+          {/* Logo + Nom école */}
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg gradient-tahfidz flex items-center justify-center">
-              <span className="text-white font-bold text-xs">TH</span>
+            <div className="w-9 h-9 rounded-xl gradient-tahfidz flex items-center justify-center overflow-hidden shadow-sm">
+              {schoolLogo ? (
+                <Image src={schoolLogo} alt={schoolName} width={36} height={36} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-white font-bold text-sm">{schoolName.charAt(0).toUpperCase()}</span>
+              )}
             </div>
-            <span className="font-bold text-gray-900 hidden sm:block">TAHFIDZ</span>
-            <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
-              {locale === "ar" ? "ولي الأمر" : locale === "en" ? "Parent" : "Parent"}
-            </span>
+            <div className="hidden sm:flex flex-col leading-tight">
+              <span className="font-bold text-sm text-gray-900 dark:text-gray-100">{schoolName}</span>
+              {schoolSlug && (
+                <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400">{schoolSlug}</span>
+              )}
+            </div>
           </div>
 
-          {/* Nav */}
-          <nav className="flex items-center gap-1">
+          {/* Nav centrale */}
+          <nav className="flex items-center gap-0.5 bg-gray-100/60 dark:bg-gray-800/60 rounded-xl p-1">
             {navItems.map(item => {
               const isActive = pathname === item.href
               if (item.href === "/parent/notifications") {
@@ -53,37 +66,39 @@ export function ParentNav({ user }: ParentNavProps) {
                     href={item.href}
                     label={item.label}
                     isActive={isActive}
-                    activeClass="bg-tahfidz-green-light text-tahfidz-green font-semibold"
-                    inactiveClass="text-gray-600 hover:bg-gray-50"
-                    iconActiveClass="text-tahfidz-green"
+                    activeClass="bg-white dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 shadow-sm"
+                    inactiveClass="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                    iconActiveClass="text-emerald-600 dark:text-emerald-400"
                     iconInactiveClass="text-gray-400"
+                    className="rounded-lg"
                   />
                 )
               }
               return (
                 <Link key={item.href} href={item.href}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition",
-                    isActive ? "bg-tahfidz-green-light text-tahfidz-green font-semibold" : "text-gray-600 hover:bg-gray-50"
+                    "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition",
+                    isActive
+                      ? "bg-white dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                   )}
                 >
-                  <item.icon size={16} className={isActive ? "text-tahfidz-green" : "text-gray-400"} />
+                  <item.icon size={15} className={cn(isActive ? "text-emerald-600 dark:text-emerald-400" : "text-gray-400")} />
                   <span className="hidden md:inline">{item.label}</span>
                 </Link>
               )
             })}
           </nav>
 
-          {/* Controls + logout */}
-          <div className="flex items-center gap-2">
+          {/* Controls + Logout */}
+          <div className="flex items-center gap-1">
             <TopBarControls />
             <button
               onClick={() => signOut({ callbackUrl: "/login" })}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-red-500 hover:bg-red-50 transition"
+              className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
               title={tA("logout")}
             >
               <LogOut size={16} />
-              <span className="hidden md:inline">{tA("logout")}</span>
             </button>
           </div>
         </div>

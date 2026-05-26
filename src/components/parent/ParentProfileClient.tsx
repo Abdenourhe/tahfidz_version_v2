@@ -1,13 +1,18 @@
 "use client"
-// src/components/parent/ParentProfileClient.tsx
-
 import { useState } from "react"
 import Link from "next/link"
+import { motion } from "framer-motion"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
+import { useSession } from "next-auth/react"
+import { formatDate, formatAge, statusLabel } from "@/lib/utils"
+import { ProfileHeader } from "@/components/profile/ProfileHeader"
+import { StatCard } from "@/components/profile/StatCard"
+import { ProfileAccordion } from "@/components/profile/ProfileAccordion"
 import { ParentProfileAttendance } from "@/components/parent/ParentProfileAttendance"
+import { ParentProfileSettings } from "@/components/parent/ParentProfileSettings"
 import {
   Phone, Mail, Link2, BookOpen, Star, CalendarCheck, GraduationCap,
-  TrendingUp, Award, MessageSquare, User, ArrowRight, Bug
+  TrendingUp, Award, User, Bug, Settings
 } from "lucide-react"
 import { FeedbackModal } from "@/components/shared/FeedbackModal"
 
@@ -41,6 +46,7 @@ interface Props {
       fullNameAr: string | null
       email: string
       phone: string | null
+      avatar: string | null
       createdAt: Date
     }
     childrenLinks: ChildLink[]
@@ -49,9 +55,6 @@ interface Props {
   totalMemorized: number
   totalStars: number
   totalBadges: number
-  formatDate: (d: Date, opts?: Intl.DateTimeFormatOptions) => string
-  formatAge: (dob: Date | null) => string
-  statusLabel: (status: string) => { label: string; bg: string; color: string }
 }
 
 const RELATION_LABELS: Record<string, { fr: string; en: string; ar: string }> = {
@@ -70,105 +73,79 @@ const ATT_ICON: Record<string, string> = { PRESENT: "✓", LATE: "~", EXCUSED: "
 
 export function ParentProfileClient({
   parent, totalChildren, totalMemorized, totalStars, totalBadges,
-  formatDate, formatAge, statusLabel,
 }: Props) {
   const [showFeedback, setShowFeedback] = useState(false)
-
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
-
-    const t = useT("parentProfileClient")
+  const t = useT("parentProfileClient")
+  const tc = useT("profileCommon")
 
   const relationLabel = (rel: string) => RELATION_LABELS[rel]?.[L] ?? rel
 
+  const { data: session } = useSession()
+  const schoolName = session?.user?.schoolName
+  const schoolCity = (session?.user as any)?.schoolCity
+
+  const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } }
+
   return (
-    <div className="space-y-6 max-w-6xl">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t("title")}</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t("welcome")}, {parent.user.fullName}</p>
-      </div>
-
-      {/* Bandeau infos parent + stats */}
-      <div className="bg-gradient-to-br from-orange-50 via-white to-amber-50 dark:from-orange-900/10 dark:via-gray-900 dark:to-amber-900/10 rounded-2xl border border-orange-100 dark:border-orange-800 p-6">
-        <div className="flex items-center gap-5 flex-wrap">
-          <div className="w-20 h-20 rounded-2xl bg-orange-500 flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-bold text-3xl">{parent.user.fullName.charAt(0)}</span>
-          </div>
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="font-bold text-gray-900 dark:text-gray-100 text-xl">{parent.user.fullName}</h2>
-              <span className="text-xs bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 px-2.5 py-1 rounded-full font-medium">{t("parent")}</span>
-            </div>
-            {parent.user.fullNameAr && <p className="arabic text-gray-500 dark:text-gray-400 text-base mt-0.5">{parent.user.fullNameAr}</p>}
-
-            <div className="flex items-center gap-3 mt-2 flex-wrap">
-              <a href={`mailto:${parent.user.email}`} className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300 hover:text-tahfidz-green transition">
-                <Mail size={13} className="text-orange-400" />{parent.user.email}
-              </a>
-              {parent.user.phone && (
-                <a href={`tel:${parent.user.phone}`} className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300 hover:text-tahfidz-green transition">
-                  <Phone size={13} className="text-orange-400" />{parent.user.phone}
-                </a>
-              )}
-              <span className="text-sm text-gray-400">
-                · {t("memberSince")} {formatDate(parent.user.createdAt, { month: "long", year: "numeric" })}
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-4 gap-3 sm:gap-4">
-            {[
-              { v: totalChildren,  l: t("children"),     c: "text-orange-600" },
-              { v: totalMemorized, l: t("memorized"),  c: "text-tahfidz-green" },
-              { v: totalStars,     l: t("stars"),        c: "text-tahfidz-gold", prefix: "⭐" },
-              { v: totalBadges,    l: t("badges"),       c: "text-purple-600" },
-            ].map(s => (
-              <div key={s.l} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 px-4 py-2.5 text-center">
-                <p className={`text-xl font-bold ${s.c}`}>{s.prefix}{s.v}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{s.l}</p>
-              </div>
-            ))}
-          </div>
-          <button
-            onClick={() => setShowFeedback(true)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-lg text-xs font-medium hover:bg-red-100 transition"
-            title={L === "ar" ? "الإبلاغ عن مشكلة" : L === "en" ? "Report issue" : "Signaler un problème"}
-          >
-            <Bug size={14} />
-            <span className="hidden sm:inline">{L === "ar" ? "إبلاغ" : L === "en" ? "Report" : "Signaler"}</span>
-          </button>
+    <motion.div variants={container} initial="hidden" animate="show" className="space-y-6 max-w-6xl">
+      <ProfileHeader
+        name={parent.user.fullName}
+        nameAr={parent.user.fullNameAr}
+        role={t("parent")}
+        avatarLetter={parent.user.fullName.charAt(0)}
+        avatar={parent.user.avatar || undefined}
+        avatarColor="bg-orange-500"
+        roleColor="bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300"
+      >
+        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+          <span className="flex items-center gap-1"><Mail size={13} /> {parent.user.email}</span>
+          {parent.user.phone && <span className="flex items-center gap-1"><Phone size={13} /> {parent.user.phone}</span>}
+          <span>· {t("memberSince")} {formatDate(parent.user.createdAt, { month: "long", year: "numeric" })}</span>
+          {schoolName && (
+            <span>· {schoolName}{schoolCity ? `, ${schoolCity}` : ""}</span>
+          )}
         </div>
+      </ProfileHeader>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard icon={User} label={t("children")} value={totalChildren} colorClass="text-orange-600" delay={0.1} />
+        <StatCard icon={BookOpen} label={t("memorized")} value={totalMemorized} colorClass="text-tahfidz-green" delay={0.2} />
+        <StatCard icon={Star} label={t("stars")} value={totalStars} prefix="⭐" colorClass="text-tahfidz-gold" delay={0.3} />
+        <StatCard icon={Award} label={t("badges")} value={totalBadges} colorClass="text-purple-600" delay={0.4} />
       </div>
 
-      {/* Aucun enfant lié */}
       {totalChildren === 0 ? (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border-2 border-dashed border-orange-300 dark:border-orange-800 p-12 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white dark:bg-gray-900 rounded-2xl border-2 border-dashed border-orange-300 dark:border-orange-800 p-12 text-center"
+        >
           <div className="text-6xl mb-3">👨‍👩‍👦</div>
           <p className="font-semibold text-gray-700 dark:text-gray-200 text-lg mb-1">{t("noChild")}</p>
           <p className="text-sm text-gray-400 mb-5">{t("linkChild")}</p>
           <Link href="/parent/link"
-            className="inline-flex items-center gap-2 px-6 py-3 gradient-tahfidz text-white text-sm font-semibold rounded-xl hover:opacity-90 transition">
+            className="inline-flex items-center gap-2 px-6 py-3 gradient-tahfidz text-white text-sm font-semibold rounded-xl hover:opacity-90 transition active:scale-95">
             <Link2 size={16} /> {t("link")}
           </Link>
-        </div>
+        </motion.div>
       ) : (
         <>
-          {/* Cartes des enfants */}
-          <div>
-            <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
-              <User size={17} className="text-orange-500" /> {t("myChildren")} ({totalChildren})
-            </h2>
-
+          <ProfileAccordion title={`${t("myChildren")} (${totalChildren})`} icon={User} defaultOpen delay={0.5}>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              {parent.childrenLinks.map(link => {
+              {parent.childrenLinks.map((link) => {
                 const s = link.student
                 const present = s.attendances.filter(a => a.status === "PRESENT" || a.status === "LATE").length
                 const rate = s.attendances.length > 0 ? Math.round((present / s.attendances.length) * 100) : 0
 
                 return (
-                  <div key={link.id} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden hover:shadow-md transition">
+                  <motion.div
+                    key={link.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden hover:shadow-md transition"
+                  >
                     <Link href={`/parent/child/${s.id}`}
                       className="flex items-center gap-3 p-5 bg-gradient-to-r from-tahfidz-green-light/40 to-transparent dark:from-emerald-900/20 border-b border-gray-100 dark:border-gray-700 hover:from-tahfidz-green-light/70 transition group">
                       <div className="w-14 h-14 rounded-2xl gradient-tahfidz flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
@@ -183,9 +160,6 @@ export function ParentProfileClient({
                           })()}
                           <span className="text-xs bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 px-1.5 py-0.5 rounded">
                             {relationLabel(link.relation)}
-                          </span>
-                          <span className="text-xs text-tahfidz-green opacity-0 group-hover:opacity-100 transition font-medium ml-auto">
-                            {t("viewProfile")} →
                           </span>
                         </div>
                         {s.user.fullNameAr && <p className="arabic text-gray-500 dark:text-gray-400 text-sm">{s.user.fullNameAr}</p>}
@@ -228,7 +202,12 @@ export function ParentProfileClient({
                                     </div>
                                   </div>
                                   <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                                    <div className="h-full bg-tahfidz-green rounded-full transition-all" style={{ width: `${prog.completionPercentage}%` }}/>
+                                    <motion.div
+                                      className="h-full bg-tahfidz-green rounded-full"
+                                      initial={{ width: 0 }}
+                                      animate={{ width: `${prog.completionPercentage}%` }}
+                                      transition={{ duration: 1, delay: 0.3 }}
+                                    />
                                   </div>
                                 </div>
                               )
@@ -291,21 +270,32 @@ export function ParentProfileClient({
                         </div>
                       )}
                     </div>
-                  </div>
+                  </motion.div>
                 )
               })}
             </div>
-          </div>
+          </ProfileAccordion>
 
-          {/* Marquer présences */}
-          <div>
-            <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
-              <CalendarCheck size={17} className="text-tahfidz-green"/>{t("markAttendance")}
-            </h2>
+          <ProfileAccordion title={t("markAttendance")} icon={CalendarCheck} delay={0.6}>
             <ParentProfileAttendance children={parent.childrenLinks as any} />
-          </div>
+          </ProfileAccordion>
         </>
       )}
+
+      <ProfileAccordion title={t("settings")} icon={Settings} delay={0.7}>
+        <ParentProfileSettings />
+      </ProfileAccordion>
+
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setShowFeedback(true)}
+        className="flex items-center gap-1.5 px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-lg text-xs font-medium hover:bg-red-100 transition"
+      >
+        <Bug size={14} />
+        <span>{L === "ar" ? "إبلاغ" : L === "en" ? "Report" : "Signaler"}</span>
+      </motion.button>
+
       <FeedbackModal
         isOpen={showFeedback}
         onClose={() => setShowFeedback(false)}
@@ -314,6 +304,6 @@ export function ParentProfileClient({
         userEmail={parent.user.email}
         schoolName={undefined}
       />
-    </div>
+    </motion.div>
   )
 }

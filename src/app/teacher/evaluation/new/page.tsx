@@ -33,7 +33,7 @@ export default function NewEvaluationPage() {
 
     const t = useT("evaluation_new")
 
-  const initSid=sp.get("studentId")||""; const initPid=sp.get("progressId")||""
+  const initSid=sp.get("studentId")||""; const initPid=sp.get("progressId")||""; const editId=sp.get("edit")||""
   const [mode,setMode]=useState<Mode>(initSid?"student":"select")
   const [groups,setGroups]=useState<Group[]>([]); const [students,setStudents]=useState<Student[]>([])
   const [sid,setSid]=useState(initSid); const [progs,setProgs]=useState<Progress[]>([]); const [pid,setPid]=useState(initPid)
@@ -44,6 +44,7 @@ export default function NewEvaluationPage() {
   const [eTitle,setETitle]=useState(""); const [eTitleAr,setETitleAr]=useState(""); const [eDesc,setEDesc]=useState("")
   const [eGrp,setEGrp]=useState(""); const [eDate,setEDate]=useState(""); const [eDur,setEDur]=useState(60)
   const [sub,setSub]=useState(false); const [ok,setOk]=useState(false); const [err,setErr]=useState<string|null>(null)
+  const [editLoading,setEditLoading]=useState(false)
 
   useEffect(()=>{
     Promise.all([fetch("/api/groups?mine=true").then(r=>r.json()),fetch("/api/students").then(r=>r.json())])
@@ -58,13 +59,37 @@ export default function NewEvaluationPage() {
     })
   },[sid])
 
+  // Load existing evaluation for edit mode
+  useEffect(()=>{
+    if(!editId)return
+    setEditLoading(true)
+    fetch(`/api/evaluations/${editId}`).then(r=>r.json()).then(d=>{
+      const ev=d.evaluation
+      if(ev){
+        setSid(ev.studentId)
+        setPid(ev.progressId)
+        setMemo(ev.memorizationScore??ev.tarteel??75)
+        setTaj(ev.tajweedScore??ev.tajwid??75)
+        setFlu(ev.fluencyScore??ev.waqf??75)
+        setMak(ev.makharijScore??ev.makhraj??75)
+        setNotes(ev.teacherNotes||"")
+        setDec(ev.decision||"APPROVED")
+        setEt(ev.evaluationType||"live")
+        setMode("student")
+      }
+    }).finally(()=>setEditLoading(false))
+  },[editId])
+
   const fs=calculateFinalScore({memorizationScore:memo,tajweedScore:taj,fluencyScore:flu,makharijScore:mak})
 
   const doStudent=async()=>{
     if(!sid||!pid){setErr(t("errorSelect"));return}
     setSub(true);setErr(null)
     try{
-      const r=await fetch("/api/evaluations",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({progressId:pid,studentId:sid,evaluationType:et,memorizationScore:memo,tajweedScore:taj,fluencyScore:flu,makharijScore:mak,teacherNotes:notes,revisionRequired:dec!=="APPROVED",decision:dec,strengths:[],improvements:[]})})
+      const body={progressId:pid,studentId:sid,evaluationType:et,memorizationScore:memo,tajweedScore:taj,fluencyScore:flu,makharijScore:mak,teacherNotes:notes,revisionRequired:dec!=="APPROVED",decision:dec,strengths:[],improvements:[]}
+      const url=editId?`/api/evaluations/${editId}`:"/api/evaluations"
+      const method=editId?"PATCH":"POST"
+      const r=await fetch(url,{method,headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
       if(!r.ok)throw new Error((await r.json()).error||t("error"))
       setOk(true);setTimeout(()=>router.push("/teacher/evaluations"),2000)
     }catch(e){setErr(e instanceof Error?e.message:t("error"))}finally{setSub(false)}
@@ -103,7 +128,8 @@ export default function NewEvaluationPage() {
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
         <button onClick={()=>mode==="select"?router.back():setMode("select")} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"><ArrowLeft size={18} className="text-gray-500"/></button>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{mode==="select"?t("titleSelect"):mode==="student"?t("titleStudent"):mode==="group"?t("titleGroup"):t("titleExam")}</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{editId?t("titleEdit"):mode==="select"?t("titleSelect"):mode==="student"?t("titleStudent"):mode==="group"?t("titleGroup"):t("titleExam")}</h1>
+        {editLoading&&<Loader2 size={18} className="animate-spin text-gray-400"/>}
       </div>
 
       {err&&<div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm">{err}</div>}

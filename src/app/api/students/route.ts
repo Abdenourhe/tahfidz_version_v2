@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
+import crypto from "crypto"
 
 // ═════════════════════════════════════════════════════════════════════════════
 // GET — Liste des élèves OU export CSV (query param ?export=true)
@@ -131,6 +132,13 @@ export async function GET(req: NextRequest) {
   try {
     const schoolId = session.user.schoolId
     const where: Record<string, unknown> = { user: { schoolId } }
+
+    // Teacher ne voit que SES élèves
+    if (session.user.role === "TEACHER") {
+      const teacher = await prisma.teacher.findUnique({ where: { userId: session.user.id }, select: { id: true } })
+      if (teacher) where.teacherId = teacher.id
+    }
+
     if (status === "active")   where.user = { schoolId, isActive: true }
     if (status === "inactive") where.user = { schoolId, isActive: false }
 
@@ -182,35 +190,92 @@ export async function POST(req: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    const result = await prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({
-        data: {
-          fullName, fullNameAr: fullNameAr || null, email, password: hashedPassword,
-          gender: gender || null, role: "STUDENT", phone: phone || null,
-          avatar: photo || null, isActive: true, schoolId,
-        },
+    const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+
+    async function generateStudentCode(tx: any) {
+      const year = new Date().getFullYear()
+      const prefix = `TAH-${year}-`
+      const last = await tx.student.findFirst({
+        where: { studentCode: { startsWith: prefix }, user: { schoolId } },
+        orderBy: { studentCode: "desc" },
       })
+      let num = 1
+      if (last) {
+        const match = last.studentCode.match(new RegExp(`^${prefix}([0-9]+)$`))
+        if (match) num = parseInt(match[1], 10) + 1
+      }
+      return `${prefix}${String(num).padStart(4, "0")}`
+    }
 
-      const count = await tx.student.count({ where: { user: { schoolId } } })
-      const year  = new Date().getFullYear()
-      const studentCode = `TAH-${year}-${String(count + 1).padStart(3, "0")}`
+    let result: any
+    let retries = 0
+    const maxRetries = 5
 
-      const student = await tx.student.create({
-        data: {
-          userId: user.id, studentCode,
-          groupId: groupId || null, teacherId: teacherId || null,
-          emergencyPhone: emergencyPhone || null,
-          dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
-          address: address || null, city: city || null,
-          postalCode: postalCode || null, medicalNotes: medicalNotes || null,
-        },
-        include: { user: true, group: true, teacher: { include: { user: true } } },
-      })
+    while (retries < maxRetries) {
+      try {
+        result = await prisma.$transaction(async (tx) => {
+          const user = await tx.user.create({
+            data: {
+              fullName, fullNameAr: fullNameAr || null, email, password: hashedPassword,
+              gender: gender || null, role: "STUDENT", phone: phone || null,
+              avatar: photo || null, isActive: true, schoolId,
+            },
+          })
 
-      return student
-    })
+          const studentCode = await generateStudentCode(tx)
 
-    return NextResponse.json({ message: "Élève créé avec succès", student: result }, { status: 201 })
+          const student = await tx.student.create({
+            data: {
+              userId: user.id, studentCode,
+              groupId: groupId || null, teacherId: teacherId || null,
+              emergencyPhone: emergencyPhone || null,
+              dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+              address: address || null, city: city || null,
+              postalCode: postalCode || null, medicalNotes: medicalNotes || null,
+            },
+            include: { user: true, group: true, teacher: { include: { user: true } } },
+          })
+
+          // Générer l'invitation parent
+          const inviteCode = crypto.randomBytes(4).toString("hex").toUpperCase()
+          const expiresAt = new Date()
+          expiresAt.setDate(expiresAt.getDate() + 30)
+
+          await tx.parentInvite.create({
+            data: {
+              code: inviteCode,
+              studentId: student.id,
+              schoolId,
+              expiresAt,
+            },
+          })
+
+          return { student, inviteCode, studentCode }
+        })
+        break
+      } catch (err: any) {
+        // Si erreur de contrainte unique sur studentCode, réessayer
+        if (err.message?.includes("Unique constraint") && err.message?.includes("studentCode")) {
+          retries++
+          continue
+        }
+        throw err
+      }
+    }
+
+    if (!result) {
+      return NextResponse.json({ error: "Impossible de générer un code élève unique après plusieurs tentatives" }, { status: 500 })
+    }
+
+    const inviteUrl = `${APP_URL}/parent/register?invite=${result.inviteCode}&student=${result.studentCode}`
+
+    return NextResponse.json({
+      message: "Élève créé avec succès",
+      student: result.student,
+      studentCode: result.studentCode,
+      inviteUrl,
+      qrValue: inviteUrl,
+    }, { status: 201 })
 
   } catch (error: any) {
     console.error("[STUDENT POST ERROR]", error)

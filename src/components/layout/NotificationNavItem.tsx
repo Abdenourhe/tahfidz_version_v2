@@ -15,6 +15,7 @@ interface Props {
   inactiveClass?: string
   iconActiveClass?: string
   iconInactiveClass?: string
+  iconContainerClass?: string
 }
 
 export function NotificationNavItem({
@@ -25,6 +26,7 @@ export function NotificationNavItem({
   inactiveClass = "text-gray-600 hover:bg-gray-50",
   iconActiveClass   = "text-tahfidz-green",
   iconInactiveClass = "text-gray-400",
+  iconContainerClass,
 }: Props) {
   const [unread, setUnread] = useState(0)
 
@@ -44,23 +46,35 @@ export function NotificationNavItem({
     return () => { cancelled = true; clearInterval(id) }
   }, [])
 
+  const iconEl = (
+    <>
+      <Bell size={iconContainerClass ? 16 : 18} className={cn(isActive ? iconActiveClass : iconInactiveClass)} />
+      {unread > 0 && (
+        <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
+          {unread > 99 ? "99+" : unread}
+        </span>
+      )}
+    </>
+  )
+
   return (
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all",
+        "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150 group",
         isActive ? activeClass : inactiveClass,
       )}
     >
-      <div className="relative shrink-0">
-        <Bell size={18} className={cn(isActive ? iconActiveClass : iconInactiveClass)} />
-        {unread > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
-            {unread > 99 ? "99+" : unread}
-          </span>
-        )}
-      </div>
-      <span className="flex-1">{label}</span>
+      {iconContainerClass ? (
+        <div className={cn("relative flex-shrink-0", iconContainerClass)}>
+          {iconEl}
+        </div>
+      ) : (
+        <div className="relative shrink-0">
+          {iconEl}
+        </div>
+      )}
+      <span className="flex-1 truncate">{label}</span>
     </Link>
   )
 }

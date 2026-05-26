@@ -4,10 +4,12 @@
 
 import Link from "next/link"
 import Image from "next/image"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import {
   Plus, Search, Users, ArrowLeft, BookOpen, Star,
-  ClipboardList,
+  ClipboardList, Pencil, Trash2, AlertTriangle,
 } from "lucide-react"
 import { shortId, formatDate, scoreToGrade } from "@/lib/utils"
 
@@ -35,11 +37,40 @@ interface ListProps {
   search: string
 }
 
-export function TeachersListClient({ teachers, total, search }: ListProps) {
+export function TeachersListClient({ teachers: initialTeachers, total, search }: ListProps) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
+  const router = useRouter()
+  const t = useT("teachers_1")
 
-    const t = useT("teachers_1")
+  const [teachers, setTeachers] = useState<TeacherRow[]>(initialTeachers)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const handleDelete = async () => {
+    if (!deleteId) return
+    setDeleteLoading(true)
+    setDeleteError(null)
+    try {
+      const res = await fetch(`/api/teachers/${deleteId}`, { method: "DELETE" })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setDeleteError(data.error || t("deleteBlocked"))
+        setDeleteLoading(false)
+        return
+      }
+      setTeachers((prev) => prev.filter((t) => t.id !== deleteId))
+      setDeleteId(null)
+      router.refresh()
+    } catch {
+      setDeleteError(t("deleteBlocked"))
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
+  const teacherToDelete = teachers.find((t) => t.id === deleteId)
 
   return (
     <div className="space-y-6">
@@ -103,13 +134,65 @@ export function TeachersListClient({ teachers, total, search }: ListProps) {
 
               <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700">
                 <span className="text-xs text-gray-400">{t("enrolled")} {formatDate(teacher.user.createdAt, L, { month: "short", year: "numeric" })}</span>
-                <Link href={`/admin/teachers/${teacher.id}`}
-                  className="text-xs text-tahfidz-green hover:underline font-medium">{t("view")}</Link>
+                <div className="flex items-center gap-2">
+                  <Link href={`/admin/teachers/${teacher.id}/edit`}
+                    className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition"
+                    title={t("edit")}>
+                    <Pencil size={14} />
+                  </Link>
+                  <button
+                    onClick={() => { setDeleteId(teacher.id); setDeleteError(null) }}
+                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition"
+                    title={t("delete")}>
+                    <Trash2 size={14} />
+                  </button>
+                  <Link href={`/admin/teachers/${teacher.id}`}
+                    className="text-xs text-tahfidz-green hover:underline font-medium ml-1">{t("view")}</Link>
+                </div>
               </div>
             </div>
           ))
         )}
       </div>
+
+      {/* Confirmation dialog */}
+      {deleteId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-sm p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <AlertTriangle size={20} className="text-red-600 dark:text-red-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t("delete")}</h3>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              {t("deleteConfirm")}
+            </p>
+            {teacherToDelete && (
+              <p className="text-sm font-medium text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
+                {teacherToDelete.user.fullName}
+              </p>
+            )}
+            {deleteError && (
+              <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2">{deleteError}</p>
+            )}
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={() => { setDeleteId(null); setDeleteError(null) }}
+                className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
+                disabled={deleteLoading}>
+                {t("cancel")}
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleteLoading}
+                className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50">
+                {deleteLoading ? "…" : t("delete")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -124,11 +207,35 @@ interface DetailProps {
   avgScore: number | null
 }
 
-export function TeacherDetailClient({ teacher, school, avgScore }: DetailProps) {
+export function TeacherDetailClient({ teacher: initialTeacher, school, avgScore }: DetailProps) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
+  const router = useRouter()
+  const t = useT("teachers_2")
 
-    const t = useT("teachers_2")
+  const [teacher, setTeacher] = useState<any>(initialTeacher)
+  const [showDelete, setShowDelete] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const handleDelete = async () => {
+    setDeleteLoading(true)
+    setDeleteError(null)
+    try {
+      const res = await fetch(`/api/teachers/${teacher.id}`, { method: "DELETE" })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setDeleteError(data.error || t("deleteBlocked"))
+        setDeleteLoading(false)
+        return
+      }
+      setShowDelete(false)
+      router.push("/admin/teachers")
+    } catch {
+      setDeleteError(t("deleteBlocked"))
+      setDeleteLoading(false)
+    }
+  }
 
   const genderLabel = (g: string | null) => {
     if (g === "MALE") return t("male")
@@ -146,9 +253,20 @@ export function TeacherDetailClient({ teacher, school, avgScore }: DetailProps) 
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{teacher.user.fullName}</h1>
           {teacher.user.fullNameAr && <p className="arabic text-gray-500 dark:text-gray-400">{teacher.user.fullNameAr}</p>}
         </div>
-        <span className={`px-3 py-1 text-sm rounded-full font-medium ${teacher.user.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
-          {teacher.user.isActive ? t("active") : t("inactive")}
-        </span>
+        <div className="flex items-center gap-2">
+          <Link href={`/admin/teachers/${teacher.id}/edit`}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-700 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition">
+            <Pencil size={14} /> {t("edit")}
+          </Link>
+          <button
+            onClick={() => { setShowDelete(true); setDeleteError(null) }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-700 bg-red-50 dark:bg-red-900/20 dark:text-red-300 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition">
+            <Trash2 size={14} /> {t("delete")}
+          </button>
+          <span className={`px-3 py-1 text-sm rounded-full font-medium ${teacher.user.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+            {teacher.user.isActive ? t("active") : t("inactive")}
+          </span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -305,6 +423,43 @@ export function TeacherDetailClient({ teacher, school, avgScore }: DetailProps) 
           </div>
         </div>
       </div>
+
+      {/* Confirmation dialog */}
+      {showDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 w-full max-w-sm p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <AlertTriangle size={20} className="text-red-600 dark:text-red-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t("delete")}</h3>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              {t("deleteConfirm")}
+            </p>
+            <p className="text-sm font-medium text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
+              {teacher.user.fullName}
+            </p>
+            {deleteError && (
+              <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2">{deleteError}</p>
+            )}
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={() => { setShowDelete(false); setDeleteError(null) }}
+                className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
+                disabled={deleteLoading}>
+                {t("cancel")}
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleteLoading}
+                className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50">
+                {deleteLoading ? "…" : t("delete")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

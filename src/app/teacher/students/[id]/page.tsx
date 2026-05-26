@@ -2,7 +2,7 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect, notFound } from "next/navigation"
-import { formatDate, statusLabel, scoreToGrade, formatAge } from "@/lib/utils"
+
 import { TeacherStudentDetailClient } from "@/components/teacher/TeacherStudentDetailClient"
 
 export default async function TeacherStudentDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -11,8 +11,12 @@ export default async function TeacherStudentDetailPage({ params }: { params: Pro
 
   const student = await prisma.student.findUnique({
     where: { id: (await params).id },
-    include: {
-      user: { select: { fullName: true, fullNameAr: true, email: true, phone: true, gender: true, isActive: true } },
+    select: {
+      id: true,
+      dateOfBirth: true,
+      emergencyPhone: true,
+      totalStars: true,
+      user: { select: { fullName: true, fullNameAr: true, email: true, phone: true, gender: true, isActive: true, avatar: true } },
       group: { select: { name: true } },
       teacher: { include: { user: { select: { fullName: true, phone: true, email: true } } } },
       parentLinks: {
@@ -54,10 +58,6 @@ export default async function TeacherStudentDetailPage({ params }: { params: Pro
       totalAtt={totalAtt}
       presentAtt={presentAtt}
       attRate={attRate}
-      formatDate={formatDate}
-      statusLabel={statusLabel}
-      scoreToGrade={scoreToGrade}
-      formatAge={formatAge}
     />
   )
 }

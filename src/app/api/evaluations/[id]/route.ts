@@ -6,6 +6,10 @@ import { calculateFinalScore, starsFromScore } from "@/lib/utils"
 import { z } from "zod"
 
 const patchSchema = z.object({
+  tajwid:            z.number().min(0).max(100).optional(),
+  makhraj:           z.number().min(0).max(100).optional(),
+  waqf:              z.number().min(0).max(100).optional(),
+  tarteel:           z.number().min(0).max(100).optional(),
   memorizationScore: z.number().min(0).max(100).optional(),
   tajweedScore:      z.number().min(0).max(100).optional(),
   fluencyScore:      z.number().min(0).max(100).optional(),
@@ -31,6 +35,39 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   return NextResponse.json({ evaluation })
 }
 
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await auth()
+  if (!session?.user || !["ADMIN","TEACHER","SUPERADMIN"].includes(session.user.role)) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+  }
+
+  const { id } = await params
+
+  const existing = await prisma.evaluation.findUnique({
+    where: { id },
+    include: { student: { select: { teacherId: true } } },
+  })
+  if (!existing) return NextResponse.json({ error: "Introuvable" }, { status: 404 })
+
+  let teacherId: string | null = null
+  if (session.user.role === "TEACHER") {
+    const teacher = await prisma.teacher.findUnique({ where: { userId: session.user.id }, select: { id: true } })
+    teacherId = teacher?.id ?? null
+  }
+
+  const canDelete =
+    session.user.role === "SUPERADMIN" ||
+    session.user.role === "ADMIN" ||
+    (session.user.role === "TEACHER" && existing.student?.teacherId === teacherId)
+
+  if (!canDelete) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
+  }
+
+  await prisma.evaluation.delete({ where: { id } })
+  return NextResponse.json({ success: true })
+}
+
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
   if (!session?.user || !["ADMIN","TEACHER"].includes(session.user.role)) {
@@ -50,21 +87,25 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   })
   if (!existing) return NextResponse.json({ error: "Introuvable" }, { status: 404 })
 
-  const memo    = parsed.data.memorizationScore ?? existing.memorizationScore
-  const tajweed = parsed.data.tajweedScore      ?? existing.tajweedScore
-  const fluency = parsed.data.fluencyScore      ?? existing.fluencyScore
-  const mak     = parsed.data.makharijScore ?? existing.makharijScore ?? undefined
-  const newScore = calculateFinalScore({ memorizationScore: memo, tajweedScore: tajweed, fluencyScore: fluency, makharijScore: mak })
+  const tajwid  = parsed.data.tajwid  ?? existing.tajwid  ?? existing.tajweedScore ?? 0
+  const makhraj = parsed.data.makhraj ?? existing.makhraj ?? existing.makharijScore ?? 0
+  const waqf    = parsed.data.waqf    ?? existing.waqf    ?? existing.fluencyScore ?? 0
+  const tarteel = parsed.data.tarteel ?? existing.tarteel ?? existing.memorizationScore ?? 0
+  const newScore = Math.round((tajwid + makhraj + waqf + tarteel) / 4)
 
   const newDecision = parsed.data.decision ?? existing.decision
 
   const updated = await prisma.evaluation.update({
     where: { id: (await params).id },
     data: {
-      memorizationScore: memo,
-      tajweedScore:      tajweed,
-      fluencyScore:      fluency,
-      makharijScore:     mak,
+      tajwid,
+      makhraj,
+      waqf,
+      tarteel,
+      memorizationScore: parsed.data.memorizationScore ?? existing.memorizationScore,
+      tajweedScore:      parsed.data.tajweedScore      ?? existing.tajweedScore,
+      fluencyScore:      parsed.data.fluencyScore      ?? existing.fluencyScore,
+      makharijScore:     parsed.data.makharijScore     ?? existing.makharijScore,
       finalScore:        newScore,
       teacherNotes:      parsed.data.teacherNotes ?? existing.teacherNotes,
       decision:          newDecision,
