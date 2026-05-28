@@ -2,10 +2,12 @@
 
 import { useRef, useState } from "react"
 import Image from "next/image"
-import { Printer, Phone, Mail, MapPin, Calendar, User, GraduationCap, HeartPulse, Shield, Clock, Copy, CheckCircle2 } from "lucide-react"
+import { Download, Printer, Phone, Mail, MapPin, Calendar, User, GraduationCap, HeartPulse, Shield, Clock, Copy, CheckCircle2 } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { AvatarLightbox } from "@/components/AvatarLightbox"
+import html2canvas from "html2canvas"
+import { jsPDF } from "jspdf"
 
 interface Props {
   student: any
@@ -23,6 +25,27 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
 
   const handlePrint = () => {
     window.print()
+  }
+
+  const handleDownloadPDF = async () => {
+    if (!cardRef.current) return
+    const btn = document.getElementById("pdf-btn")
+    if (btn) btn.style.display = "none"
+    try {
+      const canvas = await html2canvas(cardRef.current, { scale: 2, useCORS: true })
+      const imgData = canvas.toDataURL("image/png")
+      const pdf = new jsPDF("p", "mm", "a4")
+      const pageWidth = pdf.internal.pageSize.getWidth()
+      const pageHeight = pdf.internal.pageSize.getHeight()
+      const imgWidth = canvas.width
+      const imgHeight = canvas.height
+      const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight)
+      const centerX = (pageWidth - imgWidth * ratio) / 2
+      pdf.addImage(imgData, "PNG", centerX, 0, imgWidth * ratio, imgHeight * ratio)
+      pdf.save(`fiche-inscription-${student.studentCode}.pdf`)
+    } finally {
+      if (btn) btn.style.display = "flex"
+    }
   }
 
   const handleCopy = () => {
@@ -61,15 +84,23 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
 
   return (
     <div className="min-h-screen bg-gray-100 py-8 print:py-0 print:bg-white">
-      {/* Bouton imprimer (caché en print) */}
-      <div className="max-w-[210mm] mx-auto mb-4 px-4 print:hidden flex justify-between items-center">
+      {/* Boutons (cachés en print) */}
+      <div id="pdf-btn" className="max-w-[210mm] mx-auto mb-4 px-4 print:hidden flex justify-between items-center">
         <h1 className="text-xl font-bold text-gray-800">{t("title")}</h1>
-        <button
-          onClick={handlePrint}
-          className="flex items-center gap-2 px-5 py-2.5 bg-tahfidz-green text-white text-sm font-semibold rounded-xl hover:bg-tahfidz-green-dark transition shadow-sm"
-        >
-          <Printer size={16} /> {t("print")}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleDownloadPDF}
+            className="flex items-center gap-2 px-5 py-2.5 bg-tahfidz-green text-white text-sm font-semibold rounded-xl hover:bg-tahfidz-green-dark transition shadow-sm"
+          >
+            <Download size={16} /> PDF
+          </button>
+          <button
+            onClick={handlePrint}
+            className="flex items-center gap-2 px-5 py-2.5 bg-gray-700 text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition shadow-sm"
+          >
+            <Printer size={16} /> {t("print")}
+          </button>
+        </div>
       </div>
 
       {/* Carte A4 */}
