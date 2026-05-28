@@ -1,4 +1,6 @@
 // src/app/admin/layout.tsx
+export const dynamic = 'force-dynamic'
+
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"

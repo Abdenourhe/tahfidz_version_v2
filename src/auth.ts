@@ -1,4 +1,4 @@
-// src/auth.ts — NextAuth.js v5, multi-tenant par schoolId
+// src/auth.ts — NextAuth.js v5 stable, multi-tenant par schoolId
 
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
@@ -12,7 +12,12 @@ const LoginSchema = z.object({
   schoolSlug: z.string().optional().default(""),
 })
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const {
+  handlers,
+  auth,
+  signIn,
+  signOut,
+} = NextAuth({
   session: { strategy: "jwt", maxAge: 8 * 60 * 60 },
   pages: { signIn: "/login", error: "/login" },
   providers: [
@@ -23,7 +28,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const { email: rawEmail, password, schoolSlug } = parsed.data
         const email = rawEmail.toLowerCase().trim()
 
-        // SUPERADMIN bypass — pas besoin de slug
+        // SUPERADMIN bypass
         const superAdmin = await prisma.user.findFirst({
           where: { email, role: "SUPERADMIN", isActive: true },
           select: {
@@ -52,7 +57,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           }
         }
 
-        // Auth normale (ADMIN / TEACHER / STUDENT / PARENT)
+        // Auth normale
         if (!schoolSlug || schoolSlug.length < 2) return null
 
         const school = await prisma.school.findFirst({
@@ -70,7 +75,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const valid = await bcrypt.compare(password, user.password)
         if (!valid) return null
 
-        // Récupérer studentCode si c'est un élève
         let studentCode: string | undefined
         if (user.role === "STUDENT") {
           const studentProfile = await prisma.student.findUnique({
@@ -104,20 +108,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        const u = user as typeof user & {
-          role: string; schoolId: string; schoolSlug: string; schoolName: string; avatar?: string; schoolLogo?: string; schoolCity?: string; studentCode?: string
-        }
-        token.id          = u.id
-        token.role        = u.role
-        token.avatar      = u.avatar
-        token.schoolId    = u.schoolId
-        token.schoolSlug  = u.schoolSlug
-        token.schoolName  = u.schoolName
-        token.schoolLogo  = u.schoolLogo
-        token.schoolCity  = u.schoolCity
-        token.studentCode = u.studentCode
+        token.id = user.id
+        token.role = user.role
+        token.avatar = user.avatar
+        token.schoolId = user.schoolId
+        token.schoolSlug = user.schoolSlug
+        token.schoolName = user.schoolName
+        token.schoolLogo = user.schoolLogo
+        token.schoolCity = user.schoolCity
+        token.studentCode = user.studentCode
       }
-      // Fallback pour les tokens existants (sans reconnexion)
       if (!token.schoolLogo && token.schoolId) {
         const school = await prisma.school.findUnique({
           where: { id: token.schoolId as string },
@@ -136,16 +136,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token
     },
     async session({ session, token }) {
-      const u = session.user as any
-      u.id          = token.id          as string
-      u.role        = token.role        as string
-      u.avatar      = token.avatar      as string | undefined
-      u.schoolId    = token.schoolId    as string
-      u.schoolSlug  = token.schoolSlug  as string
-      u.schoolName  = token.schoolName  as string
-      u.schoolLogo  = token.schoolLogo  as string | undefined
-      u.schoolCity  = token.schoolCity  as string | undefined
-      u.studentCode = token.studentCode as string | undefined
+      if (session.user) {
+        session.user.id = token.id as string
+        session.user.role = token.role as string
+        session.user.avatar = token.avatar as string | undefined
+        session.user.schoolId = token.schoolId as string
+        session.user.schoolSlug = token.schoolSlug as string
+        session.user.schoolName = token.schoolName as string
+        session.user.schoolLogo = token.schoolLogo as string | undefined
+        session.user.schoolCity = token.schoolCity as string | undefined
+        session.user.studentCode = token.studentCode as string | undefined
+      }
       return session
     },
   },
@@ -153,25 +154,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
 declare module "next-auth" {
   interface User {
-    role:        string
-    avatar?:     string
-    schoolId:    string
-    schoolSlug:  string
-    schoolName:  string
+    role: string
+    avatar?: string
+    schoolId: string
+    schoolSlug: string
+    schoolName: string
     schoolLogo?: string
     schoolCity?: string
     studentCode?: string
   }
   interface Session {
     user: {
-      id:          string
-      name:        string
-      email:       string
-      role:        string
-      avatar?:     string
-      schoolId:    string
-      schoolSlug:  string
-      schoolName:  string
+      id: string
+      name: string
+      email: string
+      role: string
+      avatar?: string
+      schoolId: string
+      schoolSlug: string
+      schoolName: string
       schoolLogo?: string
       schoolCity?: string
       studentCode?: string

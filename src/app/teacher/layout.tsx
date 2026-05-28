@@ -1,4 +1,6 @@
 // src/app/teacher/layout.tsx
+export const dynamic = 'force-dynamic'
+
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { TeacherSidebar } from "@/components/layout/TeacherSidebar"
