@@ -1,94 +1,10 @@
-// src/middleware.ts — Vérification impersonation HMAC + protection routes
-import { auth } from "@/auth"
+// src/middleware.ts — TEMPORAIREMENT DESACTIVE pour test Vercel
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { verifyImpersonationCookie } from "@/lib/impersonation"
 
-const PUBLIC_PATHS = [
-  "/login",
-  "/register-school",
-  "/parent/register",
-  "/api/register-school",
-  "/api/auth",
-]
-
-const ROLE_ROUTES = [
-  { prefix: "/admin/super",         allowed: ["SUPERADMIN"] },
-  { prefix: "/api/admin/schools",   allowed: ["SUPERADMIN"] },
-  { prefix: "/api/admin/health",    allowed: ["SUPERADMIN"] },
-  { prefix: "/api/admin/audit",     allowed: ["SUPERADMIN"] },
-  { prefix: "/api/admin/broadcast", allowed: ["SUPERADMIN"] },
-  { prefix: "/api/admin/impersonate", allowed: ["SUPERADMIN"] },
-  { prefix: "/admin",               allowed: ["ADMIN", "SUPERADMIN"] },
-  { prefix: "/teacher",             allowed: ["TEACHER", "ADMIN", "SUPERADMIN"] },
-  { prefix: "/parent",              allowed: ["PARENT", "ADMIN", "SUPERADMIN"] },
-  { prefix: "/student",             allowed: ["STUDENT", "ADMIN", "SUPERADMIN"] },
-]
-
-export default auth((req) => {
-  const { pathname } = req.nextUrl
-  const session = req.auth
-
-  // Routes publiques
-  if (PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
-    return NextResponse.next()
-  }
-
-  // Pas de session → login
-  if (!session?.user) {
-    const url = new URL("/login", req.url)
-    url.searchParams.set("callbackUrl", pathname)
-    return NextResponse.redirect(url)
-  }
-
-  const role = session.user.role ?? ""
-
-  // 🔐 Vérification impersonation
-  const impRaw = req.cookies.get("impersonation_ctx")?.value
-  const imp = impRaw ? verifyImpersonationCookie(impRaw) : null
-
-  // Cookie présent mais invalide/expiré → suppression
-  if (impRaw && !imp) {
-    const response = NextResponse.redirect(new URL("/admin/dashboard", req.url))
-    response.cookies.delete("impersonation_ctx")
-    return response
-  }
-
-  // Impersonation active mais superadmin déconnecté (session manquante) → suppression
-  // (déjà géré par le bloc "pas de session" ci-dessus, mais on garde la logique explicite)
-  if (imp && !session?.user) {
-    const response = NextResponse.redirect(new URL("/login", req.url))
-    response.cookies.delete("impersonation_ctx")
-    return response
-  }
-
-  // Bloquer /admin/super en mode impersonation
-  if (imp && pathname.startsWith("/admin/super")) {
-    return NextResponse.redirect(new URL("/admin/dashboard", req.url))
-  }
-
-  // Protection par rôle
-  for (const { prefix, allowed } of ROLE_ROUTES) {
-    if (pathname.startsWith(prefix)) {
-      if (!allowed.includes(role)) {
-        return NextResponse.redirect(new URL(getDashboard(role), req.url))
-      }
-      return NextResponse.next()
-    }
-  }
-
+export function middleware(req: NextRequest) {
+  console.log("[middleware]", req.nextUrl.pathname)
   return NextResponse.next()
-})
-
-function getDashboard(role: string): string {
-  switch (role) {
-    case "SUPERADMIN": return "/admin/super"
-    case "ADMIN":      return "/admin/dashboard"
-    case "TEACHER":    return "/teacher/dashboard"
-    case "PARENT":     return "/parent/dashboard"
-    case "STUDENT":    return "/student/dashboard"
-    default:           return "/login"
-  }
 }
 
 export const config = {
