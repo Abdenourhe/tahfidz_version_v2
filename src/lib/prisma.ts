@@ -2,7 +2,6 @@
 // Singleton Prisma avec middleware audit intégré
 
 import { PrismaClient } from "@prisma/client"
-import { setupAuditMiddleware } from "@/lib/audit"
 
 // ═══ FALLBACK VERCEL : POSTGRES_URL → DATABASE_URL ═══
 if (!process.env.DATABASE_URL && process.env.POSTGRES_URL) {
