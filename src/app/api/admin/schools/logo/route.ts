@@ -1,7 +1,9 @@
-// src/app/api/admin/schools/logo/route.ts — Upload logo pour SUPERADMIN (base64 → DB)
+// src/app/api/admin/schools/logo/route.ts — Upload logo pour SUPERADMIN (filesystem)
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { writeFile, mkdir } from "fs/promises"
+import { join } from "path"
 
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"]
 const MAX_SIZE = 2 * 1024 * 1024 // 2 MB
@@ -30,13 +32,24 @@ export async function POST(req: NextRequest) {
     const school = await prisma.school.findUnique({ where: { id: schoolId } })
     if (!school) return NextResponse.json({ error: "École introuvable" }, { status: 404 })
 
+    const uploadDir = join(process.cwd(), "public", "uploads", "schools", schoolId)
+    await mkdir(uploadDir, { recursive: true })
+
+    const ext = file.type === "image/svg+xml" ? "svg"
+              : file.type === "image/webp"    ? "webp"
+              : file.type === "image/png"     ? "png"
+              : "jpg"
+    const filename = `logo.${ext}`
+    const filepath = join(uploadDir, filename)
+
     const bytes = await file.arrayBuffer()
-    const base64 = Buffer.from(bytes).toString("base64")
-    const dataUri = `data:${file.type};base64,${base64}`
+    await writeFile(filepath, Buffer.from(bytes))
 
-    await prisma.school.update({ where: { id: schoolId }, data: { logo: dataUri } })
+    const publicPath = `/uploads/schools/${schoolId}/${filename}`
 
-    return NextResponse.json({ logo: dataUri })
+    await prisma.school.update({ where: { id: schoolId }, data: { logo: publicPath } })
+
+    return NextResponse.json({ logo: publicPath })
   } catch (err) {
     console.error("[SUPERADMIN LOGO UPLOAD ERROR]", err)
     return NextResponse.json({ error: "Erreur lors de l'upload" }, { status: 500 })
