@@ -4,6 +4,11 @@
 import { PrismaClient } from "@prisma/client"
 import { setupAuditMiddleware } from "@/lib/audit"
 
+// ═══ FALLBACK VERCEL : POSTGRES_URL → DATABASE_URL ═══
+if (!process.env.DATABASE_URL && process.env.POSTGRES_URL) {
+  process.env.DATABASE_URL = process.env.POSTGRES_URL
+}
+
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
@@ -15,9 +20,6 @@ export const prisma =
   })
 
 // ── Activer le middleware audit ────────────────────────────────────
-// Décommenter la ligne ci-dessous pour activer l'audit automatique
-// sur TOUTES les opérations Prisma (create, update, delete)
-// Attention : peut impacter les performances — utiliser avec modération
 // setupAuditMiddleware(prisma)
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma
