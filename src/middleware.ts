@@ -34,7 +34,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // Vérification JWT via getToken (Edge-compatible)
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET! })
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET!, secureCookie: true })
 
   if (!token) {
     const url = new URL("/login", req.url)
