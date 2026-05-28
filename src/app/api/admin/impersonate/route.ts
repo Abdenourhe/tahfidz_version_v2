@@ -2,6 +2,8 @@
 // POST — Créer une session d'impersonation sécurisée (HMAC)
 // DELETE — Arrêter l'impersonation
 
+export const runtime = 'nodejs'; 
+
 import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
