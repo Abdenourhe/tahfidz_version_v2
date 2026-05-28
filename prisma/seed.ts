@@ -257,11 +257,11 @@ async function main() {
   // 6. Élèves
   const studentPwd = await bcrypt.hash("Student@123456", 12)
   const eleves = [
-    { email: "yusuf@tahfidz.com",   fullName: "Yusuf Mahmoud",  g: g1.id, t: teacher1!.id, stars: 245, streak: 12 },
-    { email: "aisha@tahfidz.com",   fullName: "Aisha Rahman",   g: g1.id, t: teacher1!.id, stars: 189, streak: 8  },
-    { email: "omar@tahfidz.com",    fullName: "Omar Khalil",    g: g1.id, t: teacher1!.id, stars: 312, streak: 25 },
-    { email: "maryam@tahfidz.com",  fullName: "Maryam Saidi",   g: g2.id, t: teacher2!.id, stars: 98,  streak: 5  },
-    { email: "ibrahim@tahfidz.com", fullName: "Ibrahim Bouzid", g: g2.id, t: teacher2!.id, stars: 67,  streak: 3  },
+  { email: "yusuf@tahfidz.com",   fullName: "Yusuf Mahmoud",  g: g1.id, t: teacher1!.id, stars: 245, streak: 12, code: "STU-001" },
+  { email: "aisha@tahfidz.com",   fullName: "Aisha Rahman",   g: g1.id, t: teacher1!.id, stars: 189, streak: 8,  code: "STU-002" },
+  { email: "omar@tahfidz.com",    fullName: "Omar Khalil",    g: g1.id, t: teacher1!.id, stars: 312, streak: 25, code: "STU-003" },
+  { email: "maryam@tahfidz.com",  fullName: "Maryam Saidi",   g: g2.id, t: teacher2!.id, stars: 98,  streak: 5,  code: "STU-004" },
+  { email: "ibrahim@tahfidz.com", fullName: "Ibrahim Bouzid", g: g2.id, t: teacher2!.id, stars: 67,  streak: 3,  code: "STU-005" },
   ]
   for (const e of eleves) {
     await prisma.user.upsert({
@@ -274,7 +274,7 @@ async function main() {
         fullName: e.fullName,
         role:     "STUDENT",
         isActive: true,
-        studentProfile: { create: { groupId: e.g, teacherId: e.t, totalStars: e.stars, currentStreak: e.streak } },
+        studentProfile: { create: { groupId: e.g, teacherId: e.t, totalStars: e.stars, currentStreak: e.streak, studentCode: e.code } },
       },
     })
   }
