@@ -18,6 +18,7 @@ export const {
   signIn,
   signOut,
 } = NextAuth({
+  trustHost: true,
   session: { strategy: "jwt", maxAge: 8 * 60 * 60 },
   pages: { signIn: "/login", error: "/login" },
   providers: [
