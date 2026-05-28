@@ -31,7 +31,7 @@ export function calculateFinalScore(scores: {
 /** Retourne le dashboard selon le rôle */
 export function getDashboardPath(role: string): string {
   switch (role) {
-    case "SUPERADMIN": return "/superadmin/dashboard"
+    case "SUPERADMIN": return "/admin/super"
     case "ADMIN":      return "/admin/dashboard"
     case "TEACHER":    return "/teacher/dashboard"
     case "PARENT":     return "/parent/dashboard"
