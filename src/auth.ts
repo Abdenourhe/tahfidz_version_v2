@@ -111,28 +111,8 @@ export const {
       if (user) {
         token.id = user.id
         token.role = user.role
-        token.avatar = user.avatar
         token.schoolId = user.schoolId
         token.schoolSlug = user.schoolSlug
-        token.schoolName = user.schoolName
-        token.schoolLogo = user.schoolLogo
-        token.schoolCity = user.schoolCity
-        token.studentCode = user.studentCode
-      }
-      if (!token.schoolLogo && token.schoolId) {
-        const school = await prisma.school.findUnique({
-          where: { id: token.schoolId as string },
-          select: { logo: true, city: true },
-        })
-        token.schoolLogo = school?.logo ?? undefined
-        token.schoolCity = school?.city ?? undefined
-      }
-      if (!token.studentCode && token.role === "STUDENT" && token.id) {
-        const studentProfile = await prisma.student.findUnique({
-          where: { userId: token.id as string },
-          select: { studentCode: true },
-        })
-        token.studentCode = studentProfile?.studentCode ?? undefined
       }
       return token
     },
@@ -140,13 +120,8 @@ export const {
       if (session.user) {
         session.user.id = token.id as string
         session.user.role = token.role as string
-        session.user.avatar = token.avatar as string | undefined
         session.user.schoolId = token.schoolId as string
         session.user.schoolSlug = token.schoolSlug as string
-        session.user.schoolName = token.schoolName as string
-        session.user.schoolLogo = token.schoolLogo as string | undefined
-        session.user.schoolCity = token.schoolCity as string | undefined
-        session.user.studentCode = token.studentCode as string | undefined
       }
       return session
     },
@@ -156,13 +131,8 @@ export const {
 declare module "next-auth" {
   interface User {
     role: string
-    avatar?: string
     schoolId: string
     schoolSlug: string
-    schoolName: string
-    schoolLogo?: string
-    schoolCity?: string
-    studentCode?: string
   }
   interface Session {
     user: {
@@ -170,13 +140,8 @@ declare module "next-auth" {
       name: string
       email: string
       role: string
-      avatar?: string
       schoolId: string
       schoolSlug: string
-      schoolName: string
-      schoolLogo?: string
-      schoolCity?: string
-      studentCode?: string
     }
   }
 }
