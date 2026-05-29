@@ -93,6 +93,7 @@ export default function SuperAdminPage() {
   /* ── Impersonate ── */
   const [showImpersonate, setShowImpersonate] = useState(false)
   const [impersonateSchool, setImpersonateSchool] = useState<School | null>(null)
+  const [impersonateLoading, setImpersonateLoading] = useState(false)
 
   /* ── Dark mode ── */
   useEffect(() => {
@@ -365,9 +366,25 @@ export default function SuperAdminPage() {
     setShowImpersonate(true)
   }
 
-  const confirmImpersonate = async () => {
-    // La soumission est gérée par le <form action={impersonateSchoolAdmin}>
-    // Cette fonction n'est plus utilisée directement
+  const handleImpersonateSubmit = async (schoolId: string) => {
+    setImpersonateLoading(true)
+    try {
+      const res = await fetch("/api/admin/impersonate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ schoolId }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data.error || "Erreur d'impersonation")
+        return
+      }
+      window.location.href = data.redirectUrl || "/admin/dashboard"
+    } catch {
+      toast.error("Erreur réseau")
+    } finally {
+      setImpersonateLoading(false)
+    }
   }
 
   /* ── Broadcast ── */
