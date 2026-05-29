@@ -18,9 +18,8 @@ import { HealthTab, AuditTab, FeedbackTab } from "@/components/admin/superadmin/
 import { BroadcastTab } from "@/components/admin/superadmin/broadcast-tab"
 import {
   CreateSchoolModal, EditSchoolModal, ApprovalResultModal,
-  ImpersonateModal, FeedbackDetailModal,
+  FeedbackDetailModal,
 } from "@/components/admin/superadmin/modals"
-// import { impersonateSchoolAdmin } from "./actions"
 
 export default function SuperAdminPage() {
   /* ── Core state ── */
@@ -89,11 +88,6 @@ export default function SuperAdminPage() {
 
   /* ── Broadcast ── */
   const [broadcastSending, setBroadcastSending] = useState(false)
-
-  /* ── Impersonate ── */
-  const [showImpersonate, setShowImpersonate] = useState(false)
-  const [impersonateSchool, setImpersonateSchool] = useState<School | null>(null)
-  const [impersonateLoading, setImpersonateLoading] = useState(false)
 
   /* ── Dark mode ── */
   useEffect(() => {
@@ -364,33 +358,6 @@ export default function SuperAdminPage() {
     flash(`${count} ecole(s) supprimee(s).`)
   }
 
-  /* ── Impersonate ── */
-  const impersonate = async (school: School) => {
-    setImpersonateSchool(school)
-    setShowImpersonate(true)
-  }
-
-  const handleImpersonateSubmit = async (schoolId: string) => {
-    setImpersonateLoading(true)
-    try {
-      const res = await fetch("/api/admin/impersonate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ schoolId }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        toast.error(data.error || "Erreur d'impersonation")
-        return
-      }
-      window.location.href = data.redirectUrl || "/admin/dashboard"
-    } catch {
-      toast.error("Erreur réseau")
-    } finally {
-      setImpersonateLoading(false)
-    }
-  }
-
   /* ── Broadcast ── */
   const sendBroadcast = async (message: string, target: "all" | "active" | "inactive") => {
     setBroadcastSending(true)
@@ -494,7 +461,6 @@ export default function SuperAdminPage() {
               copyToClipboard={copyToClipboard}
               onToggle={toggle}
               onOpenEdit={openEdit}
-              onImpersonate={impersonate}
               onDeleteSchool={deleteSchool}
               onExportCSV={exportCSV}
               onCreateClick={() => { setForm(p => ({ ...p, schoolSlug: generateSlug() })); setShowForm(true); setError(null); setLogoFile(null); setLogoPreview(null) }}
@@ -567,14 +533,6 @@ export default function SuperAdminPage() {
         copied={copied}
         copyToClipboard={copyToClipboard}
         onClose={() => setApprovalResult(null)}
-      />
-
-      <ImpersonateModal
-        open={showImpersonate}
-        school={impersonateSchool}
-        onClose={() => { setShowImpersonate(false); setImpersonateSchool(null) }}
-        onSubmit={handleImpersonateSubmit}
-        loading={impersonateLoading}
       />
 
       <FeedbackDetailModal
