@@ -1,9 +1,7 @@
-// src/middleware.ts — Protection routes + impersonation (Vercel-safe)
+// src/middleware.ts — Protection routes
 import { getToken } from "next-auth/jwt"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { verifyImpersonationCookie } from "@/lib/impersonation"
-
 const PUBLIC_PATHS = [
   "/login",
   "/register-school",
@@ -18,7 +16,6 @@ const ROLE_ROUTES = [
   { prefix: "/api/admin/health",    allowed: ["SUPERADMIN"] },
   { prefix: "/api/admin/audit",     allowed: ["SUPERADMIN"] },
   { prefix: "/api/admin/broadcast", allowed: ["SUPERADMIN"] },
-  { prefix: "/api/admin/impersonate", allowed: ["SUPERADMIN"] },
   { prefix: "/admin",               allowed: ["ADMIN", "SUPERADMIN"] },
   { prefix: "/teacher",             allowed: ["TEACHER", "ADMIN", "SUPERADMIN"] },
   { prefix: "/parent",              allowed: ["PARENT", "ADMIN", "SUPERADMIN"] },
@@ -43,29 +40,6 @@ export async function middleware(req: NextRequest) {
   }
 
   const role = (token.role as string) ?? ""
-
-  // 🔐 Vérification impersonation
-  const impRaw = req.cookies.get("impersonation_ctx")?.value
-  const imp = impRaw ? verifyImpersonationCookie(impRaw) : null
-
-  // Cookie présent mais invalide/expiré → suppression
-  if (impRaw && !imp) {
-    const response = NextResponse.redirect(new URL("/admin/dashboard", req.url))
-    response.cookies.delete("impersonation_ctx")
-    return response
-  }
-
-  // Impersonation active mais token manquant → suppression
-  if (imp && !token) {
-    const response = NextResponse.redirect(new URL("/login", req.url))
-    response.cookies.delete("impersonation_ctx")
-    return response
-  }
-
-  // Bloquer /admin/super en mode impersonation
-  if (imp && pathname.startsWith("/admin/super")) {
-    return NextResponse.redirect(new URL("/admin/dashboard", req.url))
-  }
 
   // Protection par rôle
   for (const { prefix, allowed } of ROLE_ROUTES) {

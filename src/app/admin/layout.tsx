@@ -10,7 +10,6 @@ import { MobileHeader } from "@/components/layout/MobileHeader"
 import { TopBar } from "@/components/layout/TopBar"
 import { Providers } from "@/components/Providers"
 import { LanguageProvider } from "@/contexts/LanguageContext"
-import { ImpersonationBanner } from "@/components/admin/ImpersonationBanner"
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
@@ -25,7 +24,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <Providers session={session}>
         <LanguageProvider>
           <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden">
-            <ImpersonationBanner />
             <div className="hidden md:block"><TopBar /></div>
             <div className="md:hidden"><MobileHeader role="admin" /></div>
             <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
@@ -64,7 +62,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </div>
 
           <main className="flex-1 overflow-y-auto flex flex-col">
-            <ImpersonationBanner />
             <div className="hidden md:block"><TopBar /></div>
             <div className="md:hidden"><MobileHeader role="admin" /></div>
 

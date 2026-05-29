@@ -3,7 +3,7 @@ import { Fragment, useMemo } from "react"
 import Image from "next/image"
 import {
   Search, X, Download, Plus, RefreshCw, Check, Ban, Trash2,
-  ChevronDown, ChevronRight, Pencil, Eye, ToggleLeft, ToggleRight,
+  ChevronDown, ChevronRight, Pencil, ToggleLeft, ToggleRight,
   Copy, CheckCircle2, TrendingUp, Zap,
   MapPin, Phone, Mail, Building2, Users, UserCog, BookOpen, GraduationCap, KeyRound,
 } from "lucide-react"
@@ -42,7 +42,6 @@ export function SchoolsTab({
   copyToClipboard,
   onToggle,
   onOpenEdit,
-  onImpersonate,
   onDeleteSchool,
   onExportCSV,
   onCreateClick,
@@ -78,7 +77,6 @@ export function SchoolsTab({
   copyToClipboard: (text: string, key: string) => void
   onToggle: (id: string, current: boolean) => void
   onOpenEdit: (s: School) => void
-  onImpersonate: (s: School) => void
   onDeleteSchool: (s: School) => void
   onExportCSV: () => void
   onCreateClick: () => void
@@ -242,7 +240,6 @@ export function SchoolsTab({
                       <div className="flex items-center gap-1">
                         <button onClick={() => onToggle(s.id, s.isActive)} title={s.isActive ? "Desactiver" : "Activer"} className={`p-1.5 rounded-lg transition ${s.isActive ? "hover:bg-red-50 text-red-400" : "hover:bg-green-50 text-gray-400 hover:text-green-600"}`}>{s.isActive ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}</button>
                         <button onClick={() => onOpenEdit(s)} title="Modifier" className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-300 hover:text-blue-500 transition"><Pencil size={15} /></button>
-                        <button onClick={() => onImpersonate(s)} title="Voir comme admin" className="p-1.5 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/30 text-gray-300 hover:text-purple-500 transition"><Eye size={15} /></button>
                         <button onClick={() => onDeleteSchool(s)} title="Supprimer" className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-300 hover:text-red-500 transition"><Trash2 size={15} /></button>
                       </div>
                     </td>
