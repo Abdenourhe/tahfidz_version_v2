@@ -1,12 +1,19 @@
 // src/app/api/admin/school/logo/route.ts
+// Stockage du logo en base64 dans la DB (compatible Vercel — pas d'écriture filesystem)
+
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
-import { writeFile, mkdir } from "fs/promises"
-import { join } from "path"
 
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"]
 const MAX_SIZE = 2 * 1024 * 1024 // 2 MB
+
+function mimeToExt(type: string): string {
+  if (type === "image/svg+xml") return "svg"
+  if (type === "image/webp") return "webp"
+  if (type === "image/png") return "png"
+  return "jpg"
+}
 
 export async function POST(req: NextRequest) {
   const session = await auth()
@@ -14,8 +21,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 401 })
   }
 
-  // SuperAdmin peut uploader le logo de n'importe quelle école (via schoolId dans le FormData)
-  // Admin normal ne peut uploader que pour son école
   const formData = await req.formData()
   const bodySchoolId = formData.get("schoolId") as string | null
   const schoolId = session.user.role === "SUPERADMIN" && bodySchoolId
@@ -28,7 +33,6 @@ export async function POST(req: NextRequest) {
 
   try {
     const file = formData.get("logo") as File | null
-
     if (!file) {
       return NextResponse.json({ error: "Aucun fichier reçu" }, { status: 400 })
     }
@@ -47,32 +51,18 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Préparer le répertoire de stockage
-    const uploadDir = join(process.cwd(), "public", "uploads", "schools", schoolId)
-    await mkdir(uploadDir, { recursive: true })
-
-    // Nom du fichier avec extension
-    const ext = file.type === "image/svg+xml" ? "svg"
-              : file.type === "image/webp"    ? "webp"
-              : file.type === "image/png"     ? "png"
-              : "jpg"
-    const filename = `logo.${ext}`
-    const filepath = join(uploadDir, filename)
-
-    // Écrire le fichier
+    // Lire le fichier et convertir en base64
     const bytes = await file.arrayBuffer()
-    await writeFile(filepath, Buffer.from(bytes))
+    const base64 = Buffer.from(bytes).toString("base64")
+    const dataUri = `data:${file.type};base64,${base64}`
 
-    // Chemin public accessible depuis le navigateur
-    const publicPath = `/uploads/schools/${schoolId}/${filename}`
-
-    // Mettre à jour la base de données
+    // Stocker dans la DB
     await prisma.school.update({
       where: { id: schoolId },
-      data: { logo: publicPath },
+      data: { logo: dataUri },
     })
 
-    return NextResponse.json({ logo: publicPath })
+    return NextResponse.json({ logo: dataUri })
   } catch (err) {
     console.error("[LOGO UPLOAD ERROR]", err)
     return NextResponse.json({ error: "Erreur lors de l'upload" }, { status: 500 })
