@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
-import { setImpersonation, clearImpersonation, getImpersonation } from "@/lib/impersonation"
+import { buildImpersonationCookie, clearImpersonation, getImpersonation } from "@/lib/impersonation"
 
 // POST — Démarrer l'impersonation
 export async function POST(request: Request) {
@@ -37,8 +37,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No active admin found for this school" }, { status: 404 })
     }
 
-    // Créer le contexte sécurisé
-    await setImpersonation({
+    // Créer le contexte sécurisé via cookie sur la réponse (NextResponse)
+    const { name, value, options } = buildImpersonationCookie({
       targetAdminId: admin.id,
       targetSchoolId: schoolId,
       superadminId: session.user.id,
@@ -68,11 +68,13 @@ export async function POST(request: Request) {
       } as any,
     }).catch(() => {}) // Silencieux si échec
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       redirectUrl: "/admin/dashboard",
       school: { id: schoolId },
     })
+    response.cookies.set(name, value, options)
+    return response
 
   } catch (error) {
     console.error("Impersonate POST error:", error)
