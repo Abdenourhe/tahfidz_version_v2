@@ -441,15 +441,15 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
                     <span className={`text-sm font-semibold ${dec.color}`}>{dec.label}</span>
                   </div>
                 </div>
-                <div className="grid grid-cols-5 gap-2">
-                  <div className={`col-span-2 text-center p-3 rounded-xl border-2 ${sBg}`}>
+                <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
+                  <div className={`sm:col-span-2 text-center p-3 rounded-xl border-2 ${sBg}`}>
                     <p className={`text-3xl font-bold ${sColor}`}>{pct}</p>
                     <p className="text-xs text-gray-400">/100</p>
                     <div className="flex justify-center gap-0.5 mt-1">
                       {[...Array(5)].map((_, i) => <Star key={i} size={10} className={i < Math.round(pct / 20) ? "text-yellow-400 fill-yellow-400" : "text-gray-200 fill-gray-200"} />)}
                     </div>
                   </div>
-                  <div className="col-span-3 grid grid-cols-2 gap-1.5">
+                  <div className="sm:col-span-3 grid grid-cols-2 gap-1.5">
                     {[
                       { l: t("memorization"), v: ev.memorizationScore },
                       { l: t("tajweed"), v: ev.tajweedScore },
@@ -475,7 +475,7 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
       {/* Présences */}
       {tab === "attendance" && (
         <div className="space-y-4">
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {Object.entries(ATT_CFG).map(([status, cfg]) => {
               const count = attendances.filter(a => a.status === status).length
               return (

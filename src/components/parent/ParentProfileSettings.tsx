@@ -2,7 +2,7 @@
 import { useState } from "react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { useSession } from "next-auth/react"
-import { Loader2, Save, Lock, User, Phone, Globe, CheckCircle2, AlertTriangle } from "lucide-react"
+import { Loader2, Save, Lock, User, Phone, Globe, CheckCircle2, AlertTriangle, Eye, EyeOff } from "lucide-react"
 
 export function ParentProfileSettings() {
   const { locale } = useLanguage()
@@ -20,6 +20,7 @@ export function ParentProfileSettings() {
   const [profileErr, setProfileErr] = useState<string | null>(null)
 
   const [pwdForm, setPwdForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" })
+  const [showPwd, setShowPwd] = useState({ current: false, new: false, confirm: false })
   const [pwdLoading, setPwdLoading] = useState(false)
   const [pwdMsg, setPwdMsg] = useState<string | null>(null)
   const [pwdErr, setPwdErr] = useState<string | null>(null)
@@ -139,30 +140,60 @@ export function ParentProfileSettings() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
             <label className="block text-xs font-medium text-gray-500 mb-1">{t("currentPassword")}</label>
-            <input
-              type="password"
-              value={pwdForm.currentPassword}
-              onChange={(e) => setPwdForm((p) => ({ ...p, currentPassword: e.target.value }))}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm"
-            />
+            <div className="relative">
+              <input
+                type={showPwd.current ? "text" : "password"}
+                value={pwdForm.currentPassword}
+                onChange={(e) => setPwdForm((p) => ({ ...p, currentPassword: e.target.value }))}
+                className="w-full px-3 py-2 pr-10 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPwd((s) => ({ ...s, current: !s.current }))}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                tabIndex={-1}
+              >
+                {showPwd.current ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">{t("newPassword")}</label>
-            <input
-              type="password"
-              value={pwdForm.newPassword}
-              onChange={(e) => setPwdForm((p) => ({ ...p, newPassword: e.target.value }))}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm"
-            />
+            <div className="relative">
+              <input
+                type={showPwd.new ? "text" : "password"}
+                value={pwdForm.newPassword}
+                onChange={(e) => setPwdForm((p) => ({ ...p, newPassword: e.target.value }))}
+                className="w-full px-3 py-2 pr-10 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPwd((s) => ({ ...s, new: !s.new }))}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                tabIndex={-1}
+              >
+                {showPwd.new ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">{t("confirmPassword")}</label>
-            <input
-              type="password"
-              value={pwdForm.confirmPassword}
-              onChange={(e) => setPwdForm((p) => ({ ...p, confirmPassword: e.target.value }))}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm"
-            />
+            <div className="relative">
+              <input
+                type={showPwd.confirm ? "text" : "password"}
+                value={pwdForm.confirmPassword}
+                onChange={(e) => setPwdForm((p) => ({ ...p, confirmPassword: e.target.value }))}
+                className="w-full px-3 py-2 pr-10 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPwd((s) => ({ ...s, confirm: !s.confirm }))}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                tabIndex={-1}
+              >
+                {showPwd.confirm ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
           </div>
         </div>
         <div className="mt-4 flex items-center gap-3">

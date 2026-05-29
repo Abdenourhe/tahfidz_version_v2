@@ -306,17 +306,19 @@ export function ImpersonateModal({
   open,
   school,
   onClose,
-  action,
+  onSubmit,
+  loading,
 }: {
   open: boolean
   school: School | null
   onClose: () => void
-  action?: (formData: FormData) => void
+  onSubmit?: (schoolId: string) => void
+  loading?: boolean
 }) {
   if (!open || !school) return null
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <form action={action} className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2"><Eye size={18} className="text-purple-500" /> Impersonation</h3>
           <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
@@ -325,12 +327,14 @@ export function ImpersonateModal({
         <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3 mb-4">
           <p className="text-xs text-purple-700 dark:text-purple-300">⚠️ Cette action est enregistree dans les logs d&apos;audit.</p>
         </div>
-        <input type="hidden" name="schoolId" value={school.id} />
         <div className="flex gap-3">
-          <button type="button" onClick={onClose} className="flex-1 py-2.5 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition">Annuler</button>
-          <button type="submit" className="flex-1 py-2.5 bg-purple-500 text-white text-sm font-semibold rounded-xl hover:bg-purple-600 transition flex items-center justify-center gap-2"><Eye size={14} /> Se connecter</button>
+          <button type="button" onClick={onClose} disabled={loading} className="flex-1 py-2.5 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition disabled:opacity-50">Annuler</button>
+          <button type="button" disabled={loading} onClick={() => onSubmit?.(school.id)} className="flex-1 py-2.5 bg-purple-500 text-white text-sm font-semibold rounded-xl hover:bg-purple-600 transition flex items-center justify-center gap-2 disabled:opacity-50">
+            {loading ? <Loader2 size={14} className="animate-spin" /> : <Eye size={14} />}
+            {loading ? "Connexion..." : "Se connecter"}
+          </button>
         </div>
-      </form>
+      </div>
     </div>
   )
 }
