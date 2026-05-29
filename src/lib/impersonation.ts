@@ -61,7 +61,7 @@ export async function setImpersonation(payload: ImpersonationPayload) {
   cookieStore.set("impersonation_ctx", value, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "lax",
     maxAge: 60 * 60 * 2, // 2 heures
     path: "/",
   })
