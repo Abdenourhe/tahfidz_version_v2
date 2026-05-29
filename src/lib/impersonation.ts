@@ -67,6 +67,23 @@ export async function setImpersonation(payload: ImpersonationPayload) {
   })
 }
 
+/** Retourne la valeur et les options du cookie (pour API routes NextResponse) */
+export function buildImpersonationCookie(payload: ImpersonationPayload) {
+  const signature = sign(payload)
+  const value = Buffer.from(JSON.stringify({ ...payload, signature })).toString("base64")
+  return {
+    name: "impersonation_ctx",
+    value,
+    options: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax" as const,
+      maxAge: 60 * 60 * 2,
+      path: "/",
+    },
+  }
+}
+
 /** Lit et vérifie le cookie (Server Components / Server Actions) */
 export async function getImpersonation(): Promise<ImpersonationPayload | null> {
   const cookieStore = await cookies()
