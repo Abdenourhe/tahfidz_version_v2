@@ -10,17 +10,23 @@ const MAX_SIZE = 2 * 1024 * 1024 // 2 MB
 
 export async function POST(req: NextRequest) {
   const session = await auth()
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "SUPERADMIN")) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 401 })
   }
 
-  const schoolId = session.user.schoolId
+  // SuperAdmin peut uploader le logo de n'importe quelle école (via schoolId dans le FormData)
+  // Admin normal ne peut uploader que pour son école
+  const formData = await req.formData()
+  const bodySchoolId = formData.get("schoolId") as string | null
+  const schoolId = session.user.role === "SUPERADMIN" && bodySchoolId
+    ? bodySchoolId
+    : session.user.schoolId
+
   if (!schoolId) {
     return NextResponse.json({ error: "École introuvable" }, { status: 400 })
   }
 
   try {
-    const formData = await req.formData()
     const file = formData.get("logo") as File | null
 
     if (!file) {
@@ -75,11 +81,16 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   const session = await auth()
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "SUPERADMIN")) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 401 })
   }
 
-  const schoolId = session.user.schoolId
+  const { searchParams } = new URL(req.url)
+  const bodySchoolId = searchParams.get("schoolId")
+  const schoolId = session.user.role === "SUPERADMIN" && bodySchoolId
+    ? bodySchoolId
+    : session.user.schoolId
+
   if (!schoolId) {
     return NextResponse.json({ error: "École introuvable" }, { status: 400 })
   }
