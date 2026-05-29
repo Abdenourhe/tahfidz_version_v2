@@ -326,6 +326,15 @@ function LoginForm() {
               </button>
             </div>
 
+            {!superMode && (
+              <div className="mt-4 text-center">
+                <Link href="/register-school"
+                  className="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition">
+                  🏫 Inscrire mon ecole sur TAHFIDZ
+                </Link>
+              </div>
+            )}
+
             <div className="mt-5 text-center">
               <p className="text-[10px] text-gray-300 select-none">TAHFIDZ Platform v2.0</p>
             </div>
