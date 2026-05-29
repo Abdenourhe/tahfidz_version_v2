@@ -291,7 +291,11 @@ export default function SuperAdminPage() {
         const fd = new FormData()
         fd.append("logo", logoFile)
         fd.append("schoolId", data.school.id)
-        await fetch("/api/admin/schools/logo", { method: "POST", body: fd })
+        const logoRes = await fetch("/api/admin/school/logo", { method: "POST", body: fd })
+        if (!logoRes.ok) {
+          const logoErr = await logoRes.json().catch(() => ({ error: "Erreur upload logo" }))
+          toast.error(logoErr.error || "Erreur upload logo")
+        }
       }
       toast.success("Ecole creee avec succes !")
       setShowForm(false)
@@ -369,18 +373,21 @@ export default function SuperAdminPage() {
   const handleImpersonateSubmit = async (schoolId: string) => {
     setImpersonateLoading(true)
     try {
+      console.log("[Impersonate] Fetching /api/admin/impersonate with schoolId:", schoolId)
       const res = await fetch("/api/admin/impersonate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ schoolId }),
       })
       const data = await res.json()
+      console.log("[Impersonate] Response:", res.status, data)
       if (!res.ok) {
         toast.error(data.error || "Erreur d'impersonation")
         return
       }
       window.location.href = data.redirectUrl || "/admin/dashboard"
-    } catch {
+    } catch (err) {
+      console.error("[Impersonate] Error:", err)
       toast.error("Erreur réseau")
     } finally {
       setImpersonateLoading(false)
