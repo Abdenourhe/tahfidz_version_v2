@@ -4,6 +4,7 @@ import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
+import { getImpersonation } from "@/lib/impersonation"
 import { z } from "zod"
 
 const LoginSchema = z.object({
@@ -12,9 +13,9 @@ const LoginSchema = z.object({
   schoolSlug: z.string().optional().default(""),
 })
 
-export const {
-  handlers,
-  auth,
+const {
+  handlers: nextAuthHandlers,
+  auth: baseAuth,
   signIn,
   signOut,
 } = NextAuth({
@@ -127,6 +128,52 @@ export const {
     },
   },
 })
+
+export { nextAuthHandlers as handlers }
+
+/** Wrapper auth() qui lit le cookie d'impersonation et modifie la session */
+export async function auth() {
+  const session = await baseAuth()
+  if (!session?.user) return session
+
+  try {
+    const imp = await getImpersonation()
+    if (!imp) return session
+
+    const [admin, school] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: imp.targetAdminId },
+        select: { id: true, email: true, fullName: true, role: true, schoolId: true, avatar: true },
+      }),
+      prisma.school.findUnique({
+        where: { id: imp.targetSchoolId },
+        select: { id: true, slug: true, name: true, logo: true, city: true },
+      }),
+    ])
+
+    if (!admin || admin.role !== "ADMIN") return session
+
+    return {
+      ...session,
+      user: {
+        ...session.user,
+        id: admin.id,
+        name: admin.fullName ?? session.user.name,
+        email: admin.email ?? session.user.email,
+        role: admin.role,
+        schoolId: admin.schoolId,
+        schoolSlug: school?.slug ?? session.user.schoolSlug,
+        schoolName: school?.name ?? (session.user as any).schoolName,
+        schoolLogo: school?.logo ?? (session.user as any).schoolLogo,
+        schoolCity: school?.city ?? (session.user as any).schoolCity,
+        isImpersonating: true,
+        originalRole: "SUPERADMIN",
+      } as any,
+    }
+  } catch {
+    return session
+  }
+}
 
 declare module "next-auth" {
   interface User {
