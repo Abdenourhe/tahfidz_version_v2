@@ -3,6 +3,7 @@ import { getToken } from "next-auth/jwt"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 const PUBLIC_PATHS = [
+  "/",
   "/login",
   "/register-school",
   "/parent/register",
