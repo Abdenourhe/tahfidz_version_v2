@@ -20,7 +20,7 @@ import {
   CreateSchoolModal, EditSchoolModal, ApprovalResultModal,
   ImpersonateModal, FeedbackDetailModal,
 } from "@/components/admin/superadmin/modals"
-import { impersonateSchoolAdmin } from "./actions"
+// import { impersonateSchoolAdmin } from "./actions"
 
 export default function SuperAdminPage() {
   /* ── Core state ── */
@@ -552,7 +552,8 @@ export default function SuperAdminPage() {
         open={showImpersonate}
         school={impersonateSchool}
         onClose={() => { setShowImpersonate(false); setImpersonateSchool(null) }}
-        action={impersonateSchoolAdmin}
+        onSubmit={handleImpersonateSubmit}
+        loading={impersonateLoading}
       />
 
       <FeedbackDetailModal

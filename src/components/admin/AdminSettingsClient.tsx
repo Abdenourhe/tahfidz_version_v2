@@ -49,6 +49,7 @@ export function AdminSettingsClient({ user, school }: Props) {
   const [confPwd, setConfPwd] = useState("")
   const [showCur, setShowCur] = useState(false)
   const [showNew, setShowNew] = useState(false)
+  const [showConf, setShowConf] = useState(false)
   const [pwdSaving, setPwdSaving] = useState(false)
   const [pwdSaved, setPwdSaved] = useState(false)
   const [pwdErr, setPwdErr] = useState<string | null>(null)
@@ -316,8 +317,13 @@ export function AdminSettingsClient({ user, school }: Props) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{tS("confirmPwd")}</label>
-                  <input type="password" value={confPwd} onChange={e => setConfPwd(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green" />
+                  <div className="relative">
+                    <input type={showConf ? "text" : "password"} value={confPwd} onChange={e => setConfPwd(e.target.value)}
+                      className="w-full px-4 py-2.5 pr-10 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green" />
+                    <button type="button" onClick={() => setShowConf(!showConf)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                      {showConf ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <button type="submit" disabled={pwdSaving}
