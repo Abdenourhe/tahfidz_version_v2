@@ -385,6 +385,14 @@ export default function SuperAdminPage() {
         toast.error(data.error || "Erreur d'impersonation")
         return
       }
+      // Vérifier que le cookie est bien posé avant de naviguer
+      const debugRes = await fetch("/api/debug/session")
+      const debugData = await debugRes.json()
+      console.log("[Impersonate] Debug session:", debugData)
+      if (!debugData.impersonationCookie) {
+        toast.error("Cookie d'impersonation non détecté — essayez de rafraîchir la page")
+        return
+      }
       window.location.href = data.redirectUrl || "/admin/dashboard"
     } catch (err) {
       console.error("[Impersonate] Error:", err)
