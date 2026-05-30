@@ -129,6 +129,7 @@ export async function PATCH(req: NextRequest) {
         plan: plan as any,
         isActive: true,
         settings: {},
+        address: request.address,
         city: request.city,
         country: request.country,
         phone: request.adminPhone,
