@@ -7,9 +7,11 @@ const PUBLIC_PATHS = [
   "/login",
   "/register-school",
   "/forgot-password",
+  "/reset-password",
   "/parent/register",
   "/api/register-school",
   "/api/forgot-password",
+  "/api/reset-password",
   "/api/auth",
 ]
 

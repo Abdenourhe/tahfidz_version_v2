@@ -1,7 +1,9 @@
 // src/app/api/forgot-password/route.ts — Demande de reinitialisation mot de passe
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { sendMail, isMailConfigured } from "@/lib/mail"
 import { z } from "zod"
+import { SignJWT } from "jose"
 
 const schema = z.object({
   email: z.string().email("Email invalide"),
@@ -38,16 +40,48 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Aucun compte trouve avec cet email pour cette ecole." }, { status: 404 })
     }
 
-    // Logger la demande pour le Super Admin
-    console.log("\n🔐 ═══════════════════════════════════════════")
-    console.log("   DEMANDE DE REINITIALISATION MOT DE PASSE")
-    console.log("   Ecole    :", school.name, `(${schoolSlug})`)
-    console.log("   Utilisateur:", user.fullName, `(${email})`)
-    console.log("   Role     :", user.role)
-    console.log("   → Traiter sur /admin/super")
-    console.log("═══════════════════════════════════════════\n")
+    // Generer un token JWT signe (valide 1h)
+    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET!)
+    const token = await new SignJWT({ email: email.toLowerCase(), schoolId: school.id, userId: user.id })
+      .setProtectedHeader({ alg: "HS256" })
+      .setExpirationTime("1h")
+      .setIssuedAt()
+      .sign(secret)
 
-    // Optionnel: creer un audit log
+    // Construire le lien de reinitialisation
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://votre-app.vercel.app"
+    const resetUrl = `${baseUrl}/reset-password?token=${encodeURIComponent(token)}`
+
+    // Envoyer l'email si SMTP configure
+    if (isMailConfigured()) {
+      await sendMail({
+        to: email,
+        subject: "Reinitialisation de votre mot de passe TAHFIDZ",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
+            <h2 style="color: #059669;">Reinitialisation de mot de passe</h2>
+            <p>Bonjour ${user.fullName || ""},</p>
+            <p>Vous avez demande la reinitialisation de votre mot de passe pour l'ecole <strong>${school.name}</strong>.</p>
+            <p>Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe :</p>
+            <a href="${resetUrl}" style="display: inline-block; background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; margin: 16px 0;">Reinitialiser mon mot de passe</a>
+            <p style="color: #666; font-size: 12px;">Ce lien est valide pendant 1 heure. Si vous n'etes pas a l'origine de cette demande, ignorez cet email.</p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+            <p style="color: #999; font-size: 11px;">TAHFIDZ Platform — <a href="${baseUrl}">${baseUrl}</a></p>
+          </div>
+        `,
+        text: `Bonjour,\n\nVous avez demande la reinitialisation de votre mot de passe pour ${school.name}.\n\nCliquez sur ce lien : ${resetUrl}\n\nCe lien est valide pendant 1 heure.\n\nTAHFIDZ Platform`,
+      })
+    } else {
+      // Mode fallback : log dans la console
+      console.log("\n📧 ═══════════════════════════════════════════")
+      console.log("   EMAIL DE REINITIALISATION (SMTP non configure)")
+      console.log("   Destinataire:", email)
+      console.log("   Ecole:", school.name)
+      console.log("   Lien:", resetUrl)
+      console.log("═══════════════════════════════════════════\n")
+    }
+
+    // Audit log
     try {
       await (prisma as any).auditLog.create({
         data: {
@@ -60,10 +94,15 @@ export async function POST(req: NextRequest) {
         },
       })
     } catch {
-      // ignore audit log errors
+      // ignore
     }
 
-    return NextResponse.json({ success: true, message: "Demande envoyee au Super Admin." })
+    return NextResponse.json({
+      success: true,
+      message: isMailConfigured()
+        ? "Un email de reinitialisation a ete envoye. Verifiez votre boite de reception."
+        : "Demande enregistree. (SMTP non configure — lien affiche dans la console serveur)",
+    })
   } catch (e) {
     console.error("[forgot-password]", e)
     return NextResponse.json({ error: "Erreur serveur interne" }, { status: 500 })
