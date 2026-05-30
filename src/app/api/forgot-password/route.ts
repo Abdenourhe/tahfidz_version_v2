@@ -20,10 +20,10 @@ export async function POST(req: NextRequest) {
 
     const { email, schoolSlug } = parsed.data
 
-    // Verifier que l'ecole existe
-    const school = await prisma.school.findUnique({
-      where: { slug: schoolSlug },
-      select: { id: true, name: true },
+    // Verifier que l'ecole existe (insensible a la casse)
+    const school = await prisma.school.findFirst({
+      where: { slug: { equals: schoolSlug, mode: 'insensitive' } },
+      select: { id: true, name: true, slug: true },
     })
 
     if (!school) {
@@ -99,9 +99,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      resetUrl: isMailConfigured() ? undefined : resetUrl,
       message: isMailConfigured()
         ? "Un email de reinitialisation a ete envoye. Verifiez votre boite de reception."
-        : "Demande enregistree. (SMTP non configure — lien affiche dans la console serveur)",
+        : "Demande enregistree. (SMTP non configure — utilisez le lien ci-dessous)",
     })
   } catch (e) {
     console.error("[forgot-password]", e)

@@ -11,6 +11,7 @@ export default function ForgotPasswordPage() {
   const [schoolSlug, setSchoolSlug] = useState("")
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
+  const [resetUrl, setResetUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const submit = async (e: React.FormEvent) => {
@@ -29,7 +30,9 @@ export default function ForgotPasswordPage() {
         const d = await res.json()
         setError(d.error || "Erreur lors de la demande.")
       } else {
+        const d = await res.json()
         setSent(true)
+        if (d.resetUrl) setResetUrl(d.resetUrl)
       }
     } catch {
       setError("Une erreur reseau est survenue.")
@@ -94,8 +97,18 @@ export default function ForgotPasswordPage() {
                 </div>
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Demande envoyee !</h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                  Le Super Admin a ete notifie de votre demande. Vous recevrez une reponse sous peu.
+                  {resetUrl
+                    ? "SMTP non configure sur ce serveur. Cliquez sur le lien ci-dessous pour reinitialiser votre mot de passe :"
+                    : "Un email de reinitialisation a ete envoye. Verifiez votre boite de reception."}
                 </p>
+                {resetUrl && (
+                  <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
+                    <p className="text-xs text-blue-600 dark:text-blue-300 mb-2 font-medium">Lien de reinitialisation (valide 1h) :</p>
+                    <a href={resetUrl} className="text-sm text-tahfidz-green hover:text-emerald-700 font-semibold break-all underline">
+                      {resetUrl}
+                    </a>
+                  </div>
+                )}
                 <Link href="/login" className="inline-flex items-center gap-2 px-5 py-2.5 bg-tahfidz-green text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition">
                   <ArrowLeft size={14} /> Retour a la connexion
                 </Link>
