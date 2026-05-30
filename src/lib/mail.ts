@@ -1,6 +1,19 @@
-// src/lib/mail.ts — Service d'envoi d'emails via Nodemailer
+// src/lib/mail.ts — Service d'envoi d'emails via SendGrid API (prioritaire) ou Nodemailer SMTP (fallback)
 import nodemailer from "nodemailer"
 
+// ——— SendGrid API ———
+let sendgrid: typeof import("@sendgrid/mail") | undefined
+if (process.env.SENDGRID_API_KEY) {
+  try {
+    const sg = require("@sendgrid/mail")
+    sg.setApiKey(process.env.SENDGRID_API_KEY)
+    sendgrid = sg
+  } catch {
+    console.warn("[MAIL] @sendgrid/mail non disponible")
+  }
+}
+
+// ——— Nodemailer SMTP ———
 const SMTP_HOST = process.env.SMTP_HOST
 const SMTP_PORT = Number(process.env.SMTP_PORT ?? "587")
 const SMTP_USER = process.env.SMTP_USER
@@ -23,11 +36,33 @@ export interface SendMailOptions {
 }
 
 export async function sendMail({ to, subject, text, html }: SendMailOptions) {
+  // ——— 1. Priorité : SendGrid API ———
+  if (sendgrid) {
+    try {
+      const fromEmail = SMTP_FROM.match(/<(.+)>/)?.[1] ?? SMTP_FROM
+      const fromName = SMTP_FROM.match(/(.*)\s+</)?.[1]?.trim() ?? "TAHFIDZ"
+      await sendgrid.send({
+        to,
+        from: { email: fromEmail, name: fromName },
+        subject,
+        text,
+        html,
+      })
+      console.log("[MAIL] Envoyé via SendGrid API:", to, "-", subject)
+      return { success: true }
+    } catch (err: any) {
+      console.error("[MAIL] Erreur SendGrid API:", err?.response?.body ?? err)
+      // On ne tombe pas en fallback SMTP car les credentials SendGrid sont fournis
+      return { success: false, error: err?.response?.body?.errors?.[0]?.message ?? String(err) }
+    }
+  }
+
+  // ——— 2. Fallback : Nodemailer SMTP ———
   if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
-    console.warn("[MAIL] SMTP non configuré. Email non envoyé.")
+    console.warn("[MAIL] Ni SendGrid API ni SMTP configuré. Email non envoyé.")
     console.warn("         Destinataire:", to)
     console.warn("         Sujet:", subject)
-    return { success: false, error: "SMTP non configuré" }
+    return { success: false, error: "Email non configuré" }
   }
 
   try {
@@ -38,14 +73,14 @@ export async function sendMail({ to, subject, text, html }: SendMailOptions) {
       text,
       html,
     })
-    console.log("[MAIL] Envoyé:", info.messageId)
+    console.log("[MAIL] Envoyé via SMTP:", info.messageId)
     return { success: true, messageId: info.messageId }
   } catch (err) {
-    console.error("[MAIL] Erreur d'envoi:", err)
+    console.error("[MAIL] Erreur SMTP:", err)
     return { success: false, error: String(err) }
   }
 }
 
 export function isMailConfigured(): boolean {
-  return !!(SMTP_HOST && SMTP_USER && SMTP_PASS)
+  return !!(sendgrid || (SMTP_HOST && SMTP_USER && SMTP_PASS))
 }
