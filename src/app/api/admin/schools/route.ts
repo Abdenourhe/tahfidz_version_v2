@@ -124,7 +124,14 @@ export async function PATCH(req: NextRequest) {
 
     const school = await prisma.school.create({
       data: {
-        name: request.schoolName, slug, plan: plan as any, isActive: true, settings: {},
+        name: request.schoolName,
+        slug,
+        plan: plan as any,
+        isActive: true,
+        settings: {},
+        city: request.city,
+        country: request.country,
+        phone: request.adminPhone,
         users: {
           create: {
             email:    request.adminEmail,
