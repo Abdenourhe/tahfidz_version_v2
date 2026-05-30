@@ -13,7 +13,7 @@ import { motion } from "framer-motion"
   Formats acceptés : .json (Lottie classique) ou .lottie (nouveau format compressé)
 */
 const LOTTIE_URL =
-  "https://lottie.host/5e06232e-8580-4c3a-8f3b-251e8e835757/zgR0Q8z9oC.json"
+  "https://kommodo.ai/i/a19JGkz0cOyJ8J1n4ZwY"
 
 const float = {
   y: [0, -12, 0],
