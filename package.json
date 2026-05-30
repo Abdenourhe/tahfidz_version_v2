@@ -24,6 +24,7 @@
     "@auth/prisma-adapter": "^2.7.4",
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^5.22.0",
+    "@sendgrid/mail": "^8.1.6",
     "bcryptjs": "^2.4.3",
     "bullmq": "^5.16.0",
     "clsx": "^2.1.1",
