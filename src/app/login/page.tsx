@@ -57,7 +57,7 @@ function LoginForm() {
   const callbackUrl   = searchParams.get("callbackUrl") || "/"
   const [showPwd, setShowPwd]         = useState(false)
   const [error, setError]             = useState<string | null>(null)
-  const [slugCleared, setSlugCleared] = useState(false)
+
   const [activeTab, setActiveTab]     = useState<"school" | "super">("school")
 
   const registered = searchParams.get("registered") === "true"
@@ -78,14 +78,13 @@ function LoginForm() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey && e.key === "S") {
         e.preventDefault()
-        schoolForm.setValue("schoolSlug", "")
-        setSlugCleared(true)
-        setTimeout(() => setSlugCleared(false), 3000)
+        setActiveTab("super")
+        setError(null)
       }
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [schoolForm])
+  }, [])
 
   const doSignIn = async (email: string, password: string, schoolSlug = "") => {
     setError(null)
@@ -296,33 +295,26 @@ function LoginForm() {
               <p className="text-gray-500 dark:text-gray-400 text-sm">Connectez-vous a votre espace TAHFIDZ</p>
             </div>
 
-            {/* Tabs */}
-            <div className="mb-6 p-1 bg-gray-100 dark:bg-gray-800/50 rounded-xl flex gap-1">
-              <button
-                type="button"
-                onClick={() => switchTab("school")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all ${
-                  activeTab === "school"
-                    ? "bg-white dark:bg-gray-700 text-tahfidz-green shadow-sm"
-                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700"
-                }`}
+            {/* Mode indicator (only visible in super mode) */}
+            {activeTab === "super" && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-4 p-3 bg-purple-50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-800/20 rounded-xl flex items-center justify-between"
               >
-                <School size={16} />
-                Connexion Ecole
-              </button>
-              <button
-                type="button"
-                onClick={() => switchTab("super")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all ${
-                  activeTab === "super"
-                    ? "bg-white dark:bg-gray-700 text-purple-600 shadow-sm"
-                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700"
-                }`}
-              >
-                <ShieldCheck size={16} />
-                Super Admin
-              </button>
-            </div>
+                <div className="flex items-center gap-2 text-purple-700 dark:text-purple-300 text-sm font-medium">
+                  <ShieldCheck size={16} />
+                  Mode Super Admin
+                </div>
+                <button
+                  type="button"
+                  onClick={() => switchTab("school")}
+                  className="text-xs text-purple-500 hover:text-purple-700 underline"
+                >
+                  Retour
+                </button>
+              </motion.div>
+            )}
 
             {/* Forms */}
             <AnimatePresence mode="wait">
@@ -347,7 +339,7 @@ function LoginForm() {
                         autoComplete="organization"
                         placeholder="EX : EC-ALG-001"
                         style={{ textTransform: "uppercase" }}
-                        className={`w-full pl-11 pr-4 py-3 rounded-xl border bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm font-bold tracking-widest placeholder:font-normal placeholder:tracking-normal dark:text-white ${slugCleared ? "border-amber-400" : "border-gray-200 dark:border-gray-700"} ${schoolForm.formState.errors.schoolSlug ? "border-red-300" : ""}`}
+                        className={`w-full pl-11 pr-4 py-3 rounded-xl border bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm font-bold tracking-widest placeholder:font-normal placeholder:tracking-normal dark:text-white ${"border-gray-200 dark:border-gray-700"} ${schoolForm.formState.errors.schoolSlug ? "border-red-300" : ""}`}
                         {...schoolForm.register("schoolSlug", {
                           onChange: (e) => { e.target.value = e.target.value.toUpperCase() }
                         })}
