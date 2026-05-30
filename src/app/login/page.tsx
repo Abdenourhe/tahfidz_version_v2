@@ -14,6 +14,7 @@ import {
   Check, ArrowLeft, ShieldCheck, Globe, Lock, Mail, Building2,
   Sparkles, TrendingUp, Award
 } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 
 const schoolSchema = z.object({
@@ -143,26 +144,42 @@ function LoginForm() {
         </div>
 
         {/* Content */}
-        <div className="relative z-10 max-w-md">
+        <div className="relative z-10 max-w-md flex flex-col items-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
+            className="w-full"
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-emerald-100 text-xs font-medium mb-6">
+            {/* Illustration */}
+            <div className="mb-8 relative">
+              <div className="absolute inset-0 bg-white/10 rounded-3xl blur-2xl scale-110" />
+              <div className="relative rounded-2xl overflow-hidden border border-white/20 shadow-2xl">
+                <Image
+                  src="/images/hero-illustration.png"
+                  alt="TAHFIDZ Illustration"
+                  width={400}
+                  height={340}
+                  className="w-full h-auto object-contain"
+                  priority
+                />
+              </div>
+            </div>
+
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-emerald-100 text-xs font-medium mb-4">
               <Sparkles size={14} />
               Plateforme N°1 pour les ecoles coraniques
             </div>
 
-            <h2 className="text-4xl xl:text-5xl font-extrabold text-white leading-tight mb-4">
+            <h2 className="text-3xl xl:text-4xl font-extrabold text-white leading-tight mb-3">
               La plateforme<br />
               <span className="text-emerald-300">coranique</span> moderne
             </h2>
-            <p className="text-emerald-100/80 text-base leading-relaxed mb-8">
-              Gerez votre ecole de memorisation du Coran avec des outils intelligents. Suivi, evaluations, rapports — tout en un seul endroit.
+            <p className="text-emerald-100/80 text-sm leading-relaxed mb-6">
+              Gerez votre ecole de memorisation du Coran avec des outils intelligents.
             </p>
 
-            <div className="space-y-3 mb-10">
+            <div className="space-y-2">
               {features.map((f, i) => (
                 <motion.div
                   key={i}
@@ -171,10 +188,10 @@ function LoginForm() {
                   transition={{ delay: 0.3 + i * 0.1 }}
                   className="flex items-center gap-3"
                 >
-                  <div className="w-8 h-8 rounded-full bg-emerald-500/30 border border-emerald-400/30 flex items-center justify-center flex-shrink-0">
-                    <Check size={14} className="text-white" />
+                  <div className="w-7 h-7 rounded-full bg-emerald-500/30 border border-emerald-400/30 flex items-center justify-center flex-shrink-0">
+                    <Check size={12} className="text-white" />
                   </div>
-                  <span className="text-emerald-50 text-sm font-medium">{f.text}</span>
+                  <span className="text-emerald-50 text-xs font-medium">{f.text}</span>
                 </motion.div>
               ))}
             </div>
@@ -397,12 +414,7 @@ function LoginForm() {
                   onSubmit={superForm.handleSubmit(onSuperSubmit)}
                   className="space-y-4"
                 >
-                  <div className="p-4 bg-purple-50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-800/30 rounded-xl mb-2">
-                    <div className="flex items-center gap-2 text-purple-700 dark:text-purple-300 text-sm font-medium">
-                      <ShieldCheck size={18} />
-                      Acces reserve au Super Administrateur
-                    </div>
-                  </div>
+
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
