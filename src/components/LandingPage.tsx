@@ -11,7 +11,7 @@ import {
   UserCheck, BookMarked, FileText, Wifi, Award, Sun, Moon,
   Sparkles, TrendingUp, Clock, Heart, Zap, Lock
 } from "lucide-react"
-import { LottieHero } from "./landing/LottieHero"
+import { HeroImage } from "./landing/HeroImage"
 
 // ─── Traductions ────────────────────────────────────────────────────────────
 const dict = {
@@ -579,7 +579,7 @@ function HeroSection({ t }: { t: (typeof dict)["fr"] }) {
             className="relative"
           >
             <div className="relative rounded-3xl bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border border-gray-100 dark:border-gray-800 p-6 shadow-2xl shadow-gray-200/50 dark:shadow-black/30">
-              <LottieHero />
+              <HeroImage />
             </div>
             {/* Decorative dots */}
             <div className="absolute -top-6 -right-6 w-24 h-24 opacity-20">
