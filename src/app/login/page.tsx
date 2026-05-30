@@ -126,98 +126,98 @@ function LoginForm() {
   return (
     <div className="min-h-screen flex bg-white dark:bg-gray-950">
       {/* ═══ Panneau gauche ═══ */}
-      <div className="hidden lg:flex lg:w-[45%] xl:w-1/2 bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-900 relative overflow-hidden flex-col justify-between p-10 xl:p-14">
-        {/* Decorative circles */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/3 translate-x-1/3 blur-2xl" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-emerald-400/10 rounded-full translate-y-1/3 -translate-x-1/4 blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-3xl" />
+      <div className="hidden lg:flex lg:w-[45%] xl:w-1/2 bg-gradient-to-br from-emerald-700 via-emerald-800 to-emerald-950 relative overflow-hidden">
+        {/* Background decorative elements */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0aDR2NGgtNHpNMzQgMzZoNHY0aC00eiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/10 rounded-full -translate-y-1/2 translate-x-1/4 blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-teal-500/10 rounded-full translate-y-1/3 -translate-x-1/4 blur-3xl" />
 
-        {/* Header */}
-        <div className="relative z-10">
-          <Link href="/" className="inline-flex items-center gap-3 group">
-            <div className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center group-hover:bg-white/25 transition">
-              <span className="text-white font-bold text-2xl">ط</span>
-            </div>
-            <span className="text-white font-bold text-2xl tracking-tight">TAHFIDZ</span>
-          </Link>
-        </div>
-
-        {/* Content */}
-        <div className="relative z-10 max-w-md flex flex-col items-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="w-full"
-          >
-            {/* Illustration */}
-            <div className="mb-8 relative">
-              <div className="absolute inset-0 bg-white/10 rounded-3xl blur-2xl scale-110" />
-              <div className="relative rounded-2xl overflow-hidden border border-white/20 shadow-2xl">
-                <Image
-                  src="/images/hero-illustration.png"
-                  alt="TAHFIDZ Illustration"
-                  width={400}
-                  height={340}
-                  className="w-full h-auto object-contain"
-                  priority
-                />
+        <div className="relative z-10 flex flex-col h-full p-10 xl:p-14">
+          {/* Header */}
+          <div className="flex-shrink-0">
+            <Link href="/" className="inline-flex items-center gap-3 group">
+              <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm border border-white/15 flex items-center justify-center group-hover:bg-white/20 transition">
+                <span className="text-white font-bold text-xl">ط</span>
               </div>
-            </div>
-
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-emerald-100 text-xs font-medium mb-4">
-              <Sparkles size={14} />
-              Plateforme N°1 pour les ecoles coraniques
-            </div>
-
-            <h2 className="text-3xl xl:text-4xl font-extrabold text-white leading-tight mb-3">
-              La plateforme<br />
-              <span className="text-emerald-300">coranique</span> moderne
-            </h2>
-            <p className="text-emerald-100/80 text-sm leading-relaxed mb-6">
-              Gerez votre ecole de memorisation du Coran avec des outils intelligents.
-            </p>
-
-            <div className="space-y-2">
-              {features.map((f, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 + i * 0.1 }}
-                  className="flex items-center gap-3"
-                >
-                  <div className="w-7 h-7 rounded-full bg-emerald-500/30 border border-emerald-400/30 flex items-center justify-center flex-shrink-0">
-                    <Check size={12} className="text-white" />
-                  </div>
-                  <span className="text-emerald-50 text-xs font-medium">{f.text}</span>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Stats */}
-        <div className="relative z-10">
-          <div className="flex items-center gap-6">
-            {stats.map((s, i) => (
-              <motion.div
-                key={s.label}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 + i * 0.1 }}
-                className="flex items-center gap-3"
-              >
-                <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center">
-                  <s.icon size={18} className="text-emerald-200" />
-                </div>
-                <div>
-                  <div className="text-xl font-bold text-white">{s.val}</div>
-                  <div className="text-xs text-emerald-300/80">{s.label}</div>
-                </div>
-              </motion.div>
-            ))}
+              <span className="text-white font-bold text-xl tracking-tight">TAHFIDZ</span>
+            </Link>
           </div>
+
+          {/* Main content — centered */}
+          <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full py-8">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7 }}
+              className="text-center"
+            >
+              {/* Illustration */}
+              <div className="mb-8 mx-auto max-w-[280px]">
+                <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/20">
+                  <Image
+                    src="/images/hero-illustration.png"
+                    alt="TAHFIDZ Illustration"
+                    width={280}
+                    height={230}
+                    className="w-full h-auto object-contain"
+                    priority
+                  />
+                </div>
+              </div>
+
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/8 border border-white/10 text-emerald-100 text-xs font-medium mb-5 backdrop-blur-sm">
+                <Sparkles size={13} />
+                Plateforme N°1 pour les ecoles coraniques
+              </div>
+
+              {/* Title */}
+              <h2 className="text-2xl xl:text-3xl font-bold text-white leading-snug mb-3">
+                La plateforme<br />
+                <span className="text-emerald-300">coranique</span> moderne
+              </h2>
+              <p className="text-emerald-100/60 text-sm leading-relaxed mb-8 max-w-xs mx-auto">
+                Gerez votre ecole de memorisation du Coran avec des outils intelligents.
+              </p>
+
+              {/* Feature cards */}
+              <div className="space-y-2.5 mb-8">
+                {features.map((f, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -15 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.4 + i * 0.12 }}
+                    className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white/5 border border-white/8 backdrop-blur-sm"
+                  >
+                    <div className="w-6 h-6 rounded-full bg-emerald-500/25 flex items-center justify-center flex-shrink-0">
+                      <Check size={12} className="text-emerald-300" />
+                    </div>
+                    <span className="text-emerald-50/90 text-xs font-medium text-left">{f.text}</span>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Stats row */}
+              <div className="flex items-center justify-center gap-4">
+                {stats.map((s, i) => (
+                  <motion.div
+                    key={s.label}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.7 + i * 0.1 }}
+                    className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/8 backdrop-blur-sm text-center min-w-[90px]"
+                  >
+                    <div className="text-lg font-bold text-white">{s.val}</div>
+                    <div className="text-[10px] text-emerald-300/70 uppercase tracking-wide">{s.label}</div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Bottom spacer for balance */}
+          <div className="flex-shrink-0 h-10" />
         </div>
       </div>
 
