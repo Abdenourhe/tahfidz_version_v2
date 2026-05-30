@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import {
   Loader2, CheckCircle2, School, ArrowLeft, Building2, User, Mail,
   Phone, Lock, MapPin, Globe, Users, GraduationCap, BookOpen,
-  ChevronRight, Check, Sparkles, ShieldCheck
+  ChevronRight, Check, Sparkles, ShieldCheck, Eye, EyeOff, ImagePlus, X
 } from "lucide-react"
 import Link from "next/link"
 
@@ -42,6 +42,8 @@ export default function RegisterSchoolPage() {
   const [error, setError]     = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [showPwd, setShowPwd] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
 
   const [form, setForm] = useState<FormData>({
     schoolName:      "",
@@ -56,6 +58,8 @@ export default function RegisterSchoolPage() {
     studentsPerClass:"",
     teachersCount:   "",
   })
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
 
   const update = (k: keyof FormData, v: string) => {
     setForm(prev => ({ ...prev, [k]: v }))
@@ -91,11 +95,24 @@ export default function RegisterSchoolPage() {
     if (step > 1) setStep((s => (s - 1) as Step))
   }
 
+  const readFileAsBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+  }
+
   const submit = async () => {
     if (!canGoNext()) return
     setLoading(true)
     setError(null)
     try {
+      let logo: string | undefined
+      if (logoFile) {
+        logo = await readFileAsBase64(logoFile)
+      }
       const res = await fetch("/api/register-school", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
@@ -110,6 +127,7 @@ export default function RegisterSchoolPage() {
           classCount:       Number(form.classCount),
           studentsPerClass: Number(form.studentsPerClass),
           teachersCount:    Number(form.teachersCount),
+          logo,
         }),
       })
       if (!res.ok) {
@@ -268,6 +286,51 @@ export default function RegisterSchoolPage() {
                       </div>
                     </div>
 
+                    {/* Logo upload */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        Logo de l&apos;ecole <span className="text-gray-400 font-normal">(optionnel)</span>
+                      </label>
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-center bg-gray-50 dark:bg-gray-800 overflow-hidden shrink-0">
+                          {logoPreview ? (
+                            <img src={logoPreview} alt="Preview" className="w-full h-full object-contain p-1" />
+                          ) : (
+                            <ImagePlus size={18} className="text-gray-300" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                            className="hidden"
+                            id="logo-upload"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0]
+                              if (!file) return
+                              if (file.size > 2 * 1024 * 1024) { setError("Le logo ne doit pas depasser 2 Mo."); return }
+                              setLogoFile(file)
+                              const reader = new FileReader()
+                              reader.onload = () => setLogoPreview(reader.result as string)
+                              reader.readAsDataURL(file)
+                              setError(null)
+                            }}
+                          />
+                          <label htmlFor="logo-upload"
+                            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer">
+                            {logoFile ? logoFile.name : "Choisir un logo"}
+                          </label>
+                          {logoFile && (
+                            <button type="button" onClick={() => { setLogoFile(null); setLogoPreview(null); }}
+                              className="ml-2 text-xs text-red-400 hover:text-red-600 inline-flex items-center gap-1">
+                              <X size={11} /> Retirer
+                            </button>
+                          )}
+                          <p className="text-[10px] text-gray-400 mt-1">PNG, JPG, WEBP ou SVG — Max 2 Mo</p>
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Ville</label>
@@ -377,12 +440,16 @@ export default function RegisterSchoolPage() {
                         <div className="relative">
                           <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                           <input
-                            type="password"
+                            type={showPwd ? "text" : "password"}
                             value={form.adminPassword}
                             onChange={(e) => update("adminPassword", e.target.value)}
                             placeholder="min. 8 caracteres"
-                            className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white"
+                            className="w-full pl-11 pr-11 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white"
                           />
+                          <button type="button" onClick={() => setShowPwd(!showPwd)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition">
+                            {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
                         </div>
                       </div>
                       <div>
@@ -392,12 +459,16 @@ export default function RegisterSchoolPage() {
                         <div className="relative">
                           <ShieldCheck size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                           <input
-                            type="password"
+                            type={showConfirm ? "text" : "password"}
                             value={form.confirmPassword}
                             onChange={(e) => update("confirmPassword", e.target.value)}
                             placeholder="repeter"
-                            className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white"
+                            className="w-full pl-11 pr-11 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white"
                           />
+                          <button type="button" onClick={() => setShowConfirm(!showConfirm)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition">
+                            {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
                         </div>
                       </div>
                     </div>

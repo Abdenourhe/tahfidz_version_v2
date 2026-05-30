@@ -132,6 +132,7 @@ export async function PATCH(req: NextRequest) {
         city: request.city,
         country: request.country,
         phone: request.adminPhone,
+        logo: request.logo,
         users: {
           create: {
             email:    request.adminEmail,
