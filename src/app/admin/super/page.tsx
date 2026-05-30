@@ -2,9 +2,10 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
 import {
   Loader2, Building2, Clock, Activity, Eye, Send,
-  MessageCircleQuestion, CheckCircle2, X,
+  MessageCircleQuestion, CheckCircle2, X, Lock, EyeOff,
 } from "lucide-react"
 import { Toaster, toast } from "sonner"
+import { signOut } from "next-auth/react"
 
 import {
   School, SchoolRequest, AuditLog, FeedbackItem, SystemHealth,
@@ -46,6 +47,16 @@ export default function SuperAdminPage() {
   })
   const [editLogoFile, setEditLogoFile] = useState<File | null>(null)
   const [editLogoPreview, setEditLogoPreview] = useState<string | null>(null)
+
+  /* ── Password change modal ── */
+  const [showPwdModal, setShowPwdModal] = useState(false)
+  const [curPwd, setCurPwd] = useState("")
+  const [newPwd, setNewPwd] = useState("")
+  const [confPwd, setConfPwd] = useState("")
+  const [showCur, setShowCur] = useState(false)
+  const [showNew, setShowNew] = useState(false)
+  const [pwdLoading, setPwdLoading] = useState(false)
+  const [pwdErr, setPwdErr] = useState<string | null>(null)
 
   const [approvalResult, setApprovalResult] = useState<{ schoolName: string; slug: string; plan: string; adminEmail: string; adminName: string } | null>(null)
   const [processing, setProcessing] = useState<string | null>(null)
@@ -201,6 +212,30 @@ export default function SuperAdminPage() {
 
   /* ── Flash ── */
   const flash = (msg: string) => { setSuccess(msg); setTimeout(() => setSuccess(null), 4000) }
+
+  /* ── Change password ── */
+  const changeSuperAdminPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (newPwd !== confPwd) { setPwdErr("Les mots de passe ne correspondent pas."); return }
+    if (newPwd.length < 8) { setPwdErr("Le mot de passe doit contenir au moins 8 caracteres."); return }
+    setPwdLoading(true); setPwdErr(null)
+    try {
+      const res = await fetch("/api/profile/password", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: curPwd, newPassword: newPwd }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Erreur")
+      toast.success("Mot de passe modifie ! Deconnexion...")
+      setShowPwdModal(false)
+      setCurPwd(""); setNewPwd(""); setConfPwd("")
+      setTimeout(() => signOut({ callbackUrl: "/login" }), 1500)
+    } catch (e) {
+      setPwdErr(e instanceof Error ? e.message : "Erreur")
+    }
+    setPwdLoading(false)
+  }
 
   /* ── Clipboard ── */
   const copyToClipboard = (text: string, key: string) => {
@@ -428,7 +463,7 @@ export default function SuperAdminPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <Toaster position="top-right" richColors />
 
-      <SuperAdminHeader dark={dark} onToggleDark={toggleDark} />
+      <SuperAdminHeader dark={dark} onToggleDark={toggleDark} onChangePassword={() => setShowPwdModal(true)} />
 
       <main className="max-w-6xl mx-auto p-6 space-y-5">
         {success && <div className="flex items-center gap-2 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm"><CheckCircle2 size={16} /> {success}</div>}
@@ -567,6 +602,54 @@ export default function SuperAdminPage() {
         onClose={() => { setShowFeedbackDetail(false); setSelectedFeedback(null) }}
         onReload={loadFeedback}
       />
+
+      {/* ── Change Password Modal ── */}
+      {showPwdModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2"><Lock size={18} className="text-tahfidz-green" /> Modifier mon mot de passe</h3>
+              <button onClick={() => { setShowPwdModal(false); setPwdErr(null); setCurPwd(""); setNewPwd(""); setConfPwd("") }} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"><X size={20} /></button>
+            </div>
+            <form onSubmit={changeSuperAdminPassword} className="p-6 space-y-4">
+              {pwdErr && <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{pwdErr}</div>}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mot de passe actuel</label>
+                <div className="relative">
+                  <input type={showCur ? "text" : "password"} value={curPwd} onChange={e => setCurPwd(e.target.value)} required
+                    className="w-full px-4 py-2.5 pr-10 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green" />
+                  <button type="button" onClick={() => setShowCur(!showCur)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    {showCur ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nouveau mot de passe</label>
+                <div className="relative">
+                  <input type={showNew ? "text" : "password"} value={newPwd} onChange={e => setNewPwd(e.target.value)} required minLength={8}
+                    className="w-full px-4 py-2.5 pr-10 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green" />
+                  <button type="button" onClick={() => setShowNew(!showNew)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirmer</label>
+                <input type="password" value={confPwd} onChange={e => setConfPwd(e.target.value)} required
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green" />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => { setShowPwdModal(false); setPwdErr(null); setCurPwd(""); setNewPwd(""); setConfPwd("") }}
+                  className="flex-1 py-2.5 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition">Annuler</button>
+                <button type="submit" disabled={pwdLoading}
+                  className="flex-1 py-2.5 bg-tahfidz-green text-white text-sm font-semibold rounded-xl hover:opacity-90 disabled:opacity-50 transition flex items-center justify-center gap-2">
+                  {pwdLoading ? <><Loader2 size={14} className="animate-spin" /> Enregistrement...</> : "Enregistrer"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
