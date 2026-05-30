@@ -126,13 +126,13 @@ function LoginForm() {
   return (
     <div className="min-h-screen flex bg-white dark:bg-gray-950">
       {/* ═══ Panneau gauche ═══ */}
-      <div className="hidden lg:flex lg:w-1/2 xl:w-[48%] bg-gradient-to-br from-emerald-700 via-emerald-800 to-emerald-950 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 xl:w-[48%] bg-gradient-to-br from-emerald-700 via-emerald-800 to-emerald-950 relative overflow-hidden h-screen">
         {/* Background decorative elements */}
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0aDR2NGgtNHpNMzQgMzZoNHY0aC00eiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/10 rounded-full -translate-y-1/2 translate-x-1/4 blur-3xl" />
         <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-teal-500/10 rounded-full translate-y-1/3 -translate-x-1/4 blur-3xl" />
 
-        <div className="relative z-10 flex flex-col h-full p-8 xl:p-10">
+        <div className="relative z-10 flex flex-col h-full p-6 xl:p-8 overflow-y-auto">
           {/* Header */}
           <div className="flex-shrink-0 mb-6">
             <Link href="/" className="inline-flex items-center gap-3 group">
@@ -152,7 +152,7 @@ function LoginForm() {
               transition={{ duration: 0.6 }}
               className="flex-shrink-0"
             >
-              <div className="mx-auto max-w-[360px] xl:max-w-[420px]">
+              <div className="mx-auto max-w-[280px] xl:max-w-[320px]">
                 <div className="relative rounded-2xl overflow-hidden border border-white/15 shadow-2xl shadow-black/25 bg-white/5 backdrop-blur-sm">
                   <Image
                     src="/images/hero-illustration.png"
@@ -173,7 +173,7 @@ function LoginForm() {
                 initial={{ opacity: 0, x: -15 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
-                className="flex flex-col bg-white/6 border border-white/10 backdrop-blur-md rounded-2xl p-6 overflow-hidden"
+                className="flex flex-col bg-white/6 border border-white/10 backdrop-blur-md rounded-2xl p-5 overflow-hidden"
               >
                 {/* Badge */}
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/8 border border-white/10 text-emerald-100 text-xs font-medium mb-4 w-fit backdrop-blur-sm">
@@ -190,7 +190,7 @@ function LoginForm() {
                 </p>
 
                 {/* Features */}
-                <div className="space-y-3 flex-1 overflow-y-auto">
+                <div className="space-y-2 flex-1 overflow-y-auto">
                   {features.map((f, i) => (
                     <motion.div
                       key={i}
@@ -213,14 +213,14 @@ function LoginForm() {
                 initial={{ opacity: 0, x: 15 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
-                className="flex flex-col bg-white/6 border border-white/10 backdrop-blur-md rounded-2xl p-6 overflow-hidden"
+                className="flex flex-col bg-white/6 border border-white/10 backdrop-blur-md rounded-2xl p-5 overflow-hidden"
               >
                 <h3 className="text-base font-bold text-white mb-5 flex items-center gap-2">
                   <TrendingUp size={18} className="text-emerald-300" />
                   Notre impact
                 </h3>
 
-                <div className="flex-1 flex flex-col gap-4 justify-center">
+                <div className="flex-1 flex flex-col gap-3 justify-center">
                   {stats.map((s, i) => (
                     <motion.div
                       key={s.label}
