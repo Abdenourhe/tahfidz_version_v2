@@ -242,21 +242,64 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
-  // Supprimer une école complète (cascade users via Prisma)
+  // Supprimer une école complète ( suppression SQL cascade manuelle )
   if (type === "school" && id) {
     const school = await prisma.school.findUnique({ where: { id } })
     if (!school) return NextResponse.json({ error: "École introuvable" }, { status: 404 })
-    if (school.slug === "platform") return NextResponse.json({ error: "Impossible de supprimer l'école plateforme" }, { status: 403 })
 
-    // Supprimer les profils liés avant les users (contraintes FK)
-    await prisma.$transaction([
-      prisma.admin.deleteMany({   where: { user: { schoolId: id } } }),
-      prisma.teacher.deleteMany({ where: { user: { schoolId: id } } }),
-      prisma.student.deleteMany({ where: { user: { schoolId: id } } }),
-      prisma.parent.deleteMany({  where: { user: { schoolId: id } } }),
-      prisma.user.deleteMany({    where: { schoolId: id } }),
-      prisma.school.delete({      where: { id } }),
-    ])
+    await prisma.$transaction(async (tx) => {
+      // 1. Donnees liees aux eleves (via students -> users -> school)
+      await tx.$executeRaw`DELETE FROM "daily_log_comments" WHERE "dailyLogId" IN (SELECT id FROM "daily_progress_logs" WHERE "studentId" IN (SELECT id FROM "students" WHERE "userId" IN (SELECT id FROM "users" WHERE "schoolId" = ${id})))`
+      await tx.$executeRaw`DELETE FROM "daily_progress_logs" WHERE "studentId" IN (SELECT id FROM "students" WHERE "userId" IN (SELECT id FROM "users" WHERE "schoolId" = ${id}))`
+      await tx.$executeRaw`DELETE FROM "status_history" WHERE "progressId" IN (SELECT id FROM "memorization_progress" WHERE "studentId" IN (SELECT id FROM "students" WHERE "userId" IN (SELECT id FROM "users" WHERE "schoolId" = ${id})))`
+      await tx.$executeRaw`DELETE FROM "evaluations" WHERE "studentId" IN (SELECT id FROM "students" WHERE "userId" IN (SELECT id FROM "users" WHERE "schoolId" = ${id}))`
+      await tx.$executeRaw`DELETE FROM "memorization_progress" WHERE "studentId" IN (SELECT id FROM "students" WHERE "userId" IN (SELECT id FROM "users" WHERE "schoolId" = ${id}))`
+      await tx.$executeRaw`DELETE FROM "memorized_surahs" WHERE "studentId" IN (SELECT id FROM "students" WHERE "userId" IN (SELECT id FROM "users" WHERE "schoolId" = ${id}))`
+      await tx.$executeRaw`DELETE FROM "attendances" WHERE "studentId" IN (SELECT id FROM "students" WHERE "userId" IN (SELECT id FROM "users" WHERE "schoolId" = ${id}))`
+      await tx.$executeRaw`DELETE FROM "parent_attendances" WHERE "studentId" IN (SELECT id FROM "students" WHERE "userId" IN (SELECT id FROM "users" WHERE "schoolId" = ${id}))`
+      await tx.$executeRaw`DELETE FROM "student_badges" WHERE "studentId" IN (SELECT id FROM "students" WHERE "userId" IN (SELECT id FROM "users" WHERE "schoolId" = ${id}))`
+      await tx.$executeRaw`DELETE FROM "stars_logs" WHERE "studentId" IN (SELECT id FROM "students" WHERE "userId" IN (SELECT id FROM "users" WHERE "schoolId" = ${id}))`
+      await tx.$executeRaw`DELETE FROM "student_stats" WHERE "studentId" IN (SELECT id FROM "students" WHERE "userId" IN (SELECT id FROM "users" WHERE "schoolId" = ${id}))`
+      await tx.$executeRaw`DELETE FROM "parent_student_links" WHERE "studentId" IN (SELECT id FROM "students" WHERE "userId" IN (SELECT id FROM "users" WHERE "schoolId" = ${id}))`
+      await tx.$executeRaw`DELETE FROM "parent_invites" WHERE "studentId" IN (SELECT id FROM "students" WHERE "userId" IN (SELECT id FROM "users" WHERE "schoolId" = ${id}))`
+
+      // 2. Donnees liees aux groupes
+      await tx.$executeRaw`DELETE FROM "group_announcements" WHERE "groupId" IN (SELECT id FROM "groups" WHERE "schoolId" = ${id})`
+      await tx.$executeRaw`DELETE FROM "attendances" WHERE "groupId" IN (SELECT id FROM "groups" WHERE "schoolId" = ${id})`
+
+      // 3. Exams (liens group + teacher)
+      await tx.$executeRaw`DELETE FROM "exams" WHERE "schoolId" = ${id}`
+
+      // 4. Announcements
+      await tx.$executeRaw`DELETE FROM "announcements" WHERE "schoolId" = ${id}`
+
+      // 5. Messages et notifications
+      await tx.$executeRaw`DELETE FROM "direct_messages" WHERE "schoolId" = ${id}`
+      await tx.$executeRaw`DELETE FROM "notifications" WHERE "schoolId" = ${id}`
+
+      // 6. Autres donnees ecole
+      await tx.$executeRaw`DELETE FROM "broadcasts" WHERE "schoolId" = ${id}`
+      await tx.$executeRaw`DELETE FROM "feedbacks" WHERE "schoolId" = ${id}`
+      await tx.$executeRaw`DELETE FROM "audit_logs" WHERE "schoolId" = ${id}`
+      await tx.$executeRaw`DELETE FROM "parent_invites" WHERE "schoolId" = ${id}`
+
+      // 7. Groupes
+      await tx.$executeRaw`DELETE FROM "groups" WHERE "schoolId" = ${id}`
+
+      // 8. Profils utilisateurs
+      await tx.$executeRaw`DELETE FROM "admins" WHERE "userId" IN (SELECT id FROM "users" WHERE "schoolId" = ${id})`
+      await tx.$executeRaw`DELETE FROM "teachers" WHERE "userId" IN (SELECT id FROM "users" WHERE "schoolId" = ${id})`
+      await tx.$executeRaw`DELETE FROM "students" WHERE "userId" IN (SELECT id FROM "users" WHERE "schoolId" = ${id})`
+      await tx.$executeRaw`DELETE FROM "parents" WHERE "userId" IN (SELECT id FROM "users" WHERE "schoolId" = ${id})`
+
+      // 9. Sessions et users
+      await tx.$executeRaw`DELETE FROM "sessions" WHERE "userId" IN (SELECT id FROM "users" WHERE "schoolId" = ${id})`
+      await tx.$executeRaw`DELETE FROM "users" WHERE "schoolId" = ${id}`
+
+      // 10. Badges et ecole
+      await tx.$executeRaw`DELETE FROM "badges" WHERE "schoolId" = ${id}`
+      await tx.$executeRaw`DELETE FROM "schools" WHERE "id" = ${id}`
+    })
 
     console.log(`[TAHFIDZ] 🗑️ École supprimée : ${school.name} (${school.slug})`)
     return NextResponse.json({ ok: true })
