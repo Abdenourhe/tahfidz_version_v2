@@ -44,6 +44,8 @@ export default function SuperAdminPage() {
     schoolId: "", schoolName: "", plan: "FREE", address: "", city: "", country: "DZ",
     phone: "", adminId: "", adminName: "", adminEmail: "", adminPassword: "",
   })
+  const [editLogoFile, setEditLogoFile] = useState<File | null>(null)
+  const [editLogoPreview, setEditLogoPreview] = useState<string | null>(null)
 
   const [approvalResult, setApprovalResult] = useState<{ schoolName: string; slug: string; plan: string; adminEmail: string; adminName: string } | null>(null)
   const [processing, setProcessing] = useState<string | null>(null)
@@ -261,6 +263,8 @@ export default function SuperAdminPage() {
       address: s.address ?? "", city: s.city ?? "", country: s.country ?? "DZ", phone: s.phone ?? "",
       adminId: admin?.id ?? "", adminName: admin?.fullName ?? "", adminEmail: admin?.email ?? "", adminPassword: "",
     })
+    setEditLogoPreview(s.logo)
+    setEditLogoFile(null)
     setShowEdit(true)
   }
 
@@ -269,7 +273,23 @@ export default function SuperAdminPage() {
     setSaving(true)
     setError(null)
     const res = await fetch("/api/admin/schools", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "update-school", ...editForm }) })
-    if (res.ok) { setShowEdit(false); await load(); flash("Informations mises a jour.") }
+    if (res.ok) {
+      if (editLogoFile && editForm.schoolId) {
+        const fd = new FormData()
+        fd.append("logo", editLogoFile)
+        fd.append("schoolId", editForm.schoolId)
+        const logoRes = await fetch("/api/admin/school/logo", { method: "POST", body: fd })
+        if (!logoRes.ok) {
+          const logoErr = await logoRes.json().catch(() => ({ error: "Erreur upload logo" }))
+          toast.error(logoErr.error || "Erreur upload logo")
+        }
+      }
+      setShowEdit(false)
+      setEditLogoFile(null)
+      setEditLogoPreview(null)
+      await load()
+      flash("Informations mises a jour.")
+    }
     else { setError((await res.json()).error || "Erreur") }
     setSaving(false)
   }
@@ -524,7 +544,11 @@ export default function SuperAdminPage() {
         form={editForm}
         setForm={setEditForm}
         saving={saving}
-        onClose={() => setShowEdit(false)}
+        logoFile={editLogoFile}
+        setLogoFile={setEditLogoFile}
+        logoPreview={editLogoPreview}
+        setLogoPreview={setEditLogoPreview}
+        onClose={() => { setShowEdit(false); setEditLogoFile(null); setEditLogoPreview(null) }}
         onSubmit={saveEdit}
       />
 

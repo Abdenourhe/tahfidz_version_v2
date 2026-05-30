@@ -2,7 +2,8 @@
 // src/components/admin/AdminSettingsClient.tsx
 
 import { useState, useEffect, useRef } from "react"
-import { Loader2, Save, CheckCircle2, Eye, EyeOff, User, Lock, Globe, Bell, Database, Moon, Sun, ExternalLink, Building2, Upload, Trash2, Image } from "lucide-react"
+import { Loader2, Save, CheckCircle2, Eye, EyeOff, User, Lock, Globe, Bell, Database, Moon, Sun, ExternalLink, Building2, Upload, Trash2, Image, LogOut } from "lucide-react"
+import { signOut } from "next-auth/react"
 import { useLanguage } from "@/contexts/LanguageContext"
 import type { Locale } from "@/lib/i18n/translations"
 
@@ -135,6 +136,10 @@ export function AdminSettingsClient({ user, school }: Props) {
       if (!r.ok) throw new Error(d.error || tC("error"))
       setPwdSaved(true); setCurPwd(""); setNewPwd(""); setConfPwd("")
       setTimeout(() => setPwdSaved(false), 3000)
+      // Deconnexion automatique apres changement de mot de passe
+      setTimeout(() => {
+        signOut({ callbackUrl: "/login" })
+      }, 1500)
     } catch (e) {
       setPwdErr(e instanceof Error ? e.message : tC("error"))
     } finally { setPwdSaving(false) }

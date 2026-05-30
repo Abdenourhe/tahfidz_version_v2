@@ -825,6 +825,7 @@ model SchoolRequest {
   studentsPerClass Int
   adminPhone       String?
   teachersCount    Int
+  logo             String?
   status           RequestStatus @default(PENDING)
   slug             String?
   rejectionReason  String?

@@ -173,6 +173,10 @@ export function EditSchoolModal({
   form,
   setForm,
   saving,
+  logoFile,
+  setLogoFile,
+  logoPreview,
+  setLogoPreview,
   onClose,
   onSubmit,
 }: {
@@ -180,9 +184,23 @@ export function EditSchoolModal({
   form: Record<string, string>
   setForm: Dispatch<SetStateAction<Record<string, string>>>
   saving: boolean
+  logoFile: File | null
+  setLogoFile: (f: File | null) => void
+  logoPreview: string | null
+  setLogoPreview: (v: string | null) => void
   onClose: () => void
   onSubmit: (e: React.FormEvent) => void
 }) {
+  const logoRef = useRef<HTMLInputElement>(null)
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setLogoFile(file)
+    const reader = new FileReader()
+    reader.onload = ev => setLogoPreview(ev.target?.result as string)
+    reader.readAsDataURL(file)
+  }
+
   if (!open) return null
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -192,6 +210,29 @@ export function EditSchoolModal({
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"><X size={20} /></button>
         </div>
         <form onSubmit={onSubmit} className="p-6 space-y-4">
+          {/* Logo */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Logo de l&apos;ecole</label>
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-800 shrink-0">
+                {logoPreview ? (
+                  <img src={logoPreview} alt="Preview" className="w-full h-full object-contain p-1" />
+                ) : (
+                  <ImagePlus size={20} className="text-gray-300" />
+                )}
+              </div>
+              <div className="flex-1">
+                <input ref={logoRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml" onChange={handleLogoChange} className="hidden" />
+                <button type="button" onClick={() => logoRef.current?.click()}
+                  className="px-4 py-2 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition w-full text-center">
+                  {logoFile ? logoFile.name : "Changer le logo (PNG, JPG, SVG)"}
+                </button>
+                {logoFile && <button type="button" onClick={() => { setLogoFile(null); setLogoPreview(null); if (logoRef.current) logoRef.current.value = "" }} className="text-xs text-red-400 hover:text-red-600 mt-1 flex items-center gap-1"><X size={11} /> Retirer</button>}
+                <p className="text-[10px] text-gray-400 mt-1">Max 2 Mo — PNG, JPG, WEBP ou SVG</p>
+              </div>
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nom de l&apos;ecole</label>
             <input value={form.schoolName} onChange={e => setForm({ ...form, schoolName: e.target.value })}

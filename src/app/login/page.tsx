@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import {
   Loader2, Eye, EyeOff, School, BookOpen, Users, BarChart2,
   Check, ArrowLeft, ShieldCheck, Globe, Lock, Mail, Building2,
-  Sparkles, TrendingUp, Award
+  Sparkles, TrendingUp, Award, KeyRound
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -126,15 +126,15 @@ function LoginForm() {
   return (
     <div className="min-h-screen flex bg-white dark:bg-gray-950">
       {/* ═══ Panneau gauche ═══ */}
-      <div className="hidden lg:flex lg:w-[45%] xl:w-1/2 bg-gradient-to-br from-emerald-700 via-emerald-800 to-emerald-950 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-[45%] xl:w-[42%] bg-gradient-to-br from-emerald-700 via-emerald-800 to-emerald-950 relative overflow-hidden">
         {/* Background decorative elements */}
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0aDR2NGgtNHpNMzQgMzZoNHY0aC00eiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/10 rounded-full -translate-y-1/2 translate-x-1/4 blur-3xl" />
         <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-teal-500/10 rounded-full translate-y-1/3 -translate-x-1/4 blur-3xl" />
 
-        <div className="relative z-10 flex flex-col h-full p-10 xl:p-14">
+        <div className="relative z-10 flex flex-col h-full p-8 xl:p-10">
           {/* Header */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 mb-6">
             <Link href="/" className="inline-flex items-center gap-3 group">
               <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm border border-white/15 flex items-center justify-center group-hover:bg-white/20 transition">
                 <span className="text-white font-bold text-xl">ط</span>
@@ -143,86 +143,120 @@ function LoginForm() {
             </Link>
           </div>
 
-          {/* Main content — centered */}
-          <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full py-8">
+          {/* Main content grid */}
+          <div className="flex-1 flex flex-col gap-5 min-h-0">
+            {/* ═══ CADRE ROUGE : Illustration ═══ */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7 }}
-              className="text-center"
+              transition={{ duration: 0.6 }}
+              className="flex-shrink-0"
             >
-              {/* Illustration */}
-              <div className="mb-8 mx-auto max-w-[280px]">
-                <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/20">
+              <div className="mx-auto max-w-[340px] xl:max-w-[380px]">
+                <div className="relative rounded-2xl overflow-hidden border border-white/15 shadow-2xl shadow-black/25 bg-white/5 backdrop-blur-sm">
                   <Image
                     src="/images/hero-illustration.png"
                     alt="TAHFIDZ Illustration"
-                    width={280}
-                    height={230}
+                    width={380}
+                    height={300}
                     className="w-full h-auto object-contain"
                     priority
                   />
                 </div>
               </div>
-
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/8 border border-white/10 text-emerald-100 text-xs font-medium mb-5 backdrop-blur-sm">
-                <Sparkles size={13} />
-                Plateforme N°1 pour les ecoles coraniques
-              </div>
-
-              {/* Title */}
-              <h2 className="text-2xl xl:text-3xl font-bold text-white leading-snug mb-3">
-                La plateforme<br />
-                <span className="text-emerald-300">coranique</span> moderne
-              </h2>
-              <p className="text-emerald-100/60 text-sm leading-relaxed mb-8 max-w-xs mx-auto">
-                Gerez votre ecole de memorisation du Coran avec des outils intelligents.
-              </p>
-
-              {/* Feature cards */}
-              <div className="space-y-2.5 mb-8">
-                {features.map((f, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: -15 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 + i * 0.12 }}
-                    className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white/5 border border-white/8 backdrop-blur-sm"
-                  >
-                    <div className="w-6 h-6 rounded-full bg-emerald-500/25 flex items-center justify-center flex-shrink-0">
-                      <Check size={12} className="text-emerald-300" />
-                    </div>
-                    <span className="text-emerald-50/90 text-xs font-medium text-left">{f.text}</span>
-                  </motion.div>
-                ))}
-              </div>
-
-              {/* Stats row */}
-              <div className="flex items-center justify-center gap-4">
-                {stats.map((s, i) => (
-                  <motion.div
-                    key={s.label}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.7 + i * 0.1 }}
-                    className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/8 backdrop-blur-sm text-center min-w-[90px]"
-                  >
-                    <div className="text-lg font-bold text-white">{s.val}</div>
-                    <div className="text-[10px] text-emerald-300/70 uppercase tracking-wide">{s.label}</div>
-                  </motion.div>
-                ))}
-              </div>
             </motion.div>
+
+            {/* ═══ CADRES ORANGE : Features & Stats ═══ */}
+            <div className="flex-1 grid grid-cols-2 gap-4 min-h-0">
+              {/* Left card : title + features */}
+              <motion.div
+                initial={{ opacity: 0, x: -15 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="flex flex-col bg-white/6 border border-white/10 backdrop-blur-md rounded-2xl p-5 overflow-hidden"
+              >
+                {/* Badge */}
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/8 border border-white/10 text-emerald-100 text-[11px] font-medium mb-4 w-fit backdrop-blur-sm">
+                  <Sparkles size={12} />
+                  Plateforme N°1 pour les ecoles coraniques
+                </div>
+
+                {/* Title */}
+                <h2 className="text-lg xl:text-xl font-bold text-white leading-snug mb-2">
+                  La plateforme <span className="text-emerald-300">coranique</span> moderne
+                </h2>
+                <p className="text-emerald-100/60 text-xs leading-relaxed mb-4">
+                  Gerez votre ecole de memorisation du Coran avec des outils intelligents.
+                </p>
+
+                {/* Features */}
+                <div className="space-y-2 flex-1 overflow-y-auto">
+                  {features.map((f, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.4 + i * 0.1 }}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-white/5 border border-white/8"
+                    >
+                      <div className="w-5 h-5 rounded-full bg-emerald-500/30 flex items-center justify-center flex-shrink-0">
+                        <Check size={10} className="text-emerald-300" />
+                      </div>
+                      <span className="text-emerald-50/90 text-[11px] font-medium">{f.text}</span>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+
+              {/* Right card : stats */}
+              <motion.div
+                initial={{ opacity: 0, x: 15 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="flex flex-col bg-white/6 border border-white/10 backdrop-blur-md rounded-2xl p-5 overflow-hidden"
+              >
+                <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                  <TrendingUp size={14} className="text-emerald-300" />
+                  Notre impact
+                </h3>
+
+                <div className="flex-1 flex flex-col gap-3 justify-center">
+                  {stats.map((s, i) => (
+                    <motion.div
+                      key={s.label}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.5 + i * 0.1 }}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/8"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                        <s.icon size={16} className="text-emerald-300" />
+                      </div>
+                      <div>
+                        <div className="text-lg font-bold text-white leading-none">{s.val}</div>
+                        <div className="text-[10px] text-emerald-300/70 uppercase tracking-wide mt-0.5">{s.label}</div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Decorative bottom element */}
+                <div className="mt-3 pt-3 border-t border-white/10">
+                  <p className="text-[10px] text-emerald-200/50 text-center">
+                    Deja present dans 8 pays
+                  </p>
+                </div>
+              </motion.div>
+            </div>
           </div>
 
           {/* Bottom spacer for balance */}
-          <div className="flex-shrink-0 h-10" />
+          <div className="flex-shrink-0 h-6" />
         </div>
       </div>
 
       {/* ═══ Panneau droit ═══ */}
-      <div className="w-full lg:w-[55%] xl:w-1/2 flex flex-col min-h-screen">
+      <div className="w-full lg:w-[55%] xl:w-[58%] flex flex-col min-h-screen">
         {/* Mobile header */}
         <div className="lg:hidden flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-800">
           <Link href="/" className="flex items-center gap-2.5">
@@ -389,6 +423,13 @@ function LoginForm() {
                       </button>
                     </div>
                     {schoolForm.formState.errors.password && <p className="mt-1.5 text-xs text-red-600">{schoolForm.formState.errors.password.message}</p>}
+                  </div>
+
+                  {/* Forgot password */}
+                  <div className="flex justify-end">
+                    <Link href="/forgot-password" className="text-xs text-tahfidz-green hover:text-emerald-700 font-medium transition">
+                      Mot de passe oublie ?
+                    </Link>
                   </div>
 
                   <button type="submit" disabled={isSubmitting}
