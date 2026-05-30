@@ -16,6 +16,7 @@ type Step = 1 | 2 | 3
 
 interface FormData {
   schoolName:      string
+  address:         string
   city:            string
   country:         string
   adminName:       string
@@ -47,6 +48,7 @@ export default function RegisterSchoolPage() {
 
   const [form, setForm] = useState<FormData>({
     schoolName:      "",
+    address:         "",
     city:            "",
     country:         "DZ",
     adminName:       "",
@@ -118,6 +120,7 @@ export default function RegisterSchoolPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           schoolName:       form.schoolName,
+          address:          form.address || undefined,
           city:             form.city,
           country:          form.country,
           adminName:        form.adminName,
@@ -328,6 +331,19 @@ export default function RegisterSchoolPage() {
                           )}
                           <p className="text-[10px] text-gray-400 mt-1">PNG, JPG, WEBP ou SVG — Max 2 Mo</p>
                         </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Adresse</label>
+                      <div className="relative">
+                        <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                          value={form.address}
+                          onChange={(e) => update("address", e.target.value)}
+                          placeholder="Rue, quartier, commune..."
+                          className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white"
+                        />
                       </div>
                     </div>
 

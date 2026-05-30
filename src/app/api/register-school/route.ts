@@ -6,6 +6,7 @@ import { z } from "zod"
 
 const schema = z.object({
   schoolName:       z.string().min(2, "Nom de l'école requis"),
+  address:          z.string().optional(),
   city:             z.string().optional(),
   country:          z.string().default("DZ"),
   adminName:        z.string().min(2, "Nom admin requis"),
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest) {
     await (prisma as any).schoolRequest.create({
       data: {
         schoolName:       d.schoolName,
+        address:          d.address ?? null,
         city:             d.city ?? null,
         country:          d.country,
         adminName:        d.adminName,
