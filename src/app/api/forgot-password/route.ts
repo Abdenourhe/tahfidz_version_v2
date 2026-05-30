@@ -52,9 +52,11 @@ export async function POST(req: NextRequest) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://votre-app.vercel.app"
     const resetUrl = `${baseUrl}/reset-password?token=${encodeURIComponent(token)}`
 
-    // Envoyer l'email si SMTP configure
+    let mailResult: { success: boolean; error?: string } | undefined
+
+    // Envoyer l'email si configure
     if (isMailConfigured()) {
-      await sendMail({
+      mailResult = await sendMail({
         to: email,
         subject: "Reinitialisation de votre mot de passe TAHFIDZ",
         html: `
@@ -71,10 +73,18 @@ export async function POST(req: NextRequest) {
         `,
         text: `Bonjour,\n\nVous avez demande la reinitialisation de votre mot de passe pour ${school.name}.\n\nCliquez sur ce lien : ${resetUrl}\n\nCe lien est valide pendant 1 heure.\n\nTAHFIDZ Platform`,
       })
+      if (!mailResult.success) {
+        console.error("[forgot-password] Echec envoi email:", mailResult.error)
+        return NextResponse.json({
+          success: false,
+          error: `Echec de l'envoi de l'email: ${mailResult.error}`,
+          resetUrl,
+        }, { status: 502 })
+      }
     } else {
       // Mode fallback : log dans la console
       console.log("\n📧 ═══════════════════════════════════════════")
-      console.log("   EMAIL DE REINITIALISATION (SMTP non configure)")
+      console.log("   EMAIL DE REINITIALISATION (email non configure)")
       console.log("   Destinataire:", email)
       console.log("   Ecole:", school.name)
       console.log("   Lien:", resetUrl)
@@ -102,7 +112,7 @@ export async function POST(req: NextRequest) {
       resetUrl: isMailConfigured() ? undefined : resetUrl,
       message: isMailConfigured()
         ? "Un email de reinitialisation a ete envoye. Verifiez votre boite de reception."
-        : "Demande enregistree. (SMTP non configure — utilisez le lien ci-dessous)",
+        : "Demande enregistree. (Email non configure — utilisez le lien ci-dessous)",
     })
   } catch (e) {
     console.error("[forgot-password]", e)

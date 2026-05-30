@@ -1,16 +1,13 @@
 // src/lib/mail.ts — Service d'envoi d'emails via SendGrid API (prioritaire) ou Nodemailer SMTP (fallback)
 import nodemailer from "nodemailer"
+import sgMail from "@sendgrid/mail"
 
 // ——— SendGrid API ———
-let sendgrid: typeof import("@sendgrid/mail") | undefined
 if (process.env.SENDGRID_API_KEY) {
-  try {
-    const sg = require("@sendgrid/mail")
-    sg.setApiKey(process.env.SENDGRID_API_KEY)
-    sendgrid = sg
-  } catch {
-    console.warn("[MAIL] @sendgrid/mail non disponible")
-  }
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+  console.log("[MAIL] SendGrid API configurée")
+} else {
+  console.log("[MAIL] SENDGRID_API_KEY non définie")
 }
 
 // ——— Nodemailer SMTP ———
@@ -37,22 +34,24 @@ export interface SendMailOptions {
 
 export async function sendMail({ to, subject, text, html }: SendMailOptions) {
   // ——— 1. Priorité : SendGrid API ———
-  if (sendgrid) {
+  if (process.env.SENDGRID_API_KEY) {
     try {
       const fromEmail = SMTP_FROM.match(/<(.+)>/)?.[1] ?? SMTP_FROM
       const fromName = SMTP_FROM.match(/(.*)\s+</)?.[1]?.trim() ?? "TAHFIDZ"
-      await sendgrid.send({
+      const msg = {
         to,
         from: { email: fromEmail, name: fromName },
         subject,
         text,
         html,
-      })
-      console.log("[MAIL] Envoyé via SendGrid API:", to, "-", subject)
+      }
+      console.log("[MAIL] Tentative d'envoi via SendGrid API à:", to, "depuis:", fromEmail)
+      await sgMail.send(msg)
+      console.log("[MAIL] Envoyé avec succès via SendGrid API:", to, "-", subject)
       return { success: true }
     } catch (err: any) {
-      console.error("[MAIL] Erreur SendGrid API:", err?.response?.body ?? err)
-      // On ne tombe pas en fallback SMTP car les credentials SendGrid sont fournis
+      const errorBody = err?.response?.body ?? err
+      console.error("[MAIL] Erreur SendGrid API:", JSON.stringify(errorBody, null, 2))
       return { success: false, error: err?.response?.body?.errors?.[0]?.message ?? String(err) }
     }
   }
@@ -82,5 +81,8 @@ export async function sendMail({ to, subject, text, html }: SendMailOptions) {
 }
 
 export function isMailConfigured(): boolean {
-  return !!(sendgrid || (SMTP_HOST && SMTP_USER && SMTP_PASS))
+  const hasSendGrid = !!process.env.SENDGRID_API_KEY
+  const hasSMTP = !!(SMTP_HOST && SMTP_USER && SMTP_PASS)
+  console.log(`[MAIL] Config check — SendGrid: ${hasSendGrid}, SMTP: ${hasSMTP}`)
+  return hasSendGrid || hasSMTP
 }
