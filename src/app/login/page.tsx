@@ -145,109 +145,136 @@ function LoginForm() {
 
           {/* Main content grid */}
           <div className="flex-1 flex flex-col gap-5 min-h-0">
-            {/* ═══ CADRE ROUGE : Illustration ═══ */}
+            {/* ═══ CERCLE ISLAMIQUE ANIMÉ ═══ */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="flex-shrink-0"
+              className="flex-shrink-0 flex justify-center"
             >
-              <div className="mx-auto max-w-[280px] xl:max-w-[320px]">
-                <div className="relative rounded-2xl overflow-hidden border border-white/15 shadow-2xl shadow-black/25 bg-white/5 backdrop-blur-sm">
+              <div className="relative w-[260px] h-[260px] xl:w-[300px] xl:h-[300px]">
+                {/* Cercle décoratif islamique tournant */}
+                <svg
+                  viewBox="0 0 200 200"
+                  className="absolute inset-0 w-full h-full animate-[spin_20s_linear_infinite]"
+                  style={{ filter: "drop-shadow(0 0 12px rgba(255,255,255,0.15))" }}
+                >
+                  {/* Cercle extérieur */}
+                  <circle cx="100" cy="100" r="96" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="0.5" />
+                  <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="0.3" />
+                  {/* Rosace islamique géométrique */}
+                  {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => (
+                    <g key={angle} transform={`rotate(${angle} 100 100)`}>
+                      <path
+                        d="M100 4 Q130 30 140 50 Q120 55 100 60 Q80 55 60 50 Q70 30 100 4Z"
+                        fill="none"
+                        stroke="rgba(255,255,255,0.25)"
+                        strokeWidth="0.8"
+                      />
+                      <circle cx="100" cy="18" r="3" fill="rgba(255,255,255,0.3)" />
+                      <circle cx="100" cy="32" r="2" fill="rgba(255,255,255,0.15)" />
+                    </g>
+                  ))}
+                  {/* Étoile centrale */}
+                  {[0, 60, 120, 180, 240, 300].map((angle) => (
+                    <g key={`s-${angle}`} transform={`rotate(${angle} 100 100)`}>
+                      <line x1="100" y1="100" x2="100" y2="70" stroke="rgba(255,255,255,0.12)" strokeWidth="0.5" />
+                    </g>
+                  ))}
+                  <circle cx="100" cy="100" r="8" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="0.8" />
+                  <circle cx="100" cy="100" r="4" fill="rgba(255,255,255,0.15)" />
+                  {/* Petits cercles sur le périmètre */}
+                  {Array.from({ length: 24 }).map((_, i) => {
+                    const a = (i * 15 * Math.PI) / 180
+                    const r = 85
+                    return (
+                      <circle
+                        key={`p-${i}`}
+                        cx={100 + r * Math.cos(a)}
+                        cy={100 + r * Math.sin(a)}
+                        r={i % 3 === 0 ? 1.5 : 0.8}
+                        fill={i % 3 === 0 ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.15)"}
+                      />
+                    )
+                  })}
+                </svg>
+
+                {/* Image centrale dans un cercle */}
+                <div className="absolute inset-[18%] rounded-full overflow-hidden border-2 border-white/20 shadow-xl bg-white/5 backdrop-blur-sm">
                   <Image
                     src="/images/hero-illustration.png"
                     alt="TAHFIDZ Illustration"
-                    width={380}
+                    width={300}
                     height={300}
-                    className="w-full h-auto object-contain"
+                    className="w-full h-full object-cover"
                     priority
                   />
                 </div>
               </div>
             </motion.div>
 
-            {/* ═══ CADRES ORANGE : Features & Stats ═══ */}
-            <div className="flex-1 grid grid-cols-2 gap-4 min-h-0">
-              {/* Left card : title + features */}
-              <motion.div
-                initial={{ opacity: 0, x: -15 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="flex flex-col bg-white/6 border border-white/10 backdrop-blur-md rounded-2xl p-5 overflow-hidden"
-              >
-                {/* Badge */}
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/8 border border-white/10 text-emerald-100 text-xs font-medium mb-4 w-fit backdrop-blur-sm">
-                  <Sparkles size={14} />
+            {/* ═══ Features & Stats (design épuré) ═══ */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="flex-1 bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-5 xl:p-6 overflow-hidden flex flex-col"
+            >
+              {/* En-tête */}
+              <div className="mb-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/8 text-emerald-100 text-xs font-medium mb-3">
+                  <Sparkles size={13} />
                   Plateforme N°1 pour les ecoles coraniques
                 </div>
-
-                {/* Title */}
-                <h2 className="text-xl xl:text-2xl font-bold text-white leading-snug mb-3">
+                <h2 className="text-lg xl:text-xl font-bold text-white">
                   La plateforme <span className="text-emerald-300">coranique</span> moderne
                 </h2>
-                <p className="text-emerald-100/70 text-sm leading-relaxed mb-5">
-                  Gerez votre ecole de memorisation du Coran avec des outils intelligents.
-                </p>
+              </div>
 
-                {/* Features */}
-                <div className="space-y-2 flex-1 overflow-y-auto">
+              <div className="flex-1 grid grid-cols-2 gap-5 min-h-0">
+                {/* Colonne gauche : features */}
+                <div className="flex flex-col justify-center gap-2.5">
                   {features.map((f, i) => (
                     <motion.div
                       key={i}
-                      initial={{ opacity: 0, x: -10 }}
+                      initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.4 + i * 0.1 }}
-                      className="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-white/5 border border-white/8"
+                      transition={{ delay: 0.35 + i * 0.08 }}
+                      className="flex items-center gap-3"
                     >
-                      <div className="w-6 h-6 rounded-full bg-emerald-500/30 flex items-center justify-center flex-shrink-0">
+                      <div className="w-7 h-7 rounded-full bg-emerald-500/25 flex items-center justify-center flex-shrink-0">
                         <Check size={14} className="text-emerald-300" />
                       </div>
-                      <span className="text-emerald-50/95 text-sm font-medium">{f.text}</span>
+                      <span className="text-emerald-50/90 text-sm font-medium leading-snug">{f.text}</span>
                     </motion.div>
                   ))}
                 </div>
-              </motion.div>
 
-              {/* Right card : stats */}
-              <motion.div
-                initial={{ opacity: 0, x: 15 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                className="flex flex-col bg-white/6 border border-white/10 backdrop-blur-md rounded-2xl p-5 overflow-hidden"
-              >
-                <h3 className="text-base font-bold text-white mb-5 flex items-center gap-2">
-                  <TrendingUp size={18} className="text-emerald-300" />
-                  Notre impact
-                </h3>
-
-                <div className="flex-1 flex flex-col gap-3 justify-center">
+                {/* Colonne droite : stats */}
+                <div className="flex flex-col justify-center gap-3">
+                  <h3 className="text-xs font-bold text-emerald-200/60 uppercase tracking-wider mb-0.5 flex items-center gap-1.5">
+                    <TrendingUp size={12} />
+                    Notre impact
+                  </h3>
                   {stats.map((s, i) => (
                     <motion.div
                       key={s.label}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.5 + i * 0.1 }}
-                      className="flex items-center gap-4 px-5 py-3.5 rounded-xl bg-white/5 border border-white/8"
+                      initial={{ opacity: 0, x: 8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.4 + i * 0.08 }}
+                      className="flex items-center gap-3"
                     >
-                      <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                        <s.icon size={20} className="text-emerald-300" />
-                      </div>
+                      <s.icon size={18} className="text-emerald-300/80 flex-shrink-0" />
                       <div>
-                        <div className="text-xl font-bold text-white leading-none">{s.val}</div>
-                        <div className="text-xs text-emerald-300/70 uppercase tracking-wide mt-1">{s.label}</div>
+                        <span className="text-lg font-bold text-white">{s.val}</span>
+                        <span className="text-xs text-emerald-200/60 ml-1.5">{s.label}</span>
                       </div>
                     </motion.div>
                   ))}
+                  <p className="text-[11px] text-emerald-200/40 mt-1">Deja present dans 8 pays</p>
                 </div>
-
-                {/* Decorative bottom element */}
-                <div className="mt-4 pt-4 border-t border-white/10">
-                  <p className="text-xs text-emerald-200/60 text-center">
-                    Deja present dans 8 pays
-                  </p>
-                </div>
-              </motion.div>
-            </div>
+              </div>
+            </motion.div>
           </div>
 
           {/* Bottom spacer for balance */}
@@ -371,7 +398,7 @@ function LoginForm() {
                       <input
                         type="text"
                         autoComplete="organization"
-                        placeholder="EX : EC-ALG-001"
+                        placeholder="EC-ALG-001"
                         style={{ textTransform: "uppercase" }}
                         className={`w-full pl-11 pr-4 py-3 rounded-xl border bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm font-bold tracking-widest placeholder:font-normal placeholder:tracking-normal dark:text-white ${"border-gray-200 dark:border-gray-700"} ${schoolForm.formState.errors.schoolSlug ? "border-red-300" : ""}`}
                         {...schoolForm.register("schoolSlug", {
@@ -383,7 +410,7 @@ function LoginForm() {
                       <p className="mt-1.5 text-xs text-red-600">{schoolForm.formState.errors.schoolSlug.message}</p>
                     )}
                     <p className="text-[11px] text-gray-400 mt-1.5">
-                      Exemple : <span className="font-mono font-bold text-gray-500">AB-12345</span> ou <span className="font-mono font-bold text-gray-500">EC-ALG-001</span>
+                      Format : <span className="font-mono font-bold text-gray-500">EC-ALG-001</span> ou <span className="font-mono font-bold text-gray-500">AB-12345</span>
                     </p>
                   </div>
 
