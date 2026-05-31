@@ -3,7 +3,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
-import { useSession } from "next-auth/react"
+
 import { formatDate, formatAge, statusLabel } from "@/lib/utils"
 import { ProfileHeader } from "@/components/profile/ProfileHeader"
 import { StatCard } from "@/components/profile/StatCard"
@@ -55,6 +55,8 @@ interface Props {
   totalMemorized: number
   totalStars: number
   totalBadges: number
+  schoolName?: string
+  schoolCity?: string
 }
 
 const RELATION_LABELS: Record<string, { fr: string; en: string; ar: string }> = {
@@ -72,7 +74,7 @@ const ATT_STYLE: Record<string, string> = {
 const ATT_ICON: Record<string, string> = { PRESENT: "✓", LATE: "~", EXCUSED: "E", ABSENT: "✗" }
 
 export function ParentProfileClient({
-  parent, totalChildren, totalMemorized, totalStars, totalBadges,
+  parent, totalChildren, totalMemorized, totalStars, totalBadges, schoolName, schoolCity,
 }: Props) {
   const [showFeedback, setShowFeedback] = useState(false)
   const { locale } = useLanguage()
@@ -81,10 +83,6 @@ export function ParentProfileClient({
   const tc = useT("profileCommon")
 
   const relationLabel = (rel: string) => RELATION_LABELS[rel]?.[L] ?? rel
-
-  const { data: session } = useSession()
-  const schoolName = session?.user?.schoolName
-  const schoolCity = (session?.user as any)?.schoolCity
 
   const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } }
 

@@ -29,7 +29,7 @@ function Slider({ label, desc, value, onChange }: { label:string; desc?:string; 
 export default function NewEvaluationPage() {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
-  const router=useRouter(); const sp=useSearchParams()
+  const router=useRouter(); const sp=useSearchParams() ?? new URLSearchParams()
 
     const t = useT("evaluation_new")
 

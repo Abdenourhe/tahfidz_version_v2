@@ -30,17 +30,19 @@ const NAV_ITEMS = [
 
 interface TeacherSidebarProps {
   user: { name: string; email: string; role: string; avatar?: string }
+  schoolName?: string
+  schoolLogo?: string
 }
 
-export function TeacherSidebar({ user }: TeacherSidebarProps) {
-  const pathname = usePathname()
+export function TeacherSidebar({ user, schoolName, schoolLogo }: TeacherSidebarProps) {
+  const pathname = usePathname() ?? ""
   const { locale } = useLanguage()
   const { data: session } = useSession()
   const t = useT("teacherSidebar")
   const tA = useT("auth")
 
-  const schoolName = session?.user?.schoolName || "TAHFIDZ"
-  const schoolLogo = session?.user?.schoolLogo
+  const displayName = schoolName || "TAHFIDZ"
+  const logo = schoolLogo
   const schoolSlug = session?.user?.schoolSlug
 
   return (
@@ -49,14 +51,14 @@ export function TeacherSidebar({ user }: TeacherSidebarProps) {
       <div className="p-6 border-b border-gray-100 dark:border-gray-800">
         <Link href="/teacher/dashboard" className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-tahfidz-green flex items-center justify-center overflow-hidden">
-            {schoolLogo ? (
-              <Image src={schoolLogo} alt={schoolName} width={40} height={40} className="w-full h-full object-cover" />
+            {logo ? (
+              <Image src={logo} alt={displayName} width={40} height={40} className="w-full h-full object-cover" />
             ) : (
-              <span className="text-white font-bold text-lg">{schoolName.charAt(0).toUpperCase()}</span>
+              <span className="text-white font-bold text-lg">{displayName.charAt(0).toUpperCase()}</span>
             )}
           </div>
           <div>
-            <p className="font-bold text-gray-900 dark:text-white text-sm">{schoolName}</p>
+            <p className="font-bold text-gray-900 dark:text-white text-sm">{displayName}</p>
             {schoolSlug && (
               <p className="text-[10px] font-mono text-tahfidz-green dark:text-tahfidz-green">{schoolSlug}</p>
             )}

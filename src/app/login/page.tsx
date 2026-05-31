@@ -53,7 +53,7 @@ const stats = [
 /* ═══════════════════════════════════════════════════════════════════ */
 function LoginForm() {
   const router        = useRouter()
-  const searchParams  = useSearchParams()
+  const searchParams  = useSearchParams() ?? new URLSearchParams()
   const callbackUrl   = searchParams.get("callbackUrl") || "/"
   const [showPwd, setShowPwd]         = useState(false)
   const [error, setError]             = useState<string | null>(null)

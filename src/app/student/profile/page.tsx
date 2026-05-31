@@ -46,5 +46,10 @@ export default async function StudentProfilePage() {
 
   if (!student) redirect("/login")
 
-  return <StudentProfileClient student={student} />
+  const school = await prisma.school.findUnique({
+    where: { id: session.user.schoolId },
+    select: { name: true, city: true },
+  })
+
+  return <StudentProfileClient student={student} schoolName={school?.name ?? undefined} schoolCity={school?.city ?? undefined} />
 }

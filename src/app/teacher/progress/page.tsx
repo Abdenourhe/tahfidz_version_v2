@@ -22,7 +22,7 @@ interface Progress {
 export default function TeacherProgressPage() {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
-  const searchParams = useSearchParams()
+  const searchParams = useSearchParams() ?? new URLSearchParams()
   const urlStudentId = searchParams.get("studentId")
 
   const t = useT("progressX")

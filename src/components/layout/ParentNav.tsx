@@ -14,17 +14,19 @@ import { NotificationNavItem } from "@/components/layout/NotificationNavItem"
 
 interface ParentNavProps {
   user: { name: string; email: string }
+  schoolName?: string
+  schoolLogo?: string
 }
 
-export function ParentNav({ user }: ParentNavProps) {
+export function ParentNav({ user, schoolName, schoolLogo }: ParentNavProps) {
   const pathname = usePathname()
   const { locale, useT } = useLanguage()
   const { data: session } = useSession()
   const tN = (k: string) => useT("nav", k)
   const tA = (k: string) => useT("auth", k)
 
-  const schoolName = session?.user?.schoolName || "TAHFIDZ"
-  const schoolLogo = session?.user?.schoolLogo
+  const displayName = schoolName || "TAHFIDZ"
+  const logo = schoolLogo
   const schoolSlug = session?.user?.schoolSlug
 
   const navItems = [
@@ -41,14 +43,14 @@ export function ParentNav({ user }: ParentNavProps) {
           {/* Logo + Nom école */}
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl gradient-tahfidz flex items-center justify-center overflow-hidden shadow-sm">
-              {schoolLogo ? (
-                <Image src={schoolLogo} alt={schoolName} width={36} height={36} className="w-full h-full object-cover" />
+              {logo ? (
+                <Image src={logo} alt={displayName} width={36} height={36} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-white font-bold text-sm">{schoolName.charAt(0).toUpperCase()}</span>
+                <span className="text-white font-bold text-sm">{displayName.charAt(0).toUpperCase()}</span>
               )}
             </div>
             <div className="hidden sm:flex flex-col leading-tight">
-              <span className="font-bold text-sm text-gray-900 dark:text-gray-100">{schoolName}</span>
+              <span className="font-bold text-sm text-gray-900 dark:text-gray-100">{displayName}</span>
               {schoolSlug && (
                 <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400">{schoolSlug}</span>
               )}

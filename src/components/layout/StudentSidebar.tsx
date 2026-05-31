@@ -13,17 +13,19 @@ import { NotificationNavItem } from "@/components/layout/NotificationNavItem"
 
 interface StudentSidebarProps {
   user: { name: string; email: string; avatar?: string }
+  schoolName?: string
+  schoolLogo?: string
 }
 
-export function StudentSidebar({ user }: StudentSidebarProps) {
+export function StudentSidebar({ user, schoolName, schoolLogo }: StudentSidebarProps) {
   const pathname = usePathname()
   const { locale, useT } = useLanguage()
   const { data: session } = useSession()
   const tN = (k: string) => useT("nav", k)
   const tA = (k: string) => useT("auth", k)
 
-  const schoolName = session?.user?.schoolName || "TAHFIDZ"
-  const schoolLogo = session?.user?.schoolLogo
+  const displayName = schoolName || "TAHFIDZ"
+  const logo = schoolLogo
   const schoolSlug = session?.user?.schoolSlug
   const studentCode = (session?.user as any)?.studentCode
 
@@ -41,14 +43,14 @@ export function StudentSidebar({ user }: StudentSidebarProps) {
       <div className="p-6 border-b border-gray-100">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl gradient-tahfidz flex items-center justify-center overflow-hidden">
-            {schoolLogo ? (
-              <Image src={schoolLogo} alt={schoolName} width={36} height={36} className="w-full h-full object-cover" />
+            {logo ? (
+              <Image src={logo} alt={displayName} width={36} height={36} className="w-full h-full object-cover" />
             ) : (
-              <span className="text-white font-bold text-sm">{schoolName.charAt(0).toUpperCase()}</span>
+              <span className="text-white font-bold text-sm">{displayName.charAt(0).toUpperCase()}</span>
             )}
           </div>
           <div>
-            <p className="font-bold text-gray-900 text-sm">{schoolName}</p>
+            <p className="font-bold text-gray-900 text-sm">{displayName}</p>
             {schoolSlug && (
               <p className="text-[10px] font-mono text-tahfidz-green">{schoolSlug}</p>
             )}

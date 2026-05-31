@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
+import { prisma } from "@/lib/prisma"
 import { TeacherSidebar } from "@/components/layout/TeacherSidebar"
 import { TeacherBottomNav } from "@/components/layout/TeacherBottomNav"
 import { MobileHeader } from "@/components/layout/MobileHeader"
@@ -14,18 +15,23 @@ export default async function TeacherLayout({ children }: { children: React.Reac
   const session = await auth()
   if (!session?.user || !["ADMIN", "TEACHER"].includes(session.user.role)) redirect("/login")
 
+  const school = await prisma.school.findUnique({
+    where: { id: session.user.schoolId },
+    select: { name: true, logo: true },
+  })
+
   return (
     <Providers session={session}>
       <LanguageProvider>
         <div className="flex h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden">
           {/* Desktop sidebar */}
           <div className="hidden md:block">
-            <TeacherSidebar user={(session.user as any)} />
+            <TeacherSidebar user={(session.user as any)} schoolName={school?.name ?? undefined} schoolLogo={school?.logo ?? undefined} />
           </div>
 
           <main className="flex-1 overflow-y-auto flex flex-col md:ml-64">
             <div className="hidden md:block"><TopBar /></div>
-            <div className="md:hidden"><MobileHeader role="teacher" /></div>
+            <div className="md:hidden"><MobileHeader role="teacher" schoolName={school?.name ?? undefined} schoolLogo={school?.logo ?? undefined} /></div>
 
             <div className="max-w-7xl mx-auto w-full px-4 md:px-6 py-4 md:py-8 pb-24 md:pb-8">
               {children}

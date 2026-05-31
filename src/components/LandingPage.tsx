@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useTheme } from "next-themes"
-import { motion, useScroll, useTransform } from "framer-motion"
+import { motion, useScroll, useTransform, type Variants } from "framer-motion"
 import {
   BookOpen, Users, GraduationCap, BarChart2, Bell, Megaphone,
   Shield, Smartphone, RefreshCw, Database, Menu, X, Star,
@@ -264,8 +264,8 @@ const dict = {
       popular: "الأكثر شيوعاً",
       plans: [
         { name: "مجاني", students: "حتى 50 طالب", price: "0", features: ["إدارة الطلاب", "2 معلم", "1 حلقة", "تقارير أساسية", "دعم بالبريد"] },
-        { name: " starter", students: "51 - 200 طالب", price: "49", features: ["كل شيء في المجاني", "10 معلمين", "حلقات غير محدودة", "إشعارات فورية", "تصدير PDF"] },
-        { name: "احترافي", students: "201 - 500 طالب", price: "99", features: ["كل شيء في starter", "معلمين غير محدودين", "المقرأة الإلكترونية", "لوحة معلومات متقدمة", "دعم أولوي"] },
+        { name: "Starter", students: "51 - 200 طالب", price: "49", features: ["كل شيء في المجاني", "10 معلمين", "حلقات غير محدودة", "إشعارات فورية", "تصدير PDF"] },
+        { name: "احترافي", students: "201 - 500 طالب", price: "99", features: ["كل شيء في Starter", "معلمين غير محدودين", "المقرأة الإلكترونية", "لوحة معلومات متقدمة", "دعم أولوي"] },
       ],
     },
     cta: {
@@ -287,27 +287,27 @@ const dict = {
 type Lang = "fr" | "en" | "ar"
 
 // ─── Animation variants ─────────────────────────────────────────────────────
-const fadeInUp = {
+const fadeInUp: Variants = {
   hidden: { opacity: 0, y: 40 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
 }
 
-const fadeInLeft = {
+const fadeInLeft: Variants = {
   hidden: { opacity: 0, x: -40 },
   visible: { opacity: 1, x: 0, transition: { duration: 0.6, ease: "easeOut" } },
 }
 
-const fadeInRight = {
+const fadeInRight: Variants = {
   hidden: { opacity: 0, x: 40 },
   visible: { opacity: 1, x: 0, transition: { duration: 0.6, ease: "easeOut" } },
 }
 
-const staggerContainer = {
+const staggerContainer: Variants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.12 } },
 }
 
-const scaleIn = {
+const scaleIn: Variants = {
   hidden: { opacity: 0, scale: 0.9 },
   visible: { opacity: 1, scale: 1, transition: { duration: 0.5, ease: "easeOut" } },
 }
@@ -880,12 +880,12 @@ function PricingSection({ t }: { t: (typeof dict)["fr"] }) {
               variants={fadeInUp}
               whileHover={{ y: -6 }}
               className={`relative p-6 rounded-2xl border transition-all ${
-                plan.name === "Starter" || plan.name === " starter"
+                i === 1
                   ? "border-tahfidz-green bg-tahfidz-green-light/30 dark:bg-emerald-900/10 shadow-lg shadow-tahfidz-green/10"
                   : "border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 hover:border-tahfidz-green/30"
               }`}
             >
-              {(plan.name === "Starter" || plan.name === " starter") && (
+              {i === 1 && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-tahfidz-green text-white text-[10px] font-bold rounded-full uppercase tracking-wide">
                   {t.pricing.popular}
                 </div>
@@ -907,7 +907,7 @@ function PricingSection({ t }: { t: (typeof dict)["fr"] }) {
               <Link
                 href="/register-school"
                 className={`block w-full text-center py-2.5 rounded-xl text-sm font-bold transition ${
-                  plan.name === "Starter" || plan.name === " starter"
+                  i === 1
                     ? "bg-tahfidz-green text-white hover:bg-emerald-700 shadow-lg shadow-tahfidz-green/25"
                     : "bg-white dark:bg-gray-800 text-tahfidz-green border border-tahfidz-green hover:bg-tahfidz-green hover:text-white"
                 }`}
@@ -1026,7 +1026,7 @@ function Footer({ t }: { t: (typeof dict)["fr"] }) {
 // ─── Main component ─────────────────────────────────────────────────────────
 export default function LandingPage() {
   const [lang, setLang] = useState<Lang>("fr")
-  const t = dict[lang]
+  const t = dict[lang] as typeof dict["fr"]
 
   useEffect(() => {
     document.documentElement.dir = t.dir

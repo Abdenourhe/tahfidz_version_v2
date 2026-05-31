@@ -63,7 +63,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
           <main className="flex-1 overflow-y-auto flex flex-col">
             <div className="hidden md:block"><TopBar /></div>
-            <div className="md:hidden"><MobileHeader role="admin" /></div>
+            <div className="md:hidden"><MobileHeader role="admin" schoolName={school?.name ?? undefined} schoolLogo={school?.logo ?? undefined} /></div>
 
             <div className="max-w-7xl mx-auto w-full px-4 md:px-6 py-4 md:py-8 pb-24 md:pb-8">
               {children}

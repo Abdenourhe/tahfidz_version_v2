@@ -1,7 +1,7 @@
 "use client"
 import { motion } from "framer-motion"
 import { useT } from "@/contexts/LanguageContext"
-import { useSession } from "next-auth/react"
+
 import { formatDate, statusLabel } from "@/lib/utils"
 import { ProfileHeader } from "@/components/profile/ProfileHeader"
 import { StatCard } from "@/components/profile/StatCard"
@@ -50,6 +50,8 @@ interface Props {
       memorizationProgress: number
     }
   }
+  schoolName?: string
+  schoolCity?: string
 }
 
 const ATT_STYLE: Record<string, string> = {
@@ -60,12 +62,9 @@ const ATT_STYLE: Record<string, string> = {
 }
 const ATT_ICON: Record<string, string> = { PRESENT: "✓", LATE: "~", EXCUSED: "E", ABSENT: "✗" }
 
-export function StudentProfileClient({ student }: Props) {
+export function StudentProfileClient({ student, schoolName, schoolCity }: Props) {
   const t = useT("studentProfileClient")
   const tc = useT("profileCommon")
-  const { data: session } = useSession()
-  const schoolName = session?.user?.schoolName
-  const schoolCity = (session?.user as any)?.schoolCity
 
   const genderLabel = (g: string | null) => {
     if (g === "MALE") return t("male")

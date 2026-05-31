@@ -24,8 +24,8 @@ interface Props {
     decision: string
     teacherNotes: string | null
     revisionRequired: boolean
-    student: { user: { fullName: string; fullNameAr: string | null } }
-    progress: { surah: { nameFr: string; nameAr: string } } | null
+    student: { id: string; user: { fullName: string; fullNameAr: string | null } }
+    progress: { id: string; surah: { nameFr: string; nameAr: string } } | null
   }[]
   stats: { total: number; approved: number; revision: number; rejected: number }
   students: { id: string; user: { fullName: string; fullNameAr: string | null } }[]

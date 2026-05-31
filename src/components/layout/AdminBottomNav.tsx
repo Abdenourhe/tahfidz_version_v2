@@ -18,7 +18,7 @@ const MOBILE_NAV = [
 ]
 
 export function AdminBottomNav() {
-  const pathname = usePathname()
+  const pathname = usePathname() ?? ""
   const t = useT("nav")
 
   return (

@@ -43,6 +43,11 @@ export default async function ParentProfilePage() {
   const totalStars = parent.childrenLinks.reduce((a, l) => a + l.student.totalStars, 0)
   const totalBadges = parent.childrenLinks.reduce((a, l) => a + l.student._count.studentBadges, 0)
 
+  const school = await prisma.school.findUnique({
+    where: { id: session.user.schoolId },
+    select: { name: true, city: true },
+  })
+
   return (
     <ParentProfileClient
       parent={parent}
@@ -50,6 +55,8 @@ export default async function ParentProfilePage() {
       totalMemorized={totalMemorized}
       totalStars={totalStars}
       totalBadges={totalBadges}
+      schoolName={school?.name ?? undefined}
+      schoolCity={school?.city ?? undefined}
     />
   )
 }

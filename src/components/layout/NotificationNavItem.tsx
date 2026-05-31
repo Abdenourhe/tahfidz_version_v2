@@ -16,6 +16,7 @@ interface Props {
   iconActiveClass?: string
   iconInactiveClass?: string
   iconContainerClass?: string
+  className?: string
 }
 
 export function NotificationNavItem({
@@ -27,6 +28,7 @@ export function NotificationNavItem({
   iconActiveClass   = "text-tahfidz-green",
   iconInactiveClass = "text-gray-400",
   iconContainerClass,
+  className,
 }: Props) {
   const [unread, setUnread] = useState(0)
 
@@ -63,6 +65,7 @@ export function NotificationNavItem({
       className={cn(
         "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150 group",
         isActive ? activeClass : inactiveClass,
+        className,
       )}
     >
       {iconContainerClass ? (

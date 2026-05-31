@@ -51,15 +51,23 @@ const ROLE_LINKS: Record<string, { href: string; labelKey: string }[]> = {
   ],
 }
 
-export function MobileHeader({ role }: { role: "admin" | "teacher" | "student" | "parent" | "superadmin" }) {
+export function MobileHeader({
+  role,
+  schoolName,
+  schoolLogo,
+}: {
+  role: "admin" | "teacher" | "student" | "parent" | "superadmin"
+  schoolName?: string
+  schoolLogo?: string
+}) {
   const [menuOpen, setMenuOpen] = useState(false)
-  const pathname = usePathname()
+  const pathname = usePathname() ?? ""
   const t = useT("nav")
   const { data: session } = useSession()
 
   const links = ROLE_LINKS[role] || []
-  const schoolName = session?.user?.schoolName || "TAHFIDZ"
-  const schoolLogo = session?.user?.schoolLogo
+  const displayName = schoolName || "TAHFIDZ"
+  const logo = schoolLogo
   const schoolSlug = session?.user?.schoolSlug
 
   return (
@@ -98,14 +106,14 @@ export function MobileHeader({ role }: { role: "admin" | "teacher" | "student" |
 
           <Link href={`/${role}/dashboard`} className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-tahfidz-green flex items-center justify-center overflow-hidden">
-              {schoolLogo ? (
-                <Image src={schoolLogo} alt={schoolName} width={32} height={32} className="w-full h-full object-cover" />
+              {logo ? (
+                <Image src={logo} alt={displayName} width={32} height={32} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-white font-bold text-sm">{schoolName.charAt(0).toUpperCase()}</span>
+                <span className="text-white font-bold text-sm">{displayName.charAt(0).toUpperCase()}</span>
               )}
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-gray-900 dark:text-white text-sm">{schoolName}</span>
+              <span className="font-bold text-gray-900 dark:text-white text-sm">{displayName}</span>
               {schoolSlug && (
                 <span className="text-[10px] font-mono text-tahfidz-green text-center">{schoolSlug}</span>
               )}
@@ -173,7 +181,7 @@ export function MobileHeader({ role }: { role: "admin" | "teacher" | "student" |
 
               {/* Footer */}
               <div className="p-4 border-t border-gray-100 dark:border-gray-800">
-                <p className="text-xs text-gray-400 text-center">{schoolName}</p>
+                <p className="text-xs text-gray-400 text-center">{displayName}</p>
               </div>
             </motion.div>
           </>

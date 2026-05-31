@@ -17,7 +17,7 @@ const MOBILE_NAV = [
 ]
 
 export function StudentBottomNav() {
-  const pathname = usePathname()
+  const pathname = usePathname() ?? ""
   const t = useT("nav")
 
   return (

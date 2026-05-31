@@ -43,10 +43,17 @@ export default async function TeacherProfilePage() {
 
   const totalStudents = teacher.groups.reduce((sum, g) => sum + g._count.students, 0)
 
+  const school = await prisma.school.findUnique({
+    where: { id: session.user.schoolId },
+    select: { name: true, city: true },
+  })
+
   return (
     <TeacherProfileClient
       teacher={teacher}
       totalStudents={totalStudents}
+      schoolName={school?.name ?? undefined}
+      schoolCity={school?.city ?? undefined}
     />
   )
 }

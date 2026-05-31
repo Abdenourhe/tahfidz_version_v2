@@ -29,7 +29,7 @@ interface AdminSidebarProps {
 }
 
 export function AdminSidebar({ user, schoolName, schoolLogo, schoolSlug, schoolCity }: AdminSidebarProps) {
-  const pathname = usePathname()
+  const pathname = usePathname() ?? ""
   const { useT, locale } = useLanguage()
   const tNav  = (k: string) => useT("nav", k)
   const tAuth = (k: string) => useT("auth", k)

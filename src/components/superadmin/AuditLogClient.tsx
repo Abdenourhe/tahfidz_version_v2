@@ -86,7 +86,7 @@ const SEVERITY_CONFIG = {
 
 export function AuditLogClient({ logs, totalCount, currentPage, pageSize, stats, filters }: Props) {
   const router = useRouter()
-  const searchParams = useSearchParams()
+  const searchParams = useSearchParams() ?? new URLSearchParams()
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [showFilters, setShowFilters] = useState(false)
 

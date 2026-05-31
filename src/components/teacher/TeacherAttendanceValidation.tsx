@@ -14,7 +14,7 @@ interface ParentAlert {
   reason: string | null
   validatedBy: string | null
   validatedAt: string | null
-  student: { user: { fullName: string } }
+  student: { id: string; user: { fullName: string } }
   parent: { fullName: string }
 }
 

@@ -2,7 +2,7 @@
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { useState } from "react"
-import { useSession } from "next-auth/react"
+
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { formatDate } from "@/lib/utils"
 import { ProfileHeader } from "@/components/profile/ProfileHeader"
@@ -38,17 +38,16 @@ interface Props {
     _count: { groups: number; evaluations: number }
   }
   totalStudents: number
+  schoolName?: string
+  schoolCity?: string
 }
 
-export function TeacherProfileClient({ teacher, totalStudents }: Props) {
+export function TeacherProfileClient({ teacher, totalStudents, schoolName, schoolCity }: Props) {
   const [showFeedback, setShowFeedback] = useState(false)
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
   const t = useT("teacherProfileClient")
   const tc = useT("profileCommon")
-  const { data: session } = useSession()
-  const schoolName = session?.user?.schoolName
-  const schoolCity = (session?.user as any)?.schoolCity
 
   const genderLabel = (g: string | null) => {
     if (g === "MALE") return t("male")
