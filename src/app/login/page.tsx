@@ -174,21 +174,17 @@ function LoginForm() {
 
         <div className="relative z-10 flex flex-col h-full p-6 xl:p-8 overflow-y-auto">
           {/* Header */}
-          <div className="flex-shrink-0 mb-4 flex items-center justify-between">
+          <div className="flex-shrink-0 mb-4">
             <Link href="/" className="inline-flex items-center gap-3 group">
               <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm border border-white/15 flex items-center justify-center group-hover:bg-white/20 transition">
                 <span className="text-white font-bold text-xl">ط</span>
               </div>
               <span className="text-white font-bold text-xl tracking-tight">TAHFIDZ</span>
             </Link>
-            <div className="flex items-center gap-2">
-              <LanguageSwitcher />
-              <ThemeToggle />
-            </div>
           </div>
 
           {/* Main content grid */}
-          <div className="flex-1 flex flex-col gap-3 min-h-0 justify-center">
+          <div className="flex-1 flex flex-col gap-4 min-h-0">
             {/* ═══ CERCLE ISLAMIQUE ANIMÉ ═══ */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -262,7 +258,7 @@ function LoginForm() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-5 xl:p-6 overflow-hidden flex flex-col justify-center w-full"
+              className="bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-5 xl:p-6 overflow-hidden flex flex-col w-full mt-auto"
             >
               {/* En-tête */}
               <div className="mb-5 text-center">
@@ -314,11 +310,15 @@ function LoginForm() {
           </Link>
         </div>
 
-        {/* Desktop back link */}
-        <div className="hidden lg:flex items-center px-10 xl:px-16 pt-8">
+        {/* Desktop header */}
+        <div className="hidden lg:flex items-center justify-between px-10 xl:px-16 pt-8">
           <Link href="/" className="flex items-center gap-2 text-sm text-gray-400 hover:text-tahfidz-green transition">
             <ArrowLeft size={14} /> Retour a l&apos;accueil
           </Link>
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher />
+            <ThemeToggle />
+          </div>
         </div>
 
         <div className="flex-1 flex items-center justify-center px-6 py-10 lg:px-10 xl:px-20">
