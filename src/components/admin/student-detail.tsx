@@ -13,6 +13,7 @@ import {
   User, Mail, Phone, AlertCircle, MapPin, Heart, Calendar,
   GraduationCap, Users, Shield, Copy, CheckCircle, Clock,
   TrendingUp, BarChart3, KeyRound, ArrowRight, Loader2, CheckCircle2, X, Printer,
+  Globe, Languages,
 } from "lucide-react"
 import { AvatarLightbox } from "@/components/AvatarLightbox"
 import { ParentInviteQR } from "@/components/admin/ParentInviteQR"
@@ -43,6 +44,9 @@ interface Student {
   city?: string | null
   postalCode?: string | null
   medicalNotes?: string | null
+  nationality?: string | null
+  spokenLanguages?: string | null
+  currentSurahNote?: string | null
   _count?: { memorizedSurahs: number }
   memorizedSurahs?: { surahId: number; surah: { nameFr: string; nameAr: string } }[]
   studentBadges?: any[]
@@ -99,6 +103,9 @@ const TEXTS: Record<string, Record<string, string>> = {
   souratesMem: { fr: "Sourates mémorisées", en: "Memorized surahs", ar: "السور المحفوظة" },
   stars:       { fr: "Étoiles", en: "Stars", ar: "النجوم" },
   presence:    { fr: "Présence", en: "Attendance", ar: "الحضور" },
+  nationality: { fr: "Nationalité", en: "Nationality", ar: "الجنسية" },
+  spokenLanguages: { fr: "Langues parlées", en: "Spoken languages", ar: "اللغات المحكية" },
+  currentSurah: { fr: "Sourah en cours", en: "Current surah", ar: "السورة الحالية" },
 }
 
 function t(key: string, locale: string = "fr"): string {
@@ -107,6 +114,18 @@ function t(key: string, locale: string = "fr"): string {
 
 const LEVEL_LABEL: Record<string, string> = {
   beginner: "Débutant", intermediate: "Intermédiaire", advanced: "Avancé",
+}
+
+const NATIONALITY_MAP: Record<string, Record<string, string>> = {
+  fr: { DZ: "Algérien(ne)", MA: "Marocain(e)", TN: "Tunisien(ne)", EG: "Égyptien(ne)", SA: "Saoudien(ne)", AE: "Émirien(ne)", QA: "Qatari(e)", KW: "Koweïtien(ne)", LB: "Libanais(e)", SY: "Syrien(ne)", IQ: "Irakien(ne)", JO: "Jordanien(ne)", PS: "Palestinien(ne)", SD: "Soudanais(e)", LY: "Libyen(ne)", MR: "Mauritanien(ne)", SO: "Somalien(ne)", TR: "Turc/Turque", CA: "Canadien(ne)" },
+  en: { DZ: "Algerian", MA: "Moroccan", TN: "Tunisian", EG: "Egyptian", SA: "Saudi", AE: "Emirati", QA: "Qatari", KW: "Kuwaiti", LB: "Lebanese", SY: "Syrian", IQ: "Iraqi", JO: "Jordanian", PS: "Palestinian", SD: "Sudanese", LY: "Libyan", MR: "Mauritanian", SO: "Somali", TR: "Turkish", CA: "Canadian" },
+  ar: { DZ: "جزائري(ة)", MA: "مغربي(ة)", TN: "تونسي(ة)", EG: "مصري(ة)", SA: "سعودي(ة)", AE: "إماراتي(ة)", QA: "قطري(ة)", KW: "كويتي(ة)", LB: "لبناني(ة)", SY: "سوري(ة)", IQ: "عراقي(ة)", JO: "أردني(ة)", PS: "فلسطيني(ة)", SD: "سوداني(ة)", LY: "ليبي(ة)", MR: "موريتاني(ة)", SO: "صومالي(ة)", TR: "تركي(ة)", CA: "كندي(ة)" },
+}
+
+const LANGUAGE_MAP: Record<string, Record<string, string>> = {
+  fr: { ar: "Arabe", fr: "Français", en: "Anglais" },
+  en: { ar: "Arabic", fr: "French", en: "English" },
+  ar: { ar: "العربية", fr: "الفرنسية", en: "الإنجليزية" },
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -422,6 +441,14 @@ export function StudentDetailClient({ student }: Props) {
               <InfoItem icon={Calendar} label={t("joined", L)} value={
                 new Date(student.user.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
               } />
+              {student.nationality && (
+                <InfoItem icon={Globe} label={t("nationality", L)} value={NATIONALITY_MAP[L]?.[student.nationality] ?? student.nationality} />
+              )}
+              {student.spokenLanguages && (
+                <InfoItem icon={Languages} label={t("spokenLanguages", L)} value={
+                  student.spokenLanguages.split(",").map(k => LANGUAGE_MAP[L]?.[k.trim()] ?? k.trim()).filter(Boolean).join(" · ")
+                } />
+              )}
             </div>
           </div>
 
@@ -437,6 +464,9 @@ export function StudentDetailClient({ student }: Props) {
               <InfoItem icon={GraduationCap} label={t("group", L)} value={student.group?.name || "—"} />
               <InfoItem icon={BarChart3} label={t("level", L)} value={student.group?.level || "—"} />
               <InfoItem icon={Users} label={t("teacher", L)} value={student.teacher?.user.fullName || "—"} />
+              {student.currentSurahNote && (
+                <InfoItem icon={BookOpen} label={t("currentSurah", L)} value={student.currentSurahNote} />
+              )}
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <KeyRound size={14} className="text-gray-400" />
