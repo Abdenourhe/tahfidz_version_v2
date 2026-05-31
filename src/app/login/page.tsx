@@ -12,8 +12,10 @@ import { motion, AnimatePresence } from "framer-motion"
 import {
   Loader2, Eye, EyeOff, School, BookOpen, Users, BarChart2,
   Check, ArrowLeft, ShieldCheck, Globe, Lock, Mail,
-  Sparkles, TrendingUp, KeyRound
+  Sparkles, TrendingUp, KeyRound, Sun, Moon
 } from "lucide-react"
+import { useTheme } from "next-themes"
+import { useLanguage } from "@/contexts/LanguageContext"
 import Image from "next/image"
 import Link from "next/link"
 
@@ -29,6 +31,49 @@ const superSchema = z.object({
 
 type SchoolInput = z.infer<typeof schoolSchema>
 type SuperInput  = z.infer<typeof superSchema>
+
+/* ─── Petits composants header ─────────────────────────────────────────── */
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  if (!mounted) return <div className="w-8 h-8" />
+  return (
+    <button
+      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      className="w-8 h-8 rounded-lg bg-white/10 border border-white/15 flex items-center justify-center text-white/80 hover:bg-white/20 hover:text-white transition"
+      title={theme === "dark" ? "Mode clair" : "Mode sombre"}
+    >
+      {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
+    </button>
+  )
+}
+
+function LanguageSwitcher() {
+  const { locale, setLocale } = useLanguage()
+  const langs: { code: "fr" | "en" | "ar"; label: string }[] = [
+    { code: "fr", label: "FR" },
+    { code: "en", label: "EN" },
+    { code: "ar", label: "AR" },
+  ]
+  return (
+    <div className="flex items-center rounded-lg bg-white/10 border border-white/15 overflow-hidden">
+      {langs.map((l) => (
+        <button
+          key={l.code}
+          onClick={() => setLocale(l.code)}
+          className={`px-2 py-1 text-[11px] font-bold transition ${
+            locale === l.code
+              ? "bg-white/20 text-white"
+              : "text-white/60 hover:text-white hover:bg-white/10"
+          }`}
+        >
+          {l.label}
+        </button>
+      ))}
+    </div>
+  )
+}
 
 const ROLE_DASHBOARD: Record<string, string> = {
   SUPERADMIN: "/admin/super",
@@ -129,17 +174,21 @@ function LoginForm() {
 
         <div className="relative z-10 flex flex-col h-full p-6 xl:p-8 overflow-y-auto">
           {/* Header */}
-          <div className="flex-shrink-0 mb-6">
+          <div className="flex-shrink-0 mb-4 flex items-center justify-between">
             <Link href="/" className="inline-flex items-center gap-3 group">
               <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm border border-white/15 flex items-center justify-center group-hover:bg-white/20 transition">
                 <span className="text-white font-bold text-xl">ط</span>
               </div>
               <span className="text-white font-bold text-xl tracking-tight">TAHFIDZ</span>
             </Link>
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher />
+              <ThemeToggle />
+            </div>
           </div>
 
           {/* Main content grid */}
-          <div className="flex-1 flex flex-col gap-5 min-h-0">
+          <div className="flex-1 flex flex-col gap-3 min-h-0 justify-center">
             {/* ═══ CERCLE ISLAMIQUE ANIMÉ ═══ */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -213,7 +262,7 @@ function LoginForm() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="flex-1 bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-6 xl:p-7 overflow-hidden flex flex-col justify-center w-full"
+              className="bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-5 xl:p-6 overflow-hidden flex flex-col justify-center w-full"
             >
               {/* En-tête */}
               <div className="mb-5 text-center">
@@ -244,14 +293,11 @@ function LoginForm() {
                 ))}
               </div>
 
-              <p className="text-[11px] text-emerald-200/40 mt-4 text-center">
-                Deja present dans 8 pays · Confiance par des centaines d'ecoles
-              </p>
             </motion.div>
           </div>
 
-          {/* Bottom spacer for balance */}
-          <div className="flex-shrink-0 h-6" />
+          {/* Bottom spacer */}
+          <div className="flex-shrink-0 h-2" />
         </div>
       </div>
 
