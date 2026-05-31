@@ -11,8 +11,8 @@ import { z } from "zod"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Loader2, Eye, EyeOff, School, BookOpen, Users, BarChart2,
-  Check, ArrowLeft, ShieldCheck, Globe, Lock, Mail, Building2,
-  Sparkles, TrendingUp, Award, KeyRound
+  Check, ArrowLeft, ShieldCheck, Globe, Lock, Mail,
+  Sparkles, TrendingUp, KeyRound
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -42,12 +42,6 @@ const features = [
   { icon: BookOpen,  text: "Suivi de memorisation sourate par sourate" },
   { icon: Users,     text: "Gestion complete eleves, enseignants, parents" },
   { icon: BarChart2, text: "Rapports et statistiques detailles" },
-]
-
-const stats = [
-  { val: "200+", label: "Ecoles", icon: Building2 },
-  { val: "20K+", label: "Eleves", icon: Users },
-  { val: "1K+", label: "Enseignants", icon: Award },
 ]
 
 /* ═══════════════════════════════════════════════════════════════════ */
@@ -152,7 +146,7 @@ function LoginForm() {
               transition={{ duration: 0.6 }}
               className="flex-shrink-0 flex justify-center"
             >
-              <div className="relative w-[260px] h-[260px] xl:w-[300px] xl:h-[300px]">
+              <div className="relative w-[280px] h-[280px] xl:w-[340px] xl:h-[340px]">
                 {/* Cercle décoratif islamique tournant */}
                 <svg
                   viewBox="0 0 200 200"
@@ -213,67 +207,45 @@ function LoginForm() {
               </div>
             </motion.div>
 
-            {/* ═══ Features & Stats (design épuré) ═══ */}
+            {/* ═══ Features (design professionnel) ═══ */}
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="flex-1 bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-5 xl:p-6 overflow-hidden flex flex-col"
+              className="flex-1 bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-6 xl:p-7 overflow-hidden flex flex-col justify-center"
             >
               {/* En-tête */}
-              <div className="mb-4">
+              <div className="mb-5 text-center">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/8 text-emerald-100 text-xs font-medium mb-3">
                   <Sparkles size={13} />
                   Plateforme N°1 pour les ecoles coraniques
                 </div>
-                <h2 className="text-lg xl:text-xl font-bold text-white">
+                <h2 className="text-xl xl:text-2xl font-bold text-white">
                   La plateforme <span className="text-emerald-300">coranique</span> moderne
                 </h2>
               </div>
 
-              <div className="flex-1 grid grid-cols-2 gap-5 min-h-0">
-                {/* Colonne gauche : features */}
-                <div className="flex flex-col justify-center gap-2.5">
-                  {features.map((f, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.35 + i * 0.08 }}
-                      className="flex items-center gap-3"
-                    >
-                      <div className="w-7 h-7 rounded-full bg-emerald-500/25 flex items-center justify-center flex-shrink-0">
-                        <Check size={14} className="text-emerald-300" />
-                      </div>
-                      <span className="text-emerald-50/90 text-sm font-medium leading-snug">{f.text}</span>
-                    </motion.div>
-                  ))}
-                </div>
-
-                {/* Colonne droite : stats */}
-                <div className="flex flex-col justify-center gap-3">
-                  <h3 className="text-xs font-bold text-emerald-200/60 uppercase tracking-wider mb-0.5 flex items-center gap-1.5">
-                    <TrendingUp size={12} />
-                    Notre impact
-                  </h3>
-                  {stats.map((s, i) => (
-                    <motion.div
-                      key={s.label}
-                      initial={{ opacity: 0, x: 8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.4 + i * 0.08 }}
-                      className="flex items-center gap-3"
-                    >
-                      <s.icon size={18} className="text-emerald-300/80 flex-shrink-0" />
-                      <div>
-                        <span className="text-lg font-bold text-white">{s.val}</span>
-                        <span className="text-xs text-emerald-200/60 ml-1.5">{s.label}</span>
-                      </div>
-                    </motion.div>
-                  ))}
-                  <p className="text-[11px] text-emerald-200/40 mt-1">Deja present dans 8 pays</p>
-                </div>
+              {/* Features en colonne unique centrée */}
+              <div className="flex flex-col gap-3">
+                {features.map((f, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.35 + i * 0.1 }}
+                    className="flex items-center gap-3.5 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                      <f.icon size={16} className="text-emerald-300" />
+                    </div>
+                    <span className="text-emerald-50/90 text-sm font-medium leading-snug">{f.text}</span>
+                  </motion.div>
+                ))}
               </div>
+
+              <p className="text-[11px] text-emerald-200/40 mt-4 text-center">
+                Deja present dans 8 pays · Confiance par des centaines d'ecoles
+              </p>
             </motion.div>
           </div>
 
