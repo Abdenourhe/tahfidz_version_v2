@@ -1,10 +1,13 @@
 "use client"
 // src/components/admin/GroupsListClient.tsx
 
+import { useState } from "react"
+
 import Link from "next/link"
-import { Plus, BookOpen, Users } from "lucide-react"
+import { Plus, BookOpen, Users, Trash2 } from "lucide-react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
-import { shortId } from "@/lib/utils"  // ← IMPORT DIRECT ICI
+import { shortId } from "@/lib/utils"
+import { useRouter } from "next/navigation"
 
 interface Group {
   id: string
@@ -23,11 +26,33 @@ interface Props {
   // ← SUPPRIMÉ : shortId n'est plus en props
 }
 
-export function GroupsListClient({ groups }: Props) {
+export function GroupsListClient({ groups: initialGroups }: Props) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
+  const router = useRouter()
+  const t = useT("groupsListClient")
 
-    const t = useT("groupsListClient")
+  const [groups, setGroups] = useState<Group[]>(initialGroups)
+  const [deleting, setDeleting] = useState<string | null>(null)
+
+  const handleDelete = async (groupId: string) => {
+    if (!confirm(t("deleteConfirm"))) return
+    setDeleting(groupId)
+    try {
+      const res = await fetch(`/api/groups/${groupId}`, { method: "DELETE" })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        alert(d.error || "Erreur")
+        return
+      }
+      setGroups(prev => prev.filter(g => g.id !== groupId))
+      router.refresh()
+    } catch {
+      alert("Erreur réseau")
+    } finally {
+      setDeleting(null)
+    }
+  }
 
   const levelMap: Record<string, { label: string; color: string }> = {
     beginner:     { label: t("beginner"),     color: "bg-green-100 text-green-700" },
@@ -99,8 +124,19 @@ export function GroupsListClient({ groups }: Props) {
 
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-tahfidz-gold font-medium">⭐ {avgStars} {t("avgStars")}</span>
-                  <Link href={`/admin/groups/${group.id}`}
-                    className="text-xs text-tahfidz-green hover:underline font-medium">{t("manage")}</Link>
+                  <div className="flex items-center gap-3">
+                    {group._count.students === 0 && (
+                      <button
+                        onClick={() => handleDelete(group.id)}
+                        disabled={deleting === group.id}
+                        className="text-xs text-red-500 hover:text-red-700 font-medium flex items-center gap-1 disabled:opacity-50"
+                      >
+                        <Trash2 size={12} /> {t("delete")}
+                      </button>
+                    )}
+                    <Link href={`/admin/groups/${group.id}`}
+                      className="text-xs text-tahfidz-green hover:underline font-medium">{t("manage")}</Link>
+                  </div>
                 </div>
               </div>
             )

@@ -91,14 +91,14 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const existing = await prisma.group.findUnique({ where: { id: groupId } })
   if (!existing) return NextResponse.json({ error: "Introuvable" }, { status: 404 })
 
-  await prisma.group.update({ where: { id: groupId }, data: { isActive: false } })
+  await prisma.group.delete({ where: { id: groupId } })
 
-  // Audit log — CORRIGÉ avec tous les champs requis
+  // Audit log
   await prisma.auditLog.create({
     data: {
       schoolId: session.user.schoolId,
       userId: session.user.id,
-      action: "DEACTIVATE_GROUP",
+      action: "DELETE_GROUP",
       actorId: session.user.id,
       actorRole: session.user.role,
       actorEmail: session.user.email || "admin@system.local",
@@ -108,8 +108,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
       targetType: "group",
       targetId: groupId,
       targetName: existing.name,
-      oldValues: { isActive: true },
-      newValues: { isActive: false },
     },
   })
 

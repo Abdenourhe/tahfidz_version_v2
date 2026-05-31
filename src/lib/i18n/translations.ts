@@ -363,6 +363,8 @@ export const translations = {
     teacherRef:      { fr: "Enseignant référent", en: "Referent teacher", ar: "المعلم المرجعي" },
     lockedByGroup:   { fr: "défini par le groupe", en: "defined by group", ar: "محدد من قبل المجموعة" },
     noTeacher:       { fr: "— Aucun —", en: "— None —", ar: "— لا أحد —" },
+    currentSurahNote:{ fr: "Sourah en cours / Note", en: "Current Surah / Note", ar: "السورة الحالية / ملاحظة" },
+    currentSurahHint:{ fr: "Indiquez la sourah et le verset que l'élève récite actuellement", en: "Enter the surah and verse the student is currently reciting", ar: "أدخل السورة والآية التي يقرأها الطالب حالياً" },
     cancel:          { fr: "Annuler", en: "Cancel", ar: "إلغاء" },
     create:          { fr: "Créer l'élève", en: "Create student", ar: "إنشاء الطالب" },
     creating:        { fr: "Création…", en: "Creating…", ar: "جارٍ الإنشاء…" },
@@ -488,6 +490,8 @@ export const translations = {
     manage:          { fr: "Gérer →", en: "Manage →", ar: "← إدارة" },
     statusActive:    { fr: "Actif", en: "Active", ar: "نشط" },
     statusInact:     { fr: "Inactif", en: "Inactive", ar: "غير نشط" },
+    delete:          { fr: "Supprimer", en: "Delete", ar: "حذف" },
+    deleteConfirm:   { fr: "Voulez-vous vraiment supprimer ce groupe ?", en: "Are you sure you want to delete this group?", ar: "هل أنت متأكد من حذف هذه المجموعة؟" },
   },
 
   // ─── teacherProfileClient (components/teacher/TeacherProfileClient.tsx) ─────────────────────────────────────────────
@@ -1704,6 +1708,7 @@ export const translations = {
     status:          { fr: "Statut",                    en: "Status",                  ar: "الحالة" },
     active:          { fr: "Actif",                     en: "Active",                  ar: "نشط" },
     inactive:        { fr: "Inactif",                   en: "Inactive",                ar: "غير نشط" },
+    currentSurah:    { fr: "Sourah en cours",            en: "Current Surah",           ar: "السورة الحالية" },
     contact:         { fr: "Contact",                   en: "Contact",                 ar: "جهة الاتصال" },
     email:           { fr: "Email",                     en: "Email",                   ar: "البريد الإلكتروني" },
     phone:           { fr: "Téléphone",                 en: "Phone",                   ar: "الهاتف" },
