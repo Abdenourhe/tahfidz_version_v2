@@ -1,18 +1,23 @@
-// middleware.ts (racine) — Protection des routes TAHFIDZ
+// middleware.ts — Protection des routes TAHFIDZ (NextAuth v5)
 import { auth } from "@/auth"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 const PUBLIC_PATHS = [
+  "/",
   "/login",
   "/register-school",
+  "/forgot-password",
+  "/reset-password",
+  "/parent/register",
   "/api/register-school",
+  "/api/forgot-password",
+  "/api/reset-password",
   "/api/auth",
   "/api/health",
   "/api/internal",
 ]
 
-// Ordre : routes spécifiques en premier
 const ROLE_ROUTES: Array<{ prefix: string; allowed: string[] }> = [
   { prefix: "/admin/super",       allowed: ["SUPERADMIN"] },
   { prefix: "/api/admin/schools", allowed: ["SUPERADMIN"] },
@@ -62,5 +67,6 @@ function getDashboard(role: string): string {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)" ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)",
+  ],
 }
