@@ -70,12 +70,13 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
   const [selectedGroupInfo, setSelectedGroupInfo] = useState<Group | null>(null)
   const [loadingData, setLoadingData] = useState(true)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [nationalityCustom, setNationalityCustom] = useState("")
+  const [languageCustom, setLanguageCustom] = useState("")
 
   const languageOptions = [
     { key: "ar", label: L === "ar" ? "العربية" : L === "en" ? "Arabic" : "Arabe" },
     { key: "fr", label: L === "ar" ? "الفرنسية" : L === "en" ? "French" : "Français" },
     { key: "en", label: L === "ar" ? "الإنجليزية" : L === "en" ? "English" : "Anglais" },
-    { key: "ber", label: L === "ar" ? "الأمازيغية" : L === "en" ? "Tamazight" : "Tamazight" },
     { key: "other", label: L === "ar" ? "أخرى" : L === "en" ? "Other" : "Autre" },
   ]
 
@@ -99,6 +100,7 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
     { value: "MR", label: L === "ar" ? "موريتاني(ة)" : L === "en" ? "Mauritanian" : "Mauritanien(ne)" },
     { value: "SO", label: L === "ar" ? "صومالي(ة)" : L === "en" ? "Somali" : "Somalien(ne)" },
     { value: "TR", label: L === "ar" ? "تركي(ة)" : L === "en" ? "Turkish" : "Turc/Turque" },
+    { value: "CA", label: L === "ar" ? "كندي(ة)" : L === "en" ? "Canadian" : "Canadien(ne)" },
     { value: "OTHER", label: L === "ar" ? "أخرى" : L === "en" ? "Other" : "Autre" },
   ]
 
@@ -156,11 +158,14 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
             postalCode: s.postalCode || "",
             medicalNotes: s.medicalNotes || "",
             currentSurahNote: s.currentSurahNote || "",
-            nationality: s.nationality || "",
+            nationality: nationalityOptions.some(o => o.value === s.nationality) ? s.nationality : (s.nationality ? "OTHER" : ""),
             spokenLanguages: s.spokenLanguages || "",
             status: s.user.isActive ? "ACTIVE" : "INACTIVE",
-            password: "",
           })
+          if (s.nationality && !nationalityOptions.some(o => o.value === s.nationality)) {
+            setNationalityCustom(s.nationality)
+          }
+          setValue("password", "")
           if (s.user.avatar) setPhotoPreview(s.user.avatar)
         }
       } catch (err: any) {
@@ -190,6 +195,11 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
     setSuccess(false)
     try {
       const payload: any = { ...data }
+      if (payload.nationality === "OTHER") payload.nationality = nationalityCustom || "OTHER"
+      const langs = (payload.spokenLanguages || "").split(",").map((s: string) => s.trim()).filter(Boolean)
+      if (langs.includes("other") && languageCustom) {
+        payload.spokenLanguages = langs.filter((k: string) => k !== "other").concat(languageCustom).join(",")
+      }
       if (photoPreview) {
         payload.photo = photoPreview
         if (isEdit) {
@@ -326,6 +336,15 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
+              {watch("nationality") === "OTHER" && (
+                <input
+                  type="text"
+                  value={nationalityCustom}
+                  onChange={(e) => setNationalityCustom(e.target.value)}
+                  placeholder={L === "ar" ? "أدخل الجنسية" : L === "en" ? "Enter nationality" : "Précisez la nationalité"}
+                  className="w-full mt-2 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green text-sm"
+                />
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 flex items-center gap-1.5">
@@ -353,6 +372,15 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
                   )
                 })}
               </div>
+              {(watch("spokenLanguages") || "").split(",").map(s => s.trim()).includes("other") && (
+                <input
+                  type="text"
+                  value={languageCustom}
+                  onChange={(e) => setLanguageCustom(e.target.value)}
+                  placeholder={L === "ar" ? "أدخل اللغة" : L === "en" ? "Enter language" : "Précisez la langue"}
+                  className="w-full mt-2 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green text-sm"
+                />
+              )}
             </div>
           </div>
 

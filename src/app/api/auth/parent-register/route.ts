@@ -15,7 +15,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Body JSON invalide" }, { status: 400 })
     }
 
-    const { fullName, fullNameAr, email, phone, gender, relation, password, inviteCode, studentCode } = body
+    const { fullName, fullNameAr, email, phone, gender, relation, password, inviteCode, studentCode, nationality, spokenLanguages } = body
 
     if (!fullName || !email || !password || !inviteCode || !studentCode) {
       return NextResponse.json({ error: "Tous les champs obligatoires ne sont pas remplis" }, { status: 400 })
@@ -139,6 +139,17 @@ export async function POST(req: Request) {
           isVerified: true,
         },
       })
+
+      // Mettre à jour nationalité/langues de l'élève si fournies
+      if (nationality || spokenLanguages) {
+        await tx.student.update({
+          where: { id: invite.studentId },
+          data: {
+            nationality: nationality || undefined,
+            spokenLanguages: spokenLanguages || undefined,
+          },
+        })
+      }
 
       await tx.parentInvite.update({
         where: { id: invite.id },

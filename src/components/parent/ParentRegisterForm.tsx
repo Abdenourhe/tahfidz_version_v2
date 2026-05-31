@@ -5,7 +5,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { useLanguage } from "@/contexts/LanguageContext"
-import { Loader2, Eye, EyeOff, CheckCircle2, AlertTriangle, School, User, Mail, Phone, Lock } from "lucide-react"
+import { Loader2, Eye, EyeOff, CheckCircle2, AlertTriangle, School, User, Mail, Phone, Lock, Globe, Languages } from "lucide-react"
 
 interface InviteData {
   valid: boolean
@@ -54,6 +54,10 @@ const TEXTS: Record<string, Record<string, string>> = {
   successMsg:    { fr: "Redirection vers votre tableau de bord…", en: "Redirecting to your dashboard…", ar: "جارٍ إعادة التوجيه إلى لوحة التحكم…" },
   linkedSuccess: { fr: "Lien ajouté ! Connectez-vous pour accéder à votre compte.", en: "Link added! Log in to access your account.", ar: "تمت إضافة الرابط! سجل الدخول للوصول إلى حسابك." },
   goToLogin:     { fr: "Aller à la connexion", en: "Go to login", ar: "الذهاب إلى تسجيل الدخول" },
+  nationality:   { fr: "Nationalité de l'enfant", en: "Child's nationality", ar: "جنسية الطفل" },
+  spokenLanguages: { fr: "Langues parlées par l'enfant", en: "Child's spoken languages", ar: "اللغات المحكية من قبل الطفل" },
+  nationalityOther: { fr: "Précisez la nationalité", en: "Specify nationality", ar: "حدد الجنسية" },
+  languageOther: { fr: "Précisez la langue", en: "Specify language", ar: "حدد اللغة" },
 }
 
 const ERROR_TEXTS: Record<string, Record<string, string>> = {
@@ -89,6 +93,10 @@ export function ParentRegisterForm({ inviteCode, studentCode, inviteData }: Prop
     relation: "",
     password: "",
     confirmPassword: "",
+    nationality: "",
+    nationalityCustom: "",
+    spokenLanguages: "",
+    languageCustom: "",
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
@@ -129,6 +137,8 @@ export function ParentRegisterForm({ inviteCode, studentCode, inviteData }: Prop
           password: form.password,
           inviteCode,
           studentCode,
+          nationality: form.nationality === "OTHER" ? (form.nationalityCustom || "OTHER") : form.nationality,
+          spokenLanguages: form.spokenLanguages.split(",").map((s: string) => s.trim()).filter((k: string) => k !== "other").concat(form.languageCustom || "").filter(Boolean).join(","),
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -234,6 +244,93 @@ export function ParentRegisterForm({ inviteCode, studentCode, inviteData }: Prop
         )}
 
         <form onSubmit={onSubmit} className="space-y-4">
+          {/* Infos complémentaires élève */}
+          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 p-4 space-y-4">
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{L === "ar" ? "معلومات إضافية عن الطفل" : L === "en" ? "Additional child information" : "Informations complémentaires sur l'enfant"}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 flex items-center gap-1.5">
+                  <Globe size={14} /> {tx("nationality", L)}
+                </label>
+                <select
+                  value={form.nationality}
+                  onChange={(e) => handleChange("nationality", e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+                >
+                  <option value="">{L === "ar" ? "— اختر —" : L === "en" ? "— Select —" : "— Sélectionner —"}</option>
+                  <option value="DZ">{L === "ar" ? "جزائري(ة)" : L === "en" ? "Algerian" : "Algérien(ne)"}</option>
+                  <option value="MA">{L === "ar" ? "مغربي(ة)" : L === "en" ? "Moroccan" : "Marocain(e)"}</option>
+                  <option value="TN">{L === "ar" ? "تونسي(ة)" : L === "en" ? "Tunisian" : "Tunisien(ne)"}</option>
+                  <option value="EG">{L === "ar" ? "مصري(ة)" : L === "en" ? "Egyptian" : "Égyptien(ne)"}</option>
+                  <option value="SA">{L === "ar" ? "سعودي(ة)" : L === "en" ? "Saudi" : "Saoudien(ne)"}</option>
+                  <option value="AE">{L === "ar" ? "إماراتي(ة)" : L === "en" ? "Emirati" : "Émirien(ne)"}</option>
+                  <option value="QA">{L === "ar" ? "قطري(ة)" : L === "en" ? "Qatari" : "Qatari(e)"}</option>
+                  <option value="KW">{L === "ar" ? "كويتي(ة)" : L === "en" ? "Kuwaiti" : "Koweïtien(ne)"}</option>
+                  <option value="LB">{L === "ar" ? "لبناني(ة)" : L === "en" ? "Lebanese" : "Libanais(e)"}</option>
+                  <option value="SY">{L === "ar" ? "سوري(ة)" : L === "en" ? "Syrian" : "Syrien(ne)"}</option>
+                  <option value="IQ">{L === "ar" ? "عراقي(ة)" : L === "en" ? "Iraqi" : "Irakien(ne)"}</option>
+                  <option value="JO">{L === "ar" ? "أردني(ة)" : L === "en" ? "Jordanian" : "Jordanien(ne)"}</option>
+                  <option value="PS">{L === "ar" ? "فلسطيني(ة)" : L === "en" ? "Palestinian" : "Palestinien(ne)"}</option>
+                  <option value="SD">{L === "ar" ? "سوداني(ة)" : L === "en" ? "Sudanese" : "Soudanais(e)"}</option>
+                  <option value="LY">{L === "ar" ? "ليبي(ة)" : L === "en" ? "Libyan" : "Libyen(ne)"}</option>
+                  <option value="MR">{L === "ar" ? "موريتاني(ة)" : L === "en" ? "Mauritanian" : "Mauritanien(ne)"}</option>
+                  <option value="SO">{L === "ar" ? "صومالي(ة)" : L === "en" ? "Somali" : "Somalien(ne)"}</option>
+                  <option value="TR">{L === "ar" ? "تركي(ة)" : L === "en" ? "Turkish" : "Turc/Turque"}</option>
+                  <option value="CA">{L === "ar" ? "كندي(ة)" : L === "en" ? "Canadian" : "Canadien(ne)"}</option>
+                  <option value="OTHER">{L === "ar" ? "أخرى" : L === "en" ? "Other" : "Autre"}</option>
+                </select>
+                {form.nationality === "OTHER" && (
+                  <input
+                    type="text"
+                    value={form.nationalityCustom}
+                    onChange={(e) => handleChange("nationalityCustom", e.target.value)}
+                    placeholder={tx("nationalityOther", L)}
+                    className="w-full mt-2 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+                  />
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 flex items-center gap-1.5">
+                  <Languages size={14} /> {tx("spokenLanguages", L)}
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {["ar", "fr", "en", "other"].map((key) => {
+                    const current = form.spokenLanguages.split(",").map(s => s.trim()).filter(Boolean)
+                    const checked = current.includes(key)
+                    const labelMap: Record<string, Record<string, string>> = {
+                      fr: { ar: "Arabe", fr: "Français", en: "Anglais", other: "Autre" },
+                      en: { ar: "Arabic", fr: "French", en: "English", other: "Other" },
+                      ar: { ar: "العربية", fr: "الفرنسية", en: "الإنجليزية", other: "أخرى" },
+                    }
+                    return (
+                      <label key={key} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border cursor-pointer transition ${checked ? "bg-emerald-50 border-emerald-300 text-emerald-700" : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300"}`}>
+                        <input
+                          type="checkbox"
+                          className="sr-only"
+                          checked={checked}
+                          onChange={(e) => {
+                            const next = e.target.checked ? [...current, key] : current.filter(k => k !== key)
+                            handleChange("spokenLanguages", next.join(","))
+                          }}
+                        />
+                        {labelMap[L]?.[key] ?? key}
+                      </label>
+                    )
+                  })}
+                </div>
+                {form.spokenLanguages.split(",").map(s => s.trim()).includes("other") && (
+                  <input
+                    type="text"
+                    value={form.languageCustom}
+                    onChange={(e) => handleChange("languageCustom", e.target.value)}
+                    placeholder={tx("languageOther", L)}
+                    className="w-full mt-2 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{tx("fullName", L)}</label>
