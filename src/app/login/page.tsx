@@ -50,6 +50,7 @@ function LoginForm() {
   const searchParams  = useSearchParams() ?? new URLSearchParams()
   const callbackUrl   = searchParams.get("callbackUrl") || "/"
   const [showPwd, setShowPwd]         = useState(false)
+  const [rememberMe, setRememberMe]   = useState(false)
   const [error, setError]             = useState<string | null>(null)
 
   const [activeTab, setActiveTab]     = useState<"school" | "super">("school")
@@ -212,7 +213,7 @@ function LoginForm() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="flex-1 bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-6 xl:p-7 overflow-hidden flex flex-col justify-center"
+              className="flex-1 bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-6 xl:p-7 overflow-hidden flex flex-col justify-center w-full"
             >
               {/* En-tête */}
               <div className="mb-5 text-center">
@@ -226,14 +227,14 @@ function LoginForm() {
               </div>
 
               {/* Features en colonne unique centrée */}
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-3 w-full">
                 {features.map((f, i) => (
                   <motion.div
                     key={i}
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.35 + i * 0.1 }}
-                    className="flex items-center gap-3.5 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition"
+                    className="flex items-center gap-3.5 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition w-full"
                   >
                     <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
                       <f.icon size={16} className="text-emerald-300" />
@@ -424,8 +425,19 @@ function LoginForm() {
                     {schoolForm.formState.errors.password && <p className="mt-1.5 text-xs text-red-600">{schoolForm.formState.errors.password.message}</p>}
                   </div>
 
-                  {/* Forgot password */}
-                  <div className="flex justify-end">
+                  {/* Remember me + Forgot password */}
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-300 text-tahfidz-green focus:ring-tahfidz-green/50 cursor-pointer"
+                      />
+                      <span className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition">
+                        Memorise-moi
+                      </span>
+                    </label>
                     <Link href="/forgot-password" className="text-xs text-tahfidz-green hover:text-emerald-700 font-medium transition">
                       Mot de passe oublie ?
                     </Link>
