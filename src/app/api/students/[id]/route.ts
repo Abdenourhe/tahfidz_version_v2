@@ -30,6 +30,7 @@ export async function GET(req: NextRequest, { params }: Params) {
         city: true,
         postalCode: true,
         medicalNotes: true,
+        currentSurahNote: true,
         totalStars: true,
         currentStreak: true,
         groupId: true,
@@ -197,7 +198,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const body = await req.json()
     const { email, phone, emergencyPhone, fullName, fullNameAr, gender,
             isActive, groupId, teacherId, address, city, postalCode,
-            medicalNotes, avatar } = body
+            medicalNotes, currentSurahNote, avatar } = body
 
     const existingStudent = await prisma.student.findUnique({ where: { id }, include: { user: true } })
     if (!existingStudent) return NextResponse.json({ error: "Élève non trouvé" }, { status: 404 })
@@ -226,6 +227,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (city !== undefined)      studentUpdate.city      = city || null
     if (postalCode !== undefined) studentUpdate.postalCode = postalCode || null
     if (medicalNotes !== undefined) studentUpdate.medicalNotes = medicalNotes || null
+    if (currentSurahNote !== undefined) studentUpdate.currentSurahNote = currentSurahNote || null
 
     const result = await prisma.$transaction(async (tx) => {
       if (Object.keys(userUpdate).length > 0) {

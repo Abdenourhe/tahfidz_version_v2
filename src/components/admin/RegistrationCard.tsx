@@ -68,6 +68,16 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
     return g === "MALE" ? t("male") : t("female")
   }
 
+  const levelLabel = (lvl?: string | null) => {
+    if (!lvl) return ""
+    const map: Record<string, Record<string, string>> = {
+      fr: { beginner: "Débutant", intermediate: "Intermédiaire", advanced: "Avancé" },
+      en: { beginner: "Beginner", intermediate: "Intermediate", advanced: "Advanced" },
+      ar: { beginner: "مبتدئ", intermediate: "متوسط", advanced: "متقدم" },
+    }
+    return map[L]?.[lvl] ?? lvl
+  }
+
   const formatSchedule = (schedule?: Record<string, string> | null) => {
     if (!schedule || Object.keys(schedule).length === 0) return null
     const dayNames: Record<string, string> = {
@@ -179,16 +189,20 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
             <h3 className="text-sm font-bold text-tahfidz-green uppercase tracking-wider mb-4 flex items-center gap-2">
               <GraduationCap size={16} /> {t("schooling")}
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <p className="text-xs text-gray-500">{t("group")}</p>
                 <p className="font-semibold text-gray-800">{student.group?.name || "—"}</p>
-                <p className="text-xs text-gray-400">{student.group?.level || ""}</p>
+                <p className="text-xs text-gray-400">{levelLabel(student.group?.level)}</p>
                 {formatSchedule(student.group?.schedule) && (
                   <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
                     <Clock size={11} /> {formatSchedule(student.group?.schedule)}
                   </p>
                 )}
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">{t("currentSurah") || "Sourah en cours"}</p>
+                <p className="font-semibold text-gray-800">{student.currentSurahNote || "—"}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-500">{t("teacher")}</p>

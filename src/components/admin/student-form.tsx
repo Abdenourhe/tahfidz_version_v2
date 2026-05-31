@@ -28,6 +28,7 @@ const baseSchema = z.object({
   city: z.string().optional(),
   postalCode: z.string().optional(),
   medicalNotes: z.string().optional(),
+  currentSurahNote: z.string().optional(),
   status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
 })
 
@@ -121,6 +122,7 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
             city: s.city || "",
             postalCode: s.postalCode || "",
             medicalNotes: s.medicalNotes || "",
+            currentSurahNote: s.currentSurahNote || "",
             status: s.user.isActive ? "ACTIVE" : "INACTIVE",
             password: "",
           })
@@ -365,6 +367,16 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
                 </select>
               )}
             </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("currentSurahNote") || "Sourah en cours / Note de mémorisation"}</label>
+            <input
+              type="text"
+              placeholder={L === "ar" ? "مثال: البقرة - الآية 45" : L === "en" ? "Ex: Al-Baqarah - verse 45" : "Ex: Al-Baqarah - verset 45"}
+              className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green text-sm"
+              {...register("currentSurahNote")}
+            />
+            <p className="text-xs text-gray-400 mt-1">{t("currentSurahHint") || "Indiquez la sourah et le verset que l'élève récite actuellement"}</p>
           </div>
         </div>
 
