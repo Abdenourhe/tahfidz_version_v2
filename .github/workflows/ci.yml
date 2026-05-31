@@ -22,7 +22,6 @@ concurrency:
 # ─── Variables globales ────────────────────────────────────────────────────────
 env:
   NODE_VERSION: "20"
-  PNPM_VERSION: "9"
 
 # ─────────────────────────────────────────────────────────────────────────────
 jobs:
@@ -34,22 +33,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v3
-        with: { version: "${{ env.PNPM_VERSION }}" }
-
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+          cache: npm
 
       - name: Installer les dépendances
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: ESLint
-        run: pnpm lint
+        run: npm run lint
 
       - name: TypeScript
-        run: pnpm type-check
+        run: npm run type-check
 
   # ── 2. Tests unitaires ───────────────────────────────────────────────────────
   test:
@@ -59,21 +55,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v3
-        with: { version: "${{ env.PNPM_VERSION }}" }
-
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+          cache: npm
 
-      - run: pnpm install --frozen-lockfile
+      - run: npm ci
 
       - name: Générer le client Prisma
-        run: pnpm prisma generate
+        run: npx prisma generate
 
       - name: Vitest
-        run: pnpm test --coverage
+        run: npm run test -- --coverage
         env:
           DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/tahfidz_test"
 
@@ -93,19 +86,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v3
-        with: { version: "${{ env.PNPM_VERSION }}" }
-
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+          cache: npm
 
-      - run: pnpm install --frozen-lockfile
+      - run: npm ci
 
       # Migrations Prisma en staging AVANT le déploiement
       - name: Migrations Prisma staging
-        run: pnpm prisma migrate deploy
+        run: npx prisma migrate deploy
         env:
           DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
 
@@ -128,19 +118,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v3
-        with: { version: "${{ env.PNPM_VERSION }}" }
-
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+          cache: npm
 
-      - run: pnpm install --frozen-lockfile
+      - run: npm ci
 
       # Migrations production — Railway DB
       - name: Migrations Prisma production
-        run: pnpm prisma migrate deploy
+        run: npx prisma migrate deploy
         env:
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
 
@@ -152,10 +139,3 @@ jobs:
           vercel-org-id:  ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-args:    "--prod"
-
-      # Workers BullMQ → Railway (service séparé)
-      - name: Deploy Workers Railway
-        uses: bervProject/railway-deploy@v1
-        with:
-          railway_token: ${{ secrets.RAILWAY_TOKEN }}
-          service:       tahfidz-workers
