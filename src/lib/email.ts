@@ -1,10 +1,7 @@
 // src/lib/email.ts
-// Service email avec Resend
+// Templates email — envoi délégué à src/lib/mail.ts (SendGrid)
 
-import { Resend } from "resend"
-
-const resend = new Resend(process.env.RESEND_API_KEY ?? "")
-const FROM = process.env.RESEND_FROM_EMAIL ?? "noreply@tahfidz.com"
+import { sendMail } from "@/lib/mail"
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "TAHFIDZ"
 
@@ -137,8 +134,7 @@ export async function sendWelcomeEmail({
     ${btn(`${APP_URL}/login`, "Accéder à mon compte")}
   `
 
-  return resend.emails.send({
-    from: FROM,
+  return sendMail({
     to,
     subject: isAr ? `مرحباً بك في ${APP_NAME} 🌟` : `Bienvenue sur ${APP_NAME} 🌟`,
     html: baseTemplate(content, locale),
@@ -188,8 +184,7 @@ export async function sendMemorizationApprovedEmail({
     ${btn(`${APP_URL}/student/progress`, "Continuer la mémorisation")}
   `
 
-  return resend.emails.send({
-    from: FROM,
+  return sendMail({
     to,
     subject: isAr ? `مبروك! سورة ${surahNameAr} محفوظة ✓` : `Félicitations ! ${surahName} mémorisée ✓`,
     html: baseTemplate(content, locale),
@@ -253,8 +248,7 @@ export async function sendEvaluationResultEmail({
     ${btn(`${APP_URL}/student/progress`, "Voir ma progression")}
   `
 
-  return resend.emails.send({
-    from: FROM,
+  return sendMail({
     to,
     subject: isAr ? `نتيجة تقييم سورة ${surahNameAr}` : `Résultat de l'évaluation — ${surahName}`,
     html: baseTemplate(content, locale),
@@ -294,8 +288,7 @@ export async function sendPasswordResetEmail({
     <p style="text-align:center;color:#9CA3AF;font-size:12px;">Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>
   `
 
-  return resend.emails.send({
-    from: FROM,
+  return sendMail({
     to,
     subject: isAr ? "إعادة تعيين كلمة المرور" : "Réinitialisation de votre mot de passe",
     html: baseTemplate(content, locale),
@@ -355,8 +348,7 @@ export async function sendBadgeEarnedEmail({
     ${btn(`${APP_URL}/student/badges`, "Voir mes badges")}
   `
 
-  return resend.emails.send({
-    from: FROM,
+  return sendMail({
     to,
     subject: isAr ? `وسام جديد: ${badgeNameAr} ${badgeIcon}` : `Nouveau badge : ${badgeName} ${badgeIcon}`,
     html: baseTemplate(content, locale),

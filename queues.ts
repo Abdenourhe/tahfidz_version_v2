@@ -140,7 +140,7 @@ async function sendWhatsApp(phone: string, message: string) {
 }
 
 async function sendEmail(to: string, subject: string, body: string) {
-  // Brancher : Resend, SendGrid, Postmark
-  // await resend.emails.send({ from: "noreply@tahfidz.app", to, subject, text: body })
+  // Brancher : SendGrid API
+  // await sendMail({ to, subject, text: body })
   console.info(`[Email → ${to}] ${subject}`);
 }

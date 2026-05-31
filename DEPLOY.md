@@ -3,7 +3,7 @@
 ## Prérequis
 - Compte [Vercel](https://vercel.com)
 - Compte [Supabase](https://supabase.com) (PostgreSQL gratuit)
-- Compte [Resend](https://resend.com) (emails gratuit)
+- Compte [SendGrid](https://sendgrid.com) (emails)
 - Compte [Uploadthing](https://uploadthing.com) (fichiers gratuit)
 
 ---
@@ -17,11 +17,11 @@
 
 ---
 
-## Étape 2 — Resend (emails)
+## Étape 2 — SendGrid (emails)
 
-1. Créer un compte sur [resend.com](https://resend.com)
-2. **API Keys** → Créer une clé → Copier `re_XXXX`
-3. **Domains** → Ajouter votre domaine (ou utiliser `onboarding@resend.dev` en test)
+1. Créer un compte sur [sendgrid.com](https://sendgrid.com)
+2. **Settings → API Keys** → Create API Key → Copier `SG.xxx` (Full Access ou Mail Send)
+3. **Settings → Sender Authentication** → Single Sender Verification → Ajouter et vérifier votre email
 
 ---
 
@@ -43,8 +43,8 @@ AUTH_SECRET="votre-secret-32-chars"  # openssl rand -base64 32
 NEXTAUTH_URL="http://localhost:3000"
 UPLOADTHING_SECRET="sk_live_..."
 UPLOADTHING_APP_ID="your-app-id"
-RESEND_API_KEY="re_..."
-RESEND_FROM_EMAIL="noreply@votre-domaine.com"
+SENDGRID_API_KEY="SG.xxx"
+SMTP_FROM="TAHFIDZ <ton-email-verifie@gmail.com>"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 NEXT_PUBLIC_APP_NAME="Tahfidz Pro"
 ```
@@ -110,8 +110,8 @@ Dans le dashboard Vercel → **Settings → Environment Variables**, ajouter :
 | `NEXTAUTH_URL` | `https://votre-app.vercel.app` |
 | `UPLOADTHING_SECRET` | Clé Uploadthing |
 | `UPLOADTHING_APP_ID` | ID Uploadthing |
-| `RESEND_API_KEY` | Clé Resend |
-| `RESEND_FROM_EMAIL` | Email expéditeur |
+| `SENDGRID_API_KEY` | Clé API SendGrid (SG.xxx) |
+| `SMTP_FROM` | Email vérifié SendGrid |
 | `NEXT_PUBLIC_APP_URL` | `https://votre-app.vercel.app` |
 | `NEXT_PUBLIC_APP_NAME` | `Tahfidz Pro` |
 
@@ -174,7 +174,7 @@ Styling       : Tailwind CSS + shadcn/ui
 Auth          : NextAuth.js v5 (JWT)
 ORM           : Prisma
 Base de données: PostgreSQL (Supabase)
-Emails        : Resend
+Emails        : SendGrid API
 Fichiers      : Uploadthing
 Graphiques    : Recharts
 Animations    : Framer Motion

@@ -39,13 +39,14 @@ export async function sendMail({ to, subject, text, html }: SendMailOptions) {
     const fromEmail = SMTP_FROM.match(/<(.+)>/)?.[1] ?? SMTP_FROM
     const fromName = SMTP_FROM.match(/(.*)\s+</)?.[1]?.trim() ?? "TAHFIDZ"
 
-    await sgMail.send({
+    const msg: any = {
       to,
       from: { email: fromEmail, name: fromName },
       subject,
-      text,
-      html,
-    })
+      ...(text ? { text } : {}),
+      ...(html ? { html } : {}),
+    }
+    await sgMail.send(msg)
 
     console.log("[MAIL] OK — Envoyé a", to, "| Sujet:", subject)
     return { success: true }

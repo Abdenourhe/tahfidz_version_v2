@@ -249,7 +249,7 @@
 | `prisma-tenant.ts` | ~30 | Helper Prisma multi-tenant |
 | `audit.ts` | 218 | Service audit logs |
 | `badges.ts` | 147 | Logique badges/récompenses |
-| `email.ts` | 364 | Service email (Resend) |
+| `email.ts` | 364 | Templates email (SendGrid) |
 | `utils.ts` | 151 | Fonctions utilitaires |
 | `i18n/translations.ts` | 253 | Dictionnaire FR/EN/AR |
 | `i18n/pageTranslations.ts` | 164 | Traductions de pages |
@@ -303,7 +303,7 @@
 | `bcryptjs` | ^2.4.3 | Hachage mots de passe |
 | `bullmq` | ^5.16.0 | File de tâches (jobs) |
 | `ioredis` | ^5.4.1 | Client Redis (pour BullMQ) |
-| `resend` | ^6.12.2 | Envoi emails |
+| `sendgrid/mail` | ^8.1.4 | Envoi emails (SendGrid API) |
 | `zod` | ^3.25.76 | Validation schémas |
 | `react-hook-form` | ^7.75.0 | Formulaires |
 | `@hookform/resolvers` | ^5.2.2 | Résolveurs Zod pour RHF |

@@ -1,6 +1,7 @@
 // src/app/api/messages/route.ts
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { sendMail, isMailConfigured } from "@/lib/mail"
 import { NextResponse } from "next/server"
 import { z } from "zod"
 
@@ -51,13 +52,10 @@ export async function POST(req: Request) {
       data: { messageId: message.id, fromUserId: session.user.id },
     },
   })
-  // Email if RESEND configured
-  if (toUser.email && process.env.RESEND_API_KEY) {
+  // Email notification via SendGrid
+  if (toUser.email && isMailConfigured()) {
     try {
-      const { Resend } = await import("resend")
-      const resend = new Resend(process.env.RESEND_API_KEY)
-      await resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL ?? "noreply@tahfidz.com",
+      await sendMail({
         to: toUser.email,
         subject: `[TAHFIDZ] ${subject}`,
         html: `<div style="font-family:sans-serif;padding:24px;max-width:560px;"><h2>📬 Nouveau message</h2><p><strong>De :</strong> ${fromUser?.fullName ?? "Inconnu"}</p><p><strong>Objet :</strong> ${subject}</p><div style="background:#f9fafb;padding:16px;border-radius:8px;white-space:pre-wrap;">${msgBody}</div><p style="margin-top:20px;"><a href="${process.env.NEXT_PUBLIC_APP_URL}" style="background:#1D9E75;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;">Voir sur TAHFIDZ</a></p></div>`,
