@@ -15,6 +15,8 @@ export default async function TeacherStudentDetailPage({ params }: { params: Pro
       id: true,
       dateOfBirth: true,
       emergencyPhone: true,
+      nationality: true,
+      spokenLanguages: true,
       totalStars: true,
       user: { select: { fullName: true, fullNameAr: true, email: true, phone: true, gender: true, isActive: true, avatar: true } },
       group: { select: { name: true } },

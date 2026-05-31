@@ -31,6 +31,8 @@ export async function GET(req: NextRequest, { params }: Params) {
         postalCode: true,
         medicalNotes: true,
         currentSurahNote: true,
+        nationality: true,
+        spokenLanguages: true,
         totalStars: true,
         currentStreak: true,
         groupId: true,
@@ -198,7 +200,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const body = await req.json()
     const { email, phone, emergencyPhone, fullName, fullNameAr, gender,
             isActive, groupId, teacherId, address, city, postalCode,
-            medicalNotes, currentSurahNote, avatar } = body
+            medicalNotes, currentSurahNote, nationality, spokenLanguages, avatar } = body
 
     const existingStudent = await prisma.student.findUnique({ where: { id }, include: { user: true } })
     if (!existingStudent) return NextResponse.json({ error: "Élève non trouvé" }, { status: 404 })
@@ -228,6 +230,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (postalCode !== undefined) studentUpdate.postalCode = postalCode || null
     if (medicalNotes !== undefined) studentUpdate.medicalNotes = medicalNotes || null
     if (currentSurahNote !== undefined) studentUpdate.currentSurahNote = currentSurahNote || null
+    if (nationality !== undefined) studentUpdate.nationality = nationality || null
+    if (spokenLanguages !== undefined) studentUpdate.spokenLanguages = spokenLanguages || null
 
     const result = await prisma.$transaction(async (tx) => {
       if (Object.keys(userUpdate).length > 0) {

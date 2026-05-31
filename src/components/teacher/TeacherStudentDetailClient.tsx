@@ -4,7 +4,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
-import { ArrowLeft, Star, BookOpen, CalendarCheck, ClipboardList, NotebookPen } from "lucide-react"
+import { ArrowLeft, Star, BookOpen, CalendarCheck, ClipboardList, NotebookPen, Globe, Languages } from "lucide-react"
 import { formatDate, statusLabel, scoreToGrade, formatAge } from "@/lib/utils"
 import { AvatarLightbox } from "@/components/AvatarLightbox"
 import { TeacherDailyLogModal } from "@/components/teacher/TeacherDailyLogModal"
@@ -40,6 +40,25 @@ export function TeacherStudentDetailClient({
     if (rel === "father") return t("father")
     if (rel === "mother") return t("mother")
     return t("guardian")
+  }
+
+  const nationalityLabel = (code?: string | null) => {
+    if (!code) return ""
+    const map: Record<string, Record<string, string>> = {
+      fr: { DZ: "Algérien(ne)", MA: "Marocain(e)", TN: "Tunisien(ne)", EG: "Égyptien(ne)", SA: "Saoudien(ne)", AE: "Émirien(ne)", QA: "Qatari(e)", KW: "Koweïtien(ne)", LB: "Libanais(e)", SY: "Syrien(ne)", IQ: "Irakien(ne)", JO: "Jordanien(ne)", PS: "Palestinien(ne)", SD: "Soudanais(e)", LY: "Libyen(ne)", MR: "Mauritanien(ne)", SO: "Somalien(ne)", TR: "Turc/Turque", OTHER: "Autre" },
+      en: { DZ: "Algerian", MA: "Moroccan", TN: "Tunisian", EG: "Egyptian", SA: "Saudi", AE: "Emirati", QA: "Qatari", KW: "Kuwaiti", LB: "Lebanese", SY: "Syrian", IQ: "Iraqi", JO: "Jordanian", PS: "Palestinian", SD: "Sudanese", LY: "Libyan", MR: "Mauritanian", SO: "Somali", TR: "Turkish", OTHER: "Other" },
+      ar: { DZ: "جزائري(ة)", MA: "مغربي(ة)", TN: "تونسي(ة)", EG: "مصري(ة)", SA: "سعودي(ة)", AE: "إماراتي(ة)", QA: "قطري(ة)", KW: "كويتي(ة)", LB: "لبناني(ة)", SY: "سوري(ة)", IQ: "عراقي(ة)", JO: "أردني(ة)", PS: "فلسطيني(ة)", SD: "سوداني(ة)", LY: "ليبي(ة)", MR: "موريتاني(ة)", SO: "صومالي(ة)", TR: "تركي(ة)", OTHER: "أخرى" },
+    }
+    return map[L]?.[code] ?? code
+  }
+
+  const languageLabel = (key: string) => {
+    const map: Record<string, Record<string, string>> = {
+      fr: { ar: "Arabe", fr: "Français", en: "Anglais", ber: "Tamazight", other: "Autre" },
+      en: { ar: "Arabic", fr: "French", en: "English", ber: "Tamazight", other: "Other" },
+      ar: { ar: "العربية", fr: "الفرنسية", en: "الإنجليزية", ber: "الأمازيغية", other: "أخرى" },
+    }
+    return map[L]?.[key] ?? key
   }
 
   return (
@@ -89,6 +108,18 @@ export function TeacherStudentDetailClient({
               <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">{t("age")}</span><span className="font-medium text-gray-700 dark:text-gray-300">{formatAge(student.dateOfBirth)}</span></div>
               {student.user.phone && <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">{t("phone")}</span><span className="font-medium text-gray-700 dark:text-gray-300">{student.user.phone}</span></div>}
               {student.emergencyPhone && <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">{t("emergencyPhone") || "Urgence"}</span><span className="font-medium text-gray-700 dark:text-gray-300">{student.emergencyPhone}</span></div>}
+              {student.nationality && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400 flex items-center gap-1"><Globe size={12} /> {t("nationality") || "Nationalité"}</span>
+                  <span className="font-medium text-gray-700 dark:text-gray-300">{nationalityLabel(student.nationality)}</span>
+                </div>
+              )}
+              {student.spokenLanguages && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400 flex items-center gap-1"><Languages size={12} /> {t("spokenLanguages") || "Langues"}</span>
+                  <span className="font-medium text-gray-700 dark:text-gray-300">{student.spokenLanguages.split(",").map((k: string) => languageLabel(k.trim())).filter(Boolean).join(" · ")}</span>
+                </div>
+              )}
             </div>
           </div>
 

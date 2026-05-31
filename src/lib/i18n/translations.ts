@@ -365,6 +365,8 @@ export const translations = {
     noTeacher:       { fr: "— Aucun —", en: "— None —", ar: "— لا أحد —" },
     currentSurahNote:{ fr: "Sourah en cours / Note", en: "Current Surah / Note", ar: "السورة الحالية / ملاحظة" },
     currentSurahHint:{ fr: "Indiquez la sourah et le verset que l'élève récite actuellement", en: "Enter the surah and verse the student is currently reciting", ar: "أدخل السورة والآية التي يقرأها الطالب حالياً" },
+    nationality:     { fr: "Nationalité", en: "Nationality", ar: "الجنسية" },
+    spokenLanguages: { fr: "Langues parlées", en: "Spoken languages", ar: "اللغات المحكية" },
     cancel:          { fr: "Annuler", en: "Cancel", ar: "إلغاء" },
     create:          { fr: "Créer l'élève", en: "Create student", ar: "إنشاء الطالب" },
     creating:        { fr: "Création…", en: "Creating…", ar: "جارٍ الإنشاء…" },
@@ -1216,6 +1218,8 @@ export const translations = {
     guardian:        { fr: "Tuteur", en: "Guardian", ar: "ولي" },
     recentAtt:       { fr: "Présences récentes", en: "Recent attendance", ar: "الحضور الأخير" },
     dailyLog:        { fr: "Carnet du jour", en: "Daily log", ar: "سجل اليوم" },
+    nationality:     { fr: "Nationalité", en: "Nationality", ar: "الجنسية" },
+    spokenLanguages: { fr: "Langues parlées", en: "Spoken languages", ar: "اللغات المحكية" },
   },
 
   // ─── teacherDailyLog (components/teacher/TeacherDailyLogModal.tsx) ─────────────────────────────────────────────
@@ -1709,6 +1713,8 @@ export const translations = {
     active:          { fr: "Actif",                     en: "Active",                  ar: "نشط" },
     inactive:        { fr: "Inactif",                   en: "Inactive",                ar: "غير نشط" },
     currentSurah:    { fr: "Sourah en cours",            en: "Current Surah",           ar: "السورة الحالية" },
+    nationality:     { fr: "Nationalité",                en: "Nationality",             ar: "الجنسية" },
+    spokenLanguages: { fr: "Langues parlées",            en: "Spoken languages",        ar: "اللغات المحكية" },
     contact:         { fr: "Contact",                   en: "Contact",                 ar: "جهة الاتصال" },
     email:           { fr: "Email",                     en: "Email",                   ar: "البريد الإلكتروني" },
     phone:           { fr: "Téléphone",                 en: "Phone",                   ar: "الهاتف" },

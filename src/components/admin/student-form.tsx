@@ -9,7 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import {
   Loader2, ArrowLeft, CheckCircle2, Eye, EyeOff, Camera,
-  AlertCircle,
+  AlertCircle, Globe, Languages,
 } from "lucide-react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 
@@ -29,6 +29,8 @@ const baseSchema = z.object({
   postalCode: z.string().optional(),
   medicalNotes: z.string().optional(),
   currentSurahNote: z.string().optional(),
+  nationality: z.string().optional(),
+  spokenLanguages: z.string().optional(),
   status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
 })
 
@@ -68,6 +70,37 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
   const [selectedGroupInfo, setSelectedGroupInfo] = useState<Group | null>(null)
   const [loadingData, setLoadingData] = useState(true)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+
+  const languageOptions = [
+    { key: "ar", label: L === "ar" ? "العربية" : L === "en" ? "Arabic" : "Arabe" },
+    { key: "fr", label: L === "ar" ? "الفرنسية" : L === "en" ? "French" : "Français" },
+    { key: "en", label: L === "ar" ? "الإنجليزية" : L === "en" ? "English" : "Anglais" },
+    { key: "ber", label: L === "ar" ? "الأمازيغية" : L === "en" ? "Tamazight" : "Tamazight" },
+    { key: "other", label: L === "ar" ? "أخرى" : L === "en" ? "Other" : "Autre" },
+  ]
+
+  const nationalityOptions = [
+    { value: "", label: L === "ar" ? "— اختر —" : L === "en" ? "— Select —" : "— Sélectionner —" },
+    { value: "DZ", label: L === "ar" ? "جزائري(ة)" : L === "en" ? "Algerian" : "Algérien(ne)" },
+    { value: "MA", label: L === "ar" ? "مغربي(ة)" : L === "en" ? "Moroccan" : "Marocain(e)" },
+    { value: "TN", label: L === "ar" ? "تونسي(ة)" : L === "en" ? "Tunisian" : "Tunisien(ne)" },
+    { value: "EG", label: L === "ar" ? "مصري(ة)" : L === "en" ? "Egyptian" : "Égyptien(ne)" },
+    { value: "SA", label: L === "ar" ? "سعودي(ة)" : L === "en" ? "Saudi" : "Saoudien(ne)" },
+    { value: "AE", label: L === "ar" ? "إماراتي(ة)" : L === "en" ? "Emirati" : "Émirien(ne)" },
+    { value: "QA", label: L === "ar" ? "قطري(ة)" : L === "en" ? "Qatari" : "Qatari(e)" },
+    { value: "KW", label: L === "ar" ? "كويتي(ة)" : L === "en" ? "Kuwaiti" : "Koweïtien(ne)" },
+    { value: "LB", label: L === "ar" ? "لبناني(ة)" : L === "en" ? "Lebanese" : "Libanais(e)" },
+    { value: "SY", label: L === "ar" ? "سوري(ة)" : L === "en" ? "Syrian" : "Syrien(ne)" },
+    { value: "IQ", label: L === "ar" ? "عراقي(ة)" : L === "en" ? "Iraqi" : "Irakien(ne)" },
+    { value: "JO", label: L === "ar" ? "أردني(ة)" : L === "en" ? "Jordanian" : "Jordanien(ne)" },
+    { value: "PS", label: L === "ar" ? "فلسطيني(ة)" : L === "en" ? "Palestinian" : "Palestinien(ne)" },
+    { value: "SD", label: L === "ar" ? "سوداني(ة)" : L === "en" ? "Sudanese" : "Soudanais(e)" },
+    { value: "LY", label: L === "ar" ? "ليبي(ة)" : L === "en" ? "Libyan" : "Libyen(ne)" },
+    { value: "MR", label: L === "ar" ? "موريتاني(ة)" : L === "en" ? "Mauritanian" : "Mauritanien(ne)" },
+    { value: "SO", label: L === "ar" ? "صومالي(ة)" : L === "en" ? "Somali" : "Somalien(ne)" },
+    { value: "TR", label: L === "ar" ? "تركي(ة)" : L === "en" ? "Turkish" : "Turc/Turque" },
+    { value: "OTHER", label: L === "ar" ? "أخرى" : L === "en" ? "Other" : "Autre" },
+  ]
 
   const { register, handleSubmit, watch, setValue, reset, formState: { errors, isSubmitting } } = useForm<FormInput>({
     resolver: zodResolver(formSchema),
@@ -123,6 +156,8 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
             postalCode: s.postalCode || "",
             medicalNotes: s.medicalNotes || "",
             currentSurahNote: s.currentSurahNote || "",
+            nationality: s.nationality || "",
+            spokenLanguages: s.spokenLanguages || "",
             status: s.user.isActive ? "ACTIVE" : "INACTIVE",
             password: "",
           })
@@ -279,6 +314,48 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
               </select>
             </div>
           </div>
+
+          {/* Nationalité & Langues */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 flex items-center gap-1.5">
+                <Globe size={14} /> {t("nationality") || "Nationalité"}
+              </label>
+              <select className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green text-sm bg-white" {...register("nationality")}>
+                {nationalityOptions.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 flex items-center gap-1.5">
+                <Languages size={14} /> {t("spokenLanguages") || "Langues parlées"}
+              </label>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {languageOptions.map(lang => {
+                  const current = (watch("spokenLanguages") || "").split(",").map(s => s.trim()).filter(Boolean)
+                  const checked = current.includes(lang.key)
+                  return (
+                    <label key={lang.key} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border cursor-pointer transition ${checked ? "bg-tahfidz-green/10 border-tahfidz-green text-tahfidz-green-dark" : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300"}`}>
+                      <input
+                        type="checkbox"
+                        className="sr-only"
+                        checked={checked}
+                        onChange={(e) => {
+                          const next = e.target.checked
+                            ? [...current, lang.key]
+                            : current.filter(k => k !== lang.key)
+                          setValue("spokenLanguages", next.join(","), { shouldDirty: true })
+                        }}
+                      />
+                      {lang.label}
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("phone")}</label>

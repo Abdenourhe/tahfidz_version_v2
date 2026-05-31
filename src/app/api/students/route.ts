@@ -174,7 +174,8 @@ export async function POST(req: NextRequest) {
     const {
       fullName, fullNameAr, email, password, gender, dateOfBirth,
       phone, emergencyPhone, groupId, teacherId,
-      address, city, postalCode, medicalNotes, currentSurahNote, photo,
+      address, city, postalCode, medicalNotes, currentSurahNote,
+      nationality, spokenLanguages, photo,
     } = body
 
     const schoolId = session.user.schoolId
@@ -233,6 +234,8 @@ export async function POST(req: NextRequest) {
               address: address || null, city: city || null,
               postalCode: postalCode || null, medicalNotes: medicalNotes || null,
               currentSurahNote: currentSurahNote || null,
+              nationality: nationality || null,
+              spokenLanguages: spokenLanguages || null,
             },
             include: { user: true, group: true, teacher: { include: { user: true } } },
           })
