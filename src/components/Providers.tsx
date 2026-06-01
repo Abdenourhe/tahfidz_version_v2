@@ -2,6 +2,7 @@
 // src/components/Providers.tsx
 import { SessionProvider } from "next-auth/react"
 import { ThemeProvider } from "next-themes"
+import { LanguageProvider } from "@/contexts/LanguageContext"
 import type { Session } from "next-auth"
 
 export function Providers({
@@ -14,7 +15,9 @@ export function Providers({
   return (
     <SessionProvider session={session}>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        {children}
+        <LanguageProvider>
+          {children}
+        </LanguageProvider>
       </ThemeProvider>
     </SessionProvider>
   )

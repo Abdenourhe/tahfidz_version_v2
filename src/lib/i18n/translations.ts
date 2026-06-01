@@ -236,6 +236,49 @@ export const translations = {
     welcome:        { fr: "Bienvenue sur TAHFIDZ",      en: "Welcome to TAHFIDZ",          ar: "مرحباً بك في تحفيظ" },
   },
 
+  // ─── Login Page ───────────────────────────────────────────────────
+  login: {
+    // Panneau gauche
+    feature1:       { fr: "Suivi de memorisation sourate par sourate", en: "Surah-by-surah memorization tracking", ar: "متابعة الحفظ سورة بسورة" },
+    feature2:       { fr: "Gestion complete eleves, enseignants & parents", en: "Full students, teachers & parents management", ar: "إدارة شاملة للطلاب والمعلمين وأولياء الأمور" },
+    feature3:       { fr: "Rapports et statistiques detailles", en: "Detailed reports & statistics", ar: "تقارير وإحصائيات مفصلة" },
+    badge:          { fr: "Plateforme N°1 ecoles coraniques", en: "#1 Platform for Quran schools", ar: "المنصة رقم 1 للمدارس القرآنية" },
+    titleStart:     { fr: "La plateforme ", en: "The modern ", ar: "المنصة " },
+    titleHighlight: { fr: "coranique", en: "Quranic", ar: "القرآنية" },
+    titleEnd:       { fr: " moderne", en: " platform", ar: " الحديثة" },
+    // Panneau droit — général
+    welcome:        { fr: "Bienvenue", en: "Welcome", ar: "مرحباً" },
+    subtitle:       { fr: "Connectez-vous a votre espace TAHFIDZ", en: "Sign in to your TAHFIDZ space", ar: "سجّل الدخول إلى مساحتك في تحفيظ" },
+    backHome:       { fr: "Retour a l'accueil", en: "Back to home", ar: "العودة إلى الرئيسية" },
+    back:           { fr: "Retour", en: "Back", ar: "رجوع" },
+    // Alertes
+    registeredAlert:{ fr: "Compte cree avec succes ! Connectez-vous pour acceder a votre tableau de bord.", en: "Account created successfully! Sign in to access your dashboard.", ar: "تم إنشاء الحساب بنجاح! سجّل الدخول للوصول إلى لوحة التحكم." },
+    linkedAlert:    { fr: "Nouvel enfant lie a votre compte ! Connectez-vous pour le consulter.", en: "New child linked to your account! Sign in to view them.", ar: "طفل جديد مرتبط بحسابك! سجّل الدخول لعرضه." },
+    // Formulaire école
+    schoolId:       { fr: "Identifiant de l'ecole", en: "School identifier", ar: "معرف المدرسة" },
+    schoolIdPlaceholder: { fr: "EC-ALG-001", en: "EC-ALG-001", ar: "EC-ALG-001" },
+    schoolIdFormat: { fr: "Format :", en: "Format:", ar: "الصيغة :" },
+    email:          { fr: "Adresse email", en: "Email address", ar: "عنوان البريد الإلكتروني" },
+    emailPlaceholder:{ fr: "directeur@ecole.dz", en: "principal@school.com", ar: "مدير@مدرسة. dz" },
+    password:       { fr: "Mot de passe", en: "Password", ar: "كلمة المرور" },
+    rememberMe:     { fr: "Se souvenir de moi", en: "Remember me", ar: "تذكرني" },
+    forgotPassword: { fr: "Mot de passe oublie ?", en: "Forgot password?", ar: "نسيت كلمة المرور؟" },
+    loginBtn:       { fr: "Se connecter", en: "Sign in", ar: "تسجيل الدخول" },
+    loggingIn:      { fr: "Connexion...", en: "Signing in...", ar: "جارٍ تسجيل الدخول..." },
+    // Super Admin
+    superAdminMode: { fr: "Mode Super Admin", en: "Super Admin Mode", ar: "وضع المشرف العام" },
+    superAdminEmail:{ fr: "Email Super Admin", en: "Super Admin Email", ar: "بريد المشرف العام" },
+    superAdminPlaceholder:{ fr: "superadmin@tahfidz.com", en: "superadmin@tahfidz.com", ar: "superadmin@tahfidz.com" },
+    superAdminBtn:  { fr: "Acceder au Super Admin", en: "Access Super Admin", ar: "الوصول إلى المشرف العام" },
+    // Inscription
+    noSchool:       { fr: "Vous n'avez pas encore d'ecole sur TAHFIDZ ?", en: "Don't have a school on TAHFIDZ yet?", ar: "ليس لديك مدرسة على تحفيظ بعد؟" },
+    registerSchool: { fr: "Inscrire mon ecole gratuitement", en: "Register my school for free", ar: "تسجيل مدرستي مجاناً" },
+    // Erreurs
+    errorSuper:     { fr: "Email ou mot de passe incorrect.", en: "Incorrect email or password.", ar: "البريد الإلكتروني أو كلمة المرور غير صحيحة." },
+    errorSchool:    { fr: "Identifiant ecole, email ou mot de passe incorrect.", en: "Incorrect school ID, email or password.", ar: "معرف المدرسة أو البريد الإلكتروني أو كلمة المرور غير صحيحة." },
+    genericError:   { fr: "Une erreur est survenue. Veuillez reessayer.", en: "An error occurred. Please try again.", ar: "حدث خطأ. يرجى المحاولة مرة أخرى." },
+  },
+
   // ─── École ────────────────────────────────────────────────────────
   school: {
     title:          { fr: "École",                      en: "School",                      ar: "المدرسة" },

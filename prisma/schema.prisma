@@ -99,6 +99,7 @@ model School {
 
   users          User[]
   groups         Group[]
+  maqraSessions  MaqraSession[] @relation("SchoolMaqra")
   announcements  Announcement[]
   notifications  Notification[]
   exams          Exam[]
@@ -137,6 +138,9 @@ model User {
   teacherProfile Teacher?
   parentProfile  Parent?
   studentProfile Student?
+  
+  teacherMaqraSessions MaqraSession[]     @relation("TeacherMaqra")
+  studentMaqraEvals    MaqraEvaluation[]  @relation("StudentMaqraEval")
 
   notifications    Notification[]
   sentMessages     DirectMessage[] @relation("SentMessages")
@@ -308,6 +312,7 @@ model Group {
   exams         Exam[]
   announcements GroupAnnouncement[]
   attendances   Attendance[]
+  maqraSessions MaqraSession[]      @relation("GroupMaqra")
 
   @@index([schoolId])
   @@index([teacherId])
@@ -865,4 +870,92 @@ model Feedback {
   @@index([status, priority])
   @@index([createdAt])
   @@map("feedbacks")
+}
+
+// ==================== MAQRA' (BigBlueButton) ====================
+
+enum MaqraType {
+  INDIVIDUAL
+  COLLECTIVE
+}
+
+enum MaqraStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+  CANCELLED
+}
+
+enum MaqraMode {
+  AUDIO_ONLY
+  VIDEO
+  SCREEN_SHARE
+}
+
+model MaqraSession {
+  id           String    @id @default(cuid())
+  meetingID    String    @unique
+  meetingName  String
+  roomUrl      String    // URL join prof (MODERATOR)
+  attendeeUrl  String?   // URL join élève (VIEWER)
+  guestUrl     String?   // URL join parent (OBSERVER)
+  
+  schoolId     String
+  school       School    @relation("SchoolMaqra", fields: [schoolId], references: [id], onDelete: Cascade)
+  
+  teacherId    String
+  teacher      User      @relation("TeacherMaqra", fields: [teacherId], references: [id], onDelete: Cascade)
+  studentIds   String[]  // Array of student User IDs
+  
+  groupId      String?
+  group        Group?    @relation("GroupMaqra", fields: [groupId], references: [id], onDelete: SetNull)
+  
+  type         MaqraType
+  status       MaqraStatus @default(SCHEDULED)
+  mode         MaqraMode   @default(AUDIO_ONLY)
+  
+  scheduledAt  DateTime
+  startedAt    DateTime?
+  endedAt      DateTime?
+  duration     Int?        // minutes
+  
+  recordingUrl String?
+  recordingId  String?
+  
+  sourah       String?
+  verses       String?
+  
+  evaluations  MaqraEvaluation[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@index([schoolId])
+  @@index([teacherId])
+  @@index([groupId])
+  @@index([status])
+  @@index([scheduledAt])
+  @@map("maqra_sessions")
+}
+
+model MaqraEvaluation {
+  id                String   @id @default(cuid())
+  sessionId         String
+  session           MaqraSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  studentId         String
+  student           User     @relation("StudentMaqraEval", fields: [studentId], references: [id], onDelete: Cascade)
+  
+  sourah            String?
+  verses            String?
+  tajweedScore      Int?
+  memorizationScore Int?
+  fluencyScore      Int?
+  notes             String?  @db.Text
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@unique([sessionId, studentId])
+  @@index([sessionId])
+  @@index([studentId])
+  @@map("maqra_evaluations")
 }
