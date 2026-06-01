@@ -460,7 +460,7 @@ function LoginForm() {
                       <p className="mt-1.5 text-xs text-red-600">{schoolForm.formState.errors.schoolSlug.message}</p>
                     )}
                     <p className="text-[11px] text-gray-400 mt-1.5">
-                      {t("schoolIdFormat")} <span className="font-mono font-bold text-gray-500">EC-ALG-001</span> ou <span className="font-mono font-bold text-gray-500">AB-12345</span>
+                      {t("schoolIdFormat")} <span className="font-mono font-bold text-gray-500">AB-12345</span> ou <span className="font-mono font-bold text-gray-500">EC-ALG-001</span>
                     </p>
                   </div>
 
