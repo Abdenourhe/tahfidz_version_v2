@@ -80,10 +80,14 @@ type FormData = z.infer<typeof schema>
   const onSubmit = async (data: FormData) => {
     setLoading(true)
     try {
+      const payload = {
+        ...data,
+        scheduledAt: new Date(data.scheduledAt).toISOString(),
+      }
       const res = await fetch("/api/halaqa/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       })
       if (!res.ok) throw new Error("Erreur création")
       router.push("/teacher/halaqa")
