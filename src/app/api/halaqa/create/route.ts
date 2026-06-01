@@ -1,7 +1,7 @@
 // src/app/api/halaqa/create/route.ts
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
-import { createMeeting, generateMeetingID, generatePassword, joinMeetingUrl, isConfigured } from "@/lib/bigbluebutton"
+import { createMeeting, generateMeetingID, generatePassword, joinMeetingUrl } from "@/lib/bigbluebutton"
 import { NextResponse } from "next/server"
 import { z } from "zod"
 
@@ -27,10 +27,6 @@ export async function POST(req: Request) {
     const { schoolId, id: teacherId, role } = session.user
     if (!["ADMIN", "TEACHER", "SUPERADMIN"].includes(role)) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
-    }
-
-    if (!isConfigured()) {
-      return NextResponse.json({ error: "BigBlueButton non configuré" }, { status: 503 })
     }
 
     const body = await req.json()

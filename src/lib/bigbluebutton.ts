@@ -92,6 +92,18 @@ export interface JoinMeetingParams {
 // ─── API ──────────────────────────────────────────────────────────
 
 export async function createMeeting(params: CreateMeetingParams): Promise<CreateMeetingResult> {
+  if (!isConfigured()) {
+    // Mode mock — pas de serveur BBB configuré
+    return {
+      returncode: "SUCCESS",
+      meetingID: params.meetingID,
+      internalMeetingID: params.meetingID,
+      attendeePW: params.attendeePW,
+      moderatorPW: params.moderatorPW,
+      createTime: String(Date.now()),
+      createDate: new Date().toISOString(),
+    }
+  }
   return bbbCall<CreateMeetingResult>("create", {
     name: params.meetingName,
     meetingID: params.meetingID,
@@ -111,8 +123,10 @@ export async function createMeeting(params: CreateMeetingParams): Promise<Create
 }
 
 export function joinMeetingUrl(params: JoinMeetingParams): string {
-  if (!BBB_SERVER || !BBB_SECRET) {
-    throw new Error("BBB_SERVER_URL ou BBB_SECRET manquant")
+  if (!isConfigured()) {
+    // Mode mock — URL placeholder
+    const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://votre-app.vercel.app"
+    return `${base}/halaqa/room?meetingID=${encodeURIComponent(params.meetingID)}&name=${encodeURIComponent(params.fullName)}`
   }
 
   const query = new URLSearchParams()
@@ -129,10 +143,12 @@ export function joinMeetingUrl(params: JoinMeetingParams): string {
 }
 
 export async function endMeeting(meetingID: string, password: string): Promise<void> {
+  if (!isConfigured()) return
   await bbbCall("end", { meetingID, password })
 }
 
 export async function getRecordings(meetingID?: string): Promise<any[]> {
+  if (!isConfigured()) return []
   const params: Record<string, string> = {}
   if (meetingID) params.meetingID = meetingID
   const res = await bbbCall<any>("getRecordings", params)
@@ -143,10 +159,12 @@ export async function getRecordings(meetingID?: string): Promise<any[]> {
 }
 
 export async function getMeetingInfo(meetingID: string): Promise<any> {
+  if (!isConfigured()) return {}
   return bbbCall("getMeetingInfo", { meetingID })
 }
 
 export async function isMeetingRunning(meetingID: string): Promise<boolean> {
+  if (!isConfigured()) return false
   const res = await bbbCall<{ running?: string }>("isMeetingRunning", { meetingID })
   return res.running === "true"
 }
