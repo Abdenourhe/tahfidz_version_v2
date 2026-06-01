@@ -8,6 +8,7 @@ import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 import {
   ArrowLeft, Star, BookOpen, Save, Loader2,
   BarChart3, MessageSquare
@@ -37,6 +38,9 @@ interface StudentEval {
 export default function HalaqaEvaluationPage() {
   const params = useParams()
   const router = useRouter()
+  const { locale } = useLanguage()
+  const t = useT("halaqa")
+  const isRTL = locale === "ar"
   const sessionId = params?.id as string
 
   const [students, setStudents] = useState<StudentEval[]>([])
@@ -84,7 +88,7 @@ export default function HalaqaEvaluationPage() {
         const evalObj = session.evaluations?.find((e: any) => e.studentId === id)
         return {
           userId: id,
-          fullName: u?.fullName || "Élève",
+          fullName: u?.fullName || t("studentFallback"),
           evaluation: evalObj,
         }
       })
@@ -115,7 +119,7 @@ export default function HalaqaEvaluationPage() {
       // Rafraîchir
       await fetchSession()
     } catch {
-      alert("Erreur lors de la sauvegarde")
+      alert(t("errorCreate"))
     } finally {
       setSaving(false)
     }
@@ -138,8 +142,8 @@ export default function HalaqaEvaluationPage() {
           href="/teacher/halaqa"
           className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 mb-6 transition"
         >
-          <ArrowLeft size={16} />
-          Retour aux séances
+          <ArrowLeft size={16} className={isRTL ? "rotate-180" : ""} />
+          {t("backToSessions")}
         </Link>
 
         <motion.div
@@ -149,10 +153,10 @@ export default function HalaqaEvaluationPage() {
         >
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-1">
             <BarChart3 size={24} className="text-tahfidz-green" />
-            Évaluation Halaqa Online
+            {t("evaluationTitle")}
           </h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
-            Notez la récitation de vos élèves
+            {t("evaluateSubtitle")}
           </p>
 
           {/* Liste élèves */}
@@ -179,8 +183,8 @@ export default function HalaqaEvaluationPage() {
                 {/* Tajweed */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    <Star size={14} className="inline mr-1 text-amber-500" />
-                    Tajwîd (/100)
+                    <Star size={14} className={`inline ${isRTL ? "ml-1" : "mr-1"} text-amber-500`} />
+                    {t("tajweedScore")}
                   </label>
                   <input
                     type="number"
@@ -195,8 +199,8 @@ export default function HalaqaEvaluationPage() {
                 {/* Mémorisation */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    <BookOpen size={14} className="inline mr-1 text-blue-500" />
-                    Mémorisation (/100)
+                    <BookOpen size={14} className={`inline ${isRTL ? "ml-1" : "mr-1"} text-blue-500`} />
+                    {t("memorizationScore")}
                   </label>
                   <input
                     type="number"
@@ -210,8 +214,8 @@ export default function HalaqaEvaluationPage() {
                 {/* Fluidité */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    <BarChart3 size={14} className="inline mr-1 text-green-500" />
-                    Fluidité (/100)
+                    <BarChart3 size={14} className={`inline ${isRTL ? "ml-1" : "mr-1"} text-green-500`} />
+                    {t("fluencyScore")}
                   </label>
                   <input
                     type="number"
@@ -226,13 +230,13 @@ export default function HalaqaEvaluationPage() {
               {/* Notes */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  <MessageSquare size={14} className="inline mr-1" />
-                  Notes et corrections
+                  <MessageSquare size={14} className={`inline ${isRTL ? "ml-1" : "mr-1"}`} />
+                  {t("notesAndCorrections")}
                 </label>
                 <textarea
                   {...register("notes")}
                   rows={4}
-                  placeholder="Points forts, erreurs à corriger, conseils..."
+                  placeholder={t("notesPlaceholder")}
                   className="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm resize-none"
                 />
               </div>
@@ -242,7 +246,7 @@ export default function HalaqaEvaluationPage() {
                 disabled={saving}
                 className="w-full py-3.5 bg-tahfidz-green hover:bg-emerald-700 text-white font-bold rounded-xl disabled:opacity-60 transition flex items-center justify-center gap-2 text-sm shadow-lg shadow-tahfidz-green/20"
               >
-                {saving ? <><Loader2 size={16} className="animate-spin" /> Sauvegarde...</> : <><Save size={16} /> Enregistrer l&apos;évaluation</>}
+                {saving ? <><Loader2 size={16} className="animate-spin" /> {t("saving")}</> : <><Save size={16} /> {t("saveEval")}</>}
               </button>
             </form>
           )}

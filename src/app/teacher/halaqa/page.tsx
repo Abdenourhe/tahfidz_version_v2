@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import {
@@ -28,6 +28,8 @@ interface HalaqaSession {
 export default function TeacherHalaqaPage() {
   const router = useRouter()
   const { locale } = useLanguage()
+  const t = useT("halaqa")
+  const isRTL = locale === "ar"
   const [sessions, setSessions] = useState<HalaqaSession[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<"all" | "scheduled" | "live" | "ended">("all")
@@ -77,10 +79,10 @@ export default function TeacherHalaqaPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <Video size={28} className="text-tahfidz-green" />
-              Halaqa Online
+              {t("halaqa")}
             </h1>
             <p className="text-gray-500 dark:text-gray-400 mt-1">
-              Gérez vos séances de récitation en ligne
+              {t("manageHalaqas")}
             </p>
           </div>
           <Link
@@ -88,17 +90,17 @@ export default function TeacherHalaqaPage() {
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-tahfidz-green hover:bg-emerald-700 text-white font-semibold rounded-xl transition shadow-lg shadow-tahfidz-green/20"
           >
             <Plus size={18} />
-            Nouvelle séance
+            {t("newSession")}
           </Link>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { label: "Séances planifiées", value: upcoming.length, icon: Calendar, color: "text-blue-600" },
-            { label: "En direct", value: live.length, icon: Play, color: "text-red-600" },
-            { label: "Terminées", value: past.length, icon: FileVideo, color: "text-gray-600" },
-            { label: "Cette semaine", value: sessions.filter((s) => {
+            { label: t("scheduledSessions"), value: upcoming.length, icon: Calendar, color: "text-blue-600" },
+            { label: t("liveNow"), value: live.length, icon: Play, color: "text-red-600" },
+            { label: t("endedSessions"), value: past.length, icon: FileVideo, color: "text-gray-600" },
+            { label: t("thisWeek"), value: sessions.filter((s) => {
               const d = new Date(s.scheduledAt)
               const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
               return d >= weekAgo
@@ -136,24 +138,24 @@ export default function TeacherHalaqaPage() {
                   : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
               }`}
             >
-              {f === "all" ? "Toutes" : f === "scheduled" ? "Planifiées" : f === "live" ? "En direct" : "Terminées"}
+              {f === "all" ? t("all") : f === "scheduled" ? t("planned") : f === "live" ? t("liveNow") : t("endedSessions")}
             </button>
           ))}
         </div>
 
         {/* Liste */}
         {loading ? (
-          <div className="text-center py-20 text-gray-400">Chargement...</div>
+          <div className="text-center py-20 text-gray-400">{t("loading")}</div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20">
             <Video size={48} className="mx-auto text-gray-300 dark:text-gray-700 mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">Aucune séance trouvée</p>
+            <p className="text-gray-500 dark:text-gray-400">{t("noSessionFound")}</p>
             <Link
               href="/teacher/halaqa/new"
               className="inline-flex items-center gap-2 mt-4 text-tahfidz-green hover:text-emerald-700 font-medium"
             >
               <Plus size={16} />
-              Créer votre première Halaqa
+              {t("createFirstHalaqa")}
             </Link>
           </div>
         ) : (
@@ -173,7 +175,7 @@ export default function TeacherHalaqaPage() {
                         {session.status}
                       </span>
                       <span className="text-xs text-gray-400">
-                        {session.type === "INDIVIDUAL" ? "Individuel" : "Collectif"}
+                        {session.type === "INDIVIDUAL" ? t("individual") : t("collective")}
                       </span>
                     </div>
                     <h3 className="font-semibold text-gray-900 dark:text-white">{session.meetingName}</h3>
@@ -186,7 +188,7 @@ export default function TeacherHalaqaPage() {
                       </span>
                       <span className="flex items-center gap-1">
                         <Users size={14} />
-                        {session.studentIds.length} élève{session.studentIds.length > 1 ? "s" : ""}
+                        {session.studentIds.length} {session.studentIds.length > 1 ? t("studentCountPlural") : t("studentCount")}
                       </span>
                       {session.group && (
                         <span className="flex items-center gap-1">
@@ -204,8 +206,8 @@ export default function TeacherHalaqaPage() {
                           href={`/teacher/halaqa/${session.id}`}
                           className="px-4 py-2 bg-tahfidz-green hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition"
                         >
-                          <Play size={16} className="inline mr-1" />
-                          Démarrer
+                          <Play size={16} className={`inline ${isRTL ? "ml-1" : "mr-1"}`} />
+                          {t("start")}
                         </Link>
                       </>
                     )}
@@ -214,8 +216,8 @@ export default function TeacherHalaqaPage() {
                         href={`/teacher/halaqa/${session.id}`}
                         className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition animate-pulse"
                       >
-                        <Video size={16} className="inline mr-1" />
-                        Rejoindre
+                        <Video size={16} className={`inline ${isRTL ? "ml-1" : "mr-1"}`} />
+                        {t("join")}
                       </Link>
                     )}
                     {session.status === "ENDED" && (
@@ -227,16 +229,16 @@ export default function TeacherHalaqaPage() {
                             rel="noopener noreferrer"
                             className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition"
                           >
-                            <FileVideo size={16} className="inline mr-1" />
-                            Replay
+                            <FileVideo size={16} className={`inline ${isRTL ? "ml-1" : "mr-1"}`} />
+                            {t("replay")}
                           </a>
                         )}
                         <Link
                           href={`/teacher/halaqa/${session.id}/evaluation`}
                           className="px-4 py-2 bg-purple-100 dark:bg-purple-900/20 hover:bg-purple-200 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm font-medium rounded-lg transition"
                         >
-                          <BarChart3 size={16} className="inline mr-1" />
-                          Noter
+                          <BarChart3 size={16} className={`inline ${isRTL ? "ml-1" : "mr-1"}`} />
+                          {t("rate")}
                         </Link>
                       </>
                     )}

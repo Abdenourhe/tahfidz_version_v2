@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     const recordingUrl = recording.playback.format.url
     const recordingId = recording.recordID
 
-    const halaqaSession = await prisma.halaqaSession.findUnique({
+    const halaqaSession = await prisma.maqraSession.findUnique({
       where: { meetingID },
     })
 
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Session non trouvée" }, { status: 404 })
     }
 
-    await prisma.halaqaSession.update({
+    await prisma.maqraSession.update({
       where: { meetingID },
       data: {
         recordingUrl,
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true }, { status: 200 })
   } catch (error: any) {
-    console.error("[MAQRA WEBHOOK ERROR]", error?.message || String(error))
+    console.error("[HALAQA WEBHOOK ERROR]", error?.message || String(error))
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
 }

@@ -7,10 +7,14 @@ import { motion } from "framer-motion"
 import Link from "next/link"
 import { Loader2, AlertCircle, ArrowLeft, Video } from "lucide-react"
 import { HalaqaRoom } from "@/components/halaqa/HalaqaRoom"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 export default function StudentHalaqaJoinPage() {
   const params = useParams()
   const router = useRouter()
+  const { locale } = useLanguage()
+  const t = useT("halaqa")
+  const isRTL = locale === "ar"
   const sessionId = params?.id as string
 
   const [joinUrl, setJoinUrl] = useState<string>("")
@@ -56,7 +60,7 @@ export default function StudentHalaqaJoinPage() {
           <AlertCircle size={48} className="mx-auto text-red-500 mb-4" />
           <p className="text-gray-700 dark:text-gray-300">{error}</p>
           <Link href="/student/halaqa" className="mt-4 inline-block text-tahfidz-green hover:underline">
-            Retour
+            {t("back")}
           </Link>
         </div>
       </div>
@@ -76,7 +80,7 @@ export default function StudentHalaqaJoinPage() {
           <div>
             <h1 className="text-sm font-semibold text-white flex items-center gap-2">
               <Video size={16} className="text-tahfidz-green" />
-              Halaqa Online
+              {t("halaqa")}
             </h1>
           </div>
         </div>

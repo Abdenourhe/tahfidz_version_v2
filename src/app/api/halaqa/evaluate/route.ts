@@ -29,7 +29,7 @@ export async function POST(req: Request) {
 
     const data = parsed.data
 
-    const halaqaSession = await prisma.halaqaSession.findUnique({
+    const halaqaSession = await prisma.maqraSession.findUnique({
       where: { id: data.sessionId },
     })
     if (!halaqaSession) {
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ evaluation }, { status: 200 })
   } catch (error: any) {
-    console.error("[MAQRA EVALUATE ERROR]", error?.message || String(error))
+    console.error("[HALAQA EVALUATE ERROR]", error?.message || String(error))
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
 }

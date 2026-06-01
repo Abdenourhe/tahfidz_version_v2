@@ -5,6 +5,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Video, Calendar, Clock, Play, FileVideo, Loader2 } from "lucide-react"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 interface HalaqaSession {
   id: string
@@ -17,6 +18,9 @@ interface HalaqaSession {
 }
 
 export default function StudentHalaqaPage() {
+  const { locale } = useLanguage()
+  const t = useT("halaqa")
+  const isRTL = locale === "ar"
   const [sessions, setSessions] = useState<HalaqaSession[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -45,17 +49,17 @@ export default function StudentHalaqaPage() {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-6">
           <Video size={28} className="text-tahfidz-green" />
-          Mes Halaqa Online
+          {t("myHalaqasStudent")}
         </h1>
 
         {/* Upcoming */}
         <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-          Séances à venir
+          {t("upcomingSessions")}
         </h2>
         {loading ? (
           <div className="text-center py-10"><Loader2 size={24} className="animate-spin text-tahfidz-green mx-auto" /></div>
         ) : upcoming.length === 0 ? (
-          <p className="text-gray-400 text-sm py-4">Aucune séance planifiée</p>
+          <p className="text-gray-400 text-sm py-4">{t("noSessionScheduled")}</p>
         ) : (
           <div className="space-y-3 mb-8">
             {upcoming.map((s, i) => (
@@ -83,8 +87,8 @@ export default function StudentHalaqaPage() {
                         : "bg-tahfidz-green hover:bg-emerald-700 text-white"
                     }`}
                   >
-                    <Play size={16} className="inline mr-1" />
-                    {s.status === "LIVE" ? "Rejoindre" : "Entrer"}
+                    <Play size={16} className={`inline ${isRTL ? "ml-1" : "mr-1"}`} />
+                    {s.status === "LIVE" ? t("join") : t("enter")}
                   </Link>
                 </div>
               </motion.div>
@@ -94,10 +98,10 @@ export default function StudentHalaqaPage() {
 
         {/* Past */}
         <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-          Séances passées
+          {t("pastSessions")}
         </h2>
         {past.length === 0 ? (
-          <p className="text-gray-400 text-sm py-4">Aucune séance passée</p>
+          <p className="text-gray-400 text-sm py-4">{t("noPastSession")}</p>
         ) : (
           <div className="space-y-3">
             {past.map((s, i) => (
@@ -120,11 +124,11 @@ export default function StudentHalaqaPage() {
                       rel="noopener noreferrer"
                       className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition"
                     >
-                      <FileVideo size={16} className="inline mr-1" />
-                      Replay
+                      <FileVideo size={16} className={`inline ${isRTL ? "ml-1" : "mr-1"}`} />
+                      {t("replay")}
                     </a>
                   ) : (
-                    <span className="text-xs text-gray-400">Pas d&apos;enregistrement</span>
+                    <span className="text-xs text-gray-400">{t("noRecording")}</span>
                   )}
                 </div>
               </motion.div>

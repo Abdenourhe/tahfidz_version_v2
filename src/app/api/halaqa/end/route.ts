@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     }
 
     const { sessionId } = parsed.data
-    const halaqaSession = await prisma.halaqaSession.findUnique({
+    const halaqaSession = await prisma.maqraSession.findUnique({
       where: { id: sessionId },
     })
 
@@ -51,12 +51,12 @@ export async function POST(req: Request) {
         await endMeeting(halaqaSession.meetingID, pw)
       }
     } catch (bbbErr: any) {
-      console.warn("[MAQRA END BBB WARN]", bbbErr?.message)
+      console.warn("[HALAQA END BBB WARN]", bbbErr?.message)
       // On continue quand même pour marquer comme terminée dans Prisma
     }
 
     // Mettre à jour Prisma
-    const updated = await prisma.halaqaSession.update({
+    const updated = await prisma.maqraSession.update({
       where: { id: sessionId },
       data: {
         status: "ENDED",
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ session: updated }, { status: 200 })
   } catch (error: any) {
-    console.error("[MAQRA END ERROR]", error?.message || String(error))
+    console.error("[HALAQA END ERROR]", error?.message || String(error))
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
 }

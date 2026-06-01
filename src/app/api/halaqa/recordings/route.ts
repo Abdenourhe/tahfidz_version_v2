@@ -41,7 +41,7 @@ export async function GET(req: Request) {
     }
 
     // Récupérer les sessions avec enregistrement
-    const sessions = await prisma.halaqaSession.findMany({
+    const sessions = await prisma.maqraSession.findMany({
       where: { ...where, recordingUrl: { not: null } },
       include: {
         teacher: { select: { fullName: true } },
@@ -56,7 +56,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ recordings: sessions }, { status: 200 })
   } catch (error: any) {
-    console.error("[MAQRA RECORDINGS ERROR]", error?.message || String(error))
+    console.error("[HALAQA RECORDINGS ERROR]", error?.message || String(error))
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
 }

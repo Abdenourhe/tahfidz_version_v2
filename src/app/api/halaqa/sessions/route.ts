@@ -33,7 +33,7 @@ export async function GET(req: Request) {
       where.status = statusFilter
     }
 
-    const sessions = await prisma.halaqaSession.findMany({
+    const sessions = await prisma.maqraSession.findMany({
       where,
       include: {
         group: { select: { name: true } },
@@ -47,7 +47,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ sessions }, { status: 200 })
   } catch (error: any) {
-    console.error("[MAQRA SESSIONS GET ERROR]", error?.message || String(error))
+    console.error("[HALAQA SESSIONS GET ERROR]", error?.message || String(error))
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
 }

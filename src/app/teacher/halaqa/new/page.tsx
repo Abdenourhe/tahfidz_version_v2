@@ -8,31 +8,36 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { motion } from "framer-motion"
 import Link from "next/link"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 import {
   Video, ArrowLeft, Calendar, Clock, Users, BookOpen,
   Mic, Monitor, Video as VideoIcon, Loader2
 } from "lucide-react"
 
-const schema = z.object({
-  meetingName: z.string().min(2, "Nom requis"),
-  studentIds: z.array(z.string()).min(1, "Au moins un élève"),
-  groupId: z.string().optional(),
-  scheduledAt: z.string().min(1, "Date requise"),
-  type: z.enum(["INDIVIDUAL", "COLLECTIVE"]),
-  mode: z.enum(["AUDIO_ONLY", "VIDEO", "SCREEN_SHARE"]),
-  sourah: z.string().optional(),
-  verses: z.string().optional(),
-  duration: z.number().min(15).max(180),
-})
+export default function NewHalaqaPage() {
+  const router = useRouter()
+  const { locale } = useLanguage()
+  const t = useT("halaqa")
+  const isRTL = locale === "ar"
 
 type FormData = z.infer<typeof schema>
 
-export default function NewHalaqaPage() {
-  const router = useRouter()
   const [students, setStudents] = useState<{ id: string; fullName: string; email: string }[]>([])
   const [groups, setGroups] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(true)
+
+  const schema = z.object({
+    meetingName: z.string().min(2, t("nameRequired")),
+    studentIds: z.array(z.string()).min(1, t("minOneStudent")),
+    groupId: z.string().optional(),
+    scheduledAt: z.string().min(1, t("dateRequired")),
+    type: z.enum(["INDIVIDUAL", "COLLECTIVE"]),
+    mode: z.enum(["AUDIO_ONLY", "VIDEO", "SCREEN_SHARE"]),
+    sourah: z.string().optional(),
+    verses: z.string().optional(),
+    duration: z.number().min(15).max(180),
+  })
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -83,16 +88,16 @@ export default function NewHalaqaPage() {
       if (!res.ok) throw new Error("Erreur création")
       router.push("/teacher/halaqa")
     } catch {
-      alert("Erreur lors de la création de la séance")
+      alert(t("errorCreate"))
     } finally {
       setLoading(false)
     }
   }
 
   const modeOptions = [
-    { value: "AUDIO_ONLY", label: "Audio uniquement", icon: Mic, desc: "Micro activé, caméra désactivée" },
-    { value: "VIDEO", label: "Audio + Vidéo", icon: VideoIcon, desc: "Micro et caméra activés" },
-    { value: "SCREEN_SHARE", label: "Partage d'écran", icon: Monitor, desc: "Partage mushaf PDF" },
+    { value: "AUDIO_ONLY", label: t("audioOnly"), icon: Mic, desc: t("audioOnlyDesc") },
+    { value: "VIDEO", label: t("video"), icon: VideoIcon, desc: t("videoDesc") },
+    { value: "SCREEN_SHARE", label: t("screenShare"), icon: Monitor, desc: t("screenShareDesc") },
   ]
 
   return (
@@ -102,8 +107,8 @@ export default function NewHalaqaPage() {
           href="/teacher/halaqa"
           className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 mb-6 transition"
         >
-          <ArrowLeft size={16} />
-          Retour aux séances
+          <ArrowLeft size={16} className={isRTL ? "rotate-180" : ""} />
+          {t("backToSessions")}
         </Link>
 
         <motion.div
@@ -113,21 +118,21 @@ export default function NewHalaqaPage() {
         >
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-1">
             <Video size={24} className="text-tahfidz-green" />
-            Nouvelle Halaqa Online
+            {t("newHalaqaTitle")}
           </h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
-            Planifiez une séance de récitation en ligne avec vos élèves
+            {t("newHalaqaSubtitle")}
           </p>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Nom */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Nom de la séance
+                {t("sessionName")}
               </label>
               <input
                 {...register("meetingName")}
-                placeholder="Ex: Révision Sourate Al-Fatiha"
+                placeholder={t("sessionNamePlaceholder")}
                 className="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm"
               />
               {errors.meetingName && <p className="mt-1 text-xs text-red-600">{errors.meetingName.message}</p>}
@@ -136,21 +141,21 @@ export default function NewHalaqaPage() {
             {/* Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Type de séance
+                {t("sessionType")}
               </label>
               <div className="flex gap-3">
-                {(["INDIVIDUAL", "COLLECTIVE"] as const).map((t) => (
+                {(["INDIVIDUAL", "COLLECTIVE"] as const).map((typeVal) => (
                   <button
-                    key={t}
+                    key={typeVal}
                     type="button"
-                    onClick={() => setValue("type", t)}
+                    onClick={() => setValue("type", typeVal)}
                     className={`flex-1 py-3 rounded-xl border text-sm font-medium transition ${
-                      watch("type") === t
+                      watch("type") === typeVal
                         ? "border-tahfidz-green bg-tahfidz-green/5 text-tahfidz-green"
                         : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
                     }`}
                   >
-                    {t === "INDIVIDUAL" ? "Individuel" : "Collectif"}
+                    {typeVal === "INDIVIDUAL" ? t("individual") : t("collective")}
                   </button>
                 ))}
               </div>
@@ -159,7 +164,7 @@ export default function NewHalaqaPage() {
             {/* Mode */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Mode de communication
+                {t("communicationMode")}
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {modeOptions.map((m) => (
@@ -185,8 +190,8 @@ export default function NewHalaqaPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  <Calendar size={14} className="inline mr-1" />
-                  Date et heure
+                  <Calendar size={14} className={`inline ${isRTL ? "ml-1" : "mr-1"}`} />
+                  {t("dateTime")}
                 </label>
                 <input
                   type="datetime-local"
@@ -197,8 +202,8 @@ export default function NewHalaqaPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  <Clock size={14} className="inline mr-1" />
-                  Durée (min)
+                  <Clock size={14} className={`inline ${isRTL ? "ml-1" : "mr-1"}`} />
+                  {t("durationMin")}
                 </label>
                 <input
                   type="number"
@@ -214,22 +219,22 @@ export default function NewHalaqaPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  <BookOpen size={14} className="inline mr-1" />
-                  Sourate (optionnel)
+                  <BookOpen size={14} className={`inline ${isRTL ? "ml-1" : "mr-1"}`} />
+                  {t("sourahOptional")}
                 </label>
                 <input
                   {...register("sourah")}
-                  placeholder="Ex: Al-Fatiha"
+                  placeholder={t("sourahPlaceholder")}
                   className="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Versets (optionnel)
+                  {t("versesOptional")}
                 </label>
                 <input
                   {...register("verses")}
-                  placeholder="Ex: 1-7"
+                  placeholder={t("versesPlaceholder")}
                   className="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm"
                 />
               </div>
@@ -242,7 +247,7 @@ export default function NewHalaqaPage() {
                 Élèves participants
               </label>
               {fetching ? (
-                <p className="text-sm text-gray-400">Chargement des élèves...</p>
+                <p className="text-sm text-gray-400">{t("loadingStudents")}</p>
               ) : (
                 <div className="max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-xl divide-y divide-gray-100 dark:divide-gray-800">
                   {students.map((s) => {
@@ -277,13 +282,13 @@ export default function NewHalaqaPage() {
             {/* Groupe */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Groupe (optionnel)
+                {t("groupOptional")}
               </label>
               <select
                 {...register("groupId")}
                 className="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm"
               >
-                <option value="">Aucun groupe</option>
+                <option value="">{t("noGroup")}</option>
                 {groups.map((g) => (
                   <option key={g.id} value={g.id}>{g.name}</option>
                 ))}
@@ -296,7 +301,7 @@ export default function NewHalaqaPage() {
               disabled={loading}
               className="w-full py-3.5 bg-tahfidz-green hover:bg-emerald-700 text-white font-bold rounded-xl disabled:opacity-60 transition flex items-center justify-center gap-2 text-sm shadow-lg shadow-tahfidz-green/20"
             >
-              {loading ? <><Loader2 size={16} className="animate-spin" /> Création...</> : <><Video size={16} /> Créer la séance</>}
+              {loading ? <><Loader2 size={16} className="animate-spin" /> {t("creating")}</> : <><Video size={16} /> {t("createSession")}</>}
             </button>
           </form>
         </motion.div>

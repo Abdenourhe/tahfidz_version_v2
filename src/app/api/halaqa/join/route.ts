@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     }
 
     const { sessionId } = parsed.data
-    const halaqaSession = await prisma.halaqaSession.findUnique({
+    const halaqaSession = await prisma.maqraSession.findUnique({
       where: { id: sessionId },
       include: {
         teacher: { select: { fullName: true, email: true } },
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
 
     // Mettre à jour le statut si SCHEDULED
     if (halaqaSession.status === "SCHEDULED") {
-      await prisma.halaqaSession.update({
+      await prisma.maqraSession.update({
         where: { id: sessionId },
         data: { status: "LIVE", startedAt: new Date() },
       })
@@ -83,7 +83,7 @@ export async function POST(req: Request) {
       isTeacher: isTeacher || isAdmin,
     }, { status: 200 })
   } catch (error: any) {
-    console.error("[MAQRA JOIN ERROR]", error?.message || String(error))
+    console.error("[HALAQA JOIN ERROR]", error?.message || String(error))
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
 }

@@ -10,10 +10,14 @@ import {
   Loader2, AlertCircle
 } from "lucide-react"
 import { HalaqaRoom } from "@/components/halaqa/HalaqaRoom"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 export default function TeacherHalaqaLivePage() {
   const params = useParams()
   const router = useRouter()
+  const { locale } = useLanguage()
+  const t = useT("halaqa")
+  const isRTL = locale === "ar"
   const sessionId = params?.id as string
 
   const [session, setSession] = useState<any>(null)
@@ -78,7 +82,7 @@ export default function TeacherHalaqaLivePage() {
           <AlertCircle size={48} className="mx-auto text-red-500 mb-4" />
           <p className="text-gray-700 dark:text-gray-300">{error}</p>
           <Link href="/teacher/halaqa" className="mt-4 inline-block text-tahfidz-green hover:underline">
-            Retour aux séances
+            {t("backToSessions")}
           </Link>
         </div>
       </div>
@@ -99,10 +103,10 @@ export default function TeacherHalaqaLivePage() {
           <div>
             <h1 className="text-sm font-semibold text-white flex items-center gap-2">
               <Video size={16} className="text-red-500" />
-              Halaqa Online en direct
+              {t("liveTitle")}
             </h1>
             <p className="text-xs text-gray-500">
-              {session?.mode === "AUDIO_ONLY" ? "Mode audio" : session?.mode === "VIDEO" ? "Mode vidéo" : "Partage d'écran"}
+              {session?.mode === "AUDIO_ONLY" ? t("modeAudio") : session?.mode === "VIDEO" ? t("modeVideo") : t("modeScreen")}
             </p>
           </div>
         </div>
@@ -117,7 +121,7 @@ export default function TeacherHalaqaLivePage() {
             className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition disabled:opacity-60"
           >
             {ending ? <Loader2 size={14} className="animate-spin" /> : <StopCircle size={14} />}
-            Terminer
+            {t("endSession")}
           </button>
         </div>
       </div>

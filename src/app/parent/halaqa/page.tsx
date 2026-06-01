@@ -5,6 +5,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { FileVideo, Calendar, Loader2, User, BarChart3 } from "lucide-react"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 interface Recording {
   id: string
@@ -16,6 +17,9 @@ interface Recording {
 }
 
 export default function ParentHalaqaPage() {
+  const { locale } = useLanguage()
+  const t = useT("halaqa")
+  const isRTL = locale === "ar"
   const [recordings, setRecordings] = useState<Recording[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -41,7 +45,7 @@ export default function ParentHalaqaPage() {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-6">
           <FileVideo size={28} className="text-tahfidz-green" />
-          Enregistrements Halaqa Online
+          {t("recordingsTitle")}
         </h1>
 
         {loading ? (
@@ -51,7 +55,7 @@ export default function ParentHalaqaPage() {
         ) : recordings.length === 0 ? (
           <div className="text-center py-20">
             <FileVideo size={48} className="mx-auto text-gray-300 dark:text-gray-700 mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">Aucun enregistrement disponible</p>
+            <p className="text-gray-500 dark:text-gray-400">{t("noRecordingAvailable")}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -72,7 +76,7 @@ export default function ParentHalaqaPage() {
                       {r.evaluations.length > 0 && r.evaluations[0]?.memorizationScore !== null && (
                         <span className="flex items-center gap-1 text-tahfidz-green">
                           <BarChart3 size={14} />
-                          Note: {r.evaluations[0].memorizationScore}/100
+                          {t("grade")}: {r.evaluations[0].memorizationScore}/100
                         </span>
                       )}
                     </div>
@@ -85,11 +89,11 @@ export default function ParentHalaqaPage() {
                         rel="noopener noreferrer"
                         className="px-4 py-2 bg-tahfidz-green hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition"
                       >
-                        <FileVideo size={16} className="inline mr-1" />
-                        Regarder
+                        <FileVideo size={16} className={`inline ${isRTL ? "ml-1" : "mr-1"}`} />
+                        {t("watch")}
                       </a>
                     ) : (
-                      <span className="text-xs text-gray-400">En cours de traitement</span>
+                      <span className="text-xs text-gray-400">{t("processing")}</span>
                     )}
                   </div>
                 </div>

@@ -80,7 +80,7 @@ export async function POST(req: Request) {
     })
 
     // Sauvegarder dans Prisma
-    const halaqaSession = await prisma.halaqaSession.create({
+    const halaqaSession = await prisma.maqraSession.create({
       data: {
         meetingID,
         meetingName: data.meetingName,
@@ -105,7 +105,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ session: halaqaSession }, { status: 201 })
   } catch (error: any) {
-    console.error("[MAQRA CREATE ERROR]", error?.message || String(error))
+    console.error("[HALAQA CREATE ERROR]", error?.message || String(error))
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
 }
