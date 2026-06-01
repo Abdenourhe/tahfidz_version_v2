@@ -243,8 +243,8 @@ type FormData = z.infer<typeof schema>
             {/* Élèves */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                <Users size={14} className="inline mr-1" />
-                Élèves participants
+                <Users size={14} className={`inline ${isRTL ? "ml-1" : "mr-1"}`} />
+                {t("participants")}
               </label>
               {fetching ? (
                 <p className="text-sm text-gray-400">{t("loadingStudents")}</p>

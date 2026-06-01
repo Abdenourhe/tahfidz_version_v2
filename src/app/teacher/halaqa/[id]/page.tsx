@@ -50,7 +50,7 @@ export default function TeacherHalaqaLivePage() {
   }
 
   const endSession = async () => {
-    if (!confirm("Voulez-vous vraiment terminer cette séance ?")) return
+    if (!confirm(t("confirmEnd"))) return
     setEnding(true)
     try {
       const res = await fetch("/api/halaqa/end", {
@@ -61,7 +61,7 @@ export default function TeacherHalaqaLivePage() {
       if (!res.ok) throw new Error("Erreur")
       router.push("/teacher/halaqa")
     } catch {
-      alert("Erreur lors de la fin de séance")
+      alert(t("errorEnd"))
     } finally {
       setEnding(false)
     }

@@ -1892,6 +1892,8 @@ export const translations = {
     createSession:    { fr: "Créer la séance",       en: "Create session",        ar: "إنشاء الجلسة" },
     creating:         { fr: "Création…",             en: "Creating…",             ar: "جارٍ الإنشاء…" },
     errorCreate:      { fr: "Erreur lors de la création de la séance", en: "Error creating the session", ar: "خطأ أثناء إنشاء الجلسة" },
+    confirmEnd:       { fr: "Voulez-vous vraiment terminer cette séance ?", en: "Are you sure you want to end this session?", ar: "هل أنت متأكد أنك تريد إنهاء هذه الجلسة؟" },
+    errorEnd:         { fr: "Erreur lors de la fin de séance", en: "Error ending the session", ar: "خطأ أثناء إنهاء الجلسة" },
     // Live
     joinRoom:         { fr: "Rejoindre la salle",    en: "Join room",             ar: "الانضمام إلى الغرفة" },
     endSession:       { fr: "Terminer la séance",    en: "End session",           ar: "إنهاء الجلسة" },
