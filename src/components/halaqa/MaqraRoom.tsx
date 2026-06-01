@@ -1,4 +1,4 @@
-// src/components/maqra/MaqraRoom.tsx
+// src/components/halaqa/MaqraRoom.tsx
 "use client"
 
 import { useEffect, useRef, useState } from "react"

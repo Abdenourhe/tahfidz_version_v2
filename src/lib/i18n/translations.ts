@@ -1571,6 +1571,7 @@ export const translations = {
     announcements:{ fr: "Annonces", en: "Announcements", ar: "الإعلانات" },
     notifications:{ fr: "Notifications", en: "Notifications", ar: "الإشعارات" },
     profile:      { fr: "Mon profil", en: "My Profile", ar: "ملفي الشخصي" },
+    halaqa:       { fr: "Halaqa Online", en: "Halaqa Online", ar: "حلقة أونلاين" },
     darkMode:     { fr: "Mode sombre", en: "Dark mode", ar: "الوضع المظلم" },
     lightMode:    { fr: "Mode clair", en: "Light mode", ar: "الوضع الفاتح" },
   },

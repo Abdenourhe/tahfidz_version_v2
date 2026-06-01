@@ -81,7 +81,7 @@ export default function NewMaqraPage() {
         body: JSON.stringify(data),
       })
       if (!res.ok) throw new Error("Erreur création")
-      router.push("/teacher/maqra")
+      router.push("/teacher/halaqa")
     } catch {
       alert("Erreur lors de la création de la séance")
     } finally {
@@ -99,7 +99,7 @@ export default function NewMaqraPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6">
       <div className="max-w-2xl mx-auto">
         <Link
-          href="/teacher/maqra"
+          href="/teacher/halaqa"
           className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 mb-6 transition"
         >
           <ArrowLeft size={16} />

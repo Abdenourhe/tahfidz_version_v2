@@ -1,4 +1,4 @@
-// src/app/student/maqra/page.tsx
+// src/app/student/halaqa/page.tsx
 "use client"
 
 import { useState, useEffect } from "react"
@@ -76,7 +76,7 @@ export default function StudentMaqraPage() {
                     </div>
                   </div>
                   <Link
-                    href={`/student/maqra/${s.id}`}
+                    href={`/student/halaqa/${s.id}`}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                       s.status === "LIVE"
                         ? "bg-red-600 hover:bg-red-700 text-white animate-pulse"

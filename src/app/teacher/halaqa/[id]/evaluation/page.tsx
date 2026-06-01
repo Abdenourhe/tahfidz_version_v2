@@ -1,4 +1,4 @@
-// src/app/teacher/maqra/[id]/evaluation/page.tsx
+// src/app/teacher/halaqa/[id]/evaluation/page.tsx
 "use client"
 
 import { useState, useEffect } from "react"
@@ -135,7 +135,7 @@ export default function MaqraEvaluationPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6">
       <div className="max-w-4xl mx-auto">
         <Link
-          href="/teacher/maqra"
+          href="/teacher/halaqa"
           className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 mb-6 transition"
         >
           <ArrowLeft size={16} />

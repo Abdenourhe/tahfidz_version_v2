@@ -1,4 +1,4 @@
-// src/app/teacher/maqra/page.tsx
+// src/app/teacher/halaqa/page.tsx
 "use client"
 
 import { useState, useEffect } from "react"
@@ -84,7 +84,7 @@ export default function TeacherMaqraPage() {
             </p>
           </div>
           <Link
-            href="/teacher/maqra/new"
+            href="/teacher/halaqa/new"
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-tahfidz-green hover:bg-emerald-700 text-white font-semibold rounded-xl transition shadow-lg shadow-tahfidz-green/20"
           >
             <Plus size={18} />
@@ -149,7 +149,7 @@ export default function TeacherMaqraPage() {
             <Video size={48} className="mx-auto text-gray-300 dark:text-gray-700 mb-4" />
             <p className="text-gray-500 dark:text-gray-400">Aucune séance trouvée</p>
             <Link
-              href="/teacher/maqra/new"
+              href="/teacher/halaqa/new"
               className="inline-flex items-center gap-2 mt-4 text-tahfidz-green hover:text-emerald-700 font-medium"
             >
               <Plus size={16} />
@@ -201,7 +201,7 @@ export default function TeacherMaqraPage() {
                     {session.status === "SCHEDULED" && (
                       <>
                         <Link
-                          href={`/teacher/maqra/${session.id}`}
+                          href={`/teacher/halaqa/${session.id}`}
                           className="px-4 py-2 bg-tahfidz-green hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition"
                         >
                           <Play size={16} className="inline mr-1" />
@@ -211,7 +211,7 @@ export default function TeacherMaqraPage() {
                     )}
                     {session.status === "LIVE" && (
                       <Link
-                        href={`/teacher/maqra/${session.id}`}
+                        href={`/teacher/halaqa/${session.id}`}
                         className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition animate-pulse"
                       >
                         <Video size={16} className="inline mr-1" />
@@ -232,7 +232,7 @@ export default function TeacherMaqraPage() {
                           </a>
                         )}
                         <Link
-                          href={`/teacher/maqra/${session.id}/evaluation`}
+                          href={`/teacher/halaqa/${session.id}/evaluation`}
                           className="px-4 py-2 bg-purple-100 dark:bg-purple-900/20 hover:bg-purple-200 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm font-medium rounded-lg transition"
                         >
                           <BarChart3 size={16} className="inline mr-1" />

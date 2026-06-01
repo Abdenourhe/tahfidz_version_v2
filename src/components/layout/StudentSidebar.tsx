@@ -32,7 +32,7 @@ export function StudentSidebar({ user, schoolName, schoolLogo }: StudentSidebarP
   const navItems = [
     { label: tN("dashboard"),   href: "/student/dashboard",      icon: LayoutDashboard },
     { label: locale === "ar" ? "تقدمي" : locale === "en" ? "My progress" : "Ma progression", href: "/student/progress",  icon: BookOpen },
-    { label: tN("halaqa"), href: "/student/maqra", icon: Video },
+    { label: tN("halaqa"), href: "/student/halaqa", icon: Video },
     { label: locale === "ar" ? "شاراتي" : locale === "en" ? "My badges" : "Mes badges",     href: "/student/badges",    icon: Star },
     { label: locale === "ar" ? "حضوري" : locale === "en" ? "My attendance" : "Mes présences", href: "/student/attendance", icon: CalendarCheck },
     { label: tN("notifications"), href: "/student/notifications", icon: Bell },
