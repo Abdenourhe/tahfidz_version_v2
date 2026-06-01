@@ -1,12 +1,28 @@
 // src/app/admin/halaqa/page.tsx
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
+import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
-import { Video, Calendar, Users, Play, FileVideo, BarChart3, ArrowLeft } from "lucide-react"
+import { Video, Calendar, Users, Play, FileVideo, BarChart3, ArrowLeft, Trash2, Eye } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
+
+async function deleteSession(formData: FormData) {
+  "use server"
+  const session = await auth()
+  if (!session?.user?.schoolId) return
+  if (session.user.role !== "ADMIN" && session.user.role !== "SUPERADMIN") return
+
+  const id = formData.get("id") as string
+  if (!id) return
+
+  await prisma.halaqaSession.delete({
+    where: { id, schoolId: session.user.schoolId },
+  })
+  revalidatePath("/admin/halaqa")
+}
 
 export default async function AdminHalaqaPage() {
   const session = await auth()
@@ -102,6 +118,7 @@ export default async function AdminHalaqaPage() {
                   <th className="text-left px-4 py-3 font-medium">Date</th>
                   <th className="text-left px-4 py-3 font-medium">Participants</th>
                   <th className="text-left px-4 py-3 font-medium">Évaluations</th>
+                  <th className="text-left px-4 py-3 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -134,6 +151,30 @@ export default async function AdminHalaqaPage() {
                       ) : (
                         <span className="text-gray-400">—</span>
                       )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1">
+                        <Link
+                          href={`/teacher/halaqa/${s.id}`}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-tahfidz-green hover:bg-tahfidz-green/10 transition"
+                          title="Voir"
+                        >
+                          <Eye size={15} />
+                        </Link>
+                        <form action={deleteSession} className="inline">
+                          <input type="hidden" name="id" value={s.id} />
+                          <button
+                            type="submit"
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition"
+                            title="Supprimer"
+                            onClick={(e) => {
+                              if (!confirm("Supprimer cette séance ?")) e.preventDefault()
+                            }}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </form>
+                      </div>
                     </td>
                   </tr>
                 ))}
