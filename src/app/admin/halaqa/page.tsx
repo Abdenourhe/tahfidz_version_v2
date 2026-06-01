@@ -4,7 +4,8 @@ import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
-import { Video, Calendar, Users, Play, FileVideo, BarChart3, ArrowLeft, Trash2, Eye } from "lucide-react"
+import { Video, Calendar, Users, Play, FileVideo, BarChart3, ArrowLeft, Eye } from "lucide-react"
+import { DeleteSessionButton } from "@/components/admin/DeleteSessionButton"
 import { formatDate } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
@@ -163,16 +164,7 @@ export default async function AdminHalaqaPage() {
                         </Link>
                         <form action={deleteSession} className="inline">
                           <input type="hidden" name="id" value={s.id} />
-                          <button
-                            type="submit"
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition"
-                            title="Supprimer"
-                            onClick={(e) => {
-                              if (!confirm("Supprimer cette séance ?")) e.preventDefault()
-                            }}
-                          >
-                            <Trash2 size={15} />
-                          </button>
+                          <DeleteSessionButton />
                         </form>
                       </div>
                     </td>
