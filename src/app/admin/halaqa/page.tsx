@@ -156,7 +156,7 @@ export default async function AdminHalaqaPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
                         <Link
-                          href={`/teacher/halaqa/${s.id}`}
+                          href={`/admin/halaqa/${s.id}`}
                           className="p-1.5 rounded-lg text-gray-400 hover:text-tahfidz-green hover:bg-tahfidz-green/10 transition"
                           title="Voir"
                         >
