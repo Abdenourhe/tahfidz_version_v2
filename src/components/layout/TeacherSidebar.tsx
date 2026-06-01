@@ -8,7 +8,7 @@ import { signOut } from "next-auth/react"
 import { useSession } from "next-auth/react"
 import {
   LayoutDashboard, Users, GraduationCap, BookMarked,
-  ClipboardCheck, Award, MessageSquare, Bell, UserCircle,
+  ClipboardCheck, Award, MessageSquare, Bell, UserCircle, Video,
   ChevronRight, LogOut,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -23,6 +23,7 @@ const NAV_ITEMS = [
   { href: "/teacher/memorization",  icon: BookMarked,       key: "memorization" },
   { href: "/teacher/attendance",    icon: ClipboardCheck,   key: "attendance" },
   { href: "/teacher/evaluations",   icon: Award,            key: "evaluations" },
+  { href: "/teacher/maqra",         icon: Video,            key: "maqra" },
   { href: "/teacher/announcements", icon: MessageSquare,    key: "announcements" },
   { href: "/teacher/notifications", icon: Bell,             key: "notifications" },
   { href: "/teacher/profile",       icon: UserCircle,       key: "profile" },

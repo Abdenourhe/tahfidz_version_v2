@@ -8,7 +8,7 @@ import { signOut } from "next-auth/react"
 import {
   LayoutDashboard, Users, GraduationCap, BookOpen,
   CalendarCheck, Megaphone, BarChart2, Settings, LogOut,
-  Bell, Shield, Monitor, Home, Award,
+  Bell, Shield, Monitor, Home, Award, Video,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { NotificationNavItem } from "@/components/layout/NotificationNavItem"
@@ -60,6 +60,8 @@ export function AdminSidebar({ user, schoolName, schoolLogo, schoolSlug, schoolC
           labelFallback: locale === "ar" ? "المديرون" : locale === "en" ? "Administrators" : "Administrateurs" },
         { labelKey: "groups",     href: "/admin/groups",        icon: BookOpen,        color: "text-indigo-600" },
         { labelKey: "attendance", href: "/admin/attendance",    icon: CalendarCheck,   color: "text-teal-600" },
+        { labelKey: "maqra",      href: "/admin/maqra",         icon: Video,           color: "text-red-600",
+          labelFallback: locale === "ar" ? "مقريء" : locale === "en" ? "Maqra'" : "Maqra'" },
       ],
     },
     {

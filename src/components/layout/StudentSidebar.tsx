@@ -6,7 +6,7 @@ import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
 import { useSession } from "next-auth/react"
-import { LayoutDashboard, BookOpen, Star, CalendarCheck, Bell, LogOut, ChevronRight, UserCircle } from "lucide-react"
+import { LayoutDashboard, BookOpen, Star, CalendarCheck, Bell, LogOut, ChevronRight, UserCircle, Video } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { NotificationNavItem } from "@/components/layout/NotificationNavItem"
@@ -32,6 +32,7 @@ export function StudentSidebar({ user, schoolName, schoolLogo }: StudentSidebarP
   const navItems = [
     { label: tN("dashboard"),   href: "/student/dashboard",      icon: LayoutDashboard },
     { label: locale === "ar" ? "تقدمي" : locale === "en" ? "My progress" : "Ma progression", href: "/student/progress",  icon: BookOpen },
+    { label: locale === "ar" ? "مقريء" : locale === "en" ? "Maqra'" : "Maqra'", href: "/student/maqra", icon: Video },
     { label: locale === "ar" ? "شاراتي" : locale === "en" ? "My badges" : "Mes badges",     href: "/student/badges",    icon: Star },
     { label: locale === "ar" ? "حضوري" : locale === "en" ? "My attendance" : "Mes présences", href: "/student/attendance", icon: CalendarCheck },
     { label: tN("notifications"), href: "/student/notifications", icon: Bell },
