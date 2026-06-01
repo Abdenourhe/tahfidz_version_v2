@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     const recordingUrl = recording.playback.format.url
     const recordingId = recording.recordID
 
-    const halaqaSession = await prisma.maqraSession.findUnique({
+    const halaqaSession = await prisma.halaqaSession.findUnique({
       where: { meetingID },
     })
 
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Session non trouvée" }, { status: 404 })
     }
 
-    await prisma.maqraSession.update({
+    await prisma.halaqaSession.update({
       where: { meetingID },
       data: {
         recordingUrl,

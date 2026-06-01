@@ -33,7 +33,7 @@ export async function GET(req: Request) {
       where.status = statusFilter
     }
 
-    const sessions = await prisma.maqraSession.findMany({
+    const sessions = await prisma.halaqaSession.findMany({
       where,
       include: {
         group: { select: { name: true } },

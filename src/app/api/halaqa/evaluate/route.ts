@@ -29,7 +29,7 @@ export async function POST(req: Request) {
 
     const data = parsed.data
 
-    const halaqaSession = await prisma.maqraSession.findUnique({
+    const halaqaSession = await prisma.halaqaSession.findUnique({
       where: { id: data.sessionId },
     })
     if (!halaqaSession) {
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
     }
 
-    const evaluation = await prisma.maqraEvaluation.upsert({
+    const evaluation = await prisma.halaqaEvaluation.upsert({
       where: {
         sessionId_studentId: {
           sessionId: data.sessionId,

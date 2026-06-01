@@ -99,7 +99,7 @@ model School {
 
   users          User[]
   groups         Group[]
-  maqraSessions  MaqraSession[] @relation("SchoolMaqra")
+  halaqaSessions  HalaqaSession[] @relation("SchoolHalaqa")
   announcements  Announcement[]
   notifications  Notification[]
   exams          Exam[]
@@ -139,8 +139,8 @@ model User {
   parentProfile  Parent?
   studentProfile Student?
   
-  teacherMaqraSessions MaqraSession[]     @relation("TeacherMaqra")
-  studentMaqraEvals    MaqraEvaluation[]  @relation("StudentMaqraEval")
+  teacherHalaqaSessions HalaqaSession[]     @relation("TeacherHalaqa")
+  studentHalaqaEvals    HalaqaEvaluation[]  @relation("StudentHalaqaEval")
 
   notifications    Notification[]
   sentMessages     DirectMessage[] @relation("SentMessages")
@@ -312,7 +312,7 @@ model Group {
   exams         Exam[]
   announcements GroupAnnouncement[]
   attendances   Attendance[]
-  maqraSessions MaqraSession[]      @relation("GroupMaqra")
+  halaqaSessions HalaqaSession[]      @relation("GroupHalaqa")
 
   @@index([schoolId])
   @@index([teacherId])
@@ -872,27 +872,27 @@ model Feedback {
   @@map("feedbacks")
 }
 
-// ==================== MAQRA' (BigBlueButton) ====================
+// ==================== HALAQA ONLINE (BigBlueButton) ====================
 
-enum MaqraType {
+enum HalaqaType {
   INDIVIDUAL
   COLLECTIVE
 }
 
-enum MaqraStatus {
+enum HalaqaStatus {
   SCHEDULED
   LIVE
   ENDED
   CANCELLED
 }
 
-enum MaqraMode {
+enum HalaqaMode {
   AUDIO_ONLY
   VIDEO
   SCREEN_SHARE
 }
 
-model MaqraSession {
+model HalaqaSession {
   id           String    @id @default(cuid())
   meetingID    String    @unique
   meetingName  String
@@ -901,18 +901,18 @@ model MaqraSession {
   guestUrl     String?   // URL join parent (OBSERVER)
   
   schoolId     String
-  school       School    @relation("SchoolMaqra", fields: [schoolId], references: [id], onDelete: Cascade)
+  school       School    @relation("SchoolHalaqa", fields: [schoolId], references: [id], onDelete: Cascade)
   
   teacherId    String
-  teacher      User      @relation("TeacherMaqra", fields: [teacherId], references: [id], onDelete: Cascade)
+  teacher      User      @relation("TeacherHalaqa", fields: [teacherId], references: [id], onDelete: Cascade)
   studentIds   String[]  // Array of student User IDs
   
   groupId      String?
-  group        Group?    @relation("GroupMaqra", fields: [groupId], references: [id], onDelete: SetNull)
+  group        Group?    @relation("GroupHalaqa", fields: [groupId], references: [id], onDelete: SetNull)
   
-  type         MaqraType
-  status       MaqraStatus @default(SCHEDULED)
-  mode         MaqraMode   @default(AUDIO_ONLY)
+  type         HalaqaType
+  status       HalaqaStatus @default(SCHEDULED)
+  mode         HalaqaMode   @default(AUDIO_ONLY)
   
   scheduledAt  DateTime
   startedAt    DateTime?
@@ -925,7 +925,7 @@ model MaqraSession {
   sourah       String?
   verses       String?
   
-  evaluations  MaqraEvaluation[]
+  evaluations  HalaqaEvaluation[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   
@@ -934,15 +934,15 @@ model MaqraSession {
   @@index([groupId])
   @@index([status])
   @@index([scheduledAt])
-  @@map("maqra_sessions")
+  @@map("halaqa_sessions")
 }
 
-model MaqraEvaluation {
+model HalaqaEvaluation {
   id                String   @id @default(cuid())
   sessionId         String
-  session           MaqraSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  session           HalaqaSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   studentId         String
-  student           User     @relation("StudentMaqraEval", fields: [studentId], references: [id], onDelete: Cascade)
+  student           User     @relation("StudentHalaqaEval", fields: [studentId], references: [id], onDelete: Cascade)
   
   sourah            String?
   verses            String?
@@ -957,5 +957,5 @@ model MaqraEvaluation {
   @@unique([sessionId, studentId])
   @@index([sessionId])
   @@index([studentId])
-  @@map("maqra_evaluations")
+  @@map("halaqa_evaluations")
 }

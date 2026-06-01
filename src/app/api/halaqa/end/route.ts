@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     }
 
     const { sessionId } = parsed.data
-    const halaqaSession = await prisma.maqraSession.findUnique({
+    const halaqaSession = await prisma.halaqaSession.findUnique({
       where: { id: sessionId },
     })
 
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
     }
 
     // Mettre à jour Prisma
-    const updated = await prisma.maqraSession.update({
+    const updated = await prisma.halaqaSession.update({
       where: { id: sessionId },
       data: {
         status: "ENDED",

@@ -41,7 +41,7 @@ export async function GET(req: Request) {
     }
 
     // Récupérer les sessions avec enregistrement
-    const sessions = await prisma.maqraSession.findMany({
+    const sessions = await prisma.halaqaSession.findMany({
       where: { ...where, recordingUrl: { not: null } },
       include: {
         teacher: { select: { fullName: true } },

@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     }
 
     const { sessionId } = parsed.data
-    const halaqaSession = await prisma.maqraSession.findUnique({
+    const halaqaSession = await prisma.halaqaSession.findUnique({
       where: { id: sessionId },
       include: {
         teacher: { select: { fullName: true, email: true } },
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
 
     // Mettre à jour le statut si SCHEDULED
     if (halaqaSession.status === "SCHEDULED") {
-      await prisma.maqraSession.update({
+      await prisma.halaqaSession.update({
         where: { id: sessionId },
         data: { status: "LIVE", startedAt: new Date() },
       })

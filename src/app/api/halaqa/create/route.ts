@@ -80,7 +80,7 @@ export async function POST(req: Request) {
     })
 
     // Sauvegarder dans Prisma
-    const halaqaSession = await prisma.maqraSession.create({
+    const halaqaSession = await prisma.halaqaSession.create({
       data: {
         meetingID,
         meetingName: data.meetingName,

@@ -2,12 +2,12 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { MaqraMode } from "@prisma/client"
+import { HalaqaMode } from "@prisma/client"
 import { Loader2, Maximize2, Minimize2 } from "lucide-react"
 
 interface HalaqaRoomProps {
   joinUrl: string
-  mode: MaqraMode
+  mode: HalaqaMode
   isTeacher?: boolean
 }
 
