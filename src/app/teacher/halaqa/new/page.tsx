@@ -1,4 +1,4 @@
-// src/app/teacher/maqra/new/page.tsx
+// src/app/teacher/halaqa/new/page.tsx
 "use client"
 
 import { useState, useEffect } from "react"
@@ -27,7 +27,7 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>
 
-export default function NewMaqraPage() {
+export default function NewHalaqaPage() {
   const router = useRouter()
   const [students, setStudents] = useState<{ id: string; fullName: string; email: string }[]>([])
   const [groups, setGroups] = useState<{ id: string; name: string }[]>([])
@@ -75,7 +75,7 @@ export default function NewMaqraPage() {
   const onSubmit = async (data: FormData) => {
     setLoading(true)
     try {
-      const res = await fetch("/api/maqra/create", {
+      const res = await fetch("/api/halaqa/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

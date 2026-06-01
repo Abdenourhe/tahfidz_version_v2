@@ -29,7 +29,7 @@ export default async function TeacherLayout({ children }: { children: React.Reac
             <TeacherSidebar user={(session.user as any)} schoolName={school?.name ?? undefined} schoolLogo={school?.logo ?? undefined} />
           </div>
 
-          <main className="flex-1 overflow-y-auto flex flex-col md:ml-64">
+          <main className="flex-1 overflow-y-auto flex flex-col md:ms-64">
             <div className="hidden md:block"><TopBar /></div>
             <div className="md:hidden"><MobileHeader role="teacher" schoolName={school?.name ?? undefined} schoolLogo={school?.logo ?? undefined} /></div>
 

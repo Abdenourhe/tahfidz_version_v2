@@ -1,4 +1,4 @@
-// src/app/api/maqra/evaluate/route.ts
+// src/app/api/halaqa/evaluate/route.ts
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
@@ -29,14 +29,14 @@ export async function POST(req: Request) {
 
     const data = parsed.data
 
-    const maqraSession = await prisma.maqraSession.findUnique({
+    const halaqaSession = await prisma.halaqaSession.findUnique({
       where: { id: data.sessionId },
     })
-    if (!maqraSession) {
+    if (!halaqaSession) {
       return NextResponse.json({ error: "Session non trouvée" }, { status: 404 })
     }
 
-    const isTeacher = maqraSession.teacherId === userId
+    const isTeacher = halaqaSession.teacherId === userId
     const isAdmin = ["ADMIN", "SUPERADMIN"].includes(role)
     if (!isTeacher && !isAdmin) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 })

@@ -1,4 +1,4 @@
-// src/app/api/maqra/create/route.ts
+// src/app/api/halaqa/create/route.ts
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { createMeeting, generateMeetingID, generatePassword, joinMeetingUrl, isConfigured } from "@/lib/bigbluebutton"
@@ -80,7 +80,7 @@ export async function POST(req: Request) {
     })
 
     // Sauvegarder dans Prisma
-    const maqraSession = await prisma.maqraSession.create({
+    const halaqaSession = await prisma.halaqaSession.create({
       data: {
         meetingID,
         meetingName: data.meetingName,
@@ -103,7 +103,7 @@ export async function POST(req: Request) {
       },
     })
 
-    return NextResponse.json({ session: maqraSession }, { status: 201 })
+    return NextResponse.json({ session: halaqaSession }, { status: 201 })
   } catch (error: any) {
     console.error("[MAQRA CREATE ERROR]", error?.message || String(error))
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })

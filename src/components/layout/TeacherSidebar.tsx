@@ -47,7 +47,7 @@ export function TeacherSidebar({ user, schoolName, schoolLogo }: TeacherSidebarP
   const schoolSlug = session?.user?.schoolSlug
 
   return (
-    <aside className="w-64 h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col fixed left-0 top-0 z-40">
+    <aside className="w-64 h-screen bg-white dark:bg-gray-900 border-e border-gray-200 dark:border-gray-800 flex flex-col fixed start-0 top-0 z-40">
       {/* Logo */}
       <div className="p-6 border-b border-gray-100 dark:border-gray-800">
         <Link href="/teacher/dashboard" className="flex items-center gap-3">

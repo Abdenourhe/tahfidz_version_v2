@@ -51,6 +51,12 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     return entry[locale] ?? entry.fr ?? key
   }, [locale])
 
+  // Synchroniser dir/lang sur <html> à chaque changement de locale
+  useEffect(() => {
+    document.documentElement.lang = locale
+    document.documentElement.dir = locale === "ar" ? "rtl" : "ltr"
+  }, [locale])
+
   const dir: "ltr" | "rtl" = locale === "ar" ? "rtl" : "ltr"
 
   return (

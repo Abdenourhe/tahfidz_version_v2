@@ -1,4 +1,4 @@
-// src/app/api/maqra/join/route.ts
+// src/app/api/halaqa/join/route.ts
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { joinMeetingUrl } from "@/lib/bigbluebutton"
@@ -24,20 +24,20 @@ export async function POST(req: Request) {
     }
 
     const { sessionId } = parsed.data
-    const maqraSession = await prisma.maqraSession.findUnique({
+    const halaqaSession = await prisma.halaqaSession.findUnique({
       where: { id: sessionId },
       include: {
         teacher: { select: { fullName: true, email: true } },
       },
     })
 
-    if (!maqraSession) {
+    if (!halaqaSession) {
       return NextResponse.json({ error: "Session non trouvée" }, { status: 404 })
     }
 
     // Vérifier que l'utilisateur est autorisé
-    const isTeacher = maqraSession.teacherId === userId
-    const isStudent = maqraSession.studentIds.includes(userId)
+    const isTeacher = halaqaSession.teacherId === userId
+    const isStudent = halaqaSession.studentIds.includes(userId)
     const isAdmin = ["ADMIN", "SUPERADMIN"].includes(role)
 
     if (!isTeacher && !isStudent && !isAdmin) {
@@ -45,16 +45,16 @@ export async function POST(req: Request) {
     }
 
     // Vérifier le statut
-    if (maqraSession.status === "CANCELLED") {
+    if (halaqaSession.status === "CANCELLED") {
       return NextResponse.json({ error: "Session annulée" }, { status: 400 })
     }
-    if (maqraSession.status === "ENDED") {
+    if (halaqaSession.status === "ENDED") {
       return NextResponse.json({ error: "Session terminée" }, { status: 400 })
     }
 
     // Mettre à jour le statut si SCHEDULED
-    if (maqraSession.status === "SCHEDULED") {
-      await prisma.maqraSession.update({
+    if (halaqaSession.status === "SCHEDULED") {
+      await prisma.halaqaSession.update({
         where: { id: sessionId },
         data: { status: "LIVE", startedAt: new Date() },
       })
@@ -63,12 +63,12 @@ export async function POST(req: Request) {
     // Générer l'URL de join
     let joinUrl: string
     if (isTeacher || isAdmin) {
-      joinUrl = maqraSession.roomUrl
+      joinUrl = halaqaSession.roomUrl
     } else {
       // Élève: générer une URL personnalisée avec son nom
       const userName = session.user.name || "Élève"
       joinUrl = joinMeetingUrl({
-        meetingID: maqraSession.meetingID,
+        meetingID: halaqaSession.meetingID,
         fullName: userName,
         password: "", // L'URL attendeeUrl contient déjà le mot de passe dans la query string
         role: "ATTENDEE",
@@ -78,7 +78,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       joinUrl,
-      mode: maqraSession.mode,
+      mode: halaqaSession.mode,
       status: "LIVE",
       isTeacher: isTeacher || isAdmin,
     }, { status: 200 })

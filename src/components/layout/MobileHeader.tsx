@@ -147,7 +147,7 @@ export function MobileHeader({
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed left-0 top-0 bottom-0 w-72 bg-white dark:bg-gray-900 z-50 shadow-2xl flex flex-col"
+              className="fixed start-0 top-0 bottom-0 w-72 bg-white dark:bg-gray-900 z-50 shadow-2xl flex flex-col"
             >
               {/* Header avec TopBarControls */}
               <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-center">

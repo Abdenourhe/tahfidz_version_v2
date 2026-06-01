@@ -1,4 +1,4 @@
-// src/app/student/maqra/[id]/page.tsx
+// src/app/student/halaqa/[id]/page.tsx
 "use client"
 
 import { useState, useEffect } from "react"
@@ -6,9 +6,9 @@ import { useParams, useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { Loader2, AlertCircle, ArrowLeft, Video } from "lucide-react"
-import { MaqraRoom } from "@/components/halaqa/MaqraRoom"
+import { HalaqaRoom } from "@/components/halaqa/HalaqaRoom"
 
-export default function StudentMaqraJoinPage() {
+export default function StudentHalaqaJoinPage() {
   const params = useParams()
   const router = useRouter()
   const sessionId = params?.id as string
@@ -25,7 +25,7 @@ export default function StudentMaqraJoinPage() {
 
   const joinSession = async () => {
     try {
-      const res = await fetch("/api/maqra/join", {
+      const res = await fetch("/api/halaqa/join", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId }),
@@ -83,7 +83,7 @@ export default function StudentMaqraJoinPage() {
       </div>
       <div className="flex-1 overflow-hidden">
         {joinUrl ? (
-          <MaqraRoom joinUrl={joinUrl} mode={session?.mode || "AUDIO_ONLY"} />
+          <HalaqaRoom joinUrl={joinUrl} mode={session?.mode || "AUDIO_ONLY"} />
         ) : (
           <div className="h-full flex items-center justify-center text-gray-500">
             <Loader2 size={32} className="animate-spin text-tahfidz-green" />

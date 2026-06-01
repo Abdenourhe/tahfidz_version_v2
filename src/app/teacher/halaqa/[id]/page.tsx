@@ -9,9 +9,9 @@ import {
   Video, ArrowLeft, StopCircle, Users, Clock,
   Loader2, AlertCircle
 } from "lucide-react"
-import { MaqraRoom } from "@/components/halaqa/MaqraRoom"
+import { HalaqaRoom } from "@/components/halaqa/HalaqaRoom"
 
-export default function TeacherMaqraLivePage() {
+export default function TeacherHalaqaLivePage() {
   const params = useParams()
   const router = useRouter()
   const sessionId = params?.id as string
@@ -29,7 +29,7 @@ export default function TeacherMaqraLivePage() {
 
   const joinSession = async () => {
     try {
-      const res = await fetch("/api/maqra/join", {
+      const res = await fetch("/api/halaqa/join", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId }),
@@ -49,7 +49,7 @@ export default function TeacherMaqraLivePage() {
     if (!confirm("Voulez-vous vraiment terminer cette séance ?")) return
     setEnding(true)
     try {
-      const res = await fetch("/api/maqra/end", {
+      const res = await fetch("/api/halaqa/end", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId }),
@@ -125,7 +125,7 @@ export default function TeacherMaqraLivePage() {
       {/* Room */}
       <div className="flex-1 overflow-hidden">
         {joinUrl ? (
-          <MaqraRoom joinUrl={joinUrl} mode={session?.mode || "AUDIO_ONLY"} isTeacher />
+          <HalaqaRoom joinUrl={joinUrl} mode={session?.mode || "AUDIO_ONLY"} isTeacher />
         ) : (
           <div className="h-full flex items-center justify-center text-gray-500">
             <Loader2 size={32} className="animate-spin text-tahfidz-green" />

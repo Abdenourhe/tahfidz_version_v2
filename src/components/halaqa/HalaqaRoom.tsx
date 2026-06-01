@@ -1,17 +1,17 @@
-// src/components/halaqa/MaqraRoom.tsx
+// src/components/halaqa/HalaqaRoom.tsx
 "use client"
 
 import { useEffect, useRef, useState } from "react"
 import { MaqraMode } from "@prisma/client"
 import { Loader2, Maximize2, Minimize2 } from "lucide-react"
 
-interface MaqraRoomProps {
+interface HalaqaRoomProps {
   joinUrl: string
   mode: MaqraMode
   isTeacher?: boolean
 }
 
-export function MaqraRoom({ joinUrl, mode, isTeacher }: MaqraRoomProps) {
+export function HalaqaRoom({ joinUrl, mode, isTeacher }: HalaqaRoomProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [loading, setLoading] = useState(true)
   const [fullscreen, setFullscreen] = useState(false)

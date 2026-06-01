@@ -1,4 +1,4 @@
-// src/app/api/maqra/end/route.ts
+// src/app/api/halaqa/end/route.ts
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { endMeeting } from "@/lib/bigbluebutton"
@@ -24,31 +24,31 @@ export async function POST(req: Request) {
     }
 
     const { sessionId } = parsed.data
-    const maqraSession = await prisma.maqraSession.findUnique({
+    const halaqaSession = await prisma.halaqaSession.findUnique({
       where: { id: sessionId },
     })
 
-    if (!maqraSession) {
+    if (!halaqaSession) {
       return NextResponse.json({ error: "Session non trouvée" }, { status: 404 })
     }
 
     // Seul le prof ou un admin peut terminer
-    const isTeacher = maqraSession.teacherId === userId
+    const isTeacher = halaqaSession.teacherId === userId
     const isAdmin = ["ADMIN", "SUPERADMIN"].includes(role)
     if (!isTeacher && !isAdmin) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
     }
 
-    if (maqraSession.status === "ENDED" || maqraSession.status === "CANCELLED") {
+    if (halaqaSession.status === "ENDED" || halaqaSession.status === "CANCELLED") {
       return NextResponse.json({ error: "Session déjà terminée" }, { status: 400 })
     }
 
     // Appel BBB end (le mot de passe est dans l'URL roomUrl, on l'extrait)
     try {
-      const url = new URL(maqraSession.roomUrl)
+      const url = new URL(halaqaSession.roomUrl)
       const pw = url.searchParams.get("password")
       if (pw) {
-        await endMeeting(maqraSession.meetingID, pw)
+        await endMeeting(halaqaSession.meetingID, pw)
       }
     } catch (bbbErr: any) {
       console.warn("[MAQRA END BBB WARN]", bbbErr?.message)
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
     }
 
     // Mettre à jour Prisma
-    const updated = await prisma.maqraSession.update({
+    const updated = await prisma.halaqaSession.update({
       where: { id: sessionId },
       data: {
         status: "ENDED",

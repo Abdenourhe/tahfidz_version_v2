@@ -1,4 +1,4 @@
-// src/app/api/maqra/webhook/route.ts
+// src/app/api/halaqa/webhook/route.ts
 // Webhook appelé par BigBlueButton quand un enregistrement est prêt
 
 import { prisma } from "@/lib/prisma"
@@ -24,15 +24,15 @@ export async function POST(req: Request) {
     const recordingUrl = recording.playback.format.url
     const recordingId = recording.recordID
 
-    const maqraSession = await prisma.maqraSession.findUnique({
+    const halaqaSession = await prisma.halaqaSession.findUnique({
       where: { meetingID },
     })
 
-    if (!maqraSession) {
+    if (!halaqaSession) {
       return NextResponse.json({ error: "Session non trouvée" }, { status: 404 })
     }
 
-    await prisma.maqraSession.update({
+    await prisma.halaqaSession.update({
       where: { meetingID },
       data: {
         recordingUrl,

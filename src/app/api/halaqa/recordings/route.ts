@@ -1,4 +1,4 @@
-// src/app/api/maqra/recordings/route.ts
+// src/app/api/halaqa/recordings/route.ts
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { getRecordings } from "@/lib/bigbluebutton"
@@ -41,7 +41,7 @@ export async function GET(req: Request) {
     }
 
     // Récupérer les sessions avec enregistrement
-    const sessions = await prisma.maqraSession.findMany({
+    const sessions = await prisma.halaqaSession.findMany({
       where: { ...where, recordingUrl: { not: null } },
       include: {
         teacher: { select: { fullName: true } },

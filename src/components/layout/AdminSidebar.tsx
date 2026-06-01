@@ -93,7 +93,7 @@ export function AdminSidebar({ user, schoolName, schoolLogo, schoolSlug, schoolC
   }
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-100 flex flex-col h-full shrink-0 shadow-sm">
+    <aside className="w-64 bg-white border-e border-gray-100 flex flex-col h-full shrink-0 shadow-sm">
 
       {/* Logo école */}
       <div className="px-5 py-5 border-b border-gray-100">

@@ -40,7 +40,7 @@ export function StudentSidebar({ user, schoolName, schoolLogo }: StudentSidebarP
   ]
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-100 flex flex-col h-full shrink-0">
+    <aside className="w-64 bg-white border-e border-gray-100 flex flex-col h-full shrink-0">
       <div className="p-6 border-b border-gray-100">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl gradient-tahfidz flex items-center justify-center overflow-hidden">

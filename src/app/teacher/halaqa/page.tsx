@@ -11,7 +11,7 @@ import {
   Play, StopCircle, FileVideo, BarChart3
 } from "lucide-react"
 
-interface MaqraSession {
+interface HalaqaSession {
   id: string
   meetingName: string
   status: string
@@ -25,10 +25,10 @@ interface MaqraSession {
   studentIds: string[]
 }
 
-export default function TeacherMaqraPage() {
+export default function TeacherHalaqaPage() {
   const router = useRouter()
   const { locale } = useLanguage()
-  const [sessions, setSessions] = useState<MaqraSession[]>([])
+  const [sessions, setSessions] = useState<HalaqaSession[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<"all" | "scheduled" | "live" | "ended">("all")
 
@@ -38,7 +38,7 @@ export default function TeacherMaqraPage() {
 
   const fetchSessions = async () => {
     try {
-      const res = await fetch("/api/maqra/sessions")
+      const res = await fetch("/api/halaqa/sessions")
       if (!res.ok) throw new Error("Erreur")
       const data = await res.json()
       setSessions(data.sessions || [])

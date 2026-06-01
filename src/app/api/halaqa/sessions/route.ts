@@ -1,4 +1,4 @@
-// src/app/api/maqra/sessions/route.ts
+// src/app/api/halaqa/sessions/route.ts
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
@@ -33,7 +33,7 @@ export async function GET(req: Request) {
       where.status = statusFilter
     }
 
-    const sessions = await prisma.maqraSession.findMany({
+    const sessions = await prisma.halaqaSession.findMany({
       where,
       include: {
         group: { select: { name: true } },

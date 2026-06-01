@@ -1,4 +1,4 @@
-// src/app/parent/maqra/page.tsx
+// src/app/parent/halaqa/page.tsx
 "use client"
 
 import { useState, useEffect } from "react"
@@ -15,7 +15,7 @@ interface Recording {
   evaluations: { memorizationScore?: number | null }[]
 }
 
-export default function ParentMaqraPage() {
+export default function ParentHalaqaPage() {
   const [recordings, setRecordings] = useState<Recording[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -25,7 +25,7 @@ export default function ParentMaqraPage() {
 
   const fetchRecordings = async () => {
     try {
-      const res = await fetch("/api/maqra/recordings")
+      const res = await fetch("/api/halaqa/recordings")
       if (!res.ok) throw new Error("Erreur")
       const data = await res.json()
       setRecordings(data.recordings || [])

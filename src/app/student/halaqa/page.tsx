@@ -6,7 +6,7 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { Video, Calendar, Clock, Play, FileVideo, Loader2 } from "lucide-react"
 
-interface MaqraSession {
+interface HalaqaSession {
   id: string
   meetingName: string
   status: string
@@ -16,8 +16,8 @@ interface MaqraSession {
   teacher: { fullName: string }
 }
 
-export default function StudentMaqraPage() {
-  const [sessions, setSessions] = useState<MaqraSession[]>([])
+export default function StudentHalaqaPage() {
+  const [sessions, setSessions] = useState<HalaqaSession[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -26,7 +26,7 @@ export default function StudentMaqraPage() {
 
   const fetchSessions = async () => {
     try {
-      const res = await fetch("/api/maqra/sessions")
+      const res = await fetch("/api/halaqa/sessions")
       if (!res.ok) throw new Error("Erreur")
       const data = await res.json()
       setSessions(data.sessions || [])

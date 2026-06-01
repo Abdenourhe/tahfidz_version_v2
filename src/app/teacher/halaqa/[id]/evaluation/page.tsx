@@ -34,7 +34,7 @@ interface StudentEval {
   }
 }
 
-export default function MaqraEvaluationPage() {
+export default function HalaqaEvaluationPage() {
   const params = useParams()
   const router = useRouter()
   const sessionId = params?.id as string
@@ -69,7 +69,7 @@ export default function MaqraEvaluationPage() {
 
   const fetchSession = async () => {
     try {
-      const res = await fetch(`/api/maqra/sessions?sessionId=${sessionId}`)
+      const res = await fetch(`/api/halaqa/sessions?sessionId=${sessionId}`)
       const data = await res.json()
       const session = data.sessions?.[0]
       if (!session) return
@@ -102,7 +102,7 @@ export default function MaqraEvaluationPage() {
     if (!selectedStudent) return
     setSaving(true)
     try {
-      const res = await fetch("/api/maqra/evaluate", {
+      const res = await fetch("/api/halaqa/evaluate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
