@@ -25,22 +25,29 @@ const {
   providers: [
     Credentials({
       async authorize(credentials) {
-        const parsed = LoginSchema.safeParse(credentials)
-        if (!parsed.success) return null
-        const { email: rawEmail, password, schoolSlug } = parsed.data
-        const email = rawEmail.toLowerCase().trim()
+        try {
+          const parsed = LoginSchema.safeParse(credentials)
+          if (!parsed.success) {
+            console.log("[AUTH] LoginSchema parse failed", parsed.error.flatten())
+            return null
+          }
+          const { email: rawEmail, password, schoolSlug } = parsed.data
+          const email = rawEmail.toLowerCase().trim()
 
-        // SUPERADMIN bypass
-        const superAdmin = await prisma.user.findFirst({
-          where: { email, role: "SUPERADMIN", isActive: true },
-          select: {
-            id: true, password: true, fullName: true, avatar: true, schoolId: true,
-            school: { select: { slug: true, name: true, logo: true, city: true } },
-          },
-        })
-        if (superAdmin) {
-          const valid = await bcrypt.compare(password, superAdmin.password)
-          if (!valid) return null
+          // SUPERADMIN bypass
+          const superAdmin = await prisma.user.findFirst({
+            where: { email, role: "SUPERADMIN", isActive: true },
+            select: {
+              id: true, password: true, fullName: true, avatar: true, schoolId: true,
+              school: { select: { slug: true, name: true, logo: true, city: true } },
+            },
+          })
+          if (superAdmin) {
+            const valid = await bcrypt.compare(password, superAdmin.password)
+            if (!valid) {
+              console.log("[AUTH] SuperAdmin password mismatch", email)
+              return null
+            }
           prisma.user.update({
             where: { id: superAdmin.id },
             data: { lastLoginAt: new Date() },
@@ -60,22 +67,34 @@ const {
         }
 
         // Auth normale
-        if (!schoolSlug || schoolSlug.length < 2) return null
+        if (!schoolSlug || schoolSlug.length < 2) {
+          console.log("[AUTH] Missing schoolSlug", { email, schoolSlug })
+          return null
+        }
 
         const school = await prisma.school.findFirst({
           where:  { slug: { equals: schoolSlug, mode: "insensitive" } },
           select: { id: true, slug: true, name: true, logo: true, city: true, isActive: true },
         })
-        if (!school?.isActive) return null
+        if (!school?.isActive) {
+          console.log("[AUTH] School not found or inactive", { schoolSlug })
+          return null
+        }
 
         const user = await prisma.user.findUnique({
           where:  { schoolId_email: { schoolId: school.id, email } },
           select: { id: true, password: true, role: true, isActive: true, fullName: true, avatar: true },
         })
-        if (!user?.isActive) return null
+        if (!user?.isActive) {
+          console.log("[AUTH] User not found or inactive", { email, schoolId: school.id })
+          return null
+        }
 
         const valid = await bcrypt.compare(password, user.password)
-        if (!valid) return null
+        if (!valid) {
+          console.log("[AUTH] Password mismatch", { email, schoolId: school.id })
+          return null
+        }
 
         let studentCode: string | undefined
         if (user.role === "STUDENT") {
@@ -103,6 +122,10 @@ const {
           schoolLogo: school.logo ?? undefined,
           schoolCity: school.city ?? undefined,
           studentCode,
+        }
+        } catch (err: any) {
+          console.error("[AUTH] Unexpected error in authorize", err?.message || err)
+          return null
         }
       },
     }),

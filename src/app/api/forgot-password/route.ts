@@ -41,7 +41,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Generer un token JWT signe (valide 1h)
-    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET!)
+    const secretKey = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET
+    if (!secretKey || secretKey.length < 32) {
+      return NextResponse.json({ error: "Configuration serveur incomplete (AUTH_SECRET manquant)" }, { status: 500 })
+    }
+    const secret = new TextEncoder().encode(secretKey)
     const token = await new SignJWT({ email: email.toLowerCase(), schoolId: school.id, userId: user.id })
       .setProtectedHeader({ alg: "HS256" })
       .setExpirationTime("1h")

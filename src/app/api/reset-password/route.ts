@@ -15,7 +15,11 @@ export async function POST(req: NextRequest) {
     // Verifier le token JWT
     let payload: { email: string; schoolId: string; userId: string }
     try {
-      const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET!)
+      const secretKey = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET
+      if (!secretKey || secretKey.length < 32) {
+        return NextResponse.json({ error: "Configuration serveur incomplete" }, { status: 500 })
+      }
+      const secret = new TextEncoder().encode(secretKey)
       const verified = await jwtVerify(token, secret, { clockTolerance: 60 })
       payload = verified.payload as any
     } catch {
