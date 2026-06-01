@@ -77,7 +77,7 @@ export default function TeacherMaqraPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <Video size={28} className="text-tahfidz-green" />
-              Maqra&apos; Électronique
+              Halaqa Online
             </h1>
             <p className="text-gray-500 dark:text-gray-400 mt-1">
               Gérez vos séances de récitation en ligne
@@ -153,7 +153,7 @@ export default function TeacherMaqraPage() {
               className="inline-flex items-center gap-2 mt-4 text-tahfidz-green hover:text-emerald-700 font-medium"
             >
               <Plus size={16} />
-              Créer votre première séance
+              Créer votre première Halaqa
             </Link>
           </div>
         ) : (

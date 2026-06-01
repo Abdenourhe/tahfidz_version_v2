@@ -57,7 +57,7 @@ export async function POST(req: Request) {
       webcamsOnlyForModerator: data.mode === "AUDIO_ONLY",
       lockSettingsDisableCam: data.mode === "AUDIO_ONLY",
       lockSettingsDisableMic: false,
-      welcome: `Bienvenue dans la Maqra' de récitation. Préparez votre mushaf.`,
+      welcome: `Bienvenue dans votre Halaqa Online. Préparez votre mushaf.`,
       duration: data.duration,
       maxParticipants: data.type === "INDIVIDUAL" ? 3 : 30,
     })

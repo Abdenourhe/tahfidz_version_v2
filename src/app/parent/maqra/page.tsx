@@ -41,7 +41,7 @@ export default function ParentMaqraPage() {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-6">
           <FileVideo size={28} className="text-tahfidz-green" />
-          Enregistrements Maqra&apos;
+          Enregistrements Halaqa Online
         </h1>
 
         {loading ? (

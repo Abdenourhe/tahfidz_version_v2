@@ -32,7 +32,7 @@ export function ParentNav({ user, schoolName, schoolLogo }: ParentNavProps) {
   const navItems = [
     { label: tN("dashboard"),   href: "/parent/dashboard",      icon: LayoutDashboard },
     { label: locale === "ar" ? "ربط طفل" : locale === "en" ? "Link a child" : "Lier un enfant", href: "/parent/link", icon: Link2 },
-    { label: locale === "ar" ? "مقريء" : locale === "en" ? "Maqra'" : "Maqra'", href: "/parent/maqra", icon: Video },
+    { label: tN("halaqa"), href: "/parent/maqra", icon: Video },
     { label: tN("notifications"), href: "/parent/notifications", icon: Bell },
     { label: locale === "ar" ? "ملفي الشخصي" : locale === "en" ? "My profile" : "Mon profil",  href: "/parent/profile", icon: User },
   ]

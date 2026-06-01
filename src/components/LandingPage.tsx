@@ -22,7 +22,7 @@ const dict = {
       how: "Comment ca marche", login: "Connexion", register: "Inscrire mon ecole",
     },
     hero: {
-      badge: "🎉 Nouveau · Maqra' electronique disponible",
+      badge: "🎉 Nouveau · Halaqa Online electronique disponible",
       title: "La plateforme intelligente pour",
       titleHighlight: "les ecoles coraniques",
       subtitle: "Gerez votre ecole de memorisation du Coran avec excellence. Eleves, enseignants, groupes, suivis, evaluations — tout en un seul endroit.",
@@ -39,7 +39,7 @@ const dict = {
         { icon: BookMarked, title: "Suivi memorisation", desc: "Suivez l'avancement sourate par sourate avec notation detaillee des erreurs." },
         { icon: BarChart2, title: "Rapports & statistiques", desc: "Tableaux de bord et rapports ecrits sur les halaqas, memorisation et presences." },
         { icon: Megaphone, title: "Annonces & actualites", desc: "Communiquez en temps reel avec eleves, parents et enseignants." },
-        { icon: Wifi, title: "Maqra' electronique", desc: "Seances virtuelles de recitation en direct — salles individuelles et collectives." },
+        { icon: Wifi, title: "Halaqa Online electronique", desc: "Seances virtuelles de recitation en direct — salles individuelles et collectives." },
       ],
     },
     how: {
@@ -87,7 +87,7 @@ const dict = {
       plans: [
         { name: "Gratuit", students: "Jusqu'a 50 eleves", price: "0", features: ["Gestion des eleves", "2 enseignants", "1 halaqa", "Rapports basiques", "Support email"] },
         { name: "Starter", students: "51 - 200 eleves", price: "49", features: ["Tout du plan Gratuit", "10 enseignants", "Halaqas illimitees", "Notifications push", "Exports PDF"] },
-        { name: "Pro", students: "201 - 500 eleves", price: "99", features: ["Tout du plan Starter", "Enseignants illimites", "Maqra' electronique", "Tableau de bord avance", "Support prioritaire"] },
+        { name: "Pro", students: "201 - 500 eleves", price: "99", features: ["Tout du plan Starter", "Enseignants illimites", "Halaqa Online electronique", "Tableau de bord avance", "Support prioritaire"] },
       ],
     },
     cta: {
@@ -111,7 +111,7 @@ const dict = {
       how: "How it works", login: "Login", register: "Register my school",
     },
     hero: {
-      badge: "🎉 New · Electronic Maqra' available",
+      badge: "🎉 New · Electronic Halaqa Online available",
       title: "The intelligent platform for",
       titleHighlight: "Quran schools",
       subtitle: "Manage your Quran memorization school with excellence. Students, teachers, groups, tracking, evaluations — all in one place.",
@@ -128,7 +128,7 @@ const dict = {
         { icon: BookMarked, title: "Memorization tracking", desc: "Track progress surah by surah with detailed error notation." },
         { icon: BarChart2, title: "Reports & statistics", desc: "Dashboards and written reports on halaqas, memorization and attendance." },
         { icon: Megaphone, title: "Announcements", desc: "Communicate in real-time with students, parents and teachers." },
-        { icon: Wifi, title: "Electronic Maqra'", desc: "Virtual recitation sessions live — individual and collective rooms." },
+        { icon: Wifi, title: "Electronic Halaqa Online", desc: "Virtual recitation sessions live — individual and collective rooms." },
       ],
     },
     how: {
@@ -176,7 +176,7 @@ const dict = {
       plans: [
         { name: "Free", students: "Up to 50 students", price: "0", features: ["Student management", "2 teachers", "1 halaqa", "Basic reports", "Email support"] },
         { name: "Starter", students: "51 - 200 students", price: "49", features: ["Everything in Free", "10 teachers", "Unlimited halaqas", "Push notifications", "PDF exports"] },
-        { name: "Pro", students: "201 - 500 students", price: "99", features: ["Everything in Starter", "Unlimited teachers", "Electronic Maqra'", "Advanced dashboard", "Priority support"] },
+        { name: "Pro", students: "201 - 500 students", price: "99", features: ["Everything in Starter", "Unlimited teachers", "Electronic Halaqa Online", "Advanced dashboard", "Priority support"] },
       ],
     },
     cta: {

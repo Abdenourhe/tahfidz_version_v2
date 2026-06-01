@@ -113,7 +113,7 @@ export default function NewMaqraPage() {
         >
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-1">
             <Video size={24} className="text-tahfidz-green" />
-            Nouvelle Maqra&apos;
+            Nouvelle Halaqa Online
           </h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
             Planifiez une séance de récitation en ligne avec vos élèves

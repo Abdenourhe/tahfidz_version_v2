@@ -45,7 +45,7 @@ export default function StudentMaqraPage() {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-6">
           <Video size={28} className="text-tahfidz-green" />
-          Mes Maqra&apos;
+          Mes Halaqa Online
         </h1>
 
         {/* Upcoming */}

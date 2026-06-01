@@ -1,5 +1,5 @@
 // src/lib/bigbluebutton.ts
-// Client BigBlueButton API pour TAHFIDZ Maqra'
+// Client BigBlueButton API pour TAHFIDZ Halaqa Online
 
 import { createHash } from "crypto"
 
@@ -104,7 +104,7 @@ export async function createMeeting(params: CreateMeetingParams): Promise<Create
     webcamsOnlyForModerator: params.webcamsOnlyForModerator ?? false,
     lockSettingsDisableCam: params.lockSettingsDisableCam ?? false,
     lockSettingsDisableMic: params.lockSettingsDisableMic ?? false,
-    welcome: params.welcome ?? "Bienvenue dans la Maqra'",
+    welcome: params.welcome ?? "Bienvenue dans votre Halaqa Online.",
     maxParticipants: params.maxParticipants ?? 30,
     duration: params.duration ?? 120,
   })

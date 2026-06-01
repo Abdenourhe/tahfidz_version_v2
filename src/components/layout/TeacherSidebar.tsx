@@ -23,7 +23,7 @@ const NAV_ITEMS = [
   { href: "/teacher/memorization",  icon: BookMarked,       key: "memorization" },
   { href: "/teacher/attendance",    icon: ClipboardCheck,   key: "attendance" },
   { href: "/teacher/evaluations",   icon: Award,            key: "evaluations" },
-  { href: "/teacher/maqra",         icon: Video,            key: "maqra" },
+  { href: "/teacher/maqra",         icon: Video,            key: "halaqa" },
   { href: "/teacher/announcements", icon: MessageSquare,    key: "announcements" },
   { href: "/teacher/notifications", icon: Bell,             key: "notifications" },
   { href: "/teacher/profile",       icon: UserCircle,       key: "profile" },

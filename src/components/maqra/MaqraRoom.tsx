@@ -42,7 +42,7 @@ export function MaqraRoom({ joinUrl, mode, isTeacher }: MaqraRoomProps) {
       {loading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 z-10">
           <Loader2 size={40} className="animate-spin text-tahfidz-green mb-3" />
-          <p className="text-sm text-gray-400">Connexion à la salle Maqra&apos;...</p>
+          <p className="text-sm text-gray-400">Connexion à la salle Halaqa Online...</p>
           <p className="text-xs text-gray-600 mt-1">
             {mode === "AUDIO_ONLY" ? "Mode audio uniquement" : "Mode audio + vidéo"}
           </p>

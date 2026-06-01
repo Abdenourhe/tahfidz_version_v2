@@ -60,8 +60,8 @@ export function AdminSidebar({ user, schoolName, schoolLogo, schoolSlug, schoolC
           labelFallback: locale === "ar" ? "المديرون" : locale === "en" ? "Administrators" : "Administrateurs" },
         { labelKey: "groups",     href: "/admin/groups",        icon: BookOpen,        color: "text-indigo-600" },
         { labelKey: "attendance", href: "/admin/attendance",    icon: CalendarCheck,   color: "text-teal-600" },
-        { labelKey: "maqra",      href: "/admin/maqra",         icon: Video,           color: "text-red-600",
-          labelFallback: locale === "ar" ? "مقريء" : locale === "en" ? "Maqra'" : "Maqra'" },
+        { labelKey: "halaqa",      href: "/admin/maqra",         icon: Video,           color: "text-red-600",
+          labelFallback: locale === "ar" ? "حلقة أونلاين" : locale === "en" ? "Halaqa Online" : "Halaqa Online" },
       ],
     },
     {

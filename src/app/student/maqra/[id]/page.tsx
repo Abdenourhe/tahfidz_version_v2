@@ -76,7 +76,7 @@ export default function StudentMaqraJoinPage() {
           <div>
             <h1 className="text-sm font-semibold text-white flex items-center gap-2">
               <Video size={16} className="text-tahfidz-green" />
-              Maqra&apos;
+              Halaqa Online
             </h1>
           </div>
         </div>

@@ -99,7 +99,7 @@ export default function TeacherMaqraLivePage() {
           <div>
             <h1 className="text-sm font-semibold text-white flex items-center gap-2">
               <Video size={16} className="text-red-500" />
-              Maqra&apos; en direct
+              Halaqa Online en direct
             </h1>
             <p className="text-xs text-gray-500">
               {session?.mode === "AUDIO_ONLY" ? "Mode audio" : session?.mode === "VIDEO" ? "Mode vidéo" : "Partage d'écran"}
