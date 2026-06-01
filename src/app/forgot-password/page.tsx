@@ -142,7 +142,7 @@ export default function ForgotPasswordPage() {
                         type="text"
                         value={schoolSlug}
                         onChange={e => setSchoolSlug(e.target.value.toUpperCase())}
-                        placeholder="EX : EC-ALG-001"
+                        placeholder="EX : AB-12345"
                         className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm font-bold tracking-widest placeholder:font-normal placeholder:tracking-normal dark:text-white"
                       />
                     </div>

@@ -595,7 +595,7 @@ function LoginForm() {
             )}
 
             <div className="mt-8 text-center">
-              <p className="text-[11px] text-gray-300 dark:text-gray-600">TAHFIDZ Platform v2.0 · Securise par NextAuth</p>
+              <p className="text-[11px] text-gray-300 dark:text-gray-600">TAHFIDZ Platform v2.0</p>
             </div>
           </div>
         </div>
