@@ -1461,6 +1461,34 @@ export const translations = {
     askQuestion:     { fr: "Poser une question", en: "Ask a question", ar: "طرح سؤال" },
   },
 
+  // ─── studentMessages ─────────────────────────────────────────────
+  studentMessages: {
+    title:           { fr: "Messagerie", en: "Messages", ar: "الرسائل" },
+    subtitle:        { fr: "Discutez avec votre enseignant", en: "Chat with your teacher", ar: "تحدث مع معلمك" },
+    noTeacher:       { fr: "Aucun enseignant assigné", en: "No teacher assigned", ar: "لم يتم تعيين معلم" },
+    noMessages:      { fr: "Aucun message", en: "No messages", ar: "لا توجد رسائل" },
+    send:            { fr: "Envoyer", en: "Send", ar: "إرسال" },
+    subject:         { fr: "Sujet", en: "Subject", ar: "الموضوع" },
+    message:         { fr: "Message", en: "Message", ar: "الرسالة" },
+    sent:            { fr: "Envoyé", en: "Sent", ar: "تم الإرسال" },
+    received:        { fr: "Reçu", en: "Received", ar: "تم الاستلام" },
+    back:            { fr: "← Retour", en: "← Back", ar: "← رجوع" },
+    errorSend:       { fr: "Erreur lors de l'envoi", en: "Error sending", ar: "خطأ أثناء الإرسال" },
+  },
+
+  // ─── studentAsk ──────────────────────────────────────────────────
+  studentAsk: {
+    title:           { fr: "Poser une question", en: "Ask a question", ar: "طرح سؤال" },
+    subtitle:        { fr: "Posez une question à votre enseignant", en: "Ask your teacher a question", ar: "اطرح سؤالاً على معلمك" },
+    subject:         { fr: "Sujet", en: "Subject", ar: "الموضوع" },
+    question:        { fr: "Votre question", en: "Your question", ar: "سؤالك" },
+    send:            { fr: "Envoyer", en: "Send", ar: "إرسال" },
+    sending:         { fr: "Envoi...", en: "Sending...", ar: "جارٍ الإرسال..." },
+    success:         { fr: "Question envoyée !", en: "Question sent!", ar: "تم إرسال السؤال!" },
+    back:            { fr: "← Retour", en: "← Back", ar: "← رجوع" },
+    noTeacher:       { fr: "Aucun enseignant assigné", en: "No teacher assigned", ar: "لم يتم تعيين معلم" },
+  },
+
   // ─── Memorization Status Labels ───────────────────────────────────
   memorizationStatus: {
     NOT_STARTED:              { fr: "Non commencé",       en: "Not started",       ar: "لم يبدأ" },
