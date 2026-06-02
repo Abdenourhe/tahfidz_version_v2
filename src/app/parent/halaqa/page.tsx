@@ -12,7 +12,7 @@ interface Recording {
   meetingName: string
   scheduledAt: string
   recordingUrl?: string
-  teacher: { fullName: string }
+  teacher?: { fullName: string } | null
   evaluations: { memorizationScore?: number | null }[]
 }
 
@@ -72,7 +72,7 @@ export default function ParentHalaqaPage() {
                     <h3 className="font-semibold text-gray-900 dark:text-white">{r.meetingName}</h3>
                     <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
                       <span className="flex items-center gap-1"><Calendar size={14} /> {new Date(r.scheduledAt).toLocaleDateString()}</span>
-                      <span className="flex items-center gap-1"><User size={14} /> {r.teacher.fullName}</span>
+                      <span className="flex items-center gap-1"><User size={14} /> {r.teacher?.fullName || "—"}</span>
                       {r.evaluations.length > 0 && r.evaluations[0]?.memorizationScore !== null && (
                         <span className="flex items-center gap-1 text-tahfidz-green">
                           <BarChart3 size={14} />

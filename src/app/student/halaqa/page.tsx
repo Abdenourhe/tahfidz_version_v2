@@ -14,7 +14,7 @@ interface HalaqaSession {
   mode: string
   scheduledAt: string
   recordingUrl?: string
-  teacher: { fullName: string }
+  teacher?: { fullName: string } | null
 }
 
 export default function StudentHalaqaPage() {
@@ -76,7 +76,7 @@ export default function StudentHalaqaPage() {
                     <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
                       <span className="flex items-center gap-1"><Calendar size={14} /> {new Date(s.scheduledAt).toLocaleDateString()}</span>
                       <span className="flex items-center gap-1"><Clock size={14} /> {new Date(s.scheduledAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>
-                      <span>{s.teacher.fullName}</span>
+                      <span>{s.teacher?.fullName || "—"}</span>
                     </div>
                   </div>
                   <Link
@@ -115,7 +115,7 @@ export default function StudentHalaqaPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white">{s.meetingName}</h3>
-                    <p className="text-sm text-gray-500">{s.teacher.fullName}</p>
+                    <p className="text-sm text-gray-500">{s.teacher?.fullName || "—"}</p>
                   </div>
                   {s.recordingUrl ? (
                     <a

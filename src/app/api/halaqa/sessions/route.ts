@@ -36,6 +36,7 @@ export async function GET(req: Request) {
     const sessions = await prisma.halaqaSession.findMany({
       where,
       include: {
+        teacher: { select: { fullName: true } },
         group: { select: { name: true } },
         evaluations: {
           select: { id: true, studentId: true, memorizationScore: true },
