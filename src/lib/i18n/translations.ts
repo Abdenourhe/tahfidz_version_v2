@@ -1670,8 +1670,25 @@ export const translations = {
     notifications:{ fr: "Notifications", en: "Notifications", ar: "الإشعارات" },
     profile:      { fr: "Mon profil", en: "My Profile", ar: "ملفي الشخصي" },
     halaqa:       { fr: "Halaqa Online", en: "Halaqa Online", ar: "حلقة أونلاين" },
+    messages:     { fr: "Messages", en: "Messages", ar: "الرسائل" },
     darkMode:     { fr: "Mode sombre", en: "Dark mode", ar: "الوضع المظلم" },
     lightMode:    { fr: "Mode clair", en: "Light mode", ar: "الوضع الفاتح" },
+  },
+
+  // ─── teacherMessages ─────────────────────────────────────────────
+  teacherMessages: {
+    title:           { fr: "Messages", en: "Messages", ar: "الرسائل" },
+    subtitle:        { fr: "Messages de vos élèves", en: "Messages from your students", ar: "رسائل طلابك" },
+    noMessages:      { fr: "Aucun message", en: "No messages", ar: "لا توجد رسائل" },
+    send:            { fr: "Envoyer", en: "Send", ar: "إرسال" },
+    reply:           { fr: "Répondre", en: "Reply", ar: "رد" },
+    subject:         { fr: "Sujet", en: "Subject", ar: "الموضوع" },
+    message:         { fr: "Message", en: "Message", ar: "الرسالة" },
+    from:            { fr: "De", en: "From", ar: "من" },
+    sent:            { fr: "Envoyé", en: "Sent", ar: "تم الإرسال" },
+    back:            { fr: "← Retour", en: "← Back", ar: "← رجوع" },
+    errorSend:       { fr: "Erreur lors de l'envoi", en: "Error sending", ar: "خطأ أثناء الإرسال" },
+    conversationWith:{ fr: "Conversation avec", en: "Conversation with", ar: "محادثة مع" },
   },
 
   // ─── Teacher Dashboard ────────────────────────────────────────────

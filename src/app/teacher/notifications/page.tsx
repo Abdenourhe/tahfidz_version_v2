@@ -2,8 +2,8 @@
 // src/app/teacher/notifications/page.tsx
 
 import { useState, useEffect } from "react"
-import { formatDate } from "@/lib/utils"
-import { Bell, CheckCheck, BookOpen, Star, Award, Megaphone, Link2, Trash2, Loader2 } from "lucide-react"
+import { Bell, CheckCheck, BookOpen, Star, Award, Megaphone, Link2, Trash2, Loader2, Mail } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 interface Notification {
@@ -12,6 +12,7 @@ interface Notification {
 }
 
 export default function TeacherNotificationsPage() {
+  const router = useRouter()
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
@@ -28,6 +29,7 @@ export default function TeacherNotificationsPage() {
     memorization_progress_updated: { label: L === "ar" ? "تحديث تقدم" : L === "en" ? "Progress update" : "Progression mise à jour", color: "text-tahfidz-gold", bg: "bg-tahfidz-gold-light", icon: Star },
     attendance_absent_reported:  { label: L === "ar" ? "غياب مسجل" : L === "en" ? "Absence reported" : "Absence signalée", color: "text-red-500", bg: "bg-red-50", icon: Bell },
     attendance_validated:        { label: L === "ar" ? "حضور محقق" : L === "en" ? "Attendance validated" : "Présence validée", color: "text-green-600", bg: "bg-green-50", icon: CheckCheck },
+    direct_message:              { label: L === "ar" ? "رسالة" : L === "en" ? "Message" : "Message", color: "text-blue-600", bg: "bg-blue-50", icon: Mail },
   }
 
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -145,10 +147,13 @@ export default function TeacherNotificationsPage() {
                   onClick={() => !notif.isRead && markRead(notif.id)}>
                   <tc.icon size={18} className={tc.color} />
                 </div>
-                <div className="flex-1 min-w-0 cursor-pointer" onClick={() => !notif.isRead && markRead(notif.id)}>
+                <div className="flex-1 min-w-0 cursor-pointer"
+                  onClick={() => {
+                    if (!notif.isRead) markRead(notif.id)
+                    if (notif.type === "direct_message") router.push("/teacher/messages")
+                  }}>
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className={`text-sm font-semibold ${!notif.isRead ? "text-gray-900 dark:text-gray-100" : "text-gray-700 dark:text-gray-300"}`}>
-            
                       {notif.title}
                     </p>
                     {notif.titleAr && <p className="arabic text-xs text-gray-400 mt-0.5">{notif.titleAr}</p>}

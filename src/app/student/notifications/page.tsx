@@ -4,8 +4,9 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { formatDate } from "@/lib/utils"
-import { Bell, CheckCheck, Star, Award, Megaphone, BookOpen, Trash2, Loader2 } from "lucide-react"
+import { Bell, CheckCheck, Star, Award, Megaphone, BookOpen, Trash2, Loader2, Mail } from "lucide-react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
+import { useRouter } from "next/navigation"
 
 interface Notification {
   id: string; type: string; title: string; titleAr?: string | null
@@ -13,6 +14,7 @@ interface Notification {
 }
 
 export default function StudentNotificationsPage() {
+  const router = useRouter()
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
@@ -29,6 +31,7 @@ export default function StudentNotificationsPage() {
     memorization_progress_updated: { icon: Star,    color: "text-tahfidz-gold",  bg: "bg-tahfidz-gold-light" },
     attendance_absent_reported:  { icon: Bell,     color: "text-red-500",       bg: "bg-red-50" },
     attendance_validated:        { icon: CheckCheck, color: "text-green-600",   bg: "bg-green-50" },
+    direct_message:              { icon: Mail,       color: "text-blue-600",      bg: "bg-blue-50" },
   }
 
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -127,7 +130,17 @@ export default function StudentNotificationsPage() {
                 initial={{ opacity: 0, x: -12 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3, delay: i * 0.03 }}
-                className={`bg-white dark:bg-gray-900 rounded-xl border p-4 flex gap-4 group transition ${!notif.isRead ? "border-tahfidz-green/30 bg-tahfidz-green-light/20" : "border-gray-100 dark:border-gray-800 hover:border-gray-200"}`}>
+                className={`bg-white dark:bg-gray-900 rounded-xl border p-4 flex gap-4 group transition cursor-pointer ${!notif.isRead ? "border-tahfidz-green/30 bg-tahfidz-green-light/20" : "border-gray-100 dark:border-gray-800 hover:border-gray-200"}`}
+                onClick={() => {
+                  if (!notif.isRead) {
+                    fetch("/api/notifications", {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ ids: [notif.id] }),
+                    }).then(() => load())
+                  }
+                  if (notif.type === "direct_message") router.push("/student/messages")
+                }}>
                 <div className={`w-10 h-10 rounded-xl ${tc.bg} flex items-center justify-center flex-shrink-0`}>
                   <tc.icon size={18} className={tc.color} />
                 </div>
