@@ -1,5 +1,3 @@
-"use server"
-
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect, notFound } from "next/navigation"
@@ -26,8 +24,6 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
       city: true,
       postalCode: true,
       medicalNotes: true,
-      nationality: true,
-      spokenLanguages: true,
       currentSurahNote: true,
       user: { select: { fullName: true, fullNameAr: true, email: true, phone: true, gender: true, createdAt: true, isActive: true, avatar: true } },
       group: { select: { id: true, name: true, level: true } },

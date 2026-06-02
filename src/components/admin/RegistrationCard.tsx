@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react"
 import Image from "next/image"
-import { Download, Printer, Phone, Mail, MapPin, Calendar, User, GraduationCap, HeartPulse, Shield, Clock, Copy, CheckCircle2, Globe, Languages } from "lucide-react"
+import { Download, Printer, Phone, Mail, MapPin, Calendar, User, GraduationCap, HeartPulse, Shield, Clock, Copy, CheckCircle2 } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { AvatarLightbox } from "@/components/AvatarLightbox"
@@ -78,24 +78,7 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
     return map[L]?.[lvl] ?? lvl
   }
 
-  const nationalityLabel = (code?: string | null) => {
-    if (!code) return "—"
-    const map: Record<string, Record<string, string>> = {
-      fr: { DZ: "Algérien(ne)", MA: "Marocain(e)", TN: "Tunisien(ne)", EG: "Égyptien(ne)", SA: "Saoudien(ne)", AE: "Émirien(ne)", QA: "Qatari(e)", KW: "Koweïtien(ne)", LB: "Libanais(e)", SY: "Syrien(ne)", IQ: "Irakien(ne)", JO: "Jordanien(ne)", PS: "Palestinien(ne)", SD: "Soudanais(e)", LY: "Libyen(ne)", MR: "Mauritanien(ne)", SO: "Somalien(ne)", TR: "Turc/Turque", CA: "Canadien(ne)", OTHER: "Autre" },
-      en: { DZ: "Algerian", MA: "Moroccan", TN: "Tunisian", EG: "Egyptian", SA: "Saudi", AE: "Emirati", QA: "Qatari", KW: "Kuwaiti", LB: "Lebanese", SY: "Syrian", IQ: "Iraqi", JO: "Jordanian", PS: "Palestinian", SD: "Sudanese", LY: "Libyan", MR: "Mauritanian", SO: "Somali", TR: "Turkish", CA: "Canadian", OTHER: "Other" },
-      ar: { DZ: "جزائري(ة)", MA: "مغربي(ة)", TN: "تونسي(ة)", EG: "مصري(ة)", SA: "سعودي(ة)", AE: "إماراتي(ة)", QA: "قطري(ة)", KW: "كويتي(ة)", LB: "لبناني(ة)", SY: "سوري(ة)", IQ: "عراقي(ة)", JO: "أردني(ة)", PS: "فلسطيني(ة)", SD: "سوداني(ة)", LY: "ليبي(ة)", MR: "موريتاني(ة)", SO: "صومالي(ة)", TR: "تركي(ة)", CA: "كندي(ة)", OTHER: "أخرى" },
-    }
-    return map[L]?.[code] ?? code
-  }
 
-  const languageLabel = (key: string) => {
-    const map: Record<string, Record<string, string>> = {
-      fr: { ar: "Arabe", fr: "Français", en: "Anglais", other: "Autre" },
-      en: { ar: "Arabic", fr: "French", en: "English", other: "Other" },
-      ar: { ar: "العربية", fr: "الفرنسية", en: "الإنجليزية", other: "أخرى" },
-    }
-    return map[L]?.[key] ?? key
-  }
 
   const formatSchedule = (schedule?: Record<string, string> | null) => {
     if (!schedule || Object.keys(schedule).length === 0) return null
@@ -200,21 +183,7 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
                   <p className="font-semibold text-gray-800">{formatDate(student.user.createdAt)}</p>
                 </div>
               </div>
-              {(student.nationality || student.spokenLanguages) && (
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {student.nationality && (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-medium border border-emerald-100">
-                      <Globe size={12} /> {nationalityLabel(student.nationality)}
-                    </span>
-                  )}
-                  {student.spokenLanguages && (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-medium border border-blue-100">
-                      <Languages size={12} />
-                      {student.spokenLanguages.split(",").map((k: string) => languageLabel(k.trim())).filter(Boolean).join(" · ")}
-                    </span>
-                  )}
-                </div>
-              )}
+
             </div>
           </div>
 

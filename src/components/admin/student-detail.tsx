@@ -44,8 +44,6 @@ interface Student {
   city?: string | null
   postalCode?: string | null
   medicalNotes?: string | null
-  nationality?: string | null
-  spokenLanguages?: string | null
   currentSurahNote?: string | null
   _count?: { memorizedSurahs: number }
   memorizedSurahs?: { surahId: number; surah: { nameFr: string; nameAr: string } }[]
@@ -441,14 +439,7 @@ export function StudentDetailClient({ student }: Props) {
               <InfoItem icon={Calendar} label={t("joined", L)} value={
                 new Date(student.user.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
               } />
-              {student.nationality && (
-                <InfoItem icon={Globe} label={t("nationality", L)} value={NATIONALITY_MAP[L]?.[student.nationality] ?? student.nationality} />
-              )}
-              {student.spokenLanguages && (
-                <InfoItem icon={Languages} label={t("spokenLanguages", L)} value={
-                  student.spokenLanguages.split(",").map(k => LANGUAGE_MAP[L]?.[k.trim()] ?? k.trim()).filter(Boolean).join(" · ")
-                } />
-              )}
+
             </div>
           </div>
 
