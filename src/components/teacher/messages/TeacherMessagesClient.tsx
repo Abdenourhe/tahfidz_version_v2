@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { Send, Mail, Loader2, User, ArrowLeft, MessageCircle } from "lucide-react"
+import { Send, Mail, Loader2, User, ArrowLeft, MessageCircle, Trash2 } from "lucide-react"
 import { useT } from "@/contexts/LanguageContext"
 
 interface Message {
@@ -26,6 +26,7 @@ export function TeacherMessagesClient() {
   const [subject, setSubject] = useState("")
   const [body, setBody] = useState("")
   const [sending, setSending] = useState(false)
+  const [clearing, setClearing] = useState(false)
 
   const fetchMessages = useCallback(async () => {
     try {
@@ -69,8 +70,6 @@ export function TeacherMessagesClient() {
         body: JSON.stringify({ toUserId: activeStudentId, subject, body }),
       })
       if (res.ok) {
-        setSubject("")
-        setBody("")
         await fetchMessages()
       } else {
         alert(t("errorSend"))
@@ -79,6 +78,23 @@ export function TeacherMessagesClient() {
       alert(t("errorSend"))
     } finally {
       setSending(false)
+    }
+  }
+
+  async function handleClearConversation() {
+    if (!activeStudentId) return
+    if (!confirm(t("confirmClear"))) return
+    setClearing(true)
+    try {
+      const res = await fetch(`/api/messages?otherUserId=${activeStudentId}`, { method: "DELETE" })
+      if (res.ok) {
+        setActiveStudentId(null)
+        await fetchMessages()
+      }
+    } catch {
+      // ignore
+    } finally {
+      setClearing(false)
     }
   }
 
@@ -162,17 +178,28 @@ export function TeacherMessagesClient() {
                     exit={{ opacity: 0, x: -20 }}
                     className="flex flex-col h-[500px]"
                   >
-                    <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-100 dark:border-gray-800">
+                    <div className="flex items-center justify-between gap-2 mb-3 pb-3 border-b border-gray-100 dark:border-gray-800">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setActiveStudentId(null)}
+                          className="md:hidden p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                        >
+                          <ArrowLeft size={16} />
+                        </button>
+                        <User size={16} className="text-tahfidz-green" />
+                        <span className="font-semibold text-sm text-gray-800 dark:text-gray-200">
+                          {t("conversationWith")} {activeStudentName}
+                        </span>
+                      </div>
                       <button
-                        onClick={() => setActiveStudentId(null)}
-                        className="md:hidden p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                        onClick={handleClearConversation}
+                        disabled={clearing}
+                        className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 transition disabled:opacity-50 px-2 py-1 rounded-lg hover:bg-red-50"
+                        title={t("clearConversation")}
                       >
-                        <ArrowLeft size={16} />
+                        {clearing ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                        {t("clearConversation")}
                       </button>
-                      <User size={16} className="text-tahfidz-green" />
-                      <span className="font-semibold text-sm text-gray-800 dark:text-gray-200">
-                        {t("conversationWith")} {activeStudentName}
-                      </span>
                     </div>
 
                     <div className="flex-1 overflow-y-auto space-y-3 mb-4 pr-1">

@@ -64,3 +64,21 @@ export async function POST(req: Request) {
   }
   return NextResponse.json({ message }, { status: 201 })
 }
+
+export async function DELETE(req: Request) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+  const { searchParams } = new URL(req.url)
+  const otherUserId = searchParams.get("otherUserId")
+  if (!otherUserId) return NextResponse.json({ error: "otherUserId requis" }, { status: 400 })
+  await prisma.directMessage.deleteMany({
+    where: {
+      schoolId: session.user.schoolId,
+      OR: [
+        { fromUserId: session.user.id, toUserId: otherUserId },
+        { fromUserId: otherUserId, toUserId: session.user.id },
+      ],
+    },
+  })
+  return NextResponse.json({ success: true })
+}

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Send, Mail, Loader2, User } from "lucide-react"
+import { Send, Mail, Loader2, User, Trash2 } from "lucide-react"
 import { useT } from "@/contexts/LanguageContext"
 
 interface Message {
@@ -29,6 +29,7 @@ export function StudentMessagesClient({ teacherUserId, teacherName }: Props) {
   const [subject, setSubject] = useState("")
   const [body, setBody] = useState("")
   const [sending, setSending] = useState(false)
+  const [clearing, setClearing] = useState(false)
 
   const fetchMessages = useCallback(async () => {
     try {
@@ -73,8 +74,6 @@ export function StudentMessagesClient({ teacherUserId, teacherName }: Props) {
         body: JSON.stringify({ toUserId: teacherUserId, subject, body }),
       })
       if (res.ok) {
-        setSubject("")
-        setBody("")
         await fetchMessages()
       } else {
         alert(t("errorSend"))
@@ -83,6 +82,22 @@ export function StudentMessagesClient({ teacherUserId, teacherName }: Props) {
       alert(t("errorSend"))
     } finally {
       setSending(false)
+    }
+  }
+
+  async function handleClearConversation() {
+    if (!teacherUserId) return
+    if (!confirm(t("confirmClear"))) return
+    setClearing(true)
+    try {
+      const res = await fetch(`/api/messages?otherUserId=${teacherUserId}`, { method: "DELETE" })
+      if (res.ok) {
+        setMessages([])
+      }
+    } catch {
+      // ignore
+    } finally {
+      setClearing(false)
     }
   }
 
@@ -114,8 +129,17 @@ export function StudentMessagesClient({ teacherUserId, teacherName }: Props) {
           </div>
         ) : (
           <>
-            <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300">
-              {t("received")}: <span className="font-semibold">{teacherName}</span>
+            <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 flex items-center justify-between">
+              <span>{t("received")}: <span className="font-semibold">{teacherName}</span></span>
+              <button
+                onClick={handleClearConversation}
+                disabled={clearing || messages.length === 0}
+                className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 transition disabled:opacity-50 px-2 py-1 rounded-lg hover:bg-red-50"
+                title={t("clearConversation")}
+              >
+                {clearing ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                {t("clearConversation")}
+              </button>
             </div>
 
             {/* Liste des messages */}

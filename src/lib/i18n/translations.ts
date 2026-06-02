@@ -1461,21 +1461,6 @@ export const translations = {
     askQuestion:     { fr: "Poser une question", en: "Ask a question", ar: "طرح سؤال" },
   },
 
-  // ─── studentMessages ─────────────────────────────────────────────
-  studentMessages: {
-    title:           { fr: "Messagerie", en: "Messages", ar: "الرسائل" },
-    subtitle:        { fr: "Discutez avec votre enseignant", en: "Chat with your teacher", ar: "تحدث مع معلمك" },
-    noTeacher:       { fr: "Aucun enseignant assigné", en: "No teacher assigned", ar: "لم يتم تعيين معلم" },
-    noMessages:      { fr: "Aucun message", en: "No messages", ar: "لا توجد رسائل" },
-    send:            { fr: "Envoyer", en: "Send", ar: "إرسال" },
-    subject:         { fr: "Sujet", en: "Subject", ar: "الموضوع" },
-    message:         { fr: "Message", en: "Message", ar: "الرسالة" },
-    sent:            { fr: "Envoyé", en: "Sent", ar: "تم الإرسال" },
-    received:        { fr: "Reçu", en: "Received", ar: "تم الاستلام" },
-    back:            { fr: "← Retour", en: "← Back", ar: "← رجوع" },
-    errorSend:       { fr: "Erreur lors de l'envoi", en: "Error sending", ar: "خطأ أثناء الإرسال" },
-  },
-
   // ─── studentAsk ──────────────────────────────────────────────────
   studentAsk: {
     title:           { fr: "Poser une question", en: "Ask a question", ar: "طرح سؤال" },
@@ -1689,6 +1674,25 @@ export const translations = {
     back:            { fr: "← Retour", en: "← Back", ar: "← رجوع" },
     errorSend:       { fr: "Erreur lors de l'envoi", en: "Error sending", ar: "خطأ أثناء الإرسال" },
     conversationWith:{ fr: "Conversation avec", en: "Conversation with", ar: "محادثة مع" },
+    clearConversation:{ fr: "Vider la discussion", en: "Clear conversation", ar: "مسح المحادثة" },
+    confirmClear:    { fr: "Supprimer tous les messages de cette conversation ?", en: "Delete all messages in this conversation?", ar: "حذف جميع رسائل هذه المحادثة؟" },
+  },
+
+  // ─── studentMessages ─────────────────────────────────────────────
+  studentMessages: {
+    title:           { fr: "Messagerie", en: "Messages", ar: "الرسائل" },
+    subtitle:        { fr: "Discutez avec votre enseignant", en: "Chat with your teacher", ar: "تحدث مع معلمك" },
+    noTeacher:       { fr: "Aucun enseignant assigné", en: "No teacher assigned", ar: "لم يتم تعيين معلم" },
+    noMessages:      { fr: "Aucun message", en: "No messages", ar: "لا توجد رسائل" },
+    send:            { fr: "Envoyer", en: "Send", ar: "إرسال" },
+    subject:         { fr: "Sujet", en: "Subject", ar: "الموضوع" },
+    message:         { fr: "Message", en: "Message", ar: "الرسالة" },
+    sent:            { fr: "Envoyé", en: "Sent", ar: "تم الإرسال" },
+    received:        { fr: "Reçu", en: "Received", ar: "تم الاستلام" },
+    back:            { fr: "← Retour", en: "← Back", ar: "← رجوع" },
+    errorSend:       { fr: "Erreur lors de l'envoi", en: "Error sending", ar: "خطأ أثناء الإرسال" },
+    clearConversation:{ fr: "Vider la discussion", en: "Clear conversation", ar: "مسح المحادثة" },
+    confirmClear:    { fr: "Supprimer tous les messages de cette conversation ?", en: "Delete all messages in this conversation?", ar: "حذف جميع رسائل هذه المحادثة؟" },
   },
 
   // ─── Teacher Dashboard ────────────────────────────────────────────
