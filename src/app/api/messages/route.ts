@@ -15,9 +15,13 @@ export async function GET(req: Request) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
   const { searchParams } = new URL(req.url)
-  const type = searchParams.get("type") || "inbox"
+  const type = searchParams.get("type") || "all"
+  const where =
+    type === "sent" ? { fromUserId: session.user.id }
+    : type === "inbox" ? { toUserId: session.user.id }
+    : { OR: [{ fromUserId: session.user.id }, { toUserId: session.user.id }] }
   const messages = await prisma.directMessage.findMany({
-    where: type === "sent" ? { fromUserId: session.user.id } : { toUserId: session.user.id },
+    where,
     include: {
       fromUser: { select: { fullName: true, role: true } },
       toUser:   { select: { fullName: true, role: true } },
@@ -25,9 +29,9 @@ export async function GET(req: Request) {
     orderBy: { sentAt: "desc" },
     take: 50,
   })
-  const unreadCount = type === "inbox"
-    ? await prisma.directMessage.count({ where: { toUserId: session.user.id, isRead: false } })
-    : 0
+  const unreadCount = await prisma.directMessage.count({
+    where: { toUserId: session.user.id, isRead: false },
+  })
   return NextResponse.json({ messages, unreadCount })
 }
 

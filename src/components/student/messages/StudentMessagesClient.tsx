@@ -13,6 +13,7 @@ interface Message {
   sentAt: string
   isRead: boolean
   fromUserId: string
+  toUserId: string
   fromUser: { fullName: string; role: string }
   toUser: { fullName: string; role: string }
 }
@@ -38,7 +39,7 @@ export function StudentMessagesClient({ teacherUserId, teacherName }: Props) {
       if (data.messages) {
         // Ne garder que les messages avec l'enseignant
         const filtered = data.messages.filter(
-          (m: Message) => m.fromUserId === teacherUserId || m.toUser.fullName === teacherName
+          (m: Message) => m.fromUserId === teacherUserId || m.toUserId === teacherUserId
         )
         setMessages(filtered)
       }
@@ -47,7 +48,7 @@ export function StudentMessagesClient({ teacherUserId, teacherName }: Props) {
     } finally {
       setLoading(false)
     }
-  }, [teacherUserId, teacherName])
+  }, [teacherUserId])
 
   useEffect(() => {
     fetchMessages()
@@ -74,6 +75,7 @@ export function StudentMessagesClient({ teacherUserId, teacherName }: Props) {
         body: JSON.stringify({ toUserId: teacherUserId, subject, body }),
       })
       if (res.ok) {
+        setBody("")
         await fetchMessages()
       } else {
         alert(t("errorSend"))
@@ -93,6 +95,8 @@ export function StudentMessagesClient({ teacherUserId, teacherName }: Props) {
       const res = await fetch(`/api/messages?otherUserId=${teacherUserId}`, { method: "DELETE" })
       if (res.ok) {
         setMessages([])
+        initialLoadDone.current = false
+        setSubject("")
       }
     } catch {
       // ignore

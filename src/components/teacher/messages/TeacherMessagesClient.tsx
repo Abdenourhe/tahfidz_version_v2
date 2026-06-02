@@ -70,6 +70,7 @@ export function TeacherMessagesClient() {
         body: JSON.stringify({ toUserId: activeStudentId, subject, body }),
       })
       if (res.ok) {
+        setBody("")
         await fetchMessages()
       } else {
         alert(t("errorSend"))
