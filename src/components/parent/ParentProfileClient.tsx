@@ -12,7 +12,7 @@ import { ParentProfileAttendance } from "@/components/parent/ParentProfileAttend
 import { ParentProfileSettings } from "@/components/parent/ParentProfileSettings"
 import {
   Phone, Mail, Link2, BookOpen, Star, CalendarCheck, GraduationCap,
-  TrendingUp, Award, User, Bug, Settings
+  TrendingUp, Award, User, Bug, Settings, Globe, Languages
 } from "lucide-react"
 import { FeedbackModal } from "@/components/shared/FeedbackModal"
 
@@ -49,6 +49,8 @@ interface Props {
       avatar: string | null
       createdAt: Date
     }
+    nationality: string | null
+    spokenLanguages: string | null
     childrenLinks: ChildLink[]
   }
   totalChildren: number
@@ -100,6 +102,8 @@ export function ParentProfileClient({
         <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
           <span className="flex items-center gap-1"><Mail size={13} /> {parent.user.email}</span>
           {parent.user.phone && <span className="flex items-center gap-1"><Phone size={13} /> {parent.user.phone}</span>}
+          {parent.nationality && <span className="flex items-center gap-1"><Globe size={13} /> {parent.nationality}</span>}
+          {parent.spokenLanguages && <span className="flex items-center gap-1"><Languages size={13} /> {parent.spokenLanguages}</span>}
           <span>· {t("memberSince")} {formatDate(parent.user.createdAt, { month: "long", year: "numeric" })}</span>
           {schoolName && (
             <span>· {schoolName}{schoolCity ? `, ${schoolCity}` : ""}</span>

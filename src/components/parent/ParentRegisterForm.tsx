@@ -54,8 +54,8 @@ const TEXTS: Record<string, Record<string, string>> = {
   successMsg:    { fr: "Redirection vers votre tableau de bord…", en: "Redirecting to your dashboard…", ar: "جارٍ إعادة التوجيه إلى لوحة التحكم…" },
   linkedSuccess: { fr: "Lien ajouté ! Connectez-vous pour accéder à votre compte.", en: "Link added! Log in to access your account.", ar: "تمت إضافة الرابط! سجل الدخول للوصول إلى حسابك." },
   goToLogin:     { fr: "Aller à la connexion", en: "Go to login", ar: "الذهاب إلى تسجيل الدخول" },
-  nationality:   { fr: "Nationalité de l'enfant", en: "Child's nationality", ar: "جنسية الطفل" },
-  spokenLanguages: { fr: "Langues parlées par l'enfant", en: "Child's spoken languages", ar: "اللغات المحكية من قبل الطفل" },
+  nationality:   { fr: "Votre nationalité", en: "Your nationality", ar: "جنسيتك" },
+  spokenLanguages: { fr: "Langues que vous parlez", en: "Languages you speak", ar: "اللغات التي تتحدثها" },
   nationalityOther: { fr: "Précisez la nationalité", en: "Specify nationality", ar: "حدد الجنسية" },
   languageOther: { fr: "Précisez la langue", en: "Specify language", ar: "حدد اللغة" },
 }
@@ -246,7 +246,7 @@ export function ParentRegisterForm({ inviteCode, studentCode, inviteData }: Prop
         <form onSubmit={onSubmit} className="space-y-4">
           {/* Infos complémentaires élève */}
           <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 p-4 space-y-4">
-            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{L === "ar" ? "معلومات إضافية عن الطفل" : L === "en" ? "Additional child information" : "Informations complémentaires sur l'enfant"}</p>
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{L === "ar" ? "معلومات إضافية عنك" : L === "en" ? "Additional information about you" : "Informations complémentaires sur vous"}</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 flex items-center gap-1.5">

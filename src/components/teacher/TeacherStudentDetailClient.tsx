@@ -108,18 +108,7 @@ export function TeacherStudentDetailClient({
               <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">{t("age")}</span><span className="font-medium text-gray-700 dark:text-gray-300">{formatAge(student.dateOfBirth)}</span></div>
               {student.user.phone && <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">{t("phone")}</span><span className="font-medium text-gray-700 dark:text-gray-300">{student.user.phone}</span></div>}
               {student.emergencyPhone && <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">{t("emergencyPhone") || "Urgence"}</span><span className="font-medium text-gray-700 dark:text-gray-300">{student.emergencyPhone}</span></div>}
-              {student.nationality && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400 flex items-center gap-1"><Globe size={12} /> {t("nationality") || "Nationalité"}</span>
-                  <span className="font-medium text-gray-700 dark:text-gray-300">{nationalityLabel(student.nationality)}</span>
-                </div>
-              )}
-              {student.spokenLanguages && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400 flex items-center gap-1"><Languages size={12} /> {t("spokenLanguages") || "Langues"}</span>
-                  <span className="font-medium text-gray-700 dark:text-gray-300">{student.spokenLanguages.split(",").map((k: string) => languageLabel(k.trim())).filter(Boolean).join(" · ")}</span>
-                </div>
-              )}
+
             </div>
           </div>
 
@@ -176,6 +165,12 @@ export function TeacherStudentDetailClient({
                       <a href={`mailto:${link.parent.user.email}`} className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:underline">
                         ✉️ {link.parent.user.email}
                       </a>
+                      {link.parent.nationality && (
+                        <p className="text-xs text-gray-500">🌍 {link.parent.nationality}</p>
+                      )}
+                      {link.parent.spokenLanguages && (
+                        <p className="text-xs text-gray-500">🗣️ {link.parent.spokenLanguages}</p>
+                      )}
                     </div>
                   </div>
                 ))}

@@ -350,6 +350,18 @@ export function ParentDetailClient({ parent: initialParent, school }: DetailProp
                 <span className="text-gray-500 dark:text-gray-400">{t("gender")}</span>
                 <span className="font-medium text-gray-700 dark:text-gray-300">{genderLabel(parent.user.gender)}</span>
               </div>
+              {parent.nationality && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">{t("nationality")}</span>
+                  <span className="font-medium text-gray-700 dark:text-gray-300">{parent.nationality}</span>
+                </div>
+              )}
+              {parent.spokenLanguages && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">{t("spokenLanguages")}</span>
+                  <span className="font-medium text-gray-700 dark:text-gray-300">{parent.spokenLanguages}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-gray-500 dark:text-gray-400">{t("enrolled")}</span>
                 <span className="font-medium text-gray-700 dark:text-gray-300">{formatDate(parent.user.createdAt, L, { day: "2-digit", month: "short", year: "numeric" })}</span>

@@ -127,7 +127,11 @@ export async function POST(req: Request) {
       })
 
       const parent = await tx.parent.create({
-        data: { userId: user.id },
+        data: {
+          userId: user.id,
+          nationality: nationality || null,
+          spokenLanguages: spokenLanguages || null,
+        },
       })
 
       await tx.parentStudentLink.create({
@@ -140,16 +144,7 @@ export async function POST(req: Request) {
         },
       })
 
-      // Mettre à jour nationalité/langues de l'élève si fournies
-      if (nationality || spokenLanguages) {
-        await tx.student.update({
-          where: { id: invite.studentId },
-          data: {
-            nationality: nationality || undefined,
-            spokenLanguages: spokenLanguages || undefined,
-          },
-        })
-      }
+
 
       await tx.parentInvite.update({
         where: { id: invite.id },
