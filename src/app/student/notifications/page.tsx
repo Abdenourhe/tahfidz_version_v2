@@ -85,11 +85,14 @@ export default function StudentNotificationsPage() {
   }
 
   return (
-    <motion.div className="space-y-6 max-w-2xl mx-auto" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+    <motion.div className="space-y-6" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t("title")}</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t("subtitle")}</p>
+      </div>
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t("title")}</h1>
-          {unreadCount > 0 && <p className="text-sm text-tahfidz-green mt-1 font-medium">{unreadCount} {t("unread")}{unreadCount > 1 ? (L === "fr" ? "s" : L === "en" ? "s" : "") : ""}</p>}
+          {unreadCount > 0 && <p className="text-sm text-tahfidz-green font-medium">{unreadCount} {t("unread")}{unreadCount > 1 ? (L === "fr" ? "s" : L === "en" ? "s" : "") : ""}</p>}
         </div>
         <div className="flex items-center gap-2">
           {unreadCount > 0 && (

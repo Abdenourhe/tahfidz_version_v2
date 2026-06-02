@@ -67,7 +67,7 @@ export function StudentSidebar({ user, schoolName, schoolLogo }: StudentSidebarP
               <p className="text-[10px] font-mono text-tahfidz-green dark:text-tahfidz-green">{schoolSlug}</p>
             )}
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {locale === "ar" ? "طالب" : locale === "en" ? "Student" : "Élève"}
+              {locale === "ar" ? `طالب : ${user.name}` : locale === "en" ? `Student: ${user.name}` : `Élève : ${user.name}`}
             </p>
           </div>
         </Link>

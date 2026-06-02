@@ -487,6 +487,7 @@ export const translations = {
   // ─── studentAttendanceClient (components/student/StudentAttendanceClient.tsx) ─────────────────────────────────────────────
   studentAttendanceClient: {
     title:           { fr: "Mes présences", en: "My attendance", ar: "حضوري" },
+    subtitle:        { fr: "Consultez votre assiduité aux séances", en: "Check your session attendance", ar: "تحقق من حضورك في الجلسات" },
     rate:            { fr: "Taux de présence", en: "Attendance rate", ar: "معدل الحضور" },
     present:         { fr: "Présent / Retard", en: "Present / Late", ar: "حاضر / متأخر" },
     absent:          { fr: "Absent", en: "Absent", ar: "غائب" },
@@ -504,6 +505,7 @@ export const translations = {
   // ─── studentBadgesClient (components/student/StudentBadgesClient.tsx) ─────────────────────────────────────────────
   studentBadgesClient: {
     title:           { fr: "Mes badges", en: "My badges", ar: "شاراتي" },
+    subtitle:        { fr: "Vos récompenses pour efforts et régularité", en: "Your rewards for effort and regularity", ar: "مكافآتك للجهد والانتظام" },
     earned:          { fr: "Badges obtenus", en: "Earned badges", ar: "الشارات المحصلة" },
     toUnlock:        { fr: "Badges à débloquer", en: "Badges to unlock", ar: "الشارات المطلوب فتحها" },
     earnedOn:        { fr: "Obtenu le", en: "Earned on", ar: "تم الحصول عليها في" },
@@ -518,6 +520,7 @@ export const translations = {
   // ─── studentProgressClient (components/student/StudentProgressClient.tsx) ─────────────────────────────────────────────
   studentProgressClient: {
     title:           { fr: "Ma progression", en: "My progress", ar: "تقدمي" },
+    subtitle:        { fr: "Suivez vos mémorisations et votre avancement", en: "Track your memorizations and progress", ar: "تابع حفظك وتقدمك" },
     inProgress:      { fr: "Mémorisations en cours", en: "In-progress memorizations", ar: "الحفظ الجاري" },
     memorized:       { fr: "Sourates mémorisées ✓", en: "Memorized surahs ✓", ar: "السور المحفوظة ✓" },
     noProgress:      { fr: "Aucune mémorisation commencée", en: "No memorization started", ar: "لم يبدأ أي حفظ" },
@@ -1046,6 +1049,7 @@ export const translations = {
   // ─── notificationsXX (app/student/notifications/page.tsx) ─────────────────────────────────────────────
   notificationsXX: {
     title:           { fr: "Notifications", en: "Notifications", ar: "الإشعارات" },
+    subtitle:        { fr: "Vos alertes et messages de l'école", en: "Your school alerts and messages", ar: "تنبيهاتك ورسائل المدرسة" },
     unread:          { fr: "non lue", en: "unread", ar: "غير مقروءة" },
     markAllRead:     { fr: "Tout lire", en: "Mark all read", ar: "تحديد الكل مقروء" },
     deleteAll:       { fr: "Tout supprimer", en: "Delete all", ar: "حذف الكل" },
