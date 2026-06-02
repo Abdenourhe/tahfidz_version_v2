@@ -19,6 +19,62 @@ interface Props {
   onSaved?: () => void
 }
 
+function SurahSelect({ value, onChange, label, surahs, locale }: { value: string; onChange: (v: string) => void; label: string; surahs: Surah[]; locale: string }) {
+  return (
+    <div>
+      <label className="block text-[11px] uppercase tracking-wider text-gray-500 mb-1">{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+      >
+        <option value="">—</option>
+        {surahs.map((s) => (
+          <option key={s.id} value={s.id}>
+            {locale === "ar" ? s.nameAr : s.nameFr}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
+function VerseInput({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) {
+  return (
+    <div>
+      <label className="block text-[11px] uppercase tracking-wider text-gray-500 mb-1">{label}</label>
+      <input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        min={1}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+      />
+    </div>
+  )
+}
+
+function Section({
+  icon: Icon, title, color, children,
+}: {
+  icon: React.ElementType
+  title: string
+  color: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="bg-gray-50 dark:bg-gray-800/40 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+      <div className={`px-4 py-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${color} bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700`}>
+        <Icon size={14} />
+        {title}
+      </div>
+      <div className="p-4 space-y-3">{children}</div>
+    </div>
+  )
+}
+
 export function TeacherDailyLogModal({ studentId, studentName, date: initialDate, onClose, onSaved }: Props) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
@@ -82,59 +138,18 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
           })
         } else {
           setExistingLogId(null)
+          setForm({
+            hifzFromSurahId: "", hifzFromVerse: "", hifzToSurahId: "", hifzToVerse: "", hifzNote: "",
+            murajaFromSurahId: "", murajaFromVerse: "", murajaToSurahId: "", murajaToVerse: "", murajaNote: "",
+            talqinFromSurahId: "", talqinFromVerse: "", talqinToSurahId: "", talqinToVerse: "", talqinNote: "",
+            courseBook: "", courseFromPage: "", courseToPage: "", courseNote: "",
+            attendanceStatus: "PRESENT", teacherObservation: "", globalScore: "",
+          })
         }
       })
   }, [studentId, date])
 
   const update = (field: string, value: string) => setForm((f) => ({ ...f, [field]: value }))
-
-  const SurahSelect = ({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) => (
-    <div>
-      <label className="block text-[11px] uppercase tracking-wider text-gray-500 mb-1">{label}</label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-      >
-        <option value="">{t("selectSurah")}</option>
-        {surahs.map((s) => (
-          <option key={s.id} value={s.id}>
-            {L === "ar" ? s.nameAr : s.nameFr}
-          </option>
-        ))}
-      </select>
-    </div>
-  )
-
-  const VerseInput = ({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) => (
-    <div>
-      <label className="block text-[11px] uppercase tracking-wider text-gray-500 mb-1">{label}</label>
-      <input
-        type="number"
-        min={1}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-      />
-    </div>
-  )
-
-  const Section = ({
-    icon: Icon, title, color, children,
-  }: {
-    icon: React.ElementType
-    title: string
-    color: string
-    children: React.ReactNode
-  }) => (
-    <div className="bg-gray-50 dark:bg-gray-800/40 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-      <div className={`px-4 py-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${color} bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700`}>
-        <Icon size={14} />
-        {title}
-      </div>
-      <div className="p-4 space-y-3">{children}</div>
-    </div>
-  )
 
   const handleSave = async () => {
     setSaving(true)
@@ -233,9 +248,9 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
               {/* Hifz */}
               <Section icon={BookOpen} title={t("hifz")} color="text-emerald-600">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <SurahSelect value={form.hifzFromSurahId} onChange={(v) => update("hifzFromSurahId", v)} label={t("fromSurah")} />
+                  <SurahSelect surahs={surahs} locale={L} value={form.hifzFromSurahId} onChange={(v) => update("hifzFromSurahId", v)} label={t("fromSurah")} />
                   <VerseInput value={form.hifzFromVerse} onChange={(v) => update("hifzFromVerse", v)} label={t("fromVerse")} />
-                  <SurahSelect value={form.hifzToSurahId} onChange={(v) => update("hifzToSurahId", v)} label={t("toSurah")} />
+                  <SurahSelect surahs={surahs} locale={L} value={form.hifzToSurahId} onChange={(v) => update("hifzToSurahId", v)} label={t("toSurah")} />
                   <VerseInput value={form.hifzToVerse} onChange={(v) => update("hifzToVerse", v)} label={t("toVerse")} />
                 </div>
                 <textarea
@@ -251,9 +266,9 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
               {/* Muraja */}
               <Section icon={RotateCcw} title={t("muraja")} color="text-blue-600">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <SurahSelect value={form.murajaFromSurahId} onChange={(v) => update("murajaFromSurahId", v)} label={t("fromSurah")} />
+                  <SurahSelect surahs={surahs} locale={L} value={form.murajaFromSurahId} onChange={(v) => update("murajaFromSurahId", v)} label={t("fromSurah")} />
                   <VerseInput value={form.murajaFromVerse} onChange={(v) => update("murajaFromVerse", v)} label={t("fromVerse")} />
-                  <SurahSelect value={form.murajaToSurahId} onChange={(v) => update("murajaToSurahId", v)} label={t("toSurah")} />
+                  <SurahSelect surahs={surahs} locale={L} value={form.murajaToSurahId} onChange={(v) => update("murajaToSurahId", v)} label={t("toSurah")} />
                   <VerseInput value={form.murajaToVerse} onChange={(v) => update("murajaToVerse", v)} label={t("toVerse")} />
                 </div>
                 <textarea
@@ -269,9 +284,9 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
               {/* Talqin */}
               <Section icon={Headphones} title={t("talqin")} color="text-purple-600">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <SurahSelect value={form.talqinFromSurahId} onChange={(v) => update("talqinFromSurahId", v)} label={t("fromSurah")} />
+                  <SurahSelect surahs={surahs} locale={L} value={form.talqinFromSurahId} onChange={(v) => update("talqinFromSurahId", v)} label={t("fromSurah")} />
                   <VerseInput value={form.talqinFromVerse} onChange={(v) => update("talqinFromVerse", v)} label={t("fromVerse")} />
-                  <SurahSelect value={form.talqinToSurahId} onChange={(v) => update("talqinToSurahId", v)} label={t("toSurah")} />
+                  <SurahSelect surahs={surahs} locale={L} value={form.talqinToSurahId} onChange={(v) => update("talqinToSurahId", v)} label={t("toSurah")} />
                   <VerseInput value={form.talqinToVerse} onChange={(v) => update("talqinToVerse", v)} label={t("toVerse")} />
                 </div>
                 <textarea
