@@ -39,7 +39,8 @@ export async function GET(req: Request) {
         teacher: { select: { fullName: true } },
         group: { select: { name: true } },
         evaluations: {
-          select: { id: true, studentId: true, memorizationScore: true },
+          where: role === "STUDENT" ? { studentId: userId } : undefined,
+          select: { id: true, studentId: true, memorizationScore: true, tajweedScore: true, fluencyScore: true },
         },
       },
       orderBy: { scheduledAt: "desc" },
