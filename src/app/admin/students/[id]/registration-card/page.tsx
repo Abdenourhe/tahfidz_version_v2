@@ -22,6 +22,8 @@ export default async function RegistrationCardPage({ params }: { params: Promise
       postalCode: true,
       medicalNotes: true,
       currentSurahNote: true,
+      nationality: true,
+      spokenLanguages: true,
       user: { select: { fullName: true, fullNameAr: true, email: true, phone: true, gender: true, createdAt: true, isActive: true, avatar: true } },
       group: { select: { name: true, level: true, schedule: true } },
       teacher: { include: { user: { select: { fullName: true } } } },
