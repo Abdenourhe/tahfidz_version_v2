@@ -20,13 +20,24 @@ export default async function StudentLayout({ children }: { children: React.Reac
     select: { name: true, logo: true },
   })
 
+  const userRecord = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { avatar: true, fullName: true },
+  })
+
+  const userWithAvatar = {
+    name: userRecord?.fullName || session.user.name || "",
+    email: session.user.email || "",
+    avatar: userRecord?.avatar ?? undefined,
+  }
+
   return (
     <Providers session={session}>
       <LanguageProvider>
         <div className="flex h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden">
           {/* Desktop sidebar */}
           <div className="hidden md:block">
-            <StudentSidebar user={(session.user as any)} schoolName={school?.name ?? undefined} schoolLogo={school?.logo ?? undefined} />
+            <StudentSidebar user={userWithAvatar} schoolName={school?.name ?? undefined} schoolLogo={school?.logo ?? undefined} />
           </div>
 
           <main className="flex-1 overflow-y-auto flex flex-col md:ms-64">

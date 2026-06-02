@@ -137,11 +137,6 @@ const {
         token.role = user.role
         token.schoolId = user.schoolId
         token.schoolSlug = user.schoolSlug
-        token.avatar = user.avatar
-        token.schoolName = user.schoolName
-        token.schoolLogo = user.schoolLogo
-        token.schoolCity = user.schoolCity
-        token.studentCode = user.studentCode
       }
       return token
     },
@@ -151,11 +146,6 @@ const {
         session.user.role = token.role as string
         session.user.schoolId = token.schoolId as string
         session.user.schoolSlug = token.schoolSlug as string
-        session.user.avatar = token.avatar as string | undefined
-        session.user.schoolName = token.schoolName as string | undefined
-        session.user.schoolLogo = token.schoolLogo as string | undefined
-        session.user.schoolCity = token.schoolCity as string | undefined
-        session.user.studentCode = token.studentCode as string | undefined
       }
       return session
     },
@@ -169,11 +159,6 @@ declare module "next-auth" {
     role: string
     schoolId: string
     schoolSlug: string
-    avatar?: string
-    schoolName?: string
-    schoolLogo?: string
-    schoolCity?: string
-    studentCode?: string
   }
   interface Session {
     user: {
@@ -183,11 +168,6 @@ declare module "next-auth" {
       role: string
       schoolId: string
       schoolSlug: string
-      avatar?: string
-      schoolName?: string
-      schoolLogo?: string
-      schoolCity?: string
-      studentCode?: string
     }
   }
 }
