@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Send, Mail, Loader2, User } from "lucide-react"
@@ -51,6 +51,16 @@ export function StudentMessagesClient({ teacherUserId, teacherName }: Props) {
   useEffect(() => {
     fetchMessages()
   }, [fetchMessages])
+
+  // Pré-remplir le sujet avec celui du dernier message (une seule fois au chargement)
+  const initialLoadDone = useRef(false)
+  useEffect(() => {
+    if (!initialLoadDone.current && messages.length > 0) {
+      const lastSubject = messages[0].subject
+      setSubject(lastSubject.startsWith("Re: ") ? lastSubject : `Re: ${lastSubject}`)
+      initialLoadDone.current = true
+    }
+  }, [messages])
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault()
@@ -125,7 +135,7 @@ export function StudentMessagesClient({ teacherUserId, teacherName }: Props) {
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-semibold text-gray-800 dark:text-gray-200">{msg.subject}</span>
+                      <span className="font-bold text-tahfidz-green text-xs">📌 {msg.subject}</span>
                       <span className="text-[10px] text-gray-400">{new Date(msg.sentAt).toLocaleDateString()}</span>
                     </div>
                     <p className="text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{msg.body}</p>

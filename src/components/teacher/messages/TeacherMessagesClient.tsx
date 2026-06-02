@@ -56,6 +56,8 @@ export function TeacherMessagesClient() {
     ? (activeMessages[0].fromUser.role === "STUDENT" ? activeMessages[0].fromUser.fullName : activeMessages[0].toUser.fullName)
     : ""
 
+
+
   async function handleSend(e: React.FormEvent) {
     e.preventDefault()
     if (!activeStudentId || !subject.trim() || !body.trim()) return
@@ -119,7 +121,17 @@ export function TeacherMessagesClient() {
                 return (
                   <button
                     key={studentId}
-                    onClick={() => { setActiveStudentId(studentId); setSubject(""); setBody(""); }}
+                    onClick={() => {
+                      setActiveStudentId(studentId)
+                      const conv = conversations[studentId] || []
+                      if (conv.length > 0) {
+                        const lastSubject = conv[0].subject
+                        setSubject(lastSubject.startsWith("Re: ") ? lastSubject : `Re: ${lastSubject}`)
+                      } else {
+                        setSubject("")
+                      }
+                      setBody("")
+                    }}
                     className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition text-sm ${
                       activeStudentId === studentId
                         ? "bg-tahfidz-green-light/30 dark:bg-emerald-900/20 border border-tahfidz-green"
@@ -178,7 +190,7 @@ export function TeacherMessagesClient() {
                                   : "bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200"
                               }`}
                             >
-                              <p className="font-medium text-xs mb-1 opacity-80">{msg.subject}</p>
+                              <p className={`font-bold text-xs mb-1 ${isFromMe ? "text-white/90" : "text-tahfidz-green"}`}>📌 {msg.subject}</p>
                               <p className="whitespace-pre-wrap">{msg.body}</p>
                             </div>
                             <p className={`text-[10px] text-gray-400 mt-1 ${isFromMe ? "text-right" : ""}`}>
