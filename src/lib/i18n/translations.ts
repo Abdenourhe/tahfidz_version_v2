@@ -257,7 +257,7 @@ export const translations = {
     linkedAlert:    { fr: "Nouvel enfant lie a votre compte ! Connectez-vous pour le consulter.", en: "New child linked to your account! Sign in to view them.", ar: "طفل جديد مرتبط بحسابك! سجّل الدخول لعرضه." },
     // Formulaire école
     schoolId:       { fr: "Identifiant de l'ecole", en: "School identifier", ar: "معرف المدرسة" },
-    schoolIdPlaceholder: { fr: "EC-ALG-001", en: "EC-ALG-001", ar: "EC-ALG-001" },
+    schoolIdPlaceholder: { fr: "AB-12345", en: "AB-12345", ar: "AB-12345" },
     schoolIdFormat: { fr: "Format :", en: "Format:", ar: "الصيغة :" },
     email:          { fr: "Adresse email", en: "Email address", ar: "عنوان البريد الإلكتروني" },
     emailPlaceholder:{ fr: "directeur@ecole.dz", en: "principal@school.com", ar: "مدير@مدرسة. dz" },
