@@ -33,7 +33,7 @@ export default async function StudentLayout({ children }: { children: React.Reac
             <div className="hidden md:block"><TopBar /></div>
             <div className="md:hidden"><MobileHeader role="student" schoolName={school?.name ?? undefined} schoolLogo={school?.logo ?? undefined} /></div>
 
-            <div className="max-w-7xl mx-auto w-full px-4 md:px-6 py-4 md:py-8 pb-24 md:pb-8">
+            <div className="max-w-7xl mx-auto w-full px-4 md:px-6 py-2 md:py-4 pb-24 md:pb-8">
               {children}
             </div>
           </main>

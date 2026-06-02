@@ -41,21 +41,36 @@ export function StudentSidebar({ user, schoolName, schoolLogo }: StudentSidebarP
 
   return (
     <aside className="w-64 bg-white border-e border-gray-100 flex flex-col h-full shrink-0">
-      <div className="p-6 border-b border-gray-100">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl gradient-tahfidz flex items-center justify-center overflow-hidden">
+      <div className="p-4 border-b border-gray-100">
+        {/* École */}
+        <div className="flex items-center gap-2.5 mb-3">
+          <div className="w-8 h-8 rounded-lg gradient-tahfidz flex items-center justify-center overflow-hidden shrink-0">
             {logo ? (
-              <Image src={logo} alt={displayName} width={36} height={36} className="w-full h-full object-cover" />
+              <Image src={logo} alt={displayName} width={32} height={32} className="w-full h-full object-cover" />
             ) : (
-              <span className="text-white font-bold text-sm">{displayName.charAt(0).toUpperCase()}</span>
+              <span className="text-white font-bold text-xs">{displayName.charAt(0).toUpperCase()}</span>
             )}
           </div>
-          <div>
-            <p className="font-bold text-gray-900 text-sm">{displayName}</p>
+          <div className="min-w-0">
+            <p className="font-bold text-gray-900 text-sm truncate">{displayName}</p>
             {schoolSlug && (
               <p className="text-[10px] font-mono text-tahfidz-green">{schoolSlug}</p>
             )}
-            <p className="text-xs text-gray-400">
+          </div>
+        </div>
+
+        {/* Élève */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-full gradient-tahfidz flex items-center justify-center overflow-hidden shrink-0">
+            {user.avatar ? (
+              <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-white font-bold text-xs">{user.name.charAt(0).toUpperCase()}</span>
+            )}
+          </div>
+          <div className="min-w-0">
+            <p className="font-semibold text-gray-800 text-sm truncate">{user.name}</p>
+            <p className="text-[10px] text-gray-400">
               {locale === "ar" ? "فضاء الطالب" : locale === "en" ? "Student area" : "Espace élève"}
             </p>
           </div>
