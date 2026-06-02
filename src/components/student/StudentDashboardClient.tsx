@@ -3,6 +3,7 @@
 
 import Link from "next/link"
 import { useState } from "react"
+import { motion } from "framer-motion"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { ReadyToReciteButton } from "@/components/student/ReadyToReciteButton"
 import { FeedbackModal } from "@/components/shared/FeedbackModal"
@@ -72,15 +73,15 @@ function attColor(status: string) {
 }
 
 // ✅ AJOUTÉ : Fonction formatAttDate dans le Client Component
-function formatAttDate(d: Date | string): string {
+function formatAttDate(d: Date | string, t: (k: string) => string): string {
   const date = typeof d === "string" ? new Date(d) : d
   const now = new Date()
   const diff = now.getTime() - date.getTime()
   const days = Math.floor(diff / (1000 * 60 * 60 * 24))
 
-  if (days === 0) return "Aujourd'hui"
-  if (days === 1) return "Hier"
-  if (days < 7) return `Il y a ${days} jours`
+  if (days === 0) return t("today")
+  if (days === 1) return t("yesterday")
+  if (days < 7) return t("daysAgo").replace("{{count}}", String(days))
 
   return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })
 }
@@ -106,12 +107,15 @@ export function StudentDashboardClient({
 
     const t = useT("studentDashboardClient")
 
-  const initials = studentName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
+  const initials = (studentName || "").split(" ").filter(Boolean).map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
 
   return (
-    <div className="space-y-8">
+    <motion.div className="space-y-8" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
       {/* En-tête */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6">
+      <motion.div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.05 }}>
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-2xl gradient-tahfidz flex items-center justify-center flex-shrink-0">
             <span className="text-white font-bold text-lg">{initials}</span>
@@ -130,10 +134,10 @@ export function StudentDashboardClient({
           <button
             onClick={() => setShowFeedback(true)}
             className="flex items-center gap-1.5 px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-lg text-xs font-medium hover:bg-red-100 transition"
-            title={L === "ar" ? "الإبلاغ عن مشكلة" : L === "en" ? "Report issue" : "Signaler un problème"}
+            title={t("report")}
           >
             <Bug size={14} />
-            <span className="hidden sm:inline">{L === "ar" ? "إبلاغ" : L === "en" ? "Report" : "Signaler"}</span>
+            <span className="hidden sm:inline">{t("report")}</span>
           </button>
         </div>
 
@@ -151,10 +155,13 @@ export function StudentDashboardClient({
             <div className="text-xs text-gray-500 dark:text-gray-400">{t("badges")}</div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Progression */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6">
+      <motion.div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.15 }}>
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-semibold text-gray-800 dark:text-gray-100">{t("inProgress")}</h2>
           <Link href="/student/progress" className="text-xs text-tahfidz-green hover:underline">{t("seeAll")}</Link>
@@ -194,11 +201,14 @@ export function StudentDashboardClient({
             })}
           </div>
         )}
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Badges */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6">
+        <motion.div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.25 }}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-gray-800 dark:text-gray-100">{t("myBadges")}</h2>
             <Link href="/student/badges" className="text-xs text-tahfidz-green hover:underline">{t("seeAll")}</Link>
@@ -215,10 +225,13 @@ export function StudentDashboardClient({
               ))}
             </div>
           )}
-        </div>
+        </motion.div>
 
         {/* Présences */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6">
+        <motion.div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.3 }}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-gray-800 dark:text-gray-100">{t("recentAtt")}</h2>
             <Link href="/student/attendance" className="text-xs text-tahfidz-green hover:underline">{t("seeAll")}</Link>
@@ -232,17 +245,20 @@ export function StudentDashboardClient({
                   <div className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center text-xs font-bold ${attColor(att.status)}`}>
                     {attIcon(att.status)}
                   </div>
-                  <p className="text-xs text-gray-400 mt-1">{formatAttDate(att.date)}</p>
+                  <p className="text-xs text-gray-400 mt-1">{formatAttDate(att.date, t)}</p>
                 </div>
               ))
             )}
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Annonces */}
       {announcements.length > 0 && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6">
+        <motion.div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.35 }}>
           <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-4">{t("announcements")}</h2>
           <div className="space-y-3">
             {announcements.map(ann => (
@@ -258,7 +274,7 @@ export function StudentDashboardClient({
               </div>
             ))}
           </div>
-        </div>
+        </motion.div>
       )}
       <FeedbackModal
         isOpen={showFeedback}
@@ -268,6 +284,6 @@ export function StudentDashboardClient({
         userEmail="" /* passer l'email si dispo dans les props */
         schoolName={undefined}
       />
-    </div>
+    </motion.div>
   )
 }

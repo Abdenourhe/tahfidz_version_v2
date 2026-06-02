@@ -495,6 +495,10 @@ export const translations = {
     noAtt:           { fr: "Aucune présence enregistrée", en: "No attendance recorded", ar: "لا يوجد حضور مسجل" },
     waitSessions:    { fr: "Vos présences apparaîtront ici après les sessions.", en: "Your attendance will appear here after sessions.", ar: "سيظهر حضورك هنا بعد الجلسات." },
     sessions:        { fr: "sessions", en: "sessions", ar: "جلسات" },
+    presentLabel:    { fr: "Présent", en: "Present", ar: "حاضر" },
+    absentLabel:     { fr: "Absent", en: "Absent", ar: "غائب" },
+    lateLabel:       { fr: "Retard", en: "Late", ar: "متأخر" },
+    excusedLabel:    { fr: "Excusé", en: "Excused", ar: "معذور" },
   },
 
   // ─── studentBadgesClient (components/student/StudentBadgesClient.tsx) ─────────────────────────────────────────────
@@ -505,6 +509,10 @@ export const translations = {
     earnedOn:        { fr: "Obtenu le", en: "Earned on", ar: "تم الحصول عليها في" },
     unknown:         { fr: "???", en: "???", ar: "???" },
     desc:            { fr: "Les badges sont attribués pour les efforts et la régularité", en: "Badges are awarded for effort and regularity", ar: "يتم منح الشارات للجهد والانتظام" },
+    common:          { fr: "Commun", en: "Common", ar: "شائع" },
+    rare:            { fr: "Rare", en: "Rare", ar: "نادر" },
+    epic:            { fr: "Épique", en: "Epic", ar: "ملحمي" },
+    legendary:       { fr: "Légendaire", en: "Legendary", ar: "أسطوري" },
   },
 
   // ─── studentProgressClient (components/student/StudentProgressClient.tsx) ─────────────────────────────────────────────
@@ -1424,6 +1432,23 @@ export const translations = {
     noAtt:           { fr: "Aucune donnée", en: "No data", ar: "لا توجد بيانات" },
     announcements:   { fr: "Annonces", en: "Announcements", ar: "الإعلانات" },
     pinned:          { fr: "Épinglé", en: "Pinned", ar: "مثبَّت" },
+    today:           { fr: "Aujourd'hui", en: "Today", ar: "اليوم" },
+    yesterday:       { fr: "Hier", en: "Yesterday", ar: "أمس" },
+    daysAgo:         { fr: "Il y a {{count}} jours", en: "{{count}} days ago", ar: "منذ {{count}} أيام" },
+    report:          { fr: "Signaler", en: "Report", ar: "إبلاغ" },
+    reported:        { fr: "Problème signalé", en: "Issue reported", ar: "تم الإبلاغ" },
+    welcome:         { fr: "Bienvenue", en: "Welcome", ar: "مرحباً" },
+  },
+
+  // ─── Memorization Status Labels ───────────────────────────────────
+  memorizationStatus: {
+    NOT_STARTED:              { fr: "Non commencé",       en: "Not started",       ar: "لم يبدأ" },
+    IN_PROGRESS:              { fr: "En cours",           en: "In progress",       ar: "جارٍ" },
+    UNDER_REVIEW:             { fr: "En révision",        en: "Under review",      ar: "قيد المراجعة" },
+    READY_FOR_RECITATION:     { fr: "Prêt à réciter",     en: "Ready to recite",   ar: "جاهز للتسميع" },
+    PENDING_TEACHER_APPROVAL: { fr: "En attente prof",    en: "Pending approval",  ar: "في انتظار الموافقة" },
+    MEMORIZED:                { fr: "Mémorisé ✓",         en: "Memorized ✓",       ar: "محفوظ ✓" },
+    NEEDS_REVISION:           { fr: "Révision requise",   en: "Needs revision",    ar: "يحتاج مراجعة" },
   },
 
   // ─── Teacher Memorization Panel ───────────────────────────────────
@@ -1464,6 +1489,30 @@ export const translations = {
     poor:              { fr: "Difficile", en: "Poor", ar: "ضعيف" },
     updateProgress:    { fr: "Mettre à jour ma progression", en: "Update my progress", ar: "تحديث تقدمي" },
     notesPlaceholder:  { fr: "Ma note personnelle...", en: "My personal note...", ar: "ملاحظتي الشخصية..." },
+    currentProgress:   { fr: "Mon avancement actuel", en: "My current progress", ar: "تقدمي الحالي" },
+    enterLastVerse:    { fr: "Saisissez le numéro du dernier verset mémorisé", en: "Enter the last memorized verse number", ar: "أدخل رقم آخر آية حفظتها" },
+    saving:            { fr: "Enregistrement…", en: "Saving…", ar: "جارٍ الحفظ…" },
+    saved:             { fr: "Sauvegardé", en: "Saved", ar: "تم الحفظ" },
+    savedTeacherNotified: { fr: "Sauvegardé · enseignant notifié", en: "Saved · teacher notified", ar: "تم الحفظ · تم إبلاغ المعلم" },
+    verseLabel:        { fr: "Verset", en: "Verse", ar: "آية" },
+    ofLabel:           { fr: "sur", en: "of", ar: "من" },
+    remainingLabel:    { fr: "Restant", en: "Remaining", ar: "متبقي" },
+    verseSingular:     { fr: "verset", en: "verse", ar: "آية" },
+    versePlural:       { fr: "versets", en: "verses", ar: "آيات" },
+    progressLabel:     { fr: "Progression", en: "Progress", ar: "التقدم" },
+    quickAdjust:       { fr: "Ajustement rapide", en: "Quick adjust", ar: "تعديل سريع" },
+    allDone:           { fr: "Tout terminé", en: "All done", ar: "انتهى الكل" },
+    errorVerseRange:   { fr: "Le verset doit être entre 0 et {{total}}", en: "Verse must be between 0 and {{total}}", ar: "يجب أن تكون الآية بين 0 و {{total}}" },
+    allVersesMemorized:{ fr: "Tous les versets sont mémorisés ! Signalez-le à votre enseignant.", en: "All verses memorized! Notify your teacher.", ar: "تم حفظ كل الآيات! أبلغ معلمك." },
+    remainingBeforeValidation: { fr: "Encore {{count}} {{unit}} avant la validation", en: "{{count}} {{unit}} left before validation", ar: "{{count}} {{unit}} متبقية قبل التحقق" },
+    teacherNotified:   { fr: "Enseignant notifié", en: "Teacher notified", ar: "تم إبلاغ المعلم" },
+    readyToRecite:     { fr: "Je suis prêt à réciter", en: "I'm ready to recite", ar: "أنا جاهز للتسميع" },
+    sending:           { fr: "Envoi…", en: "Sending…", ar: "جارٍ الإرسال…" },
+    waitingValidation: { fr: "En attente de validation par votre enseignant", en: "Waiting for teacher validation", ar: "في انتظار تحقق المعلم" },
+    teacherRequestsRevision: { fr: "L'enseignant demande une révision. Continuez votre travail !", en: "Teacher requests revision. Keep working!", ar: "المعلم يطلب مراجعة. واصل عملك!" },
+    continueWork:      { fr: "Continuez votre travail", en: "Keep working", ar: "واصل عملك" },
+    finishFirst:       { fr: "Terminez tous les versets d'abord", en: "Finish all verses first", ar: "أنهِ كل الآيات أولاً" },
+    requestValidation: { fr: "Demander la validation", en: "Request validation", ar: "طلب التحقق" },
   },
 
   // ─── Parent Memorization View ─────────────────────────────────────
@@ -1716,6 +1765,7 @@ export const translations = {
     male:            { fr: "Masculin", en: "Male", ar: "ذكر" },
     female:          { fr: "Féminin", en: "Female", ar: "أنثى" },
     unknown:         { fr: "—", en: "—", ar: "—" },
+    verse:           { fr: "Verset", en: "Verse", ar: "آية" },
   },
 
   // ─── superadminProfileClient (components/superadmin/SuperadminProfileClient.tsx) ─────────────────────────────────────────────

@@ -35,11 +35,11 @@ export default function StudentHalaqaJoinPage() {
         body: JSON.stringify({ sessionId }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "Erreur")
+      if (!res.ok) throw new Error(data.error || t("error"))
       setJoinUrl(data.joinUrl)
       setSession(data)
     } catch (err: any) {
-      setError(err.message || "Erreur")
+      setError(err.message || t("error"))
     } finally {
       setLoading(false)
     }
@@ -47,7 +47,7 @@ export default function StudentHalaqaJoinPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <div className="flex-1 flex items-center justify-center">
         <Loader2 size={32} className="animate-spin text-tahfidz-green" />
       </div>
     )
@@ -55,7 +55,7 @@ export default function StudentHalaqaJoinPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle size={48} className="mx-auto text-red-500 mb-4" />
           <p className="text-gray-700 dark:text-gray-300">{error}</p>

@@ -4,6 +4,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
+import { useT } from "@/contexts/LanguageContext"
 
 interface Props {
   progressId: string
@@ -11,8 +12,9 @@ interface Props {
   surahId: number
 }
 
-export function ReadyToReciteButton({ progressId, studentId, surahId }: Props) {
+export function ReadyToReciteButton({ progressId }: Props) {
   const router = useRouter()
+  const t = useT("studentMemorizationTracker")
   const [loading, setLoading] = useState(false)
   const [done, setDone]       = useState(false)
 
@@ -34,7 +36,7 @@ export function ReadyToReciteButton({ progressId, studentId, surahId }: Props) {
   if (done) {
     return (
       <span className="text-xs px-3 py-1 bg-green-100 text-green-700 rounded-full font-medium">
-        ✓ Enseignant notifié
+        ✓ {t("teacherNotified")}
       </span>
     )
   }
@@ -46,7 +48,7 @@ export function ReadyToReciteButton({ progressId, studentId, surahId }: Props) {
       className="text-xs px-3 py-1.5 bg-tahfidz-green text-white rounded-full hover:bg-tahfidz-green/90 transition disabled:opacity-60 flex items-center gap-1 font-medium"
     >
       {loading && <Loader2 size={11} className="animate-spin" />}
-      Prêt à réciter ✓
+      {t("readyToRecite")} ✓
     </button>
   )
 }

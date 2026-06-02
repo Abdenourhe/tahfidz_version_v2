@@ -34,18 +34,19 @@ const item = {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { cls: string; label: string; icon: any }> = {
-    SCHEDULED: { cls: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300", label: "Planifiée", icon: Calendar },
-    LIVE: { cls: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 animate-pulse", label: "En direct", icon: Radio },
-    ENDED: { cls: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400", label: "Terminée", icon: CheckCircle2 },
-    CANCELLED: { cls: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300", label: "Annulée", icon: XCircle },
+  const t = useT("halaqa")
+  const map: Record<string, { cls: string; labelKey: string; icon: any }> = {
+    SCHEDULED: { cls: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300", labelKey: "statusScheduled", icon: Calendar },
+    LIVE: { cls: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 animate-pulse", labelKey: "statusLive", icon: Radio },
+    ENDED: { cls: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400", labelKey: "statusEnded", icon: CheckCircle2 },
+    CANCELLED: { cls: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300", labelKey: "statusCancelled", icon: XCircle },
   }
   const cfg = map[status] || map.ENDED
   const Icon = cfg.icon
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold uppercase ${cfg.cls}`}>
       <Icon size={12} />
-      {cfg.label}
+      {t(cfg.labelKey)}
     </span>
   )
 }
@@ -57,12 +58,13 @@ function ModeIcon({ mode }: { mode: string }) {
 }
 
 function ModeLabel({ mode }: { mode: string }) {
+  const t = useT("halaqa")
   const map: Record<string, string> = {
-    AUDIO_ONLY: "Audio",
-    VIDEO: "Vidéo",
-    SCREEN_SHARE: "Écran",
+    AUDIO_ONLY: "modeAudio",
+    VIDEO: "modeVideo",
+    SCREEN_SHARE: "modeScreen",
   }
-  return <span className="text-xs text-gray-400">{map[mode] || mode}</span>
+  return <span className="text-xs text-gray-400">{t(map[mode]) || mode}</span>
 }
 
 export default function StudentHalaqaPage() {
@@ -225,12 +227,12 @@ export default function StudentHalaqaPage() {
                       {hasEval ? (
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
                           <CheckCircle2 size={12} />
-                          Évalué
+                          {t("evaluated")}
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
                           <XCircle size={12} />
-                          Non évalué
+                          {t("notEvaluated")}
                         </span>
                       )}
                     </div>

@@ -4,7 +4,9 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
+import { motion } from "framer-motion"
 import { Loader2, CheckCircle2, Save, Bell } from "lucide-react"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 interface Props {
   progressId:  string
@@ -20,6 +22,10 @@ export function VerseProgressTracker({
   progressId, studentId, surahId, totalVerses, currentVerse, status,
 }: Props) {
   const router  = useRouter()
+  const { locale } = useLanguage()
+  const t = useT("studentMemorizationTracker")
+  const L = locale as "fr" | "en" | "ar"
+
   const [verse,    setVerse]    = useState(currentVerse)
   const [draft,    setDraft]    = useState(String(currentVerse))
   const [updating, setUpdating] = useState(false)
@@ -41,10 +47,12 @@ export function VerseProgressTracker({
   const remaining = totalVerses - verseSafe
   const isComplete = verseSafe >= totalVerses
 
+  const verseUnit = (n: number) => n === 1 ? t("verseSingular") : t("versePlural")
+
   // ─── Save verse to server ──────────────────────────────────────────────────
   const saveVerse = async (newVerse: number) => {
     const clamped = Math.max(0, Math.min(newVerse, totalVerses))
-    if (clamped === verseSafe) return  // no change
+    if (clamped === verseSafe) return
     setUpdating(true); setError(null)
     try {
       const res = await fetch(`/api/progress/${progressId}`, {
@@ -54,15 +62,15 @@ export function VerseProgressTracker({
       })
       if (!res.ok) {
         const txt = await res.text()
-        throw new Error(txt.slice(0, 100) || "Erreur de mise à jour")
+        throw new Error(txt.slice(0, 100) || t("error"))
       }
       setVerse(clamped)
       setDraft(String(clamped))
       setSavedAt(new Date())
       router.refresh()
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Erreur")
-      setDraft(String(verseSafe))  // revert on error
+      setError(e instanceof Error ? e.message : t("error"))
+      setDraft(String(verseSafe))
     } finally {
       setUpdating(false)
     }
@@ -83,10 +91,9 @@ export function VerseProgressTracker({
     const num = parseInt(val, 10)
     if (isNaN(num)) return
     if (num < 0 || num > totalVerses) {
-      setError(`Le verset doit être entre 0 et ${totalVerses}`)
+      setError(t("errorVerseRange").replace("{{total}}", String(totalVerses)))
       return
     }
-    // Debounce server save by 800ms after user stops typing
     debounceRef.current = setTimeout(() => saveVerse(num), 800)
   }
 
@@ -99,47 +106,52 @@ export function VerseProgressTracker({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "READY_FOR_RECITATION" }),
       })
-      if (!res.ok) throw new Error("Erreur notification")
+      if (!res.ok) throw new Error(t("error"))
       setNotified(true)
       router.refresh()
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Erreur")
+      setError(e instanceof Error ? e.message : t("error"))
     } finally {
       setNotifying(false)
     }
   }
 
   return (
-    <div className="mt-4 space-y-4">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="mt-4 space-y-4"
+    >
       {/* ─── Saisie verset actuel ─── */}
       <div>
         <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
           <div>
-            <p className="text-xs font-medium text-gray-600">
-              Mon avancement actuel
+            <p className="text-xs font-medium text-gray-600 dark:text-gray-300">
+              {t("currentProgress")}
             </p>
             <p className="text-xs text-gray-400 mt-0.5">
-              Saisissez le numéro du dernier verset que vous avez mémorisé
+              {t("enterLastVerse")}
             </p>
           </div>
 
           {/* État de sauvegarde */}
           {updating && (
             <span className="text-xs text-gray-400 flex items-center gap-1">
-              <Loader2 size={11} className="animate-spin" /> Enregistrement…
+              <Loader2 size={11} className="animate-spin" /> {t("saving")}
             </span>
           )}
           {savedAt && !updating && (
             <span className="text-xs text-tahfidz-green flex items-center gap-1 font-medium">
-              <CheckCircle2 size={11} /> Sauvegardé · enseignant notifié
+              <CheckCircle2 size={11} /> {t("savedTeacherNotified")}
             </span>
           )}
         </div>
 
         {/* Champ saisie + total */}
-        <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
+        <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
           <div className="flex-1 flex items-center gap-2">
-            <label className="text-xs text-gray-500">Verset :</label>
+            <label className="text-xs text-gray-500">{t("verseLabel")} :</label>
             <input
               type="number"
               value={draft}
@@ -150,105 +162,120 @@ export function VerseProgressTracker({
                 else setDraft(String(verseSafe))
               }}
               min={0} max={totalVerses}
-              className="w-20 px-3 py-2 rounded-lg border-2 border-tahfidz-green/30 text-center text-base font-bold text-tahfidz-green focus:outline-none focus:border-tahfidz-green focus:ring-2 focus:ring-tahfidz-green/20 bg-white"
+              className="w-20 px-3 py-2 rounded-lg border-2 border-tahfidz-green/30 text-center text-base font-bold text-tahfidz-green focus:outline-none focus:border-tahfidz-green focus:ring-2 focus:ring-tahfidz-green/20 bg-white dark:bg-gray-900"
             />
-            <span className="text-sm text-gray-500">sur</span>
-            <span className="text-base font-bold text-gray-700">{totalVerses}</span>
+            <span className="text-sm text-gray-500">{t("ofLabel")}</span>
+            <span className="text-base font-bold text-gray-700 dark:text-gray-200">{totalVerses}</span>
           </div>
 
           <div className="text-right">
-            <p className="text-xs text-gray-400">Restant</p>
+            <p className="text-xs text-gray-400">{t("remainingLabel")}</p>
             <p className="text-base font-bold text-orange-500">
-              {remaining} verset{remaining > 1 ? "s" : ""}
+              {remaining} {verseUnit(remaining)}
             </p>
           </div>
         </div>
 
-        {/* Barre de progression visuelle (lecture seule) */}
+        {/* Barre de progression visuelle */}
         <div className="mt-3">
           <div className="flex justify-between text-xs text-gray-400 mb-1">
-            <span>Progression</span>
+            <span>{t("progressLabel")}</span>
             <span className="font-semibold text-tahfidz-green">{pct}%</span>
           </div>
-          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-            <div className="h-full gradient-tahfidz rounded-full transition-all duration-500"
-              style={{ width: `${pct}%` }} />
+          <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full gradient-tahfidz rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${pct}%` }}
+              transition={{ duration: 0.7 }}
+            />
           </div>
         </div>
 
         {/* Boutons rapides */}
         <div className="flex flex-wrap items-center gap-2 mt-3">
-          <span className="text-xs text-gray-400 mr-1">Ajustement rapide :</span>
-          <button onClick={() => adjustBy(-5)} disabled={updating || verseSafe <= 0}
-            className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 transition font-medium">
-            −5
-          </button>
-          <button onClick={() => adjustBy(-1)} disabled={updating || verseSafe <= 0}
-            className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 transition font-medium">
-            −1
-          </button>
-          <button onClick={() => adjustBy(1)} disabled={updating || verseSafe >= totalVerses}
-            className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 transition font-medium">
-            +1
-          </button>
-          <button onClick={() => adjustBy(5)} disabled={updating || verseSafe >= totalVerses}
-            className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 transition font-medium">
-            +5
-          </button>
-          <button onClick={() => saveVerse(totalVerses)} disabled={updating || verseSafe >= totalVerses}
-            className="px-3 py-1.5 text-xs border border-tahfidz-green text-tahfidz-green rounded-lg hover:bg-tahfidz-green-light disabled:opacity-40 transition font-semibold">
-            Tout terminé ✓
+          <span className="text-xs text-gray-400 mr-1">{t("quickAdjust")} :</span>
+          {[-5, -1, 1, 5].map((delta) => (
+            <button
+              key={delta}
+              onClick={() => adjustBy(delta)}
+              disabled={updating || (delta < 0 && verseSafe <= 0) || (delta > 0 && verseSafe >= totalVerses)}
+              className="px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 transition font-medium"
+            >
+              {delta > 0 ? `+${delta}` : delta}
+            </button>
+          ))}
+          <button
+            onClick={() => saveVerse(totalVerses)}
+            disabled={updating || verseSafe >= totalVerses}
+            className="px-3 py-1.5 text-xs border border-tahfidz-green text-tahfidz-green rounded-lg hover:bg-tahfidz-green-light disabled:opacity-40 transition font-semibold"
+          >
+            {t("allDone")} ✓
           </button>
         </div>
       </div>
 
       {/* Erreur */}
       {error && (
-        <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg flex items-center gap-1.5">
+        <p className="text-xs text-red-600 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg flex items-center gap-1.5">
           ⚠ {error}
         </p>
       )}
 
       {/* ─── Bouton "Prêt à réciter" ─── */}
       {status === "IN_PROGRESS" && (
-        <div className="flex items-center justify-between gap-3 pt-3 border-t border-gray-100 flex-wrap">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex items-center justify-between gap-3 pt-3 border-t border-gray-100 dark:border-gray-800 flex-wrap"
+        >
           <p className="text-xs text-gray-400 flex-1 min-w-0">
             {isComplete
-              ? "🎉 Tous les versets sont mémorisés ! Signalez-le à votre enseignant."
-              : `Encore ${remaining} verset${remaining > 1 ? "s" : ""} avant de demander la validation.`}
+              ? t("allVersesMemorized")
+              : t("remainingBeforeValidation")
+                  .replace("{{count}}", String(remaining))
+                  .replace("{{unit}}", verseUnit(remaining))}
           </p>
 
           {notified ? (
             <span className="flex items-center gap-1.5 text-xs text-tahfidz-green font-medium px-3 py-2 bg-tahfidz-green-light rounded-xl">
-              <CheckCircle2 size={14} /> Enseignant notifié
+              <CheckCircle2 size={14} /> {t("teacherNotified")}
             </span>
           ) : (
             <button
               onClick={notifyTeacher}
               disabled={notifying || !isComplete}
               className="flex items-center gap-1.5 px-4 py-2 text-xs gradient-tahfidz text-white rounded-xl hover:opacity-90 transition disabled:opacity-50 font-semibold flex-shrink-0"
-              title={!isComplete ? "Terminez tous les versets d'abord" : "Demander la validation de l'enseignant"}
+              title={!isComplete ? t("finishFirst") : t("requestValidation")}
             >
               {notifying ? <Loader2 size={12} className="animate-spin" /> : <Bell size={12} />}
-              {notifying ? "Envoi…" : "Je suis prêt à réciter"}
+              {notifying ? t("sending") : t("readyToRecite")}
             </button>
           )}
-        </div>
+        </motion.div>
       )}
 
       {status === "READY_FOR_RECITATION" && (
-        <div className="flex items-center gap-2 p-3 bg-orange-50 border border-orange-200 rounded-xl text-sm text-orange-700">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-2 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl text-sm text-orange-700 dark:text-orange-300"
+        >
           <Loader2 size={14} className="animate-spin" />
-          <span>En attente de validation par votre enseignant</span>
-        </div>
+          <span>{t("waitingValidation")}</span>
+        </motion.div>
       )}
 
       {status === "NEEDS_REVISION" && (
-        <div className="flex items-center gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-yellow-700">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl text-sm text-yellow-700 dark:text-yellow-300"
+        >
           <span>↺</span>
-          <span>L'enseignant demande une révision. Continuez votre travail !</span>
-        </div>
+          <span>{t("teacherRequestsRevision")}</span>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   )
 }

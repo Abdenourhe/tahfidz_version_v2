@@ -1,8 +1,9 @@
 "use client"
 // src/components/student/StudentProgressClient.tsx
 
+import { motion } from "framer-motion"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
-import { formatDate, statusLabel } from "@/lib/utils"
+import { formatDate, getStatusStyle } from "@/lib/utils"
 import { VerseProgressTracker } from "@/components/student/VerseProgressTracker"
 
 interface Surah {
@@ -38,20 +39,21 @@ export function StudentProgressClient({ studentId, memorized, inProgress }: Prop
     const t = useT("studentProgressClient")
 
   const total = memorized.length + inProgress.length
+  const ts = useT("memorizationStatus")
 
   return (
-    <div className="space-y-8">
+    <motion.div className="space-y-8" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t("title")}</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t("subtitle")}</p>
       </div>
 
       {inProgress.length > 0 && (
-        <div>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}>
           <h2 className="font-semibold text-gray-700 dark:text-gray-300 mb-3">{t("inProgress")}</h2>
           <div className="space-y-4">
             {inProgress.map((prog) => {
-              const sl = statusLabel(prog.status)
+              const sl = getStatusStyle(prog.status)
               return (
                 <div key={prog.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5">
                   <div className="flex items-start justify-between mb-2">
@@ -59,7 +61,7 @@ export function StudentProgressClient({ studentId, memorized, inProgress }: Prop
                       <div className="flex items-center gap-3 mb-1 flex-wrap">
                         <h3 className="font-semibold text-gray-900 dark:text-gray-100">{prog.surah.nameFr}</h3>
                         <span className="arabic text-tahfidz-green font-medium">{prog.surah.nameAr}</span>
-                        <span className={`text-xs px-2.5 py-1 rounded-full ${sl.bg} ${sl.color}`}>{sl.label}</span>
+                        <span className={`text-xs px-2.5 py-1 rounded-full ${sl.bg} ${sl.color}`}>{ts(prog.status) || prog.status}</span>
                       </div>
                       <p className="text-xs text-gray-400">
                         {t("juz")} {prog.surah.juzNumber} · {prog.surah.verseCount} {t("verses")} ·
@@ -86,13 +88,13 @@ export function StudentProgressClient({ studentId, memorized, inProgress }: Prop
                       <p className="text-xs text-gray-400 mb-1.5">{t("history")}</p>
                       <div className="space-y-1">
                         {prog.statusHistory.slice(0, 3).map((h) => {
-                          const oldSl = statusLabel(h.oldStatus)
-                          const newSl = statusLabel(h.newStatus)
+                          const oldSl = getStatusStyle(h.oldStatus)
+                          const newSl = getStatusStyle(h.newStatus)
                           return (
                             <p key={h.id} className="text-xs text-gray-400">
-                              <span className={`font-medium ${oldSl.color}`}>{oldSl.label}</span>
+                              <span className={`font-medium ${oldSl.color}`}>{ts(h.oldStatus) || h.oldStatus}</span>
                               {" → "}
-                              <span className={`font-medium ${newSl.color}`}>{newSl.label}</span>
+                              <span className={`font-medium ${newSl.color}`}>{ts(h.newStatus) || h.newStatus}</span>
                               {" · "}
                               {formatDate(h.changedAt, { day: "2-digit", month: "short" })}
                             </p>
@@ -105,11 +107,11 @@ export function StudentProgressClient({ studentId, memorized, inProgress }: Prop
               )
             })}
           </div>
-        </div>
+        </motion.div>
       )}
 
       {memorized.length > 0 && (
-        <div>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.2 }}>
           <h2 className="font-semibold text-gray-700 dark:text-gray-300 mb-3">{t("memorized")}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {memorized.map((prog) => (
@@ -131,16 +133,19 @@ export function StudentProgressClient({ studentId, memorized, inProgress }: Prop
               </div>
             ))}
           </div>
-        </div>
+        </motion.div>
       )}
 
       {total === 0 && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-12 text-center">
+        <motion.div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-12 text-center"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}>
           <p className="text-4xl mb-3">📖</p>
           <p className="font-semibold text-gray-700 dark:text-gray-200 mb-2">{t("noProgress")}</p>
           <p className="text-sm text-gray-400">{t("waitTeacher")}</p>
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   )
 }

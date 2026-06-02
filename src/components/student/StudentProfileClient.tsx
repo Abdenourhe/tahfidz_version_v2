@@ -2,7 +2,7 @@
 import { motion } from "framer-motion"
 import { useT } from "@/contexts/LanguageContext"
 
-import { formatDate, statusLabel } from "@/lib/utils"
+import { formatDate, getStatusStyle } from "@/lib/utils"
 import { ProfileHeader } from "@/components/profile/ProfileHeader"
 import { StatCard } from "@/components/profile/StatCard"
 import { ProfileAccordion } from "@/components/profile/ProfileAccordion"
@@ -65,6 +65,7 @@ const ATT_ICON: Record<string, string> = { PRESENT: "✓", LATE: "~", EXCUSED: "
 export function StudentProfileClient({ student, schoolName, schoolCity }: Props) {
   const t = useT("studentProfileClient")
   const tc = useT("profileCommon")
+  const ts = useT("memorizationStatus")
 
   const genderLabel = (g: string | null) => {
     if (g === "MALE") return t("male")
@@ -140,7 +141,7 @@ export function StudentProfileClient({ student, schoolName, schoolCity }: Props)
         ) : (
           <div className="space-y-3">
             {student.memorizationProgress.map((prog) => {
-              const sl = statusLabel(prog.status)
+              const sl = getStatusStyle(prog.status)
               return (
                 <div key={prog.id} className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
                   <div className="flex items-center justify-between mb-2">
@@ -148,10 +149,10 @@ export function StudentProfileClient({ student, schoolName, schoolCity }: Props)
                       <span className="font-medium text-gray-800 dark:text-gray-200">{prog.surah.nameFr}</span>
                       <span className="arabic text-sm text-tahfidz-green">{prog.surah.nameAr}</span>
                     </div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${sl.bg} ${sl.color}`}>{sl.label}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${sl.bg} ${sl.color}`}>{ts(prog.status) || prog.status}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm text-gray-500 mb-1">
-                    <span>Verset {prog.currentVerse} / {prog.surah.verseCount}</span>
+                    <span>{t("verse")} {prog.currentVerse} / {prog.surah.verseCount}</span>
                     <span className="font-bold text-tahfidz-green">{Math.round(prog.completionPercentage)}%</span>
                   </div>
                   <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">

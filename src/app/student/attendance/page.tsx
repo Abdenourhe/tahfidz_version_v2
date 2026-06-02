@@ -29,7 +29,8 @@ export default async function StudentAttendancePage() {
 
   const byMonth: Record<string, typeof attendances> = {}
   for (const att of attendances) {
-    const key = new Date(att.date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
+    const d = new Date(att.date)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
     if (!byMonth[key]) byMonth[key] = []
     byMonth[key].push(att)
   }

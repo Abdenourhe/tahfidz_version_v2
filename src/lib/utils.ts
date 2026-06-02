@@ -116,6 +116,19 @@ export function statusLabel(status: string): { label: string; color: string; bg:
   return map[status] ?? { label: status, color: "text-gray-500", bg: "bg-gray-100" }
 }
 
+export function getStatusStyle(status: string): { color: string; bg: string } {
+  const map: Record<string, { color: string; bg: string }> = {
+    NOT_STARTED:              { color: "text-gray-500",   bg: "bg-gray-100" },
+    IN_PROGRESS:              { color: "text-blue-600",   bg: "bg-blue-100" },
+    UNDER_REVIEW:             { color: "text-yellow-600", bg: "bg-yellow-100" },
+    READY_FOR_RECITATION:     { color: "text-purple-600", bg: "bg-purple-100" },
+    PENDING_TEACHER_APPROVAL: { color: "text-orange-600", bg: "bg-orange-100" },
+    MEMORIZED:                { color: "text-green-700",  bg: "bg-green-100" },
+    NEEDS_REVISION:           { color: "text-red-600",    bg: "bg-red-100" },
+  }
+  return map[status] ?? { color: "text-gray-500", bg: "bg-gray-100" }
+}
+
 /** Rôle en français */
 export function roleLabel(role: string): string {
   const map: Record<string, string> = {

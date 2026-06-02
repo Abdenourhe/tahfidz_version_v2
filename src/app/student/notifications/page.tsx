@@ -2,6 +2,7 @@
 // src/app/student/notifications/page.tsx — with delete
 
 import { useState, useEffect } from "react"
+import { motion } from "framer-motion"
 import { formatDate } from "@/lib/utils"
 import { Bell, CheckCheck, Star, Award, Megaphone, BookOpen, Trash2, Loader2 } from "lucide-react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
@@ -84,7 +85,7 @@ export default function StudentNotificationsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
+    <motion.div className="space-y-6 max-w-2xl mx-auto" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t("title")}</h1>
@@ -107,16 +108,22 @@ export default function StudentNotificationsPage() {
       </div>
 
       {notifications.length === 0 ? (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-12 text-center">
+        <motion.div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-12 text-center"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}>
           <Bell size={32} className="mx-auto mb-3 text-gray-300" />
           <p className="text-gray-400">{t("noNotif")}</p>
-        </div>
+        </motion.div>
       ) : (
         <div className="space-y-2">
-          {notifications.map(notif => {
+          {notifications.map((notif, i) => {
             const tc = typeIcon[notif.type] ?? { icon: Bell, color: "text-gray-500", bg: "bg-gray-50" }
             return (
-              <div key={notif.id}
+              <motion.div key={notif.id}
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: i * 0.03 }}
                 className={`bg-white dark:bg-gray-900 rounded-xl border p-4 flex gap-4 group transition ${!notif.isRead ? "border-tahfidz-green/30 bg-tahfidz-green-light/20" : "border-gray-100 dark:border-gray-800 hover:border-gray-200"}`}>
                 <div className={`w-10 h-10 rounded-xl ${tc.bg} flex items-center justify-center flex-shrink-0`}>
                   <tc.icon size={18} className={tc.color} />
@@ -127,16 +134,27 @@ export default function StudentNotificationsPage() {
                       <p className={`text-sm font-semibold ${!notif.isRead ? "text-gray-900 dark:text-gray-100" : "text-gray-700 dark:text-gray-300"}`}>{notif.title}</p>
                       {notif.titleAr && <p className="arabic text-xs text-gray-400 mt-0.5">{notif.titleAr}</p>}
                     </div>
-         
-                    <span className="text-xs text-gray-400 whitespace-nowrap">{new Date(notif.createdAt).toLocaleDateString()}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-400 whitespace-nowrap">
+                        {formatDate(notif.createdAt, { day: "2-digit", month: "short" })}
+                      </span>
+                      <button
+                        onClick={() => deleteOne(notif.id)}
+                        disabled={deletingId === notif.id}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
+                        title={t("delete")}
+                      >
+                        {deletingId === notif.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                      </button>
+                    </div>
                   </div>
                   <p className="text-xs text-gray-500 mt-1 truncate">{notif.message}</p>
                 </div>
-              </div>
+              </motion.div>
             )
           })}
         </div>
       )}
-    </div>
+    </motion.div>
   )
 }
