@@ -7,7 +7,13 @@ import { motion } from "framer-motion"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { ReadyToReciteButton } from "@/components/student/ReadyToReciteButton"
 import { FeedbackModal } from "@/components/shared/FeedbackModal"
-import { Bug } from "lucide-react"
+import { Bug, Megaphone } from "lucide-react"
+import { UpcomingHalaqaWidget } from "@/components/student/dashboard/UpcomingHalaqaWidget"
+import { MiniCalendarWidget } from "@/components/student/dashboard/MiniCalendarWidget"
+import { DailyTasksWidget } from "@/components/student/dashboard/DailyTasksWidget"
+import { GroupLeaderboardWidget } from "@/components/student/dashboard/GroupLeaderboardWidget"
+import { SessionNotesWidget } from "@/components/student/dashboard/SessionNotesWidget"
+import { QuickActionsWidget } from "@/components/student/dashboard/QuickActionsWidget"
 
 interface Progress {
   id: string
@@ -23,7 +29,7 @@ interface Badge { id: string; badge: { icon: string; name: string } }
 interface Attendance {
   id: string
   status: string
-  date: Date | string
+  date: Date
 }
 
 interface Announcement {
@@ -33,6 +39,31 @@ interface Announcement {
   content: string
   isPinned: boolean
   author: { fullName: string }
+}
+
+interface HalaqaSession {
+  id: string
+  meetingName: string
+  status: string
+  scheduledAt: string
+  teacher?: { fullName: string } | null
+}
+
+interface LeaderboardPeer {
+  userId: string
+  totalStars: number
+  currentStreak: number
+  user: { fullName: string; avatar?: string | null }
+}
+
+interface Evaluation {
+  id: string
+  sourah: string | null
+  notes: string | null
+  tajweedScore: number | null
+  memorizationScore: number | null
+  fluencyScore: number | null
+  session: { meetingName: string; scheduledAt: Date } | null
 }
 
 interface Props {
@@ -49,6 +80,10 @@ interface Props {
   badges: Badge[]
   recentAttendance: Attendance[]
   announcements: Announcement[]
+  upcomingHalaqa: HalaqaSession | null
+  monthAttendances: Attendance[]
+  groupLeaderboard: LeaderboardPeer[]
+  recentEvaluations: Evaluation[]
 }
 
 function statusBadge(status: string, locale: string) {
@@ -100,6 +135,10 @@ export function StudentDashboardClient({
   badges,
   recentAttendance,
   announcements,
+  upcomingHalaqa,
+  monthAttendances,
+  groupLeaderboard,
+  recentEvaluations,
 }: Props) {
   const [showFeedback, setShowFeedback] = useState(false)
   const { locale } = useLanguage()
@@ -157,11 +196,62 @@ export function StudentDashboardClient({
         </div>
       </motion.div>
 
+      {/* Widgets row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <motion.div className="md:col-span-2 space-y-4"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}>
+          <UpcomingHalaqaWidget halaqa={upcomingHalaqa} />
+          <DailyTasksWidget inProgress={inProgress} hasUpcomingHalaqa={!!upcomingHalaqa} />
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.15 }}>
+          <MiniCalendarWidget attendances={monthAttendances} />
+        </motion.div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <motion.div className="md:col-span-2"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}>
+          <GroupLeaderboardWidget peers={groupLeaderboard} currentUserId={studentId} />
+        </motion.div>
+        <motion.div className="space-y-4"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.25 }}>
+          {/* Annonces */}
+          {announcements.length > 0 && (
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4">
+              <h2 className="font-semibold text-gray-800 dark:text-gray-100 text-sm mb-3 flex items-center gap-2">
+                <Megaphone size={16} className="text-tahfidz-green" />
+                {t("announcements")}
+              </h2>
+              <div className="space-y-2">
+                {announcements.slice(0, 3).map((ann) => (
+                  <div key={ann.id} className={`p-3 rounded-lg border text-sm ${ann.isPinned ? "border-tahfidz-green bg-tahfidz-green-light/20 dark:bg-emerald-900/20" : "border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"}`}>
+                    <p className="font-medium text-gray-800 dark:text-gray-200">{ann.title}</p>
+                    {ann.titleAr && <p className="arabic text-xs text-gray-500 mt-0.5">{ann.titleAr}</p>}
+                    <p className="text-xs text-gray-400 mt-1 line-clamp-2">{ann.content}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <SessionNotesWidget evaluations={recentEvaluations} />
+          <QuickActionsWidget teacherName={teacherName} />
+        </motion.div>
+      </div>
+
       {/* Progression */}
       <motion.div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.15 }}>
+        transition={{ duration: 0.4, delay: 0.3 }}>
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-semibold text-gray-800 dark:text-gray-100">{t("inProgress")}</h2>
           <Link href="/student/progress" className="text-xs text-tahfidz-green hover:underline">{t("seeAll")}</Link>
@@ -253,29 +343,7 @@ export function StudentDashboardClient({
         </motion.div>
       </div>
 
-      {/* Annonces */}
-      {announcements.length > 0 && (
-        <motion.div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.35 }}>
-          <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-4">{t("announcements")}</h2>
-          <div className="space-y-3">
-            {announcements.map(ann => (
-              <div key={ann.id} className={`p-4 rounded-lg border ${ann.isPinned ? "border-tahfidz-green bg-tahfidz-green-light dark:bg-emerald-900/20" : "border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"}`}>
-                <div className="flex items-start gap-3">
-                  {ann.isPinned && <span className="text-sm">📌</span>}
-                  <div>
-                    <p className="font-medium text-gray-800 dark:text-gray-200 text-sm">{ann.title}</p>
-                    {ann.titleAr && <p className="arabic text-xs text-gray-500 mt-0.5">{ann.titleAr}</p>}
-                    <p className="text-xs text-gray-500 mt-2 line-clamp-2">{ann.content}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      )}
+
       <FeedbackModal
         isOpen={showFeedback}
         onClose={() => setShowFeedback(false)}

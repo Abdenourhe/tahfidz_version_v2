@@ -9,7 +9,7 @@ async function getStudentData(userId: string) {
   const student = await prisma.student.findUnique({
     where: { userId },
     include: {
-      user: { select: { fullName: true, fullNameAr: true } },
+      user: { select: { fullName: true, fullNameAr: true, schoolId: true } },
       group: { select: { name: true } },
       teacher: { include: { user: { select: { fullName: true } } } },
       memorizationProgress: {
@@ -37,11 +37,46 @@ async function getStudentData(userId: string) {
       OR: [{ expiresAt: { gt: new Date() } }, { expiresAt: null }],
     },
     orderBy: [{ isPinned: "desc" }, { publishedAt: "desc" }],
-    take: 3,
+    take: 5,
     include: { author: { select: { fullName: true } } },
   })
 
-  return { student, recentAttendance, announcements }
+  const upcomingHalaqa = await prisma.halaqaSession.findFirst({
+    where: {
+      schoolId: student.user.schoolId,
+      studentIds: { has: student.userId },
+      status: { in: ["SCHEDULED", "LIVE"] },
+      scheduledAt: { gte: new Date() },
+    },
+    orderBy: { scheduledAt: "asc" },
+    include: { teacher: { select: { fullName: true } } },
+  })
+
+  const monthStart = new Date()
+  monthStart.setDate(1)
+  monthStart.setHours(0, 0, 0, 0)
+  const monthAttendances = await prisma.attendance.findMany({
+    where: { studentId: student.id, date: { gte: monthStart } },
+    orderBy: { date: "asc" },
+  })
+
+  const groupLeaderboard = student.groupId
+    ? await prisma.student.findMany({
+        where: { groupId: student.groupId },
+        select: { userId: true, totalStars: true, currentStreak: true, user: { select: { fullName: true, avatar: true } } },
+        orderBy: { totalStars: "desc" },
+        take: 10,
+      })
+    : []
+
+  const recentEvaluations = await prisma.halaqaEvaluation.findMany({
+    where: { studentId: userId },
+    orderBy: { createdAt: "desc" },
+    take: 3,
+    include: { session: { select: { meetingName: true, scheduledAt: true } } },
+  })
+
+  return { student, recentAttendance, announcements, upcomingHalaqa, monthAttendances, groupLeaderboard, recentEvaluations }
 }
 
 export default async function StudentDashboard() {
@@ -51,14 +86,11 @@ export default async function StudentDashboard() {
   const data = await getStudentData(session.user.id)
   if (!data) redirect("/login")
 
-  const { student, recentAttendance, announcements } = data
+  const { student, recentAttendance, announcements, upcomingHalaqa, monthAttendances, groupLeaderboard, recentEvaluations } = data
 
   const inProgress = student.memorizationProgress.filter(p =>
     ["IN_PROGRESS", "UNDER_REVIEW", "READY_FOR_RECITATION"].includes(p.status)
   )
-
-  // ✅ SUPPRIMÉ : formatAttDate n'est plus passé en prop
-  // La fonction est maintenant dans le Client Component
 
   return (
     <div className="space-y-6">
@@ -76,6 +108,10 @@ export default async function StudentDashboard() {
         badges={student.studentBadges}
         recentAttendance={recentAttendance}
         announcements={announcements}
+        upcomingHalaqa={upcomingHalaqa ? { ...upcomingHalaqa, scheduledAt: upcomingHalaqa.scheduledAt.toISOString() } : null}
+        monthAttendances={monthAttendances}
+        groupLeaderboard={groupLeaderboard}
+        recentEvaluations={recentEvaluations}
       />
       <section className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4">
         <StudentMemorizationTracker />
