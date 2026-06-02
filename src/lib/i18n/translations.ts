@@ -1337,6 +1337,19 @@ export const translations = {
     cancel:            { fr: "Annuler", en: "Cancel", ar: "إلغاء" },
   },
 
+  // ─── studentDailyLog ─────────────────────────────────────────────
+  studentDailyLog: {
+    noLogs:            { fr: "Aucun carnet disponible pour le moment.", en: "No daily logs available yet.", ar: "لا يوجد سجلات متاحة حالياً." },
+    hifz:              { fr: "Hifz", en: "Hifz", ar: "الحفظ" },
+    muraja:            { fr: "Muraja'a", en: "Muraja'a", ar: "المراجعة" },
+    talqin:            { fr: "Talqin", en: "Talqin", ar: "التلقين" },
+    course:            { fr: "Cours scientifique", en: "Science lesson", ar: "الدرس العلمي" },
+    pages:             { fr: "Pages", en: "Pages", ar: "الصفحات" },
+    globalScore:       { fr: "Note globale", en: "Global score", ar: "العلامة العامة" },
+    teacherObservation:{ fr: "Observation enseignant", en: "Teacher observation", ar: "ملاحظة الأستاذ" },
+    parentObservation: { fr: "Observation parent", en: "Parent observation", ar: "ملاحظة الولي" },
+  },
+
   // ─── teacherGroupsListClient (components/teacher/TeacherGroupsListClient.tsx) ─────────────────────────────────────────────
   teacherGroupsListClient: {
     title:           { fr: "Mes groupes", en: "My groups", ar: "مجموعاتي" },

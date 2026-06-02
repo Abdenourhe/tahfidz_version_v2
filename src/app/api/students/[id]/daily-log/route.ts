@@ -266,6 +266,32 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       data: updateData,
     })
 
+    // Notify parents on teacher update
+    if (!isParent) {
+      const parentLinks = await prisma.parentStudentLink.findMany({
+        where: { studentId: id, isVerified: true },
+        include: { parent: { include: { user: { select: { id: true, schoolId: true } } } } },
+      })
+      const student = await prisma.student.findUnique({
+        where: { id },
+        select: { user: { select: { fullName: true, schoolId: true } } },
+      })
+      if (student && parentLinks.length > 0) {
+        await prisma.notification.createMany({
+          data: parentLinks.map((link) => ({
+            schoolId: student.user.schoolId,
+            userId: link.parent.user.id,
+            type: "DAILY_LOG_UPDATED",
+            title: `Carnet mis à jour : ${student.user.fullName}`,
+            titleAr: `سجل محدث: ${student.user.fullName}`,
+            message: `Le carnet de suivi du ${data.date} a été mis à jour par l'enseignant.`,
+            messageAr: `تم تحديث سجل المتابعة بتاريخ ${data.date} من قبل المعلم.`,
+            data: { logId: log.id, studentId: id, date: data.date },
+          })),
+        })
+      }
+    }
+
     return NextResponse.json({ log })
   } catch (error: any) {
     console.error("[DAILY LOG PATCH]", error)

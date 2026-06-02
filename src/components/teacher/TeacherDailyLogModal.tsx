@@ -170,20 +170,13 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
       if (form.teacherObservation) body.teacherObservation = form.teacherObservation
       addIf("globalScore", form.globalScore)
 
+      const method = existingLogId ? "PATCH" : "POST"
       const res = await fetch(`/api/students/${studentId}/daily-log`, {
-        method: "POST",
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       })
-      if (!res.ok) {
-        // Try PATCH if already exists
-        const patchRes = await fetch(`/api/students/${studentId}/daily-log`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        })
-        if (!patchRes.ok) throw new Error("Erreur")
-      }
+      if (!res.ok) throw new Error("Erreur")
       setSaved(true)
       setTimeout(() => { setSaved(false); onSaved?.(); onClose() }, 800)
     } catch (e) {
