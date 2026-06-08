@@ -21,12 +21,14 @@ export function RegistrationCardWithActions({ student, inviteUrl, school }: Prop
   const handlePrint = () => {
     const originalTheme = theme
     setTheme("light")
+    // Attendre que le DOM se mette à jour (next-themes modifie le class de <html>)
     setTimeout(() => {
       window.print()
+      // Restaurer le thème après fermeture du dialogue (best effort)
       setTimeout(() => {
         if (originalTheme) setTheme(originalTheme)
-      }, 500)
-    }, 150)
+      }, 800)
+    }, 300)
   }
 
   const handleDownloadPDF = async () => {
@@ -34,7 +36,18 @@ export function RegistrationCardWithActions({ student, inviteUrl, school }: Prop
     setIsGeneratingPDF(true)
     await new Promise((resolve) => setTimeout(resolve, 100))
     try {
-      const canvas = await html2canvas(cardRef.current, { scale: 2, useCORS: true })
+      const canvas = await html2canvas(cardRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        onclone: (clonedDoc) => {
+          // Forcer le clone en mode light pour éviter le dark mode dans le PDF
+          clonedDoc.documentElement.classList.remove("dark")
+          clonedDoc.documentElement.classList.add("light")
+          // S'assurer que le fond est blanc
+          clonedDoc.body.style.backgroundColor = "#ffffff"
+        },
+      })
       const imgData = canvas.toDataURL("image/png")
       const pdf = new jsPDF("p", "mm", "a4")
       const pageWidth = pdf.internal.pageSize.getWidth()
@@ -51,10 +64,10 @@ export function RegistrationCardWithActions({ student, inviteUrl, school }: Prop
   }
 
   return (
-    <div className="bg-gray-100 py-8 print:bg-white print:py-0">
+    <div className="bg-gray-100 py-8 print:py-0 print:bg-white">
       {/* Toolbar — cachée en print */}
       {!isGeneratingPDF && (
-        <div className="max-w-[210mm] mx-auto mb-4 px-4 flex justify-between items-center print:hidden">
+        <div className="admin-no-print max-w-[210mm] mx-auto mb-4 px-4 flex justify-between items-center">
           <h1 className="text-xl font-bold text-gray-800">Fiche d&apos;inscription</h1>
           <div className="flex items-center gap-2">
             <button

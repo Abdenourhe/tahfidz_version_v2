@@ -87,36 +87,36 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
       id="registration-card"
       className="max-w-[210mm] min-h-[297mm] mx-auto bg-white shadow-xl print:shadow-none print:max-w-none print:w-full print:min-h-0 print:h-auto relative overflow-hidden flex flex-col"
     >
-      {/* Bordure décorative */}
-      <div className="absolute inset-3 border-2 border-tahfidz-green/20 rounded-xl pointer-events-none print:inset-2" />
-      <div className="absolute inset-4 border border-tahfidz-green/10 rounded-lg pointer-events-none print:inset-3" />
+      {/* Bordure décorative — cachée en print */}
+      <div className="absolute inset-3 border-2 border-tahfidz-green/20 rounded-xl pointer-events-none print:hidden" />
+      <div className="absolute inset-4 border border-tahfidz-green/10 rounded-lg pointer-events-none print:hidden" />
 
-      <div className="p-8 print:p-4 flex-1 flex flex-col space-y-6 print:space-y-3">
+      <div className="p-8 print:p-3 flex-1 flex flex-col space-y-6 print:space-y-2">
         {/* En-tête */}
-        <div className="flex items-center justify-between border-b-2 border-tahfidz-green/20 pb-4 print:pb-2">
-          <div className="flex items-center gap-4 print:gap-3">
+        <div className="flex items-center justify-between border-b-2 border-tahfidz-green/20 pb-4 print:pb-1.5">
+          <div className="flex items-center gap-4 print:gap-2">
             {school.logo ? (
-              <Image src={school.logo} alt={school.name} width={64} height={64} className="w-16 h-16 print:w-12 print:h-12 object-contain" unoptimized />
+              <Image src={school.logo} alt={school.name} width={64} height={64} className="w-16 h-16 print:w-10 print:h-10 object-contain" unoptimized />
             ) : (
-              <div className="w-16 h-16 print:w-12 print:h-12 rounded-xl gradient-tahfidz flex items-center justify-center">
-                <span className="text-white font-bold text-2xl print:text-lg">{school.name.charAt(0)}</span>
+              <div className="w-16 h-16 print:w-10 print:h-10 rounded-xl gradient-tahfidz flex items-center justify-center">
+                <span className="text-white font-bold text-2xl print:text-base">{school.name.charAt(0)}</span>
               </div>
             )}
             <div>
-              <h2 className="text-2xl print:text-lg font-bold text-tahfidz-green">{school.name}</h2>
+              <h2 className="text-2xl print:text-base font-bold text-tahfidz-green">{school.name}</h2>
               <p className="text-xs text-gray-500 font-mono print:hidden">{school.slug}</p>
               {school.city && <p className="text-xs text-gray-400 mt-0.5 print:hidden">{school.city}</p>}
             </div>
           </div>
           <div className="text-right">
-            <p className="text-xs text-gray-400 uppercase tracking-wider">{t("docTitle")}</p>
+            <p className="text-xs text-gray-400 uppercase tracking-wider print:text-[10px]">{t("docTitle")}</p>
             <p className="text-sm print:text-xs font-mono text-gray-600 mt-1">{student.studentCode}</p>
           </div>
         </div>
 
         {/* Photo + Identité */}
-        <div className="flex gap-6 print:gap-4 items-start">
-          <div className="w-24 h-32 print:w-16 print:h-20 rounded-xl border-2 border-gray-200 overflow-hidden flex-shrink-0 bg-gray-50 flex items-center justify-center">
+        <div className="flex gap-6 print:gap-3 items-start">
+          <div className="w-24 h-32 print:w-14 print:h-18 rounded-xl border-2 border-gray-200 overflow-hidden flex-shrink-0 bg-gray-50 flex items-center justify-center">
             <AvatarLightbox
               src={student.user.avatar}
               alt={student.user.fullName}
@@ -125,32 +125,32 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
               imgClassName="w-full h-full"
             />
           </div>
-          <div className="flex-1 space-y-2 print:space-y-1">
+          <div className="flex-1 space-y-2 print:space-y-0.5">
             <div>
-              <p className="text-xs text-gray-400 uppercase tracking-wider">{t("fullName")}</p>
-              <p className="text-xl print:text-base font-bold text-gray-900">{student.user.fullName}</p>
-              {student.user.fullNameAr && <p className="arabic text-gray-600 text-base print:text-sm mt-0.5">{student.user.fullNameAr}</p>}
+              <p className="text-xs text-gray-400 uppercase tracking-wider print:text-[10px]">{t("fullName")}</p>
+              <p className="text-xl print:text-sm font-bold text-gray-900">{student.user.fullName}</p>
+              {student.user.fullNameAr && <p className="arabic text-gray-600 text-base print:text-xs mt-0.5">{student.user.fullNameAr}</p>}
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 print:gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 print:gap-1">
               <div>
-                <p className="text-xs text-gray-400">{t("studentCode")}</p>
-                <p className="font-semibold text-gray-800 font-mono print:text-sm">{student.studentCode}</p>
+                <p className="text-xs text-gray-400 print:text-[10px]">{t("studentCode")}</p>
+                <p className="font-semibold text-gray-800 font-mono print:text-xs">{student.studentCode}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-400">{t("gender")}</p>
-                <p className="font-semibold text-gray-800 print:text-sm">{genderLabel(student.user.gender)}</p>
+                <p className="text-xs text-gray-400 print:text-[10px]">{t("gender")}</p>
+                <p className="font-semibold text-gray-800 print:text-xs">{genderLabel(student.user.gender)}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-400">{t("dob")}</p>
-                <p className="font-semibold text-gray-800 print:text-sm">{formatDate(student.dateOfBirth)}</p>
+                <p className="text-xs text-gray-400 print:text-[10px]">{t("dob")}</p>
+                <p className="font-semibold text-gray-800 print:text-xs">{formatDate(student.dateOfBirth)}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-400">{t("enrollmentDate")}</p>
-                <p className="font-semibold text-gray-800 print:text-sm">{formatDate(student.user.createdAt)}</p>
+                <p className="text-xs text-gray-400 print:text-[10px]">{t("enrollmentDate")}</p>
+                <p className="font-semibold text-gray-800 print:text-xs">{formatDate(student.user.createdAt)}</p>
               </div>
             </div>
             {(student.nationality || student.spokenLanguages) && (
-              <div className="flex flex-wrap gap-2 pt-2 print:pt-1">
+              <div className="flex flex-wrap gap-2 pt-2 print:pt-0.5">
                 {student.nationality && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-medium border border-emerald-100">
                     <Globe size={12} /> {nationalityLabel(student.nationality)}
@@ -168,32 +168,32 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
         </div>
 
         {/* Scolarité */}
-        <div className="bg-tahfidz-green-light/30 rounded-xl p-5 print:p-3 border border-tahfidz-green/10">
-          <h3 className="text-sm print:text-xs font-bold text-tahfidz-green uppercase tracking-wider mb-3 print:mb-1.5 flex items-center gap-2">
+        <div className="bg-tahfidz-green-light/30 rounded-xl p-5 print:p-2 border border-tahfidz-green/10">
+          <h3 className="text-sm print:text-xs font-bold text-tahfidz-green uppercase tracking-wider mb-3 print:mb-1 flex items-center gap-2">
             <GraduationCap size={16} className="print:w-3 print:h-3" /> {t("schooling")}
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 print:gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 print:gap-1.5">
             <div>
-              <p className="text-xs text-gray-500">{t("group")}</p>
-              <p className="font-semibold text-gray-800 print:text-sm">{student.group?.name || "—"}</p>
-              <p className="text-xs text-gray-400">{levelLabel(student.group?.level)}</p>
+              <p className="text-xs text-gray-500 print:text-[10px]">{t("group")}</p>
+              <p className="font-semibold text-gray-800 print:text-xs">{student.group?.name || "—"}</p>
+              <p className="text-xs text-gray-400 print:text-[10px]">{levelLabel(student.group?.level)}</p>
               {formatSchedule(student.group?.schedule) && (
-                <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                <p className="text-xs text-gray-500 mt-1 flex items-center gap-1 print:text-[10px]">
                   <Clock size={11} /> {formatSchedule(student.group?.schedule)}
                 </p>
               )}
             </div>
             <div>
-              <p className="text-xs text-gray-500">{t("currentSurah") || "Sourah en cours"}</p>
-              <p className="font-semibold text-gray-800 print:text-sm">{student.currentSurahNote || "—"}</p>
+              <p className="text-xs text-gray-500 print:text-[10px]">{t("currentSurah") || "Sourah en cours"}</p>
+              <p className="font-semibold text-gray-800 print:text-xs">{student.currentSurahNote || "—"}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">{t("teacher")}</p>
-              <p className="font-semibold text-gray-800 print:text-sm">{student.teacher?.user.fullName || "—"}</p>
+              <p className="text-xs text-gray-500 print:text-[10px]">{t("teacher")}</p>
+              <p className="font-semibold text-gray-800 print:text-xs">{student.teacher?.user.fullName || "—"}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">{t("status")}</p>
-              <p className={`font-semibold print:text-sm ${student.user.isActive ? "text-green-600" : "text-red-500"}`}>
+              <p className="text-xs text-gray-500 print:text-[10px]">{t("status")}</p>
+              <p className={`font-semibold print:text-xs ${student.user.isActive ? "text-green-600" : "text-red-500"}`}>
                 {student.user.isActive ? t("active") : t("inactive")}
               </p>
             </div>
@@ -201,12 +201,12 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
         </div>
 
         {/* Contact + Parents + QR */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 print:gap-3">
-          <div className="space-y-3 print:space-y-1.5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 print:gap-2">
+          <div className="space-y-3 print:space-y-1">
             <h3 className="text-sm print:text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
               <Phone size={16} className="text-tahfidz-green print:w-3 print:h-3" /> {t("contact")}
             </h3>
-            <div className="space-y-1.5 print:space-y-1 text-sm">
+            <div className="space-y-1.5 print:space-y-0.5 text-sm">
               <div className="flex items-center gap-2">
                 <Mail size={14} className="text-gray-400" />
                 <span className="text-gray-600 print:text-xs">{student.user.email}</span>
@@ -234,14 +234,14 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
           </div>
 
           {/* Parents + QR */}
-          <div className="space-y-3 print:space-y-1.5">
+          <div className="space-y-3 print:space-y-1">
             <h3 className="text-sm print:text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
               <Shield size={16} className="text-tahfidz-green print:w-3 print:h-3" /> {t("parents")}
             </h3>
             {student.parentLinks?.length > 0 ? (
-              <div className="space-y-2 print:space-y-1">
+              <div className="space-y-2 print:space-y-0.5">
                 {student.parentLinks.map((link: any) => (
-                  <div key={link.id} className="text-sm border-l-2 border-tahfidz-green/30 pl-3 print:pl-2">
+                  <div key={link.id} className="text-sm border-l-2 border-tahfidz-green/30 pl-3 print:pl-1.5">
                     <p className="font-semibold text-gray-800 print:text-xs">{link.parent.user.fullName}</p>
                     {link.parent.user.phone && <p className="text-gray-500 text-xs">{link.parent.user.phone}</p>}
                     {link.parent.user.email && <p className="text-gray-500 text-xs">{link.parent.user.email}</p>}
@@ -255,7 +255,7 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
             {/* QR Code invitation — TOUJOURS affiché si inviteUrl existe */}
             {inviteUrl && (
               <div className="mt-3 pt-3 border-t border-gray-100 print:mt-1 print:pt-1">
-                <p className="text-xs text-gray-500 mb-2 print:mb-1 print:text-[10px]">{t("scanToLinkParent")}</p>
+                <p className="text-xs text-gray-500 mb-2 print:mb-0.5 print:text-[10px]">{t("scanToLinkParent")}</p>
                 <div className="flex items-center gap-3 print:gap-2">
                   <div className="bg-white p-1.5 rounded-lg border border-gray-200 print:p-1">
                     <QRCodeSVG value={inviteUrl} size={80} level="M" />
@@ -278,7 +278,7 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
 
         {/* Medical */}
         {student.medicalNotes && (
-          <div className="bg-red-50 border border-red-100 rounded-xl p-3 print:p-2">
+          <div className="bg-red-50 border border-red-100 rounded-xl p-3 print:p-1.5">
             <h3 className="text-sm print:text-xs font-bold text-red-700 uppercase tracking-wider mb-1 flex items-center gap-2">
               <HeartPulse size={16} className="print:w-3 print:h-3" /> {t("medical")}
             </h3>
@@ -287,23 +287,23 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
         )}
 
         {/* Signatures */}
-        <div className="grid grid-cols-3 gap-6 print:gap-4 pt-6 print:pt-3 border-t border-gray-200">
+        <div className="grid grid-cols-3 gap-6 print:gap-3 pt-6 print:pt-2 border-t border-gray-200">
           <div className="text-center">
-            <p className="text-xs text-gray-400 mb-8 print:mb-4">{t("parentSignature")}</p>
+            <p className="text-xs text-gray-400 mb-8 print:mb-2">{t("parentSignature")}</p>
             <div className="border-b border-gray-300 w-full" />
           </div>
           <div className="text-center">
-            <p className="text-xs text-gray-400 mb-8 print:mb-4">{t("studentSignature")}</p>
+            <p className="text-xs text-gray-400 mb-8 print:mb-2">{t("studentSignature")}</p>
             <div className="border-b border-gray-300 w-full" />
           </div>
           <div className="text-center">
-            <p className="text-xs text-gray-400 mb-8 print:mb-4">{t("adminSignature")}</p>
+            <p className="text-xs text-gray-400 mb-8 print:mb-2">{t("adminSignature")}</p>
             <div className="border-b border-gray-300 w-full" />
           </div>
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 pt-4 print:pt-2 mt-auto">
+        <div className="border-t border-gray-200 pt-4 print:pt-1.5 print:mt-0">
           <div className="flex flex-col items-center gap-1 text-center">
             <p className="text-[10px] text-gray-400 uppercase tracking-wider">
               {t("generatedOn")} {formatDate(new Date())}

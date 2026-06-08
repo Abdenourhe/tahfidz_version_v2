@@ -23,15 +23,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     return (
       <Providers session={session}>
         <LanguageProvider>
-          <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden print:bg-white">
-            <div className="hidden md:block print:hidden"><TopBar /></div>
-            <div className="md:hidden print:hidden"><MobileHeader role="admin" /></div>
-            <main className="flex-1 overflow-y-auto pb-20 md:pb-0 print:pb-0">
-              <div className="max-w-7xl mx-auto w-full px-4 md:px-6 py-4 md:py-8 print:p-0 print:max-w-none">
+          <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden">
+            <div className="admin-no-print hidden md:block"><TopBar /></div>
+            <div className="admin-no-print md:hidden"><MobileHeader role="admin" /></div>
+            <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
+              <div className="max-w-7xl mx-auto w-full px-4 md:px-6 py-4 md:py-8">
                 {children}
               </div>
             </main>
-            <div className="md:hidden print:hidden"><AdminBottomNav /></div>
+            <div className="admin-no-print md:hidden"><AdminBottomNav /></div>
           </div>
         </LanguageProvider>
       </Providers>
@@ -49,9 +49,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <Providers session={session}>
       <LanguageProvider>
-        <div className="flex h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden print:bg-white print:h-auto print:overflow-visible">
+        <div className="flex h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden">
           {/* Desktop sidebar */}
-          <div className="hidden md:block print:hidden">
+          <div className="admin-no-print hidden md:block">
             <AdminSidebar
               user={session.user as any}
               schoolName={school?.name}
@@ -61,17 +61,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             />
           </div>
 
-          <main className="flex-1 overflow-y-auto flex flex-col print:overflow-visible">
-            <div className="hidden md:block print:hidden"><TopBar /></div>
-            <div className="md:hidden print:hidden"><MobileHeader role="admin" schoolName={school?.name ?? undefined} schoolLogo={school?.logo ?? undefined} /></div>
+          <main className="flex-1 overflow-y-auto flex flex-col">
+            <div className="admin-no-print hidden md:block"><TopBar /></div>
+            <div className="admin-no-print md:hidden"><MobileHeader role="admin" schoolName={school?.name ?? undefined} schoolLogo={school?.logo ?? undefined} /></div>
 
-            <div className="max-w-7xl mx-auto w-full px-4 md:px-6 py-4 md:py-8 pb-24 md:pb-8 print:p-0 print:max-w-none">
+            <div className="max-w-7xl mx-auto w-full px-4 md:px-6 py-4 md:py-8 pb-24 md:pb-8">
               {children}
             </div>
           </main>
 
           {/* Mobile bottom nav */}
-          <div className="md:hidden print:hidden"><AdminBottomNav /></div>
+          <div className="admin-no-print md:hidden"><AdminBottomNav /></div>
         </div>
       </LanguageProvider>
     </Providers>

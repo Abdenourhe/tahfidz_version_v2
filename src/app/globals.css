@@ -266,3 +266,37 @@
     -webkit-tap-highlight-color: transparent;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   PRINT — Règles globales pour la fiche d'inscription
+   ═══════════════════════════════════════════════════════════════ */
+@media print {
+  @page {
+    margin: 6mm;
+    size: A4 portrait;
+  }
+
+  /* Cacher la sidebar, topbar, bottom nav, mobile header */
+  .admin-no-print {
+    display: none !important;
+  }
+
+  /* Forcer fond blanc partout */
+  html, body {
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Éviter les coupures à l'intérieur de la carte */
+  #registration-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  #registration-card, #registration-card * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
