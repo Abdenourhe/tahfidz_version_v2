@@ -139,13 +139,13 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
       <div
         ref={cardRef}
         id="registration-card"
-        className="max-w-[210mm] min-h-[297mm] mx-auto bg-white shadow-xl print:shadow-none print:max-w-none print:w-full print:h-[277mm] relative overflow-hidden flex flex-col"
+        className="max-w-[210mm] min-h-[297mm] mx-auto bg-white shadow-xl print:shadow-none print:max-w-none print:w-full relative overflow-hidden flex flex-col"
       >
         {/* Bordure décorative */}
         <div className="absolute inset-3 border-2 border-tahfidz-green/20 rounded-xl pointer-events-none print:inset-2" />
         <div className="absolute inset-4 border border-tahfidz-green/10 rounded-lg pointer-events-none print:inset-3" />
 
-        <div className="p-8 print:p-6 flex-1 flex flex-col justify-between">
+        <div className="p-8 print:p-6 flex-1 flex flex-col space-y-5 print:space-y-6">
           {/* En-tête */}
           <div className="flex items-center justify-between border-b-2 border-tahfidz-green/20 pb-4 print:pb-3">
             <div className="flex items-center gap-4">
@@ -341,23 +341,23 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
           )}
 
           {/* Signatures */}
-          <div className="grid grid-cols-3 gap-6 print:gap-4 pt-8 print:pt-8 border-t border-gray-200">
+          <div className="grid grid-cols-3 gap-6 print:gap-4 pt-6 print:pt-6 border-t border-gray-200">
             <div className="text-center">
-              <p className="text-xs text-gray-400 mb-10 print:mb-10">{t("parentSignature")}</p>
+              <p className="text-xs text-gray-400 mb-8 print:mb-8">{t("parentSignature")}</p>
               <div className="border-b border-gray-300 w-full" />
             </div>
             <div className="text-center">
-              <p className="text-xs text-gray-400 mb-10 print:mb-10">{t("studentSignature")}</p>
+              <p className="text-xs text-gray-400 mb-8 print:mb-8">{t("studentSignature")}</p>
               <div className="border-b border-gray-300 w-full" />
             </div>
             <div className="text-center">
-              <p className="text-xs text-gray-400 mb-10 print:mb-10">{t("adminSignature")}</p>
+              <p className="text-xs text-gray-400 mb-8 print:mb-8">{t("adminSignature")}</p>
               <div className="border-b border-gray-300 w-full" />
             </div>
           </div>
 
           {/* Footer */}
-          <div className="border-t border-gray-200 pt-4 print:pt-4">
+          <div className="border-t border-gray-200 pt-4 print:pt-4 mt-auto">
             <div className="flex flex-col items-center gap-1 text-center">
               <p className="text-[10px] text-gray-400 uppercase tracking-wider">
                 {t("generatedOn")} {formatDate(new Date())}
@@ -391,11 +391,9 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
             left: 0;
             top: 0;
             width: 100%;
-            height: 277mm;
             margin: 0;
             padding: 0;
             box-shadow: none;
-            box-sizing: border-box;
           }
           @page {
             size: A4 portrait;
