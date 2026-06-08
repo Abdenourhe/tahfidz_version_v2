@@ -5,6 +5,7 @@ import { Download, Printer } from "lucide-react"
 import { RegistrationCard } from "./RegistrationCard"
 import html2canvas from "html2canvas"
 import { jsPDF } from "jspdf"
+import { useTheme } from "next-themes"
 
 interface Props {
   student: any
@@ -15,9 +16,17 @@ interface Props {
 export function RegistrationCardWithActions({ student, inviteUrl, school }: Props) {
   const cardRef = useRef<HTMLDivElement>(null)
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
+  const { theme, setTheme } = useTheme()
 
   const handlePrint = () => {
-    window.open(`/print/registration-card/${student.id}`, "_blank")
+    const originalTheme = theme
+    setTheme("light")
+    setTimeout(() => {
+      window.print()
+      setTimeout(() => {
+        if (originalTheme) setTheme(originalTheme)
+      }, 500)
+    }, 150)
   }
 
   const handleDownloadPDF = async () => {
@@ -42,10 +51,10 @@ export function RegistrationCardWithActions({ student, inviteUrl, school }: Prop
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
-      {/* Toolbar */}
+    <div className="bg-gray-100 py-8 print:bg-white print:py-0">
+      {/* Toolbar — cachée en print */}
       {!isGeneratingPDF && (
-        <div className="max-w-[210mm] mx-auto mb-4 px-4 flex justify-between items-center">
+        <div className="max-w-[210mm] mx-auto mb-4 px-4 flex justify-between items-center print:hidden">
           <h1 className="text-xl font-bold text-gray-800">Fiche d&apos;inscription</h1>
           <div className="flex items-center gap-2">
             <button
