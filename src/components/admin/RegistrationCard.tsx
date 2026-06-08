@@ -22,6 +22,7 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
   const cardRef = useRef<HTMLDivElement>(null)
 
   const [copied, setCopied] = useState(false)
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
 
   const handlePrint = () => {
     window.print()
@@ -29,10 +30,8 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
 
   const handleDownloadPDF = async () => {
     if (!cardRef.current) return
-    const btn = document.getElementById("pdf-btn")
-    if (btn) btn.style.display = "none"
-    const originalHeight = cardRef.current.style.height
-    cardRef.current.style.height = "297mm"
+    setIsGeneratingPDF(true)
+    await new Promise((resolve) => setTimeout(resolve, 100))
     try {
       const canvas = await html2canvas(cardRef.current, { scale: 2, useCORS: true })
       const imgData = canvas.toDataURL("image/png")
@@ -46,8 +45,7 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
       pdf.addImage(imgData, "PNG", centerX, 0, imgWidth * ratio, imgHeight * ratio)
       pdf.save(`fiche-inscription-${student.studentCode}.pdf`)
     } finally {
-      if (btn) btn.style.display = "flex"
-      if (cardRef.current) cardRef.current.style.height = originalHeight
+      setIsGeneratingPDF(false)
     }
   }
 
@@ -116,8 +114,8 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
 
   return (
     <div className="min-h-screen bg-gray-100 py-8 print:py-0 print:bg-white">
-      {/* Boutons (cachés en print) */}
-      <div id="pdf-btn" className="max-w-[210mm] mx-auto mb-4 px-4 print:hidden flex justify-between items-center">
+      {/* Boutons (cachés en print et pendant génération PDF) */}
+      <div id="pdf-btn" className={`max-w-[210mm] mx-auto mb-4 px-4 print:hidden flex justify-between items-center ${isGeneratingPDF ? "hidden" : ""}`}>
         <h1 className="text-xl font-bold text-gray-800">{t("title")}</h1>
         <div className="flex items-center gap-2">
           <button
@@ -139,13 +137,13 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
       <div
         ref={cardRef}
         id="registration-card"
-        className="max-w-[210mm] min-h-[297mm] print:min-h-0 mx-auto bg-white shadow-xl print:shadow-none print:max-w-none print:w-full print:h-[281mm] relative overflow-hidden flex flex-col"
+        className={`max-w-[210mm] min-h-[297mm] print:min-h-[265mm] mx-auto bg-white shadow-xl print:shadow-none print:max-w-none print:w-full relative overflow-hidden flex flex-col ${isGeneratingPDF ? "h-[297mm]" : ""}`}
       >
         {/* Bordure décorative */}
         <div className="absolute inset-3 border-2 border-tahfidz-green/20 rounded-xl pointer-events-none print:inset-2" />
         <div className="absolute inset-4 border border-tahfidz-green/10 rounded-lg pointer-events-none print:inset-3" />
 
-        <div className="p-8 print:p-6 flex-1 grid grid-cols-1 auto-rows-min content-start print:content-between gap-0">
+        <div className="p-8 print:p-6 flex-1 flex flex-col space-y-6 print:space-y-6">
           {/* En-tête */}
           <div className="flex items-center justify-between border-b-2 border-tahfidz-green/20 pb-4 print:pb-3">
             <div className="flex items-center gap-4">
@@ -357,7 +355,7 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
           </div>
 
           {/* Footer */}
-          <div className="border-t border-gray-200 pt-4 print:pt-4">
+          <div className="border-t border-gray-200 pt-4 print:pt-4 mt-auto">
             <div className="flex flex-col items-center gap-1 text-center">
               <p className="text-[10px] text-gray-400 uppercase tracking-wider">
                 {t("generatedOn")} {formatDate(new Date())}
@@ -391,11 +389,9 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
             left: 0;
             top: 0;
             width: 100%;
-            height: 281mm;
             margin: 0;
             padding: 0;
             box-shadow: none;
-            box-sizing: border-box;
           }
           @page {
             size: A4 portrait;
