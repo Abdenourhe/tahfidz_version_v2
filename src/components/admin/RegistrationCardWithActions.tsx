@@ -1,7 +1,8 @@
 "use client"
 
-import { useRef, useState, useEffect } from "react"
+import { useRef, useState } from "react"
 import { Download, Printer } from "lucide-react"
+import { RegistrationCardPrintTemplate } from "./RegistrationCardPrintTemplate"
 import { RegistrationCard } from "./RegistrationCard"
 import html2canvas from "html2canvas"
 import { jsPDF } from "jspdf"
@@ -13,58 +14,54 @@ interface Props {
 }
 
 export function RegistrationCardWithActions({ student, inviteUrl, school }: Props) {
-  const cardRef = useRef<HTMLDivElement>(null)
+  const templateRef = useRef<HTMLDivElement>(null)
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
 
-  // Gestion du thème pour l'impression navigateur — manipulation DOM directe (instantanée)
-  useEffect(() => {
-    let originalClass = ""
-    const handleBeforePrint = () => {
-      originalClass = document.documentElement.className
-      document.documentElement.classList.remove("dark")
-      document.documentElement.classList.add("light")
-    }
-    const handleAfterPrint = () => {
-      document.documentElement.className = originalClass
-    }
-    window.addEventListener("beforeprint", handleBeforePrint)
-    window.addEventListener("afterprint", handleAfterPrint)
-    return () => {
-      window.removeEventListener("beforeprint", handleBeforePrint)
-      window.removeEventListener("afterprint", handleAfterPrint)
-    }
-  }, [])
-
   const handlePrint = () => {
+    const style = document.createElement("style")
+    style.id = "print-override-style"
+    style.innerHTML = `
+      @media print {
+        @page { margin: 0; }
+        body > * { visibility: hidden !important; }
+        #registration-card-print-container {
+          visibility: visible !important;
+          position: absolute !important;
+          top: 0 !important;
+          left: 0 !important;
+          z-index: 99999 !important;
+        }
+        #registration-card-print-container * { visibility: visible !important; }
+      }
+    `
+    document.head.appendChild(style)
     window.print()
+    setTimeout(() => {
+      document.getElementById("print-override-style")?.remove()
+    }, 1000)
   }
 
   const handleDownloadPDF = async () => {
-    if (!cardRef.current) return
+    if (!templateRef.current) return
     setIsGeneratingPDF(true)
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    await new Promise((resolve) => setTimeout(resolve, 200))
     try {
-      const canvas = await html2canvas(cardRef.current, {
+      const canvas = await html2canvas(templateRef.current, {
         scale: 2,
         useCORS: true,
         backgroundColor: "#ffffff",
-        onclone: (clonedDoc) => {
-          clonedDoc.documentElement.classList.remove("dark")
-          clonedDoc.documentElement.classList.add("light")
-          clonedDoc.body.style.backgroundColor = "#ffffff"
-        },
       })
       const imgData = canvas.toDataURL("image/png")
       const pdf = new jsPDF("p", "mm", "a4")
-      const pageWidth = pdf.internal.pageSize.getWidth()   // 210 mm
+      const pageWidth = pdf.internal.pageSize.getWidth()
       const imgWidth = canvas.width
       const imgHeight = canvas.height
-
-      // Forcer la largeur à 210mm (pleine page A4)
       const ratio = pageWidth / imgWidth
       const scaledHeight = imgHeight * ratio
       pdf.addImage(imgData, "PNG", 0, 0, pageWidth, scaledHeight)
       pdf.save(`fiche-inscription-${student.studentCode}.pdf`)
+    } catch (err) {
+      console.error("[PDF ERROR]", err)
     } finally {
       setIsGeneratingPDF(false)
     }
@@ -93,9 +90,16 @@ export function RegistrationCardWithActions({ student, inviteUrl, school }: Prop
         </div>
       )}
 
-      {/* Carte (capturée pour PDF) — wrapper max-w pour que html2canvas ait la bonne taille */}
-      <div ref={cardRef} className="max-w-[210mm] mx-auto">
-        <RegistrationCard student={student} inviteUrl={inviteUrl} school={school} />
+      {/* Carte écran (affichage normal) */}
+      <RegistrationCard student={student} inviteUrl={inviteUrl} school={school} />
+
+      {/* Template print/PDF — rendu hors écran mais capturable par html2canvas */}
+      <div
+        id="registration-card-print-container"
+        ref={templateRef}
+        style={{ position: "fixed", left: 0, top: 0, zIndex: -1, pointerEvents: "none" }}
+      >
+        <RegistrationCardPrintTemplate student={student} inviteUrl={inviteUrl} school={school} />
       </div>
     </div>
   )
