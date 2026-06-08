@@ -142,9 +142,9 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
         <div className="absolute inset-3 border-2 border-tahfidz-green/20 rounded-xl pointer-events-none print:inset-2" />
         <div className="absolute inset-4 border border-tahfidz-green/10 rounded-lg pointer-events-none print:inset-3" />
 
-        <div className="p-10 print:p-6 space-y-8">
+        <div className="p-8 print:p-5 space-y-5 print:space-y-3">
           {/* En-tête */}
-          <div className="flex items-center justify-between border-b-2 border-tahfidz-green/20 pb-6">
+          <div className="flex items-center justify-between border-b-2 border-tahfidz-green/20 pb-4 print:pb-3">
             <div className="flex items-center gap-4">
               {school.logo ? (
                 <Image src={school.logo} alt={school.name} width={64} height={64} className="w-16 h-16 object-contain" unoptimized />
@@ -167,7 +167,7 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
 
           {/* Photo + Identité */}
           <div className="flex gap-6 items-start">
-            <div className="w-28 h-36 rounded-xl border-2 border-gray-200 overflow-hidden flex-shrink-0 bg-gray-50 flex items-center justify-center">
+            <div className="w-24 h-32 print:w-20 print:h-28 rounded-xl border-2 border-gray-200 overflow-hidden flex-shrink-0 bg-gray-50 flex items-center justify-center">
               <AvatarLightbox
                 src={student.user.avatar}
                 alt={student.user.fullName}
@@ -176,13 +176,13 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
                 imgClassName="w-full h-full"
               />
             </div>
-            <div className="flex-1 space-y-3">
+            <div className="flex-1 space-y-2 print:space-y-1.5">
               <div>
                 <p className="text-xs text-gray-400 uppercase tracking-wider">{t("fullName")}</p>
-                <p className="text-xl font-bold text-gray-900">{student.user.fullName}</p>
-                {student.user.fullNameAr && <p className="arabic text-gray-600 text-lg mt-0.5">{student.user.fullNameAr}</p>}
+                <p className="text-xl print:text-lg font-bold text-gray-900">{student.user.fullName}</p>
+                {student.user.fullNameAr && <p className="arabic text-gray-600 text-base print:text-sm mt-0.5">{student.user.fullNameAr}</p>}
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 print:gap-2">
                 <div>
                   <p className="text-xs text-gray-400">{t("studentCode")}</p>
                   <p className="font-semibold text-gray-800 font-mono">{student.studentCode}</p>
@@ -219,11 +219,11 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
           </div>
 
           {/* Scolarité */}
-          <div className="bg-tahfidz-green-light/30 rounded-xl p-5 border border-tahfidz-green/10">
-            <h3 className="text-sm font-bold text-tahfidz-green uppercase tracking-wider mb-4 flex items-center gap-2">
+          <div className="bg-tahfidz-green-light/30 rounded-xl p-4 print:p-3 border border-tahfidz-green/10">
+            <h3 className="text-sm font-bold text-tahfidz-green uppercase tracking-wider mb-3 print:mb-2 flex items-center gap-2">
               <GraduationCap size={16} /> {t("schooling")}
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 print:gap-2">
               <div>
                 <p className="text-xs text-gray-500">{t("group")}</p>
                 <p className="font-semibold text-gray-800">{student.group?.name || "—"}</p>
@@ -252,12 +252,12 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
           </div>
 
           {/* Contact */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:gap-3">
+            <div className="space-y-2 print:space-y-1.5">
               <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
                 <Phone size={16} className="text-tahfidz-green" /> {t("contact")}
               </h3>
-              <div className="space-y-2 text-sm">
+              <div className="space-y-1.5 print:space-y-1 text-sm">
                 <div className="flex items-center gap-2">
                   <Mail size={14} className="text-gray-400" />
                   <span className="text-gray-600">{student.user.email}</span>
@@ -285,7 +285,7 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
             </div>
 
             {/* Parents */}
-            <div className="space-y-3">
+            <div className="space-y-2 print:space-y-1.5">
               <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
                 <Shield size={16} className="text-tahfidz-green" /> {t("parents")}
               </h3>
@@ -305,7 +305,7 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
 
               {/* QR Code invitation */}
               {inviteUrl && (
-                <div className="mt-3 pt-3 border-t border-gray-100">
+                <div className="mt-3 pt-3 border-t border-gray-100 print:hidden">
                   <p className="text-xs text-gray-500 mb-2">{t("scanToLinkParent")}</p>
                   <div className="flex items-center gap-3">
                     <div className="bg-white p-1.5 rounded-lg border border-gray-200">
@@ -329,8 +329,8 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
 
           {/* Medical */}
           {student.medicalNotes && (
-            <div className="bg-red-50 border border-red-100 rounded-xl p-4">
-              <h3 className="text-sm font-bold text-red-700 uppercase tracking-wider mb-2 flex items-center gap-2">
+            <div className="bg-red-50 border border-red-100 rounded-xl p-3 print:p-2.5">
+              <h3 className="text-sm font-bold text-red-700 uppercase tracking-wider mb-1 flex items-center gap-2">
                 <HeartPulse size={16} /> {t("medical")}
               </h3>
               <p className="text-sm text-red-800 whitespace-pre-wrap">{student.medicalNotes}</p>
@@ -338,28 +338,28 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
           )}
 
           {/* Signatures */}
-          <div className="grid grid-cols-3 gap-6 pt-8 border-t border-gray-200">
+          <div className="grid grid-cols-3 gap-6 print:gap-4 pt-6 print:pt-4 border-t border-gray-200">
             <div className="text-center">
-              <p className="text-xs text-gray-400 mb-8">{t("parentSignature")}</p>
+              <p className="text-xs text-gray-400 mb-6 print:mb-4">{t("parentSignature")}</p>
               <div className="border-b border-gray-300 w-full" />
             </div>
             <div className="text-center">
-              <p className="text-xs text-gray-400 mb-8">{t("studentSignature")}</p>
+              <p className="text-xs text-gray-400 mb-6 print:mb-4">{t("studentSignature")}</p>
               <div className="border-b border-gray-300 w-full" />
             </div>
             <div className="text-center">
-              <p className="text-xs text-gray-400 mb-8">{t("adminSignature")}</p>
+              <p className="text-xs text-gray-400 mb-6 print:mb-4">{t("adminSignature")}</p>
               <div className="border-b border-gray-300 w-full" />
             </div>
           </div>
 
           {/* Footer */}
-          <div className="border-t border-gray-200 pt-4 mt-4">
-            <div className="flex flex-col items-center gap-2 text-center">
+          <div className="border-t border-gray-200 pt-3 mt-2 print:pt-2 print:mt-1">
+            <div className="flex flex-col items-center gap-1 text-center">
               <p className="text-[10px] text-gray-400 uppercase tracking-wider">
                 {t("generatedOn")} {formatDate(new Date())}
               </p>
-              <div className="flex items-center gap-3 text-[10px] text-gray-500">
+              <div className="flex items-center gap-3 text-[10px] text-gray-500 flex-wrap justify-center">
                 <span className="font-semibold">{school.name}</span>
                 {school.city && <span className="text-gray-300">|</span>}
                 {school.city && <span>{school.city}</span>}
