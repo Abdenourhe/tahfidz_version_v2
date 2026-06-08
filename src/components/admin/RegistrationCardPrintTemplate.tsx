@@ -68,7 +68,7 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
   const fmtSchedule = (schedule?: Record<string, string> | null) => {
     if (!schedule || Object.keys(schedule).length === 0) return null
     const days = dayMap[locale] ?? dayMap.fr
-    return Object.entries(schedule).map(([day, time]) => `${days[day] ?? day}: ${time}`).join(" · ")
+    return Object.entries(schedule).map(([day, time]) => `${days[day.toUpperCase()] ?? day}: ${time}`).join(" · ")
   }
 
   const natLabel = (nationalityMap[locale] ?? nationalityMap.fr)[s.nationality ?? ""] ?? s.nationality ?? "—"
