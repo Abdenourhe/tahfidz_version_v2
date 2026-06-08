@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import { Download, Printer } from "lucide-react"
 import { RegistrationCard } from "./RegistrationCard"
 import html2canvas from "html2canvas"
@@ -18,17 +18,22 @@ export function RegistrationCardWithActions({ student, inviteUrl, school }: Prop
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
   const { theme, setTheme } = useTheme()
 
+  // Gestion robuste du thème pour l'impression navigateur
+  useEffect(() => {
+    const handleBeforePrint = () => setTheme("light")
+    const handleAfterPrint = () => {
+      if (theme) setTheme(theme)
+    }
+    window.addEventListener("beforeprint", handleBeforePrint)
+    window.addEventListener("afterprint", handleAfterPrint)
+    return () => {
+      window.removeEventListener("beforeprint", handleBeforePrint)
+      window.removeEventListener("afterprint", handleAfterPrint)
+    }
+  }, [theme, setTheme])
+
   const handlePrint = () => {
-    const originalTheme = theme
-    setTheme("light")
-    // Attendre que le DOM se mette à jour (next-themes modifie le class de <html>)
-    setTimeout(() => {
-      window.print()
-      // Restaurer le thème après fermeture du dialogue (best effort)
-      setTimeout(() => {
-        if (originalTheme) setTheme(originalTheme)
-      }, 800)
-    }, 300)
+    window.print()
   }
 
   const handleDownloadPDF = async () => {
@@ -41,22 +46,32 @@ export function RegistrationCardWithActions({ student, inviteUrl, school }: Prop
         useCORS: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          // Forcer le clone en mode light pour éviter le dark mode dans le PDF
           clonedDoc.documentElement.classList.remove("dark")
           clonedDoc.documentElement.classList.add("light")
-          // S'assurer que le fond est blanc
           clonedDoc.body.style.backgroundColor = "#ffffff"
         },
       })
       const imgData = canvas.toDataURL("image/png")
       const pdf = new jsPDF("p", "mm", "a4")
-      const pageWidth = pdf.internal.pageSize.getWidth()
-      const pageHeight = pdf.internal.pageSize.getHeight()
+      const pageWidth = pdf.internal.pageSize.getWidth()   // 210 mm
+      const pageHeight = pdf.internal.pageSize.getHeight() // 297 mm
       const imgWidth = canvas.width
       const imgHeight = canvas.height
-      const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight)
-      const centerX = (pageWidth - imgWidth * ratio) / 2
-      pdf.addImage(imgData, "PNG", centerX, 0, imgWidth * ratio, imgHeight * ratio)
+
+      // Forcer la largeur à 210mm, ajuster la hauteur proportionnellement
+      const ratio = pageWidth / imgWidth
+      const scaledHeight = imgHeight * ratio
+
+      // Si ça dépasse en hauteur, on réduit pour tenir sur 1 page
+      if (scaledHeight > pageHeight) {
+        const fitRatio = pageHeight / imgHeight
+        const fitWidth = imgWidth * fitRatio
+        const centerX = (pageWidth - fitWidth) / 2
+        pdf.addImage(imgData, "PNG", centerX, 0, fitWidth, pageHeight)
+      } else {
+        pdf.addImage(imgData, "PNG", 0, 0, pageWidth, scaledHeight)
+      }
+
       pdf.save(`fiche-inscription-${student.studentCode}.pdf`)
     } finally {
       setIsGeneratingPDF(false)
