@@ -137,7 +137,7 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.5px" }}>{t("fullName")}</div>
-            <div style={{ fontSize: "16pt", fontWeight: "bold", color: "#111", textTransform: "uppercase", letterSpacing: "0.3px" }}>{u.fullName}</div>
+            <div style={{ fontSize: "16pt", fontWeight: "bold", color: "#111", letterSpacing: "0.3px" }}>{u.fullName?.toUpperCase?.() || u.fullName}</div>
             {u.fullNameAr && <div style={{ fontSize: "12pt", color: "#444", marginTop: "2px" }}>{u.fullNameAr}</div>}
 
             <div style={{ display: "flex", gap: "20px", marginTop: "10px", flexWrap: "wrap" }}>
@@ -184,7 +184,7 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
             </div>
             <div style={{ minWidth: "90px" }}>
               <div style={{ fontSize: "9pt", color: "#555" }}>{t("teacher")}</div>
-              <div style={{ fontSize: "11pt", fontWeight: "bold" }}>{s.teacher?.user?.fullName || t("dash")}</div>
+              <div style={{ fontSize: "11pt", fontWeight: "bold" }}>{s.teacher?.user?.fullName?.toUpperCase?.() || t("dash")}</div>
             </div>
             <div style={{ minWidth: "90px" }}>
               <div style={{ fontSize: "9pt", color: "#555" }}>{t("status")}</div>
@@ -204,7 +204,7 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
               {u.phone && <div><span style={{ color: "#666", fontSize: "9pt" }}>{t("phone")} : </span>{u.phone}</div>}
               {s.emergencyPhone && <div><span style={{ color: "#666", fontSize: "9pt" }}>{t("emergency")} : </span><span style={{ color: "#dc2626", fontWeight: 600 }}>{s.emergencyPhone}</span></div>}
               {(s.address || s.city) && (
-                <div><span style={{ color: "#666", fontSize: "9pt" }}>{t("address")} : </span>{[s.address, s.city, s.postalCode].filter(Boolean).join(", ")}</div>
+                <div><span style={{ color: "#666", fontSize: "9pt" }}>{t("address")} : </span>{(isRTL ? [s.postalCode, s.city, s.address] : [s.address, s.city, s.postalCode]).filter(Boolean).join(", ")}</div>
               )}
             </div>
           </div>
