@@ -2141,6 +2141,8 @@ export const translations = {
     noSurah:          { fr: "—",                        en: "—",                     ar: "—" },
     dash:             { fr: "—",                        en: "—",                     ar: "—" },
     photoPlaceholder: { fr: "PHOTO",                    en: "PHOTO",                 ar: "صورة" },
+    print:            { fr: "Imprimer",                 en: "Print",                 ar: "طباعة" },
+    pdf:              { fr: "PDF",                      en: "PDF",                   ar: "PDF" },
   },
 } as const
 

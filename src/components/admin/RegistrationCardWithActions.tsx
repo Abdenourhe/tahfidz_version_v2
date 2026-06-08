@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import { Download, Printer } from "lucide-react"
 import { RegistrationCardPrintTemplate } from "./RegistrationCardPrintTemplate"
 import { RegistrationCard } from "./RegistrationCard"
@@ -19,6 +19,9 @@ export function RegistrationCardWithActions({ student, inviteUrl, school }: Prop
   const t = (key: string) => useT("printCard", key)
   const templateRef = useRef<HTMLDivElement>(null)
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
 
   const handlePrint = () => {
     const style = document.createElement("style")
@@ -96,14 +99,16 @@ export function RegistrationCardWithActions({ student, inviteUrl, school }: Prop
       {/* Carte écran (affichage normal) */}
       <RegistrationCard student={student} inviteUrl={inviteUrl} school={school} />
 
-      {/* Template print/PDF — rendu hors écran mais capturable par html2canvas */}
-      <div
-        id="registration-card-print-container"
-        ref={templateRef}
-        style={{ position: "fixed", left: 0, top: 0, zIndex: -1, pointerEvents: "none" }}
-      >
-        <RegistrationCardPrintTemplate student={student} inviteUrl={inviteUrl} school={school} />
-      </div>
+      {/* Template print/PDF — rendu uniquement côté client pour éviter l'hydratation mismatch */}
+      {mounted && (
+        <div
+          id="registration-card-print-container"
+          ref={templateRef}
+          style={{ position: "fixed", left: 0, top: 0, zIndex: -1, pointerEvents: "none" }}
+        >
+          <RegistrationCardPrintTemplate student={student} inviteUrl={inviteUrl} school={school} />
+        </div>
+      )}
     </div>
   )
 }
