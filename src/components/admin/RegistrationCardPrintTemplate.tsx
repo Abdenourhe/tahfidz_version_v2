@@ -109,7 +109,7 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
 
         {/* Photo + Identité */}
         <div style={{ display: "flex", gap: "16px", background: "#fafafa", border: "1px solid #e5e5e5", borderRadius: "8px", padding: "14px" }}>
-          <div style={{ width: "70px", height: "90px", border: "1px solid #ccc", borderRadius: "6px", overflow: "hidden", flexShrink: 0, background: "#f5f5f5", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: "90px", height: "115px", border: "1px solid #ccc", borderRadius: "6px", overflow: "hidden", flexShrink: 0, background: "#f5f5f5", display: "flex", alignItems: "center", justifyContent: "center" }}>
             {u.avatar ? (
               <img src={u.avatar} alt={u.fullName} crossOrigin="anonymous" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
