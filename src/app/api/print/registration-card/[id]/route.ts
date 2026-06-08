@@ -79,7 +79,17 @@ export async function GET(_req: NextRequest, { params }: Params) {
       select: { name: true, logo: true, address: true, city: true, phone: true },
     })
 
-    return NextResponse.json({ student, school })
+    const invite = await prisma.parentInvite.findUnique({
+      where: { studentId: id },
+      select: { code: true, used: true },
+    })
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+    const inviteUrl = invite && !invite.used
+      ? `${appUrl}/parent/register?invite=${invite.code}&student=${student.studentCode}`
+      : null
+
+    return NextResponse.json({ student, school, inviteUrl })
   } catch (error: any) {
     console.error("[PRINT REGISTRATION CARD]", error)
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })

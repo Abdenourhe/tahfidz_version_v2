@@ -1,7 +1,7 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect, notFound } from "next/navigation"
-import { RegistrationCard } from "@/components/admin/RegistrationCard"
+import { RegistrationCardWithActions } from "@/components/admin/RegistrationCardWithActions"
 
 export default async function RegistrationCardPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
@@ -52,7 +52,7 @@ export default async function RegistrationCardPage({ params }: { params: Promise
   })
 
   return (
-    <RegistrationCard
+    <RegistrationCardWithActions
       student={student}
       inviteUrl={inviteUrl}
       school={{

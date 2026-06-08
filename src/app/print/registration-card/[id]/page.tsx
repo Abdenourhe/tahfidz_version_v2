@@ -48,7 +48,7 @@ export default function PrintRegistrationCardPage() {
       <RegistrationCard
         student={data.student}
         school={data.school || { name: "TAHFIDZ" }}
-        variant="print"
+        inviteUrl={data.inviteUrl || null}
       />
     </div>
   )
