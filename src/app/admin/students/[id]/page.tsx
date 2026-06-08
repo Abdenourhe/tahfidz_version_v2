@@ -8,7 +8,6 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
   if (!session?.user || !["ADMIN", "TEACHER"].includes(session.user.role)) redirect("/login")
 
   const resolvedParams = await params
-  const schoolId = session.user.schoolId
 
   const student = await prisma.student.findUnique({
     where: { id: resolvedParams.id },

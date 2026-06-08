@@ -28,7 +28,6 @@ const {
         try {
           const parsed = LoginSchema.safeParse(credentials)
           if (!parsed.success) {
-            console.log("[AUTH] LoginSchema parse failed", parsed.error.flatten())
             return null
           }
           const { email: rawEmail, password, schoolSlug } = parsed.data
@@ -45,7 +44,6 @@ const {
           if (superAdmin) {
             const valid = await bcrypt.compare(password, superAdmin.password)
             if (!valid) {
-              console.log("[AUTH] SuperAdmin password mismatch", email)
               return null
             }
           prisma.user.update({
@@ -68,7 +66,6 @@ const {
 
         // Auth normale
         if (!schoolSlug || schoolSlug.length < 2) {
-          console.log("[AUTH] Missing schoolSlug", { email, schoolSlug })
           return null
         }
 
@@ -77,7 +74,6 @@ const {
           select: { id: true, slug: true, name: true, logo: true, city: true, isActive: true },
         })
         if (!school?.isActive) {
-          console.log("[AUTH] School not found or inactive", { schoolSlug })
           return null
         }
 
@@ -86,13 +82,11 @@ const {
           select: { id: true, password: true, role: true, isActive: true, fullName: true, avatar: true },
         })
         if (!user?.isActive) {
-          console.log("[AUTH] User not found or inactive", { email, schoolId: school.id })
           return null
         }
 
         const valid = await bcrypt.compare(password, user.password)
         if (!valid) {
-          console.log("[AUTH] Password mismatch", { email, schoolId: school.id })
           return null
         }
 

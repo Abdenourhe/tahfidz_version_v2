@@ -48,7 +48,6 @@ export async function sendMail({ to, subject, text, html }: SendMailOptions) {
     }
     await sgMail.send(msg)
 
-    console.log("[MAIL] OK — Envoyé a", to, "| Sujet:", subject)
     return { success: true }
   } catch (err: any) {
     const errors = err?.response?.body?.errors

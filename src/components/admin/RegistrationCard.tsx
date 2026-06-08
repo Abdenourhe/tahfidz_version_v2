@@ -4,7 +4,7 @@ import Image from "next/image"
 import { Phone, Mail, MapPin, Calendar, User, GraduationCap, HeartPulse, Shield, Clock, Copy, CheckCircle2, Globe, Languages } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
-import { AvatarLightbox } from "@/components/AvatarLightbox"
+
 import { useState } from "react"
 
 interface Props {
@@ -117,13 +117,16 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
         {/* Photo + Identité */}
         <div className="flex gap-6 print:gap-3 items-start">
           <div className="w-24 h-32 print:w-14 print:h-18 rounded-xl border-2 border-gray-200 overflow-hidden flex-shrink-0 bg-gray-50 flex items-center justify-center">
-            <AvatarLightbox
-              src={student.user.avatar}
-              alt={student.user.fullName}
-              fallback={<User size={40} className="text-gray-300" />}
-              className="w-full h-full"
-              imgClassName="w-full h-full"
-            />
+            {student.user.avatar ? (
+              <img
+                src={student.user.avatar}
+                alt={student.user.fullName}
+                className="w-full h-full object-cover"
+                crossOrigin="anonymous"
+              />
+            ) : (
+              <User size={40} className="text-gray-300" />
+            )}
           </div>
           <div className="flex-1 space-y-2 print:space-y-0.5">
             <div>

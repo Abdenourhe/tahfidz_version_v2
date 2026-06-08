@@ -63,16 +63,6 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Simulation email super-admin
-    console.log("\n📧 ═══════════════════════════════════════════")
-    console.log("   NOUVELLE DEMANDE D'INSCRIPTION")
-    console.log("   École    :", d.schoolName)
-    console.log("   Admin    :", d.adminName, `(${d.adminEmail})`)
-    if (d.adminPhone) console.log("   Tél      :", d.adminPhone)
-    console.log("   Élèves   :", d.classCount * d.studentsPerClass, "(estimation)")
-    console.log("   → Valider sur /admin/super")
-    console.log("═══════════════════════════════════════════\n")
-
     return NextResponse.json(
       { success: true, message: "Demande enregistrée. Vous recevrez une confirmation par email." },
       { status: 201 }

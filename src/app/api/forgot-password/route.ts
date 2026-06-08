@@ -86,13 +86,6 @@ export async function POST(req: NextRequest) {
         }, { status: 502 })
       }
     } else {
-      // Mode fallback : log dans la console
-      console.log("\n📧 ═══════════════════════════════════════════")
-      console.log("   EMAIL DE REINITIALISATION (email non configure)")
-      console.log("   Destinataire:", email)
-      console.log("   Ecole:", school.name)
-      console.log("   Lien:", resetUrl)
-      console.log("═══════════════════════════════════════════\n")
     }
 
     // Audit log

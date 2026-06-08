@@ -59,7 +59,6 @@ export default async function StudentsPage({
     }),
   ])
 
-  // ← PAS DE TITRE ICI — le titre est dans StudentTableClient
   return (
     <StudentTableClient
       students={students}

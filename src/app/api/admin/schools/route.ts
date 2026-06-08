@@ -152,12 +152,6 @@ export async function PATCH(req: NextRequest) {
       data:  { status: "APPROVED", slug, processedAt: new Date() },
     })
 
-    console.log(`[TAHFIDZ] ✅ École approuvée : ${request.schoolName}`)
-    console.log(`  → Slug    : ${slug}`)
-    console.log(`  → Plan    : ${plan}`)
-    console.log(`  → Admin   : ${request.adminEmail}`)
-    console.log(`  → Login   : http://localhost:3000/login (slug: ${slug})`)
-
     return NextResponse.json({
       ok: true, slug, plan, schoolId: school.id,
       adminEmail: request.adminEmail,
@@ -172,7 +166,6 @@ export async function PATCH(req: NextRequest) {
       where: { id: body.requestId },
       data:  { status: "REJECTED", rejectionReason: body.reason ?? null, processedAt: new Date() },
     })
-    console.log(`[TAHFIDZ] ❌ Demande rejetée : ${body.requestId}`)
     return NextResponse.json({ ok: true })
   }
 
