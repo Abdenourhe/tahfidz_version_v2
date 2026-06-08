@@ -5,7 +5,6 @@ import { Download, Printer } from "lucide-react"
 import { RegistrationCard } from "./RegistrationCard"
 import html2canvas from "html2canvas"
 import { jsPDF } from "jspdf"
-import { useTheme } from "next-themes"
 
 interface Props {
   student: any
@@ -16,13 +15,17 @@ interface Props {
 export function RegistrationCardWithActions({ student, inviteUrl, school }: Props) {
   const cardRef = useRef<HTMLDivElement>(null)
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
-  const { theme, setTheme } = useTheme()
 
-  // Gestion robuste du thème pour l'impression navigateur
+  // Gestion du thème pour l'impression navigateur — manipulation DOM directe (instantanée)
   useEffect(() => {
-    const handleBeforePrint = () => setTheme("light")
+    let originalClass = ""
+    const handleBeforePrint = () => {
+      originalClass = document.documentElement.className
+      document.documentElement.classList.remove("dark")
+      document.documentElement.classList.add("light")
+    }
     const handleAfterPrint = () => {
-      if (theme) setTheme(theme)
+      document.documentElement.className = originalClass
     }
     window.addEventListener("beforeprint", handleBeforePrint)
     window.addEventListener("afterprint", handleAfterPrint)
@@ -30,7 +33,7 @@ export function RegistrationCardWithActions({ student, inviteUrl, school }: Prop
       window.removeEventListener("beforeprint", handleBeforePrint)
       window.removeEventListener("afterprint", handleAfterPrint)
     }
-  }, [theme, setTheme])
+  }, [])
 
   const handlePrint = () => {
     window.print()
@@ -54,24 +57,13 @@ export function RegistrationCardWithActions({ student, inviteUrl, school }: Prop
       const imgData = canvas.toDataURL("image/png")
       const pdf = new jsPDF("p", "mm", "a4")
       const pageWidth = pdf.internal.pageSize.getWidth()   // 210 mm
-      const pageHeight = pdf.internal.pageSize.getHeight() // 297 mm
       const imgWidth = canvas.width
       const imgHeight = canvas.height
 
-      // Forcer la largeur à 210mm, ajuster la hauteur proportionnellement
+      // Forcer la largeur à 210mm (pleine page A4)
       const ratio = pageWidth / imgWidth
       const scaledHeight = imgHeight * ratio
-
-      // Si ça dépasse en hauteur, on réduit pour tenir sur 1 page
-      if (scaledHeight > pageHeight) {
-        const fitRatio = pageHeight / imgHeight
-        const fitWidth = imgWidth * fitRatio
-        const centerX = (pageWidth - fitWidth) / 2
-        pdf.addImage(imgData, "PNG", centerX, 0, fitWidth, pageHeight)
-      } else {
-        pdf.addImage(imgData, "PNG", 0, 0, pageWidth, scaledHeight)
-      }
-
+      pdf.addImage(imgData, "PNG", 0, 0, pageWidth, scaledHeight)
       pdf.save(`fiche-inscription-${student.studentCode}.pdf`)
     } finally {
       setIsGeneratingPDF(false)
@@ -101,8 +93,8 @@ export function RegistrationCardWithActions({ student, inviteUrl, school }: Prop
         </div>
       )}
 
-      {/* Carte (capturée pour PDF) */}
-      <div ref={cardRef}>
+      {/* Carte (capturée pour PDF) — wrapper max-w pour que html2canvas ait la bonne taille */}
+      <div ref={cardRef} className="max-w-[210mm] mx-auto">
         <RegistrationCard student={student} inviteUrl={inviteUrl} school={school} />
       </div>
     </div>
