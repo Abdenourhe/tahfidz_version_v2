@@ -24,8 +24,54 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
   const [copied, setCopied] = useState(false)
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
 
-  const handlePrint = () => {
-    window.print()
+  const handlePrint = async () => {
+    if (!cardRef.current) return
+    setIsGeneratingPDF(true)
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    try {
+      const canvas = await html2canvas(cardRef.current, { scale: 2, useCORS: true })
+      const imgData = canvas.toDataURL("image/png")
+      const printWindow = window.open("", "_blank")
+      if (!printWindow) return
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Fiche d'inscription</title>
+            <style>
+              @page { size: A4 portrait; margin: 0; }
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body {
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
+                min-height: 100vh;
+                background: white;
+              }
+              img {
+                width: 210mm;
+                height: 297mm;
+                object-fit: contain;
+                display: block;
+              }
+              @media print {
+                body { align-items: flex-start; }
+              }
+            </style>
+          </head>
+          <body>
+            <img src="${imgData}" alt="Fiche d'inscription" />
+          </body>
+        </html>
+      `)
+      printWindow.document.close()
+      setTimeout(() => {
+        printWindow.focus()
+        printWindow.print()
+      }, 500)
+    } finally {
+      setIsGeneratingPDF(false)
+    }
   }
 
   const handleDownloadPDF = async () => {
@@ -374,31 +420,6 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
         </div>
       </div>
 
-      {/* Styles d'impression */}
-      <style jsx global>{`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          #registration-card,
-          #registration-card * {
-            visibility: visible;
-          }
-          #registration-card {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            margin: 0;
-            padding: 0;
-            box-shadow: none;
-          }
-          @page {
-            size: A4 portrait;
-            margin: 8mm;
-          }
-        }
-      `}</style>
     </div>
   )
 }
