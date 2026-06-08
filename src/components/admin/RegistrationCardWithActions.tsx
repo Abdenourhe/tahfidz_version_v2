@@ -4,6 +4,7 @@ import { useRef, useState } from "react"
 import { Download, Printer } from "lucide-react"
 import { RegistrationCardPrintTemplate } from "./RegistrationCardPrintTemplate"
 import { RegistrationCard } from "./RegistrationCard"
+import { useLanguage } from "@/contexts/LanguageContext"
 import html2canvas from "html2canvas"
 import { jsPDF } from "jspdf"
 
@@ -14,6 +15,8 @@ interface Props {
 }
 
 export function RegistrationCardWithActions({ student, inviteUrl, school }: Props) {
+  const { useT } = useLanguage()
+  const t = (key: string) => useT("printCard", key)
   const templateRef = useRef<HTMLDivElement>(null)
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
 
@@ -72,7 +75,7 @@ export function RegistrationCardWithActions({ student, inviteUrl, school }: Prop
       {/* Toolbar — cachée en print */}
       {!isGeneratingPDF && (
         <div className="admin-no-print max-w-[210mm] mx-auto mb-4 px-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-gray-800">Fiche d&apos;inscription</h1>
+          <h1 className="text-xl font-bold text-gray-800">{t("title")}</h1>
           <div className="flex items-center gap-2">
             <button
               onClick={handleDownloadPDF}
@@ -84,7 +87,7 @@ export function RegistrationCardWithActions({ student, inviteUrl, school }: Prop
               onClick={handlePrint}
               className="flex items-center gap-2 px-5 py-2.5 bg-gray-700 text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition shadow-sm"
             >
-              <Printer size={16} /> Imprimer
+              <Printer size={16} /> {t("print")}
             </button>
           </div>
         </div>

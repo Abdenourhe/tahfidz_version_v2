@@ -1,6 +1,7 @@
 "use client"
 
 import { QRCodeSVG } from "qrcode.react"
+import { useLanguage } from "@/contexts/LanguageContext"
 
 interface Props {
   student: any
@@ -8,60 +9,78 @@ interface Props {
   school: { name: string; logo?: string | null; slug?: string; address?: string | null; city?: string | null; phone?: string | null }
 }
 
-const nationalityFull = (code?: string | null) => {
-  const map: Record<string, string> = {
+const nationalityMap: Record<string, Record<string, string>> = {
+  fr: {
     DZ: "Algérie", MA: "Maroc", TN: "Tunisie", EG: "Égypte", SA: "Arabie Saoudite",
     AE: "Émirats Arabes Unis", QA: "Qatar", KW: "Koweït", LB: "Liban", SY: "Syrie",
     IQ: "Irak", JO: "Jordanie", PS: "Palestine", SD: "Soudan", LY: "Libye",
     MR: "Mauritanie", SO: "Somalie", TR: "Turquie", CA: "Canada", OTHER: "Autre",
-  }
-  return map[code ?? ""] ?? code ?? "—"
+  },
+  en: {
+    DZ: "Algeria", MA: "Morocco", TN: "Tunisia", EG: "Egypt", SA: "Saudi Arabia",
+    AE: "United Arab Emirates", QA: "Qatar", KW: "Kuwait", LB: "Lebanon", SY: "Syria",
+    IQ: "Iraq", JO: "Jordan", PS: "Palestine", SD: "Sudan", LY: "Libya",
+    MR: "Mauritania", SO: "Somalia", TR: "Turkey", CA: "Canada", OTHER: "Other",
+  },
+  ar: {
+    DZ: "الجزائر", MA: "المغرب", TN: "تونس", EG: "مصر", SA: "السعودية",
+    AE: "الإمارات", QA: "قطر", KW: "الكويت", LB: "لبنان", SY: "سوريا",
+    IQ: "العراق", JO: "الأردن", PS: "فلسطين", SD: "السودان", LY: "ليبيا",
+    MR: "موريتانيا", SO: "الصومال", TR: "تركيا", CA: "كندا", OTHER: "أخرى",
+  },
 }
 
-const languageFull = (key: string) => {
-  const map: Record<string, string> = { ar: "Arabe", fr: "Français", en: "Anglais", other: "Autre" }
-  return map[key.trim()] ?? key.trim()
+const languageMap: Record<string, Record<string, string>> = {
+  fr: { ar: "Arabe", fr: "Français", en: "Anglais", other: "Autre" },
+  en: { ar: "Arabic", fr: "French", en: "English", other: "Other" },
+  ar: { ar: "العربية", fr: "الفرنسية", en: "الإنجليزية", other: "أخرى" },
 }
 
-const levelFull = (level?: string | null) => {
-  const map: Record<string, string> = {
-    beginner: "Débutant",
-    intermediate: "Intermédiaire",
-    advanced: "Avancé",
-    expert: "Expert",
-  }
-  return map[level?.toLowerCase() ?? ""] ?? level ?? ""
+const levelMap: Record<string, Record<string, string>> = {
+  fr: { beginner: "Débutant", intermediate: "Intermédiaire", advanced: "Avancé", expert: "Expert" },
+  en: { beginner: "Beginner", intermediate: "Intermediate", advanced: "Advanced", expert: "Expert" },
+  ar: { beginner: "مبتدئ", intermediate: "متوسط", advanced: "متقدم", expert: "خبير" },
+}
+
+const dayMap: Record<string, Record<string, string>> = {
+  fr: { MONDAY: "Lundi", TUESDAY: "Mardi", WEDNESDAY: "Mercredi", THURSDAY: "Jeudi", FRIDAY: "Vendredi", SATURDAY: "Samedi", SUNDAY: "Dimanche" },
+  en: { MONDAY: "Monday", TUESDAY: "Tuesday", WEDNESDAY: "Wednesday", THURSDAY: "Thursday", FRIDAY: "Friday", SATURDAY: "Saturday", SUNDAY: "Sunday" },
+  ar: { MONDAY: "الإثنين", TUESDAY: "الثلاثاء", WEDNESDAY: "الأربعاء", THURSDAY: "الخميس", FRIDAY: "الجمعة", SATURDAY: "السبت", SUNDAY: "الأحد" },
 }
 
 export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Props) {
+  const { locale, useT, dir } = useLanguage()
+  const t = (key: string) => useT("printCard", key)
+  const isRTL = dir === "rtl"
+
   const s = student
   const u = s.user
 
   const fmtDate = (d?: string | Date | null) => {
     if (!d) return "—"
     const date = typeof d === "string" ? new Date(d) : d
-    return date.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })
+    const localeStr = locale === "ar" ? "ar-SA" : locale === "en" ? "en-US" : "fr-FR"
+    return date.toLocaleDateString(localeStr, { day: "2-digit", month: "long", year: "numeric" })
   }
 
-  const gender = u.gender === "MALE" ? "Garçon" : u.gender === "FEMALE" ? "Fille" : "—"
+  const gender = u.gender === "MALE" ? t("male") : u.gender === "FEMALE" ? t("female") : "—"
 
   const fmtSchedule = (schedule?: Record<string, string> | null) => {
     if (!schedule || Object.keys(schedule).length === 0) return null
-    const days: Record<string, string> = {
-      MONDAY: "Lundi", TUESDAY: "Mardi", WEDNESDAY: "Mercredi",
-      THURSDAY: "Jeudi", FRIDAY: "Vendredi", SATURDAY: "Samedi", SUNDAY: "Dimanche",
-    }
+    const days = dayMap[locale] ?? dayMap.fr
     return Object.entries(schedule).map(([day, time]) => `${days[day] ?? day}: ${time}`).join(" · ")
   }
 
-  const natLabel = nationalityFull(s.nationality)
+  const natLabel = (nationalityMap[locale] ?? nationalityMap.fr)[s.nationality ?? ""] ?? s.nationality ?? "—"
   const langLabel = s.spokenLanguages
-    ? s.spokenLanguages.split(",").map((k: string) => languageFull(k)).filter(Boolean).join(" · ")
+    ? s.spokenLanguages.split(",").map((k: string) => (languageMap[locale] ?? languageMap.fr)[k.trim()] ?? k.trim()).filter(Boolean).join(" · ")
     : null
+  const levelLabel = (levelMap[locale] ?? levelMap.fr)[s.group?.level?.toLowerCase() ?? ""] ?? s.group?.level ?? ""
 
   return (
     <div
       id="registration-card-print"
+      dir={dir}
       style={{
         width: "210mm",
         height: "297mm",
@@ -98,8 +117,8 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
             {school.city && <div style={{ fontSize: "9pt", color: "#777" }}>{school.city}</div>}
           </div>
         </div>
-        <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: "9pt", color: "#666", textTransform: "uppercase", fontWeight: 600 }}>Fiche d&apos;inscription</div>
+        <div style={{ textAlign: isRTL ? "left" : "right" }}>
+          <div style={{ fontSize: "9pt", color: "#666", textTransform: "uppercase", fontWeight: 600 }}>{t("title")}</div>
           <div style={{ fontSize: "11pt", color: "#333", fontFamily: "monospace", marginTop: "4px" }}>{s.studentCode}</div>
         </div>
       </div>
@@ -108,37 +127,37 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between", paddingTop: "12px", paddingBottom: "12px" }}>
 
         {/* Photo + Identité */}
-        <div style={{ display: "flex", gap: "16px", background: "#fafafa", border: "1px solid #e5e5e5", borderRadius: "8px", padding: "14px" }}>
-          <div style={{ width: "110px", height: "140px", border: "1px solid #ccc", borderRadius: "6px", overflow: "hidden", flexShrink: 0, background: "#f5f5f5", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ display: "flex", gap: "16px", background: "#fafafa", border: "1px solid #e5e5e5", borderRadius: "8px", padding: "14px", flexDirection: isRTL ? "row-reverse" : "row" }}>
+          <div style={{ width: "125px", height: "155px", border: "1px solid #ccc", borderRadius: "6px", overflow: "hidden", flexShrink: 0, background: "#f5f5f5", display: "flex", alignItems: "center", justifyContent: "center" }}>
             {u.avatar ? (
               <img src={u.avatar} alt={u.fullName} crossOrigin="anonymous" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
-              <span style={{ fontSize: "10pt", color: "#999", fontWeight: 600 }}>PHOTO</span>
+              <span style={{ fontSize: "10pt", color: "#999", fontWeight: 600 }}>{t("photoPlaceholder")}</span>
             )}
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.5px" }}>Nom complet</div>
+            <div style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.5px" }}>{t("fullName")}</div>
             <div style={{ fontSize: "16pt", fontWeight: "bold", color: "#111", textTransform: "uppercase", letterSpacing: "0.3px" }}>{u.fullName}</div>
             {u.fullNameAr && <div style={{ fontSize: "12pt", color: "#444", marginTop: "2px" }}>{u.fullNameAr}</div>}
 
             <div style={{ display: "flex", gap: "20px", marginTop: "10px", flexWrap: "wrap" }}>
-              <div style={{ minWidth: "80px" }}><div style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase" }}>Code élève</div><div style={{ fontSize: "10pt", fontWeight: "bold", color: "#222" }}>{s.studentCode}</div></div>
-              <div style={{ minWidth: "60px" }}><div style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase" }}>Genre</div><div style={{ fontSize: "10pt", fontWeight: "bold", color: "#222" }}>{gender}</div></div>
-              <div style={{ minWidth: "100px" }}><div style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase" }}>Date de naissance</div><div style={{ fontSize: "10pt", fontWeight: "bold", color: "#222" }}>{fmtDate(s.dateOfBirth)}</div></div>
-              <div style={{ minWidth: "100px" }}><div style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase" }}>Date d&apos;inscription</div><div style={{ fontSize: "10pt", fontWeight: "bold", color: "#222" }}>{fmtDate(u.createdAt)}</div></div>
+              <div style={{ minWidth: "80px" }}><div style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase" }}>{t("studentCode")}</div><div style={{ fontSize: "10pt", fontWeight: "bold", color: "#222" }}>{s.studentCode}</div></div>
+              <div style={{ minWidth: "60px" }}><div style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase" }}>{t("gender")}</div><div style={{ fontSize: "10pt", fontWeight: "bold", color: "#222" }}>{gender}</div></div>
+              <div style={{ minWidth: "100px" }}><div style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase" }}>{t("dateOfBirth")}</div><div style={{ fontSize: "10pt", fontWeight: "bold", color: "#222" }}>{fmtDate(s.dateOfBirth)}</div></div>
+              <div style={{ minWidth: "100px" }}><div style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase" }}>{t("enrollmentDate")}</div><div style={{ fontSize: "10pt", fontWeight: "bold", color: "#222" }}>{fmtDate(u.createdAt)}</div></div>
             </div>
 
-            {(natLabel || langLabel) && (
+            {(natLabel !== "—" || langLabel) && (
               <div style={{ display: "flex", gap: "16px", marginTop: "10px", paddingTop: "8px", borderTop: "1px solid #e0e0e0" }}>
-                {natLabel && natLabel !== "—" && (
+                {natLabel !== "—" && (
                   <div>
-                    <span style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase" }}>Nationalité : </span>
+                    <span style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase" }}>{t("nationality")} : </span>
                     <span style={{ fontSize: "9pt", fontWeight: 600, color: "#333" }}>{natLabel}</span>
                   </div>
                 )}
                 {langLabel && (
                   <div>
-                    <span style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase" }}>Langues : </span>
+                    <span style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase" }}>{t("languages")} : </span>
                     <span style={{ fontSize: "9pt", fontWeight: 600, color: "#333" }}>{langLabel}</span>
                   </div>
                 )}
@@ -149,52 +168,52 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
 
         {/* Scolarité */}
         <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "12px 14px" }}>
-          <div style={{ fontSize: "10pt", fontWeight: "bold", color: "#1D9E75", textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.5px" }}>Scolarité</div>
+          <div style={{ fontSize: "10pt", fontWeight: "bold", color: "#1D9E75", textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.5px" }}>{t("schooling")}</div>
           <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
             <div style={{ minWidth: "90px" }}>
-              <div style={{ fontSize: "9pt", color: "#555" }}>Groupe</div>
-              <div style={{ fontSize: "11pt", fontWeight: "bold" }}>{s.group?.name || "—"}</div>
-              <div style={{ fontSize: "9pt", color: "#777" }}>{levelFull(s.group?.level)}</div>
+              <div style={{ fontSize: "9pt", color: "#555" }}>{t("group")}</div>
+              <div style={{ fontSize: "11pt", fontWeight: "bold" }}>{s.group?.name || t("dash")}</div>
+              <div style={{ fontSize: "9pt", color: "#777" }}>{levelLabel}</div>
               {fmtSchedule(s.group?.schedule) && (
                 <div style={{ fontSize: "9pt", color: "#1D9E75", marginTop: "2px" }}>{fmtSchedule(s.group?.schedule)}</div>
               )}
             </div>
             <div style={{ minWidth: "90px" }}>
-              <div style={{ fontSize: "9pt", color: "#555" }}>Sourah en cours</div>
-              <div style={{ fontSize: "11pt", fontWeight: "bold" }}>{s.currentSurahNote || "—"}</div>
+              <div style={{ fontSize: "9pt", color: "#555" }}>{t("currentSurah")}</div>
+              <div style={{ fontSize: "11pt", fontWeight: "bold" }}>{s.currentSurahNote || t("dash")}</div>
             </div>
             <div style={{ minWidth: "90px" }}>
-              <div style={{ fontSize: "9pt", color: "#555" }}>Enseignant</div>
-              <div style={{ fontSize: "11pt", fontWeight: "bold" }}>{s.teacher?.user?.fullName || "—"}</div>
+              <div style={{ fontSize: "9pt", color: "#555" }}>{t("teacher")}</div>
+              <div style={{ fontSize: "11pt", fontWeight: "bold" }}>{s.teacher?.user?.fullName || t("dash")}</div>
             </div>
             <div style={{ minWidth: "90px" }}>
-              <div style={{ fontSize: "9pt", color: "#555" }}>Statut</div>
+              <div style={{ fontSize: "9pt", color: "#555" }}>{t("status")}</div>
               <div style={{ fontSize: "11pt", fontWeight: "bold", color: u.isActive ? "#16a34a" : "#dc2626" }}>
-                {u.isActive ? "Actif" : "Inactif"}
+                {u.isActive ? t("active") : t("inactive")}
               </div>
             </div>
           </div>
         </div>
 
         {/* Contact + Parents */}
-        <div style={{ display: "flex", gap: "20px" }}>
+        <div style={{ display: "flex", gap: "20px", flexDirection: isRTL ? "row-reverse" : "row" }}>
           <div style={{ flex: 1, background: "#fafafa", border: "1px solid #e5e5e5", borderRadius: "8px", padding: "12px 14px" }}>
-            <div style={{ fontSize: "10pt", fontWeight: "bold", color: "#444", textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.5px" }}>Contact</div>
+            <div style={{ fontSize: "10pt", fontWeight: "bold", color: "#444", textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.5px" }}>{t("contact")}</div>
             <div style={{ fontSize: "10pt", color: "#333", lineHeight: 1.7 }}>
-              <div><span style={{ color: "#666", fontSize: "9pt" }}>Email : </span>{u.email}</div>
-              {u.phone && <div><span style={{ color: "#666", fontSize: "9pt" }}>Téléphone : </span>{u.phone}</div>}
-              {s.emergencyPhone && <div><span style={{ color: "#666", fontSize: "9pt" }}>Urgence : </span><span style={{ color: "#dc2626", fontWeight: 600 }}>{s.emergencyPhone}</span></div>}
+              <div><span style={{ color: "#666", fontSize: "9pt" }}>{t("email")} : </span>{u.email}</div>
+              {u.phone && <div><span style={{ color: "#666", fontSize: "9pt" }}>{t("phone")} : </span>{u.phone}</div>}
+              {s.emergencyPhone && <div><span style={{ color: "#666", fontSize: "9pt" }}>{t("emergency")} : </span><span style={{ color: "#dc2626", fontWeight: 600 }}>{s.emergencyPhone}</span></div>}
               {(s.address || s.city) && (
-                <div><span style={{ color: "#666", fontSize: "9pt" }}>Adresse : </span>{[s.address, s.city, s.postalCode].filter(Boolean).join(", ")}</div>
+                <div><span style={{ color: "#666", fontSize: "9pt" }}>{t("address")} : </span>{[s.address, s.city, s.postalCode].filter(Boolean).join(", ")}</div>
               )}
             </div>
           </div>
           <div style={{ flex: 1, background: "#fafafa", border: "1px solid #e5e5e5", borderRadius: "8px", padding: "12px 14px" }}>
-            <div style={{ fontSize: "10pt", fontWeight: "bold", color: "#444", textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.5px" }}>Parents / Tuteurs</div>
+            <div style={{ fontSize: "10pt", fontWeight: "bold", color: "#444", textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.5px" }}>{t("parents")}</div>
             {s.parentLinks?.length > 0 ? (
               <div style={{ fontSize: "10pt", color: "#333", lineHeight: 1.7 }}>
                 {s.parentLinks.map((link: any) => (
-                  <div key={link.id} style={{ marginBottom: "4px", paddingLeft: "8px", borderLeft: "2px solid #1D9E75" }}>
+                  <div key={link.id} style={{ marginBottom: "4px", paddingLeft: isRTL ? "0" : "8px", paddingRight: isRTL ? "8px" : "0", borderLeft: isRTL ? "none" : "2px solid #1D9E75", borderRight: isRTL ? "2px solid #1D9E75" : "none" }}>
                     <div style={{ fontWeight: 600 }}>{link.parent.user.fullName}</div>
                     {link.parent.user.phone && <div style={{ fontSize: "9pt", color: "#555" }}>{link.parent.user.phone}</div>}
                     {link.parent.user.email && <div style={{ fontSize: "9pt", color: "#555" }}>{link.parent.user.email}</div>}
@@ -202,13 +221,13 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
                 ))}
               </div>
             ) : (
-              <div style={{ fontSize: "10pt", color: "#888", fontStyle: "italic" }}>Aucun parent lié</div>
+              <div style={{ fontSize: "10pt", color: "#888", fontStyle: "italic" }}>{t("noParentLinked")}</div>
             )}
 
             {inviteUrl && (
               <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: "1px solid #e0e0e0" }}>
-                <div style={{ fontSize: "8pt", color: "#555", marginBottom: "4px" }}>Scannez ce QR code pour lier un parent</div>
-                <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                <div style={{ fontSize: "8pt", color: "#555", marginBottom: "4px" }}>{t("scanQR")}</div>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", flexDirection: isRTL ? "row-reverse" : "row" }}>
                   <div style={{ padding: "3px", border: "1px solid #ddd", borderRadius: "4px", background: "#fff" }}>
                     <QRCodeSVG value={inviteUrl} size={64} level="M" />
                   </div>
@@ -224,14 +243,14 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
         {/* Medical */}
         {s.medicalNotes && (
           <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px", padding: "10px 14px" }}>
-            <div style={{ fontSize: "10pt", fontWeight: "bold", color: "#dc2626", textTransform: "uppercase", marginBottom: "4px", letterSpacing: "0.5px" }}>Informations médicales</div>
+            <div style={{ fontSize: "10pt", fontWeight: "bold", color: "#dc2626", textTransform: "uppercase", marginBottom: "4px", letterSpacing: "0.5px" }}>{t("medicalInfo")}</div>
             <div style={{ fontSize: "10pt", color: "#991b1b", whiteSpace: "pre-wrap" }}>{s.medicalNotes}</div>
           </div>
         )}
 
         {/* Signatures */}
         <div style={{ display: "flex", gap: "16px", paddingTop: "12px", borderTop: "1px solid #ccc" }}>
-          {["Signature du parent", "Signature de l'élève", "Signature de l'administration"].map((label) => (
+          {[t("signatureParent"), t("signatureStudent"), t("signatureAdmin")].map((label) => (
             <div key={label} style={{ flex: 1, textAlign: "center" }}>
               <div style={{ fontSize: "9pt", color: "#666", marginBottom: "24px" }}>{label}</div>
               <div style={{ borderBottom: "1px solid #333", width: "100%" }} />
@@ -242,7 +261,7 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
 
       {/* Footer */}
       <div style={{ borderTop: "1px solid #ccc", paddingTop: "8px", textAlign: "center", flexShrink: 0 }}>
-        <div style={{ fontSize: "8pt", color: "#888" }}>Généré le {fmtDate(new Date())}</div>
+        <div style={{ fontSize: "8pt", color: "#888" }}>{t("generatedOn")} {fmtDate(new Date())}</div>
         <div style={{ fontSize: "8pt", color: "#777", marginTop: "3px", display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
           <span style={{ fontWeight: 600 }}>{school.name}</span>
           {school.city && <span>|</span>}
