@@ -136,13 +136,13 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
       <div
         ref={cardRef}
         id="registration-card"
-        className="max-w-[210mm] min-h-[297mm] mx-auto bg-white shadow-xl print:shadow-none print:max-w-none print:w-full print:min-h-0 relative overflow-hidden"
+        className="max-w-[210mm] min-h-[297mm] mx-auto bg-white shadow-xl print:shadow-none print:max-w-none print:w-full print:min-h-[277mm] relative overflow-hidden flex flex-col"
       >
         {/* Bordure décorative */}
         <div className="absolute inset-3 border-2 border-tahfidz-green/20 rounded-xl pointer-events-none print:inset-2" />
         <div className="absolute inset-4 border border-tahfidz-green/10 rounded-lg pointer-events-none print:inset-3" />
 
-        <div className="p-8 print:p-5 space-y-5 print:space-y-3">
+        <div className="p-8 print:p-6 space-y-5 print:space-y-4 flex-1 flex flex-col">
           {/* En-tête */}
           <div className="flex items-center justify-between border-b-2 border-tahfidz-green/20 pb-4 print:pb-3">
             <div className="flex items-center gap-4">
@@ -219,7 +219,7 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
           </div>
 
           {/* Scolarité */}
-          <div className="bg-tahfidz-green-light/30 rounded-xl p-4 print:p-3 border border-tahfidz-green/10">
+          <div className="bg-tahfidz-green-light/30 rounded-xl p-5 print:p-4 border border-tahfidz-green/10">
             <h3 className="text-sm font-bold text-tahfidz-green uppercase tracking-wider mb-3 print:mb-2 flex items-center gap-2">
               <GraduationCap size={16} /> {t("schooling")}
             </h3>
@@ -252,8 +252,8 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
           </div>
 
           {/* Contact */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:gap-3">
-            <div className="space-y-2 print:space-y-1.5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 print:gap-4">
+            <div className="space-y-3 print:space-y-2">
               <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
                 <Phone size={16} className="text-tahfidz-green" /> {t("contact")}
               </h3>
@@ -285,7 +285,7 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
             </div>
 
             {/* Parents */}
-            <div className="space-y-2 print:space-y-1.5">
+            <div className="space-y-3 print:space-y-2">
               <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
                 <Shield size={16} className="text-tahfidz-green" /> {t("parents")}
               </h3>
@@ -338,23 +338,23 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
           )}
 
           {/* Signatures */}
-          <div className="grid grid-cols-3 gap-6 print:gap-4 pt-6 print:pt-4 border-t border-gray-200">
+          <div className="grid grid-cols-3 gap-6 print:gap-4 pt-8 print:pt-8 border-t border-gray-200">
             <div className="text-center">
-              <p className="text-xs text-gray-400 mb-6 print:mb-4">{t("parentSignature")}</p>
+              <p className="text-xs text-gray-400 mb-10 print:mb-10">{t("parentSignature")}</p>
               <div className="border-b border-gray-300 w-full" />
             </div>
             <div className="text-center">
-              <p className="text-xs text-gray-400 mb-6 print:mb-4">{t("studentSignature")}</p>
+              <p className="text-xs text-gray-400 mb-10 print:mb-10">{t("studentSignature")}</p>
               <div className="border-b border-gray-300 w-full" />
             </div>
             <div className="text-center">
-              <p className="text-xs text-gray-400 mb-6 print:mb-4">{t("adminSignature")}</p>
+              <p className="text-xs text-gray-400 mb-10 print:mb-10">{t("adminSignature")}</p>
               <div className="border-b border-gray-300 w-full" />
             </div>
           </div>
 
           {/* Footer */}
-          <div className="border-t border-gray-200 pt-3 mt-2 print:pt-2 print:mt-1">
+          <div className="border-t border-gray-200 pt-4 mt-auto print:pt-4 print:mt-auto">
             <div className="flex flex-col items-center gap-1 text-center">
               <p className="text-[10px] text-gray-400 uppercase tracking-wider">
                 {t("generatedOn")} {formatDate(new Date())}
