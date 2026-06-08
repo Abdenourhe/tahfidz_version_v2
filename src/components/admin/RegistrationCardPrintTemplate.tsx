@@ -23,6 +23,16 @@ const languageFull = (key: string) => {
   return map[key.trim()] ?? key.trim()
 }
 
+const levelFull = (level?: string | null) => {
+  const map: Record<string, string> = {
+    beginner: "Débutant",
+    intermediate: "Intermédiaire",
+    advanced: "Avancé",
+    expert: "Expert",
+  }
+  return map[level?.toLowerCase() ?? ""] ?? level ?? ""
+}
+
 export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Props) {
   const s = student
   const u = s.user
@@ -98,37 +108,39 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between", paddingTop: "12px", paddingBottom: "12px" }}>
 
         {/* Photo + Identité */}
-        <div style={{ display: "flex", gap: "16px" }}>
+        <div style={{ display: "flex", gap: "16px", background: "#fafafa", border: "1px solid #e5e5e5", borderRadius: "8px", padding: "14px" }}>
           <div style={{ width: "70px", height: "90px", border: "1px solid #ccc", borderRadius: "6px", overflow: "hidden", flexShrink: 0, background: "#f5f5f5", display: "flex", alignItems: "center", justifyContent: "center" }}>
             {u.avatar ? (
               <img src={u.avatar} alt={u.fullName} crossOrigin="anonymous" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
-              <span style={{ fontSize: "28px" }}>👤</span>
+              <span style={{ fontSize: "10pt", color: "#999", fontWeight: 600 }}>PHOTO</span>
             )}
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: "9pt", color: "#666", textTransform: "uppercase", fontWeight: 600 }}>Nom complet</div>
-            <div style={{ fontSize: "15pt", fontWeight: "bold", color: "#111" }}>{u.fullName}</div>
+            <div style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.5px" }}>Nom complet</div>
+            <div style={{ fontSize: "16pt", fontWeight: "bold", color: "#111", textTransform: "uppercase", letterSpacing: "0.3px" }}>{u.fullName}</div>
             {u.fullNameAr && <div style={{ fontSize: "12pt", color: "#444", marginTop: "2px" }}>{u.fullNameAr}</div>}
 
-            <div style={{ display: "flex", gap: "24px", marginTop: "8px", flexWrap: "wrap" }}>
-              <div><div style={{ fontSize: "9pt", color: "#666" }}>Code élève</div><div style={{ fontSize: "11pt", fontWeight: "bold" }}>{s.studentCode}</div></div>
-              <div><div style={{ fontSize: "9pt", color: "#666" }}>Genre</div><div style={{ fontSize: "11pt", fontWeight: "bold" }}>{gender}</div></div>
-              <div><div style={{ fontSize: "9pt", color: "#666" }}>Date de naissance</div><div style={{ fontSize: "11pt", fontWeight: "bold" }}>{fmtDate(s.dateOfBirth)}</div></div>
-              <div><div style={{ fontSize: "9pt", color: "#666" }}>Date d&apos;inscription</div><div style={{ fontSize: "11pt", fontWeight: "bold" }}>{fmtDate(u.createdAt)}</div></div>
+            <div style={{ display: "flex", gap: "20px", marginTop: "10px", flexWrap: "wrap" }}>
+              <div style={{ minWidth: "80px" }}><div style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase" }}>Code élève</div><div style={{ fontSize: "10pt", fontWeight: "bold", color: "#222" }}>{s.studentCode}</div></div>
+              <div style={{ minWidth: "60px" }}><div style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase" }}>Genre</div><div style={{ fontSize: "10pt", fontWeight: "bold", color: "#222" }}>{gender}</div></div>
+              <div style={{ minWidth: "100px" }}><div style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase" }}>Date de naissance</div><div style={{ fontSize: "10pt", fontWeight: "bold", color: "#222" }}>{fmtDate(s.dateOfBirth)}</div></div>
+              <div style={{ minWidth: "100px" }}><div style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase" }}>Date d&apos;inscription</div><div style={{ fontSize: "10pt", fontWeight: "bold", color: "#222" }}>{fmtDate(u.createdAt)}</div></div>
             </div>
 
             {(natLabel || langLabel) && (
-              <div style={{ display: "flex", gap: "8px", marginTop: "8px", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: "16px", marginTop: "10px", paddingTop: "8px", borderTop: "1px solid #e0e0e0" }}>
                 {natLabel && natLabel !== "—" && (
-                  <span style={{ padding: "3px 10px", borderRadius: "12px", background: "#ecfdf5", color: "#047857", fontSize: "9pt", fontWeight: 600, border: "1px solid #a7f3d0" }}>
-                    {natLabel}
-                  </span>
+                  <div>
+                    <span style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase" }}>Nationalité : </span>
+                    <span style={{ fontSize: "9pt", fontWeight: 600, color: "#333" }}>{natLabel}</span>
+                  </div>
                 )}
                 {langLabel && (
-                  <span style={{ padding: "3px 10px", borderRadius: "12px", background: "#eff6ff", color: "#1d4ed8", fontSize: "9pt", fontWeight: 600, border: "1px solid #bfdbfe" }}>
-                    {langLabel}
-                  </span>
+                  <div>
+                    <span style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase" }}>Langues : </span>
+                    <span style={{ fontSize: "9pt", fontWeight: 600, color: "#333" }}>{langLabel}</span>
+                  </div>
                 )}
               </div>
             )}
@@ -137,14 +149,14 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
 
         {/* Scolarité */}
         <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "12px 14px" }}>
-          <div style={{ fontSize: "10pt", fontWeight: "bold", color: "#1D9E75", textTransform: "uppercase", marginBottom: "8px" }}>🎓 Scolarité</div>
+          <div style={{ fontSize: "10pt", fontWeight: "bold", color: "#1D9E75", textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.5px" }}>Scolarité</div>
           <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
             <div style={{ minWidth: "90px" }}>
               <div style={{ fontSize: "9pt", color: "#555" }}>Groupe</div>
               <div style={{ fontSize: "11pt", fontWeight: "bold" }}>{s.group?.name || "—"}</div>
-              <div style={{ fontSize: "9pt", color: "#777" }}>{s.group?.level || ""}</div>
+              <div style={{ fontSize: "9pt", color: "#777" }}>{levelFull(s.group?.level)}</div>
               {fmtSchedule(s.group?.schedule) && (
-                <div style={{ fontSize: "9pt", color: "#1D9E75", marginTop: "2px" }}>🕐 {fmtSchedule(s.group?.schedule)}</div>
+                <div style={{ fontSize: "9pt", color: "#1D9E75", marginTop: "2px" }}>{fmtSchedule(s.group?.schedule)}</div>
               )}
             </div>
             <div style={{ minWidth: "90px" }}>
@@ -166,36 +178,36 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
 
         {/* Contact + Parents */}
         <div style={{ display: "flex", gap: "20px" }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: "10pt", fontWeight: "bold", color: "#444", textTransform: "uppercase", marginBottom: "6px" }}>📞 Contact</div>
-            <div style={{ fontSize: "10.5pt", color: "#333", lineHeight: 1.6 }}>
-              <div>✉️ {u.email}</div>
-              {u.phone && <div>📱 {u.phone}</div>}
-              {s.emergencyPhone && <div style={{ color: "#dc2626", fontWeight: 600 }}>🚨 Urgence: {s.emergencyPhone}</div>}
+          <div style={{ flex: 1, background: "#fafafa", border: "1px solid #e5e5e5", borderRadius: "8px", padding: "12px 14px" }}>
+            <div style={{ fontSize: "10pt", fontWeight: "bold", color: "#444", textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.5px" }}>Contact</div>
+            <div style={{ fontSize: "10pt", color: "#333", lineHeight: 1.7 }}>
+              <div><span style={{ color: "#666", fontSize: "9pt" }}>Email : </span>{u.email}</div>
+              {u.phone && <div><span style={{ color: "#666", fontSize: "9pt" }}>Téléphone : </span>{u.phone}</div>}
+              {s.emergencyPhone && <div><span style={{ color: "#666", fontSize: "9pt" }}>Urgence : </span><span style={{ color: "#dc2626", fontWeight: 600 }}>{s.emergencyPhone}</span></div>}
               {(s.address || s.city) && (
-                <div>📍 {[s.address, s.city, s.postalCode].filter(Boolean).join(", ")}</div>
+                <div><span style={{ color: "#666", fontSize: "9pt" }}>Adresse : </span>{[s.address, s.city, s.postalCode].filter(Boolean).join(", ")}</div>
               )}
             </div>
           </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: "10pt", fontWeight: "bold", color: "#444", textTransform: "uppercase", marginBottom: "6px" }}>🛡️ Parents / Tuteurs</div>
+          <div style={{ flex: 1, background: "#fafafa", border: "1px solid #e5e5e5", borderRadius: "8px", padding: "12px 14px" }}>
+            <div style={{ fontSize: "10pt", fontWeight: "bold", color: "#444", textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.5px" }}>Parents / Tuteurs</div>
             {s.parentLinks?.length > 0 ? (
-              <div style={{ fontSize: "10.5pt", color: "#333", lineHeight: 1.6 }}>
+              <div style={{ fontSize: "10pt", color: "#333", lineHeight: 1.7 }}>
                 {s.parentLinks.map((link: any) => (
                   <div key={link.id} style={{ marginBottom: "4px", paddingLeft: "8px", borderLeft: "2px solid #1D9E75" }}>
                     <div style={{ fontWeight: 600 }}>{link.parent.user.fullName}</div>
-                    {link.parent.user.phone && <div style={{ fontSize: "9.5pt", color: "#555" }}>{link.parent.user.phone}</div>}
-                    {link.parent.user.email && <div style={{ fontSize: "9.5pt", color: "#555" }}>{link.parent.user.email}</div>}
+                    {link.parent.user.phone && <div style={{ fontSize: "9pt", color: "#555" }}>{link.parent.user.phone}</div>}
+                    {link.parent.user.email && <div style={{ fontSize: "9pt", color: "#555" }}>{link.parent.user.email}</div>}
                   </div>
                 ))}
               </div>
             ) : (
-              <div style={{ fontSize: "10.5pt", color: "#888", fontStyle: "italic" }}>Aucun parent lié</div>
+              <div style={{ fontSize: "10pt", color: "#888", fontStyle: "italic" }}>Aucun parent lié</div>
             )}
 
             {inviteUrl && (
-              <div style={{ marginTop: "8px", paddingTop: "6px", borderTop: "1px solid #eee" }}>
-                <div style={{ fontSize: "9pt", color: "#555", marginBottom: "4px" }}>Scannez ce QR code pour lier un parent</div>
+              <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: "1px solid #e0e0e0" }}>
+                <div style={{ fontSize: "8pt", color: "#555", marginBottom: "4px" }}>Scannez ce QR code pour lier un parent</div>
                 <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
                   <div style={{ padding: "3px", border: "1px solid #ddd", borderRadius: "4px", background: "#fff" }}>
                     <QRCodeSVG value={inviteUrl} size={64} level="M" />
@@ -212,8 +224,8 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
         {/* Medical */}
         {s.medicalNotes && (
           <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px", padding: "10px 14px" }}>
-            <div style={{ fontSize: "10pt", fontWeight: "bold", color: "#dc2626", textTransform: "uppercase", marginBottom: "4px" }}>🏥 Informations médicales</div>
-            <div style={{ fontSize: "10.5pt", color: "#991b1b", whiteSpace: "pre-wrap" }}>{s.medicalNotes}</div>
+            <div style={{ fontSize: "10pt", fontWeight: "bold", color: "#dc2626", textTransform: "uppercase", marginBottom: "4px", letterSpacing: "0.5px" }}>Informations médicales</div>
+            <div style={{ fontSize: "10pt", color: "#991b1b", whiteSpace: "pre-wrap" }}>{s.medicalNotes}</div>
           </div>
         )}
 
@@ -236,9 +248,9 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
           {school.city && <span>|</span>}
           {school.city && <span>{school.city}</span>}
           {school.address && <span>|</span>}
-          {school.address && <span>📍 {school.address}</span>}
+          {school.address && <span>{school.address}</span>}
           {school.phone && <span>|</span>}
-          {school.phone && <span>📞 {school.phone}</span>}
+          {school.phone && <span>{school.phone}</span>}
         </div>
       </div>
     </div>
