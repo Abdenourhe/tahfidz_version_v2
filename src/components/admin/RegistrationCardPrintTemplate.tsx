@@ -35,6 +35,15 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
 
   const gender = u.gender === "MALE" ? "Garçon" : u.gender === "FEMALE" ? "Fille" : "—"
 
+  const fmtSchedule = (schedule?: Record<string, string> | null) => {
+    if (!schedule || Object.keys(schedule).length === 0) return null
+    const days: Record<string, string> = {
+      MONDAY: "Lundi", TUESDAY: "Mardi", WEDNESDAY: "Mercredi",
+      THURSDAY: "Jeudi", FRIDAY: "Vendredi", SATURDAY: "Samedi", SUNDAY: "Dimanche",
+    }
+    return Object.entries(schedule).map(([day, time]) => `${days[day] ?? day}: ${time}`).join(" · ")
+  }
+
   const natLabel = nationalityFull(s.nationality)
   const langLabel = s.spokenLanguages
     ? s.spokenLanguages.split(",").map((k: string) => languageFull(k)).filter(Boolean).join(" · ")
@@ -134,6 +143,9 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
               <div style={{ fontSize: "9pt", color: "#555" }}>Groupe</div>
               <div style={{ fontSize: "11pt", fontWeight: "bold" }}>{s.group?.name || "—"}</div>
               <div style={{ fontSize: "9pt", color: "#777" }}>{s.group?.level || ""}</div>
+              {fmtSchedule(s.group?.schedule) && (
+                <div style={{ fontSize: "9pt", color: "#1D9E75", marginTop: "2px" }}>🕐 {fmtSchedule(s.group?.schedule)}</div>
+              )}
             </div>
             <div style={{ minWidth: "90px" }}>
               <div style={{ fontSize: "9pt", color: "#555" }}>Sourah en cours</div>
