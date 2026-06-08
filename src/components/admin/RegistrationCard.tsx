@@ -11,11 +11,13 @@ import { jsPDF } from "jspdf"
 
 interface Props {
   student: any
-  inviteUrl: string | null
+  inviteUrl?: string | null
   school: { name: string; logo?: string | null; slug?: string; address?: string | null; city?: string | null; phone?: string | null }
+  variant?: "default" | "print"
 }
 
-export function RegistrationCard({ student, inviteUrl, school }: Props) {
+export function RegistrationCard({ student, inviteUrl, school, variant = "default" }: Props) {
+  const isPrint = variant === "print"
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
   const t = useT("registrationCard")
@@ -24,54 +26,8 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
   const [copied, setCopied] = useState(false)
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
 
-  const handlePrint = async () => {
-    if (!cardRef.current) return
-    setIsGeneratingPDF(true)
-    await new Promise((resolve) => setTimeout(resolve, 100))
-    try {
-      const canvas = await html2canvas(cardRef.current, { scale: 2, useCORS: true })
-      const imgData = canvas.toDataURL("image/png")
-      const printWindow = window.open("", "_blank")
-      if (!printWindow) return
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>Fiche d'inscription</title>
-            <style>
-              @page { size: A4 portrait; margin: 0; }
-              * { margin: 0; padding: 0; box-sizing: border-box; }
-              body {
-                display: flex;
-                justify-content: center;
-                align-items: flex-start;
-                min-height: 100vh;
-                background: white;
-              }
-              img {
-                width: 210mm;
-                height: 297mm;
-                object-fit: contain;
-                display: block;
-              }
-              @media print {
-                body { align-items: flex-start; }
-              }
-            </style>
-          </head>
-          <body>
-            <img src="${imgData}" alt="Fiche d'inscription" />
-          </body>
-        </html>
-      `)
-      printWindow.document.close()
-      setTimeout(() => {
-        printWindow.focus()
-        printWindow.print()
-      }, 500)
-    } finally {
-      setIsGeneratingPDF(false)
-    }
+  const handlePrint = () => {
+    window.open(`/print/registration-card/${student.id}`, "_blank")
   }
 
   const handleDownloadPDF = async () => {
@@ -160,30 +116,32 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
 
   return (
     <div className="min-h-screen bg-gray-100 py-8 print:py-0 print:bg-white">
-      {/* Boutons (cachés en print et pendant génération PDF) */}
-      <div id="pdf-btn" className={`max-w-[210mm] mx-auto mb-4 px-4 print:hidden flex justify-between items-center ${isGeneratingPDF ? "hidden" : ""}`}>
-        <h1 className="text-xl font-bold text-gray-800">{t("title")}</h1>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleDownloadPDF}
-            className="flex items-center gap-2 px-5 py-2.5 bg-tahfidz-green text-white text-sm font-semibold rounded-xl hover:bg-tahfidz-green-dark transition shadow-sm"
-          >
-            <Download size={16} /> PDF
-          </button>
-          <button
-            onClick={handlePrint}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gray-700 text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition shadow-sm"
-          >
-            <Printer size={16} /> {t("print")}
-          </button>
+      {/* Boutons (cachés en print mode et pendant génération PDF) */}
+      {!isPrint && (
+        <div id="pdf-btn" className={`max-w-[210mm] mx-auto mb-4 px-4 print:hidden flex justify-between items-center ${isGeneratingPDF ? "hidden" : ""}`}>
+          <h1 className="text-xl font-bold text-gray-800">{t("title")}</h1>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleDownloadPDF}
+              className="flex items-center gap-2 px-5 py-2.5 bg-tahfidz-green text-white text-sm font-semibold rounded-xl hover:bg-tahfidz-green-dark transition shadow-sm"
+            >
+              <Download size={16} /> PDF
+            </button>
+            <button
+              onClick={handlePrint}
+              className="flex items-center gap-2 px-5 py-2.5 bg-gray-700 text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition shadow-sm"
+            >
+              <Printer size={16} /> {t("print")}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Carte A4 */}
       <div
         ref={cardRef}
         id="registration-card"
-        className={`max-w-[210mm] min-h-[297mm] print:min-h-[265mm] mx-auto bg-white shadow-xl print:shadow-none print:max-w-none print:w-full relative overflow-hidden flex flex-col ${isGeneratingPDF ? "h-[297mm]" : ""}`}
+        className={`max-w-[210mm] min-h-[297mm] ${isPrint ? "h-[297mm]" : "print:min-h-[265mm]"} mx-auto bg-white shadow-xl print:shadow-none print:max-w-none print:w-full relative overflow-hidden flex flex-col ${!isPrint && isGeneratingPDF ? "h-[297mm]" : ""}`}
       >
         {/* Bordure décorative */}
         <div className="absolute inset-3 border-2 border-tahfidz-green/20 rounded-xl pointer-events-none print:inset-2" />
@@ -350,8 +308,8 @@ export function RegistrationCard({ student, inviteUrl, school }: Props) {
                 <p className="text-sm text-gray-400 italic">{t("noParents")}</p>
               )}
 
-              {/* QR Code invitation */}
-              {inviteUrl && (
+              {/* QR Code invitation — uniquement en mode default */}
+              {!isPrint && inviteUrl && (
                 <div className="mt-3 pt-3 border-t border-gray-100 print:hidden">
                   <p className="text-xs text-gray-500 mb-2">{t("scanToLinkParent")}</p>
                   <div className="flex items-center gap-3">
