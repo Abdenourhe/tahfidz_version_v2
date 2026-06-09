@@ -39,12 +39,33 @@ export default async function ParentDashboard() {
   if (!parent) redirect("/login")
 
   const children = parent.childrenLinks.map((link) => link.student)
+  const childrenIds = children.map(c => c.id)
+
+  // Check which children have attendance marked for tomorrow
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  tomorrow.setHours(0, 0, 0, 0)
+  const tomorrowEnd = new Date(tomorrow)
+  tomorrowEnd.setDate(tomorrowEnd.getDate() + 1)
+
+  const tomorrowAttendances = childrenIds.length > 0
+    ? await prisma.attendance.findMany({
+        where: {
+          studentId: { in: childrenIds },
+          date: { gte: tomorrow, lt: tomorrowEnd },
+        },
+        select: { studentId: true, status: true },
+      })
+    : []
+
+  const missingIds = childrenIds.filter(id => !tomorrowAttendances.some(a => a.studentId === id))
 
   return (
     <div className="max-w-3xl mx-auto">
       <ParentDashboardClient
         todayDate={formatDate(new Date())}
         children={children}
+        missingTomorrowIds={missingIds}
       />
     </div>
   )

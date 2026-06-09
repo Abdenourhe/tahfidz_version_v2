@@ -1,10 +1,9 @@
 "use client"
 // src/components/parent/ParentDashboardClient.tsx
 
-import { useState } from "react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { AvatarLightbox } from "@/components/AvatarLightbox"
-import { BookOpen, CalendarDays, GraduationCap, Star, TrendingUp, User, ArrowRight } from "lucide-react"
+import { CalendarDays, GraduationCap, Star, User, ArrowRight } from "lucide-react"
 import ParentDailyLogView from "./ParentDailyLogView"
 import { useSession } from "next-auth/react"
 import Image from "next/image"
@@ -24,6 +23,7 @@ interface Child {
 interface Props {
   todayDate: string
   children: Child[]
+  missingTomorrowIds: string[]
 }
 
 function ChildCard({ child }: { child: Child }) {
@@ -98,19 +98,7 @@ function ChildCard({ child }: { child: Child }) {
           </div>
         )}
 
-        {/* Quick link to attendance */}
-        <Link
-          href="/parent/attendance"
-          className="mt-4 flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-        >
-          <div className="flex items-center gap-2">
-            <CalendarDays size={16} className="text-emerald-600 dark:text-emerald-400" />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-              {locale === "ar" ? "تسجيل الحضور" : locale === "en" ? "Mark attendance" : "Marquer la présence"}
-            </span>
-          </div>
-          <ArrowRight size={14} className="text-gray-400" />
-        </Link>
+
       </div>
 
       {/* Daily log */}
@@ -121,11 +109,14 @@ function ChildCard({ child }: { child: Child }) {
   )
 }
 
-export function ParentDashboardClient({ todayDate, children }: Props) {
+export function ParentDashboardClient({ todayDate, children, missingTomorrowIds }: Props) {
   const t = useT("parentDashboardClient")
+  const { locale } = useLanguage()
   const { data: session } = useSession()
   const schoolName = (session?.user as any)?.schoolName || "TAHFIDZ"
   const schoolLogo = (session?.user as any)?.schoolLogo
+
+  const missingChildren = children.filter(c => missingTomorrowIds.includes(c.id))
 
   return (
     <div className="space-y-6">
@@ -143,6 +134,37 @@ export function ParentDashboardClient({ todayDate, children }: Props) {
           <p className="text-xs text-gray-500">{t("title")} · {todayDate}</p>
         </div>
       </div>
+
+      {/* Attendance alert banner */}
+      {missingChildren.length > 0 && (
+        <Link
+          href="/parent/attendance"
+          className="flex items-center gap-3 p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-2xl hover:bg-amber-100 dark:hover:bg-amber-900/20 transition"
+        >
+          <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-800/30 flex items-center justify-center shrink-0">
+            <CalendarDays size={18} className="text-amber-600 dark:text-amber-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+              {missingChildren.length === 1
+                ? (locale === "ar"
+                    ? `لم يتم تسجيل حضور ${missingChildren[0].user.fullName} ليوم الغد`
+                    : locale === "en"
+                      ? `${missingChildren[0].user.fullName}'s attendance for tomorrow is not marked`
+                      : `La présence de ${missingChildren[0].user.fullName} pour demain n'est pas signalée`)
+                : (locale === "ar"
+                    ? `لم يتم تسجيل حضور ${missingChildren.length} أطفال ليوم الغد`
+                    : locale === "en"
+                      ? `${missingChildren.length} children's attendance for tomorrow is not marked`
+                      : `La présence de ${missingChildren.length} enfants pour demain n'est pas signalée`)}
+            </p>
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+              {locale === "ar" ? "انقر للتسجيل →" : locale === "en" ? "Click to mark →" : "Cliquez pour marquer →"}
+            </p>
+          </div>
+          <ArrowRight size={16} className="text-amber-400 shrink-0" />
+        </Link>
+      )}
 
       {children.length === 0 ? (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-10 text-center">
