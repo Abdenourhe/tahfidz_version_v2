@@ -11,7 +11,7 @@ interface Child {
   student: {
     id: string
     user: { fullName: string; fullNameAr?: string | null }
-    group: { id: string; name: string } | null
+    group: { id: string; name: string; schedule?: Record<string, string> | null } | null
     teacher: { user: { fullName: string } } | null
   }
 }
@@ -24,6 +24,30 @@ const STATUS_OPTIONS = [
 ]
 
 const RELATION_LABELS: Record<string, string> = { father: "Père", mother: "Mère", guardian: "Tuteur" }
+
+const DAY_KEYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const
+
+function getCourseDayIndices(children: Child[]): number[] {
+  const indices = new Set<number>()
+  children.forEach(child => {
+    const schedule = child.student.group?.schedule
+    if (schedule) {
+      Object.keys(schedule).forEach(day => {
+        const idx = DAY_KEYS.indexOf(day.toLowerCase() as typeof DAY_KEYS[number])
+        if (idx >= 0) indices.add(idx)
+      })
+    }
+  })
+  return Array.from(indices).sort((a, b) => a - b)
+}
+
+function hasCourseOnDay(child: Child, dateStr: string): boolean {
+  const schedule = child.student.group?.schedule
+  if (!schedule) return false
+  const dayIndex = new Date(`${dateStr}T12:00:00`).getDay()
+  const dayKey = DAY_KEYS[dayIndex]
+  return !!schedule[dayKey] || !!schedule[dayKey.toUpperCase()]
+}
 
 // Returns date string YYYY-MM-DD offset from today
 function offsetDate(days: number): string {
@@ -178,8 +202,13 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
     }
   }
 
-  // ── Quick day buttons (tomorrow to tomorrow+6) ──
-  const quickDays = Array.from({ length: 7 }, (_, i) => offsetDate(i + 1))
+  // ── Course days only ──
+  const courseDayIndices = getCourseDayIndices(children)
+  const quickDays = Array.from({ length: 14 }, (_, i) => offsetDate(i + 1))
+    .filter(d => {
+      const dayIdx = new Date(`${d}T12:00:00`).getDay()
+      return courseDayIndices.includes(dayIdx)
+    })
 
   // How many selections made
   const selectionCount = Object.values(attendance).filter(v => !!v).length
@@ -280,84 +309,87 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
           </div>
         ) : (
           <div className="space-y-3">
-            {children.map(child => {
-              const hasGroup  = !!child.student.group
-              const selected  = attendance[child.student.id] || ""
-              const hasChoice = !!selected
+            {children
+              .filter(child => hasCourseOnDay(child, date))
+              .map(child => {
+                const selected  = attendance[child.student.id] || ""
+                const hasChoice = !!selected
 
-              return (
-                <div key={child.id}
-                  className={`rounded-xl border p-4 transition ${
-                    hasChoice ? "border-tahfidz-green/40 bg-tahfidz-green-light/20" : "border-gray-100 bg-gray-50"
-                  }`}>
-                  {/* Child header */}
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full gradient-tahfidz flex items-center justify-center flex-shrink-0">
-                      <span className="text-white font-bold text-sm">{child.student.user.fullName.charAt(0)}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-semibold text-gray-900 text-sm">{child.student.user.fullName}</p>
-                        {hasChoice && (
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                            selected === "PRESENT" ? "bg-green-100 text-green-700" :
-                            selected === "LATE"    ? "bg-yellow-100 text-yellow-700" :
-                            selected === "EXCUSED" ? "bg-blue-100 text-blue-700" :
-                            "bg-red-100 text-red-700"
-                          }`}>
-                            {STATUS_OPTIONS.find(o => o.value === selected)?.label}
+                return (
+                  <div key={child.id}
+                    className={`rounded-xl border p-4 transition ${
+                      hasChoice ? "border-tahfidz-green/40 bg-tahfidz-green-light/20" : "border-gray-100 bg-gray-50"
+                    }`}>
+                    {/* Child header */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-full gradient-tahfidz flex items-center justify-center flex-shrink-0">
+                        <span className="text-white font-bold text-sm">{child.student.user.fullName.charAt(0)}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold text-gray-900 text-sm">{child.student.user.fullName}</p>
+                          {hasChoice && (
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                              selected === "PRESENT" ? "bg-green-100 text-green-700" :
+                              selected === "LATE"    ? "bg-yellow-100 text-yellow-700" :
+                              selected === "EXCUSED" ? "bg-blue-100 text-blue-700" :
+                              "bg-red-100 text-red-700"
+                            }`}>
+                              {STATUS_OPTIONS.find(o => o.value === selected)?.label}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          <span className="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded mr-1.5">
+                            {RELATION_LABELS[child.relation] ?? child.relation}
                           </span>
-                        )}
+                          {child.student.group?.name ?? <span className="text-orange-500">Sans groupe</span>}
+                        </p>
                       </div>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        <span className="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded mr-1.5">
-                          {RELATION_LABELS[child.relation] ?? child.relation}
-                        </span>
-                        {child.student.group?.name ?? <span className="text-orange-500">Sans groupe</span>}
-                      </p>
                     </div>
+
+                    {/* Status buttons — no default selection */}
+                    <div className="flex gap-2 flex-wrap mb-2.5">
+                      {STATUS_OPTIONS.map(opt => {
+                        const isSelected = selected === opt.value
+                        return (
+                          <button key={opt.value}
+                            onClick={() => select(child.student.id, opt.value)}
+                            className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl border-2 transition ${
+                              isSelected ? opt.active : opt.inactive
+                            }`}>
+                            <opt.icon size={12} />
+                            {opt.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    {(selected === "ABSENT" || selected === "EXCUSED") && (
+                      <input type="text"
+                        value={notes[child.student.id] || ""}
+                        onChange={e => setNotes(p => ({ ...p, [child.student.id]: e.target.value }))}
+                        placeholder="Motif (maladie, voyage, rendez-vous…)"
+                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-tahfidz-green" />
+                    )}
                   </div>
+                )
+              })}
 
-                  {hasGroup ? (
-                    <>
-                      {/* Status buttons — no default selection */}
-                      <div className="flex gap-2 flex-wrap mb-2.5">
-                        {STATUS_OPTIONS.map(opt => {
-                          const isSelected = selected === opt.value
-                          return (
-                            <button key={opt.value}
-                              onClick={() => select(child.student.id, opt.value)}
-                              className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl border-2 transition ${
-                                isSelected ? opt.active : opt.inactive
-                              }`}>
-                              <opt.icon size={12} />
-                              {opt.label}
-                            </button>
-                          )
-                        })}
-                      </div>
-
-                      {(selected === "ABSENT" || selected === "EXCUSED") && (
-                        <input type="text"
-                          value={notes[child.student.id] || ""}
-                          onChange={e => setNotes(p => ({ ...p, [child.student.id]: e.target.value }))}
-                          placeholder="Motif (maladie, voyage, rendez-vous…)"
-                          className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-tahfidz-green" />
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-xs text-orange-600 bg-orange-100 px-3 py-2 rounded-lg">
-                      ⚠️ Aucun groupe assigné — contactez l'administrateur
-                    </p>
-                  )}
-                </div>
-              )
-            })}
+            {children.filter(c => hasCourseOnDay(c, date)).length === 0 && (
+              <div className="text-center py-8">
+                <p className="text-sm text-gray-400">
+                  {courseDayIndices.length === 0
+                    ? "Aucun horaire de cours défini pour vos enfants."
+                    : "Aucun enfant n'a cours ce jour-là."}
+                </p>
+              </div>
+            )}
           </div>
         )}
 
         {/* Save button */}
-        {isFuture && !loading && children.some(c => c.student.group) && (
+        {isFuture && !loading && children.some(c => hasCourseOnDay(c, date)) && (
           <div className="space-y-2">
             <button onClick={save} disabled={saving || selectionCount === 0}
               className="w-full flex items-center justify-center gap-2 py-3 gradient-tahfidz text-white text-sm font-semibold rounded-xl hover:opacity-90 disabled:opacity-40 transition">
