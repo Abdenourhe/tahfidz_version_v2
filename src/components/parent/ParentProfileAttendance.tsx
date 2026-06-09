@@ -75,6 +75,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const [saving,     setSaving]     = useState(false)
   const [saved,      setSaved]      = useState(false)
   const [error,      setError]      = useState<string | null>(null)
+  const [dayWindow,  setDayWindow]  = useState(30)
 
   const isFuture = date > today
 
@@ -202,9 +203,9 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
     }
   }
 
-  // ── Course days only (next 30 days) ──
+  // ── Course days only ──
   const courseDayIndices = getCourseDayIndices(children)
-  const quickDays = Array.from({ length: 30 }, (_, i) => offsetDate(i + 1))
+  const quickDays = Array.from({ length: dayWindow }, (_, i) => offsetDate(i + 1))
     .filter(d => {
       const dayIdx = new Date(`${d}T12:00:00`).getDay()
       return courseDayIndices.includes(dayIdx)
@@ -262,6 +263,15 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
               )
             })}
           </div>
+
+          {quickDays.length > 0 && dayWindow < 90 && (
+            <button
+              onClick={() => setDayWindow(w => Math.min(w + 30, 90))}
+              className="text-xs text-gray-500 hover:text-tahfidz-green font-medium transition"
+            >
+              + Voir plus de dates
+            </button>
+          )}
 
           <p className="text-xs text-tahfidz-green font-medium flex items-center gap-1.5">
             <Calendar size={11} /> <span className="capitalize">{formatDateLabel(date)}</span>
