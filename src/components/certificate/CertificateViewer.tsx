@@ -432,21 +432,33 @@ export function CertificateViewer({ student, school, templates, defaultTemplateI
                     </p>
                   )
                 ) : (
-                  <textarea
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    placeholder={isAr ? "اكتب ملاحظة أو تعليق…" : L === "en" ? "Write a note or observation…" : "Écrivez une note ou observation…"}
-                    maxLength={200}
-                    rows={2}
-                    className="w-full px-4 py-3 text-sm italic text-center leading-relaxed bg-transparent border-0 focus:outline-none focus:ring-0 resize-none placeholder:text-gray-300 dark:placeholder:text-gray-600"
+                  <div
+                    className="w-full rounded-lg px-4 py-3"
                     style={{
-                      color: t.textColor + "cc",
-                      fontFamily: "'Georgia', 'Times New Roman', serif",
+                      background: t.lightColor,
+                      border: `1px dashed ${t.accentColor}40`,
                     }}
-                  />
-                )}
-                {!hideToolbar && note.length > 0 && (
-                  <p className="text-[9px] text-gray-300 dark:text-gray-600 text-right pr-2">{note.length}/200</p>
+                  >
+                    <textarea
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                      placeholder={isAr ? "اكتب ملاحظة أو تعليق…" : L === "en" ? "Write a note or observation…" : "Écrivez une note ou observation…"}
+                      maxLength={200}
+                      rows={2}
+                      className="w-full text-sm italic text-center leading-relaxed resize-none border-0 p-0"
+                      style={{
+                        color: t.textColor + "cc",
+                        fontFamily: "'Georgia', 'Times New Roman', serif",
+                        background: "transparent",
+                        outline: "none",
+                      }}
+                    />
+                    {note.length > 0 && (
+                      <p className="text-[9px] text-right mt-1" style={{ color: t.accentColor + "80" }}>
+                        {note.length}/200
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
