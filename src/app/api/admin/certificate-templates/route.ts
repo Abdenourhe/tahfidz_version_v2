@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
-import { readFile, writeFile } from "fs/promises"
-import { join } from "path"
-
-const TEMPLATES_PATH = join(process.cwd(), "src", "data", "certificateTemplates.json")
+import { prisma } from "@/lib/prisma"
 
 const LEVELS = ["beginner", "intermediate", "advanced", "expert", "attendance", "participation"]
+
 const REQUIRED_FIELDS = [
   "id", "title", "titleAr", "subtitle", "bodyText", "arabicVerse",
   "primaryColor", "accentColor", "lightColor", "textColor", "badgeEmoji",
@@ -20,10 +18,15 @@ export async function GET() {
     return NextResponse.json({ error: "Accès refusé" }, { status: 401 })
   }
   try {
-    const raw = await readFile(TEMPLATES_PATH, "utf-8")
-    return NextResponse.json(JSON.parse(raw))
-  } catch {
-    return NextResponse.json({ error: "Templates introuvables" }, { status: 404 })
+    const rows = await prisma.certificateTemplate.findMany()
+    const result: Record<string, any> = {}
+    for (const row of rows) {
+      result[row.level] = row.config as any
+    }
+    return NextResponse.json(result)
+  } catch (err) {
+    console.error("[TEMPLATES GET ERROR]", err)
+    return NextResponse.json({ error: "Erreur lors de la lecture" }, { status: 500 })
   }
 }
 
@@ -46,7 +49,17 @@ export async function PUT(req: NextRequest) {
       }
     }
 
-    await writeFile(TEMPLATES_PATH, JSON.stringify(body, null, 2), "utf-8")
+    // Upsert tous les templates en transaction
+    await prisma.$transaction(
+      LEVELS.map((lvl) =>
+        prisma.certificateTemplate.upsert({
+          where: { level: lvl },
+          update: { config: body[lvl] },
+          create: { level: lvl, config: body[lvl] },
+        })
+      )
+    )
+
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error("[TEMPLATES SAVE ERROR]", err)

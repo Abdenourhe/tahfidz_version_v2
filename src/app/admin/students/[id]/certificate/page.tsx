@@ -2,8 +2,6 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect, notFound } from "next/navigation"
-import { readFileSync } from "fs"
-import { join } from "path"
 import { CertificatePrint, type Templates } from "@/components/admin/certificate"
 
 const LEVEL_LABEL: Record<string, string> = {
@@ -102,11 +100,16 @@ const DEFAULT_TEMPLATES: Templates = {
   },
 }
 
-function loadTemplates(): Templates {
+async function loadTemplates(): Promise<Templates> {
   try {
-    const raw = readFileSync(join(process.cwd(), "src/data/certificateTemplates.json"), "utf-8")
-    const parsed = JSON.parse(raw)
-    if (parsed.beginner && parsed.intermediate && parsed.advanced && parsed.expert && parsed.attendance && parsed.participation) return parsed as Templates
+    const rows = await prisma.certificateTemplate.findMany()
+    const parsed: Record<string, any> = {}
+    for (const row of rows) {
+      parsed[row.level] = row.config
+    }
+    if (parsed.beginner && parsed.intermediate && parsed.advanced && parsed.expert && parsed.attendance && parsed.participation) {
+      return parsed as Templates
+    }
     return DEFAULT_TEMPLATES
   } catch {
     return DEFAULT_TEMPLATES
@@ -143,7 +146,7 @@ export default async function StudentCertificatePage({
     select: { name: true, nameAr: true, logo: true, city: true, slug: true },
   })
 
-  const templates = loadTemplates()
+  const templates = await loadTemplates()
   const levelKey = student.group?.level
     ? (LEVEL_KEY_MAP[student.group.level] ?? "beginner")
     : "beginner"

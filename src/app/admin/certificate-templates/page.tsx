@@ -1,8 +1,7 @@
 // src/app/admin/certificate-templates/page.tsx
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
-import { readFile } from "fs/promises"
-import { join } from "path"
+import { prisma } from "@/lib/prisma"
 import { CertificateTemplateEditor } from "@/components/admin/certificate"
 
 export default async function CertificateTemplatesPage() {
@@ -11,8 +10,12 @@ export default async function CertificateTemplatesPage() {
 
   let templates = {}
   try {
-    const raw = await readFile(join(process.cwd(), "src", "data", "certificateTemplates.json"), "utf-8")
-    templates = JSON.parse(raw)
+    const rows = await prisma.certificateTemplate.findMany()
+    const obj: Record<string, any> = {}
+    for (const row of rows) {
+      obj[row.level] = row.config
+    }
+    templates = obj
   } catch {}
 
   return (

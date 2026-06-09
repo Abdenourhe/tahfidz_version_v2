@@ -961,3 +961,13 @@ model HalaqaEvaluation {
   @@index([studentId])
   @@map("halaqa_evaluations")
 }
+
+model CertificateTemplate {
+  id        String   @id @default(cuid())
+  level     String   @unique
+  config    Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("certificate_templates")
+}
