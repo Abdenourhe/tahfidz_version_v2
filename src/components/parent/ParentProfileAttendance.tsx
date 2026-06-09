@@ -202,9 +202,9 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
     }
   }
 
-  // ── Course days only ──
+  // ── Course days only (next 30 days) ──
   const courseDayIndices = getCourseDayIndices(children)
-  const quickDays = Array.from({ length: 14 }, (_, i) => offsetDate(i + 1))
+  const quickDays = Array.from({ length: 30 }, (_, i) => offsetDate(i + 1))
     .filter(d => {
       const dayIdx = new Date(`${d}T12:00:00`).getDay()
       return courseDayIndices.includes(dayIdx)
@@ -261,23 +261,6 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                 </button>
               )
             })}
-          </div>
-
-          {/* Arrows + date input */}
-          <div className="flex gap-1.5">
-            <button onClick={() => navigate(-1)} disabled={date <= tomorrow}
-              className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition disabled:opacity-40">
-              <ChevronLeft size={14} className="text-gray-500" />
-            </button>
-            <input type="date" value={date} min={tomorrow}
-              onChange={e => {
-                if (e.target.value >= tomorrow) { setDate(e.target.value); setSaved(false); setError(null) }
-              }}
-              className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green" />
-            <button onClick={() => navigate(1)}
-              className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
-              <ChevronRight size={14} className="text-gray-500" />
-            </button>
           </div>
 
           <p className="text-xs text-tahfidz-green font-medium flex items-center gap-1.5">
