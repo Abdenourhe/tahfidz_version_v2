@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { useLanguage } from "@/contexts/LanguageContext"
-import { Printer, Download, Loader2, ArrowLeft } from "lucide-react"
+import { Printer, Download, Loader2, ArrowLeft, ChevronDown } from "lucide-react"
 import html2canvas from "html2canvas"
 import { jsPDF } from "jspdf"
 import { QRCodeSVG } from "qrcode.react"
@@ -12,20 +12,33 @@ import type { CertificateTemplate, StudentCertData, SchoolCertData } from "./typ
 interface Props {
   student: StudentCertData
   school: SchoolCertData
-  template: CertificateTemplate
+  templates: CertificateTemplate[]
+  defaultTemplateId?: string
+  hideToolbar?: boolean
 }
 
-export function CertificateViewer({ student, school, template }: Props) {
+export function CertificateViewer({ student, school, templates, defaultTemplateId, hideToolbar }: Props) {
   const { locale, dir } = useLanguage()
   const L = (locale as "fr" | "en" | "ar") ?? "fr"
   const isAr = L === "ar"
   const certRef = useRef<HTMLDivElement>(null)
   const [isPdfLoading, setIsPdfLoading] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [activeId, setActiveId] = useState(defaultTemplateId || templates[0]?.id)
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  const template = templates.find((t) => t.id === activeId) ?? templates[0]
+  if (!template) {
+    return (
+      <div className="p-8 text-center">
+        <h1 className="text-xl font-bold text-gray-800">Aucun template de certificat</h1>
+        <p className="text-gray-500 mt-2">Créez un template dans Paramètres &gt; Certificats.</p>
+      </div>
+    )
+  }
 
   const t = template.config
   const isLandscape = t.orientation === "landscape"
@@ -130,7 +143,7 @@ export function CertificateViewer({ student, school, template }: Props) {
   return (
     <div className="space-y-6">
       {/* Toolbar */}
-      <div className="flex items-center gap-3 no-print">
+      {!hideToolbar && <div className="flex items-center gap-3 no-print">
         <Link href={`/admin/students/${student.id}`} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition">
           <ArrowLeft size={18} className="text-gray-500" />
         </Link>
@@ -140,6 +153,24 @@ export function CertificateViewer({ student, school, template }: Props) {
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">{student.fullName}</p>
         </div>
+
+        {templates.length > 1 && (
+          <div className="relative">
+            <select
+              value={activeId}
+              onChange={(e) => setActiveId(e.target.value)}
+              className="appearance-none bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm rounded-xl pl-4 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+            >
+              {templates.map((tpl) => (
+                <option key={tpl.id} value={tpl.id}>
+                  {tpl.name}
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          </div>
+        )}
+
         <div className="flex items-center gap-2">
           <button
             onClick={handleDownloadPDF}
@@ -156,7 +187,7 @@ export function CertificateViewer({ student, school, template }: Props) {
             <Printer size={16} /> {isAr ? "طباعة" : L === "en" ? "Print" : "Imprimer"}
           </button>
         </div>
-      </div>
+      </div>}
 
       {/* Certificate DOM (hidden for PDF capture) */}
       {mounted && (

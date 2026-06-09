@@ -10,7 +10,7 @@ export default async function AdminSettingsPage() {
 
   const school = await prisma.school.findUnique({
     where: { id: session.user.schoolId },
-    select: { name: true, logo: true },
+    select: { name: true, logo: true, directorSignature: true, teacherSignature: true },
   })
 
   return (

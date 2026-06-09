@@ -9,7 +9,7 @@ import type { Locale } from "@/lib/i18n/translations"
 
 interface Props {
   user: { name: string; email: string }
-  school?: { name: string; logo?: string | null }
+  school?: { name: string; logo?: string | null; directorSignature?: string | null; teacherSignature?: string | null }
 }
 type TabId = "profile" | "security" | "school" | "appearance" | "notifications" | "system"
 
@@ -73,6 +73,14 @@ export function AdminSettingsClient({ user, school }: Props) {
   const [logoUploading, setLogoUploading] = useState(false)
   const [logoMsg, setLogoMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Signatures
+  const [directorSig, setDirectorSig] = useState<string | null>(school?.directorSignature ?? null)
+  const [teacherSig, setTeacherSig] = useState<string | null>(school?.teacherSignature ?? null)
+  const [sigUploading, setSigUploading] = useState(false)
+  const [sigMsg, setSigMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null)
+  const dirSigRef = useRef<HTMLInputElement>(null)
+  const teachSigRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme")
@@ -188,6 +196,36 @@ export function AdminSettingsClient({ user, school }: Props) {
     } catch {
       setLogoMsg({ type: "err", text: tC("error") })
     } finally { setLogoUploading(false) }
+  }
+
+  const uploadSignatures = async (type: "director" | "teacher", file: File) => {
+    setSigUploading(true); setSigMsg(null)
+    try {
+      const fd = new FormData()
+      fd.append(type, file)
+      const r = await fetch("/api/admin/school/signatures", { method: "POST", body: fd })
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error || tC("error"))
+      if (type === "director") setDirectorSig(d.directorSignature)
+      if (type === "teacher") setTeacherSig(d.teacherSignature)
+      setSigMsg({ type: "ok", text: tS("signaturesUpdated") || "Signatures mises à jour" })
+    } catch (e) {
+      setSigMsg({ type: "err", text: e instanceof Error ? e.message : tC("error") })
+    } finally { setSigUploading(false) }
+  }
+
+  const deleteSignature = async (type: "director" | "teacher") => {
+    if (!confirm((type === "director" ? tS("deleteDirSig") || "Supprimer signature directeur" : tS("deleteTeachSig") || "Supprimer signature enseignant") + " ?")) return
+    setSigUploading(true)
+    try {
+      const r = await fetch(`/api/admin/school/signatures?type=${type}`, { method: "DELETE" })
+      if (!r.ok) throw new Error(tC("error"))
+      if (type === "director") setDirectorSig(null)
+      if (type === "teacher") setTeacherSig(null)
+      setSigMsg({ type: "ok", text: tS("signatureDeleted") || "Signature supprimée" })
+    } catch {
+      setSigMsg({ type: "err", text: tC("error") })
+    } finally { setSigUploading(false) }
   }
 
   // Notification items — traduits selon locale
@@ -402,6 +440,95 @@ export function AdminSettingsClient({ user, school }: Props) {
                     </button>
                   </div>
                 )}
+              </div>
+
+              {/* Signatures */}
+              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6 space-y-5">
+                <div>
+                  <h2 className="font-semibold text-gray-800 dark:text-gray-100">
+                    {locale === "ar" ? "التوقيعات" : locale === "en" ? "Signatures" : "Signatures"}
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    {locale === "ar" ? "صور شفافة (.png) مُستَحسَنة" : locale === "en" ? "Transparent images (.png) recommended" : "Images transparentes (.png) recommandées"}
+                  </p>
+                </div>
+                {sigMsg && (
+                  <div className={`p-3 rounded-lg text-sm flex items-center gap-2 ${sigMsg.type === "ok" ? "bg-green-50 border border-green-200 text-green-700" : "bg-red-50 border border-red-200 text-red-700"}`}>
+                    {sigMsg.type === "ok" ? <CheckCircle2 size={15} /> : null}
+                    {sigMsg.text}
+                  </div>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Director signature */}
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      {locale === "ar" ? "توقيع المدير" : locale === "en" ? "Director signature" : "Signature du directeur"}
+                    </p>
+                    <div className="w-full h-24 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-center bg-gray-50 dark:bg-gray-800 overflow-hidden mb-2">
+                      {directorSig ? (
+                        <img src={directorSig} alt="Director" className="h-full object-contain p-2" />
+                      ) : (
+                        <span className="text-xs text-gray-400">
+                          {locale === "ar" ? "لا توجد توقيع" : locale === "en" ? "No signature" : "Aucune signature"}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => dirSigRef.current?.click()} disabled={sigUploading}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium rounded-lg hover:bg-gray-200 transition">
+                        <Upload size={12} />
+                        {directorSig ? (locale === "ar" ? "تغيير" : locale === "en" ? "Change" : "Changer") : (locale === "ar" ? "إضافة" : locale === "en" ? "Add" : "Ajouter")}
+                      </button>
+                      {directorSig && (
+                        <button onClick={() => deleteSignature("director")} disabled={sigUploading}
+                          className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 text-xs font-medium rounded-lg hover:bg-red-100 transition">
+                          <Trash2 size={12} />
+                          {locale === "ar" ? "حذف" : locale === "en" ? "Delete" : "Supprimer"}
+                        </button>
+                      )}
+                    </div>
+                    <input ref={dirSigRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0]
+                        if (f) uploadSignatures("director", f)
+                      }} />
+                  </div>
+
+                  {/* Teacher signature */}
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      {locale === "ar" ? "توقيع المعلم" : locale === "en" ? "Teacher signature" : "Signature de l'enseignant"}
+                    </p>
+                    <div className="w-full h-24 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-center bg-gray-50 dark:bg-gray-800 overflow-hidden mb-2">
+                      {teacherSig ? (
+                        <img src={teacherSig} alt="Teacher" className="h-full object-contain p-2" />
+                      ) : (
+                        <span className="text-xs text-gray-400">
+                          {locale === "ar" ? "لا توجد توقيع" : locale === "en" ? "No signature" : "Aucune signature"}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => teachSigRef.current?.click()} disabled={sigUploading}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium rounded-lg hover:bg-gray-200 transition">
+                        <Upload size={12} />
+                        {teacherSig ? (locale === "ar" ? "تغيير" : locale === "en" ? "Change" : "Changer") : (locale === "ar" ? "إضافة" : locale === "en" ? "Add" : "Ajouter")}
+                      </button>
+                      {teacherSig && (
+                        <button onClick={() => deleteSignature("teacher")} disabled={sigUploading}
+                          className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 text-xs font-medium rounded-lg hover:bg-red-100 transition">
+                          <Trash2 size={12} />
+                          {locale === "ar" ? "حذف" : locale === "en" ? "Delete" : "Supprimer"}
+                        </button>
+                      )}
+                    </div>
+                    <input ref={teachSigRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0]
+                        if (f) uploadSignatures("teacher", f)
+                      }} />
+                  </div>
+                </div>
               </div>
 
               <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 flex items-start gap-3">

@@ -1,22 +1,31 @@
-// src/app/admin/students/[id]/certificate/page.tsx
-import { auth } from "@/auth"
+// src/app/verify/page.tsx
+// Page publique de vérification de certificat (scan QR)
+
 import { prisma } from "@/lib/prisma"
-import { redirect, notFound } from "next/navigation"
+import { notFound } from "next/navigation"
 import { CertificateViewer } from "@/components/certificate/CertificateViewer"
 import type { StudentCertData, SchoolCertData, CertificateTemplate } from "@/components/certificate/types"
 
-export default async function StudentCertificatePage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
-  const session = await auth()
-  if (!session?.user || !["ADMIN", "SUPERADMIN"].includes(session.user.role)) redirect("/login")
+interface Props {
+  searchParams: Promise<{ student?: string; school?: string }>
+}
 
-  const { id } = await params
+export default async function VerifyPage({ searchParams }: Props) {
+  const { student: studentParam, school: schoolSlug } = await searchParams
+  if (!studentParam) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Vérification de certificat</h1>
+          <p className="text-gray-500 mt-2">Paramètre student manquant.</p>
+        </div>
+      </div>
+    )
+  }
 
-  const student = await prisma.student.findUnique({
-    where: { id },
+  // Rechercher l'élève par studentCode ou par ID
+  let student = await prisma.student.findFirst({
+    where: { studentCode: studentParam },
     include: {
       user: { select: { fullName: true, fullNameAr: true, schoolId: true } },
       group: { select: { name: true, level: true } },
@@ -27,23 +36,41 @@ export default async function StudentCertificatePage({
     },
   })
 
-  if (!student || student.user.schoolId !== session.user.schoolId) notFound()
+  if (!student) {
+    student = await prisma.student.findUnique({
+      where: { id: studentParam },
+      include: {
+        user: { select: { fullName: true, fullNameAr: true, schoolId: true } },
+        group: { select: { name: true, level: true } },
+        memorizedSurahs: { include: { surah: { select: { nameFr: true, nameAr: true } } } },
+        teacher: { include: { user: { select: { fullName: true, fullNameAr: true } } } },
+        evaluations: { select: { finalScore: true, tajwid: true, makhraj: true, waqf: true, tarteel: true } },
+        attendances: { select: { status: true } },
+      },
+    })
+  }
+
+  if (!student) notFound()
 
   const school = await prisma.school.findUnique({
-    where: { id: session.user.schoolId! },
+    where: { id: student.user.schoolId },
     select: { name: true, nameAr: true, logo: true, city: true, slug: true, directorSignature: true, teacherSignature: true },
   })
 
+  if (schoolSlug && school?.slug !== schoolSlug) notFound()
+
   const templateRows = await prisma.certificateTemplate.findMany({
-    where: { schoolId: session.user.schoolId! },
+    where: { schoolId: student.user.schoolId },
     orderBy: [{ isDefault: "desc" }, { sortOrder: "asc" }],
   })
 
   if (templateRows.length === 0) {
     return (
-      <div className="p-8 text-center">
-        <h1 className="text-xl font-bold text-gray-800">Aucun template de certificat</h1>
-        <p className="text-gray-500 mt-2">Créez un template dans Paramètres &gt; Certificats.</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Certificat introuvable</h1>
+          <p className="text-gray-500 mt-2">Aucun template n'est configuré pour cette école.</p>
+        </div>
       </div>
     )
   }
@@ -97,5 +124,15 @@ export default async function StudentCertificatePage({
     teacherSignature: school?.teacherSignature,
   }
 
-  return <CertificateViewer student={studentData} school={schoolData} templates={templates} defaultTemplateId={templates[0].id} />
+  return (
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-950 py-8">
+      <CertificateViewer
+        student={studentData}
+        school={schoolData}
+        templates={templates}
+        defaultTemplateId={templates[0].id}
+        hideToolbar
+      />
+    </div>
+  )
 }
