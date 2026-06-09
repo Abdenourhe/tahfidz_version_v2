@@ -93,9 +93,37 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const [saved,      setSaved]      = useState(false)
   const [error,      setError]      = useState<string | null>(null)
   const [dayWindow,  setDayWindow]  = useState(30)
+  const [markedDates, setMarkedDates] = useState<Set<string>>(new Set())
 
   const activeDate = selectedDates[0] ?? tomorrow
   const isFuture   = activeDate > today
+
+  // ── Course days ──
+  const courseDayIndices = getCourseDayIndices(children)
+  const quickDays = Array.from({ length: dayWindow }, (_, i) => offsetDate(i + 1))
+    .filter(d => {
+      const dayIdx = new Date(`${d}T12:00:00`).getDay()
+      return courseDayIndices.includes(dayIdx)
+    })
+
+  // ── Load which days already have attendances (for all visible days) ──
+  const loadMarkedDates = useCallback(async () => {
+    if (quickDays.length === 0) return
+    const start = quickDays[0]
+    const end = quickDays[quickDays.length - 1]
+    try {
+      const res = await fetch(`/api/attendance?dateFrom=${start}&dateTo=${end}`)
+      const data = await res.json()
+      const marked = new Set<string>()
+      ;(data.attendances || []).forEach((a: any) => {
+        const dateKey = a.date.split("T")[0]
+        marked.add(dateKey)
+      })
+      setMarkedDates(marked)
+    } catch { /* ignore */ }
+  }, [quickDays])
+
+  useEffect(() => { loadMarkedDates() }, [loadMarkedDates])
 
   // ── Load existing records for the first selected date ──
   const load = useCallback(async () => {
@@ -213,6 +241,8 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
       } else {
         setSaved(true)
         setTimeout(() => setSaved(false), 5000)
+        // Refresh marked dates after save
+        loadMarkedDates()
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur réseau")
@@ -221,13 +251,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
     }
   }
 
-  // ── Course days ──
-  const courseDayIndices = getCourseDayIndices(children)
-  const quickDays = Array.from({ length: dayWindow }, (_, i) => offsetDate(i + 1))
-    .filter(d => {
-      const dayIdx = new Date(`${d}T12:00:00`).getDay()
-      return courseDayIndices.includes(dayIdx)
-    })
+
 
   const daysByMonth = groupByMonth(quickDays)
   const selectionCount = Object.values(attendance).filter(v => !!v).length
@@ -275,15 +299,21 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                 <div className="flex gap-1.5 flex-wrap">
                   {days.map(d => {
                     const isSelected = selectedDates.includes(d)
+                    const isMarked = markedDates.has(d)
                     const [dayName, dayNum] = formatShortDate(d).split(" ")
                     return (
                       <button key={d}
                         onClick={() => toggleDate(d)}
-                        className={`flex flex-col items-center px-3 py-2 rounded-xl border-2 transition min-w-[52px] ${
+                        className={`relative flex flex-col items-center px-3 py-2 rounded-xl border-2 transition min-w-[52px] ${
                           isSelected
                             ? "border-tahfidz-green bg-tahfidz-green-light"
-                            : "border-gray-200 text-gray-500 hover:border-gray-300"
+                            : isMarked
+                              ? "border-emerald-200 bg-emerald-50/40 text-gray-600 hover:border-emerald-300"
+                              : "border-gray-200 text-gray-500 hover:border-gray-300"
                         }`}>
+                        {isMarked && !isSelected && (
+                          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white" />
+                        )}
                         <span className={`text-xs font-medium capitalize ${isSelected ? "text-tahfidz-green" : ""}`}>{dayName}</span>
                         <span className={`text-base font-bold ${isSelected ? "text-tahfidz-green" : "text-gray-700"}`}>{dayNum}</span>
                       </button>
