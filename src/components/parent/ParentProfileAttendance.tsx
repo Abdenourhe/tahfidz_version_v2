@@ -1,8 +1,11 @@
 "use client"
-// ParentProfileAttendance.tsx — Un jour actif à la fois, affichage immédiat
 
 import { useState, useEffect, useCallback } from "react"
-import { Save, Loader2, Check, Clock, BookOpen, X, CalendarCheck, AlertCircle, Info } from "lucide-react"
+import {
+  Save, Loader2, Check, Clock, BookOpen, X,
+  CalendarCheck, AlertCircle, ChevronLeft, ChevronRight,
+  Users, Sparkles
+} from "lucide-react"
 
 interface Child {
   id: string
@@ -16,19 +19,20 @@ interface Child {
 }
 
 const STATUS_OPTIONS = [
-  { value: "PRESENT", label: "Présent", icon: Check,    active: "bg-emerald-500 text-white border-emerald-500 shadow-sm",   inactive: "border-gray-200 text-gray-500 hover:border-emerald-300 hover:text-emerald-600 bg-white" },
-  { value: "LATE",    label: "Retard",  icon: Clock,    active: "bg-amber-500 text-white border-amber-500 shadow-sm", inactive: "border-gray-200 text-gray-500 hover:border-amber-300 hover:text-amber-600 bg-white" },
-  { value: "EXCUSED", label: "Excusé",  icon: BookOpen, active: "bg-blue-500 text-white border-blue-500 shadow-sm",     inactive: "border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-600 bg-white" },
-  { value: "ABSENT",  label: "Absent",  icon: X,        active: "bg-red-500 text-white border-red-500 shadow-sm",       inactive: "border-gray-200 text-gray-500 hover:border-red-300 hover:text-red-600 bg-white" },
+  { value: "PRESENT", label: "Présent",  icon: Check,    color: "emerald", bg: "bg-emerald-500",  light: "bg-emerald-50",  text: "text-emerald-700",  border: "border-emerald-200",  ring: "ring-emerald-200" },
+  { value: "LATE",    label: "Retard",   icon: Clock,    color: "amber",   bg: "bg-amber-500",    light: "bg-amber-50",    text: "text-amber-700",    border: "border-amber-200",    ring: "ring-amber-200" },
+  { value: "EXCUSED", label: "Excusé",   icon: BookOpen, color: "blue",    bg: "bg-blue-500",     light: "bg-blue-50",     text: "text-blue-700",     border: "border-blue-200",     ring: "ring-blue-200" },
+  { value: "ABSENT",  label: "Absent",   icon: X,        color: "red",     bg: "bg-red-500",      light: "bg-red-50",      text: "text-red-700",      border: "border-red-200",      ring: "ring-red-200" },
 ]
 
 const RELATION_LABELS: Record<string, string> = { father: "Père", mother: "Mère", guardian: "Tuteur" }
 
 const DAY_KEYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const
-const MONTH_NAMES: Record<string, string> = {
-  "0": "Janvier", "1": "Février", "2": "Mars", "3": "Avril", "4": "Mai", "5": "Juin",
-  "6": "Juillet", "7": "Août", "8": "Septembre", "9": "Octobre", "10": "Novembre", "11": "Décembre",
-}
+const DAY_SHORT = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"] as const
+const MONTH_NAMES = [
+  "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
+]
 
 function getCourseDayIndices(children: Child[]): number[] {
   const indices = new Set<number>()
@@ -58,14 +62,14 @@ function offsetDate(days: number): string {
   return d.toISOString().split("T")[0]
 }
 
-function formatShortDate(dateStr: string): string {
+function dateLabel(dateStr: string): { day: string; num: number; month: string; full: string } {
   const d = new Date(`${dateStr}T12:00:00`)
-  return d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric" })
-}
-
-function formatFullDate(dateStr: string): string {
-  const d = new Date(`${dateStr}T12:00:00`)
-  return d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+  return {
+    day: DAY_SHORT[d.getDay()],
+    num: d.getDate(),
+    month: MONTH_NAMES[d.getMonth()],
+    full: d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }),
+  }
 }
 
 function groupByMonth(days: string[]): Record<string, string[]> {
@@ -79,22 +83,24 @@ function groupByMonth(days: string[]): Record<string, string[]> {
 }
 
 export function ParentProfileAttendance({ children }: { children: Child[] }) {
-  const today    = offsetDate(0)
+  const todayStr = offsetDate(0)
   const tomorrow = offsetDate(1)
 
-  const [activeDate,   setActiveDate]   = useState<string>(tomorrow)
-  const [attendance,   setAttendance]   = useState<Record<string, Record<string, string>>>({})
-  const [notes,        setNotes]        = useState<Record<string, Record<string, string>>>({})
-  const [loading,      setLoading]      = useState(false)
-  const [saving,       setSaving]       = useState(false)
-  const [saved,        setSaved]        = useState(false)
-  const [error,        setError]        = useState<string | null>(null)
-  const [dayWindow,    setDayWindow]    = useState(30)
-  const [markedDates,  setMarkedDates]  = useState<Set<string>>(new Set())
+  const [activeDate,  setActiveDate]  = useState<string>(tomorrow)
+  const [attendance,  setAttendance]  = useState<Record<string, Record<string, string>>>({})
+  const [notes,       setNotes]       = useState<Record<string, Record<string, string>>>({})
+  const [loading,     setLoading]     = useState(false)
+  const [saving,      setSaving]      = useState(false)
+  const [saved,       setSaved]       = useState(false)
+  const [error,       setError]       = useState<string | null>(null)
+  const [dayWindow,   setDayWindow]   = useState(30)
+  const [markedDates, setMarkedDates] = useState<Set<string>>(new Set())
+  const [showConfirm, setShowConfirm] = useState(false)
 
-  const isFuture = activeDate > today
+  const isFuture = activeDate > todayStr
+  const activeLabel = dateLabel(activeDate)
 
-  // ── Course days ──
+  /* ── Course days ── */
   const courseDayIndices = getCourseDayIndices(children)
   const quickDays = Array.from({ length: dayWindow }, (_, i) => offsetDate(i + 1))
     .filter(d => {
@@ -102,7 +108,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
       return courseDayIndices.includes(dayIdx)
     })
 
-  // ── Load marked dates (all visible) ──
+  /* ── Load marked dates ── */
   const loadMarkedDates = useCallback(async () => {
     if (quickDays.length === 0) return
     const start = quickDays[0]
@@ -120,7 +126,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
 
   useEffect(() => { loadMarkedDates() }, [loadMarkedDates])
 
-  // ── Load active date ──
+  /* ── Load active date ── */
   const load = useCallback(async () => {
     if (!isFuture) { setAttendance({}); setNotes({}); return }
     setLoading(true)
@@ -149,7 +155,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   useEffect(() => { load() }, [load])
 
   const selectStatus = (studentId: string, value: string) => {
-    setSaved(false); setError(null)
+    setSaved(false); setError(null); setShowConfirm(false)
     setAttendance(prev => ({
       ...prev,
       [activeDate]: {
@@ -159,8 +165,25 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
     }))
   }
 
+  const markAllPresent = () => {
+    setSaved(false); setError(null)
+    const next: Record<string, string> = {}
+    dayChildren.forEach(c => { next[c.student.id] = "PRESENT" })
+    setAttendance(prev => ({ ...prev, [activeDate]: next }))
+  }
+
+  const summary = (() => {
+    const dayAtt = attendance[activeDate] || {}
+    const counts: Record<string, number> = {}
+    STATUS_OPTIONS.forEach(o => counts[o.value] = 0)
+    Object.values(dayAtt).forEach(s => { if (counts[s] !== undefined) counts[s]++ })
+    return counts
+  })()
+
+  const totalMarked = Object.values(summary).reduce((a, b) => a + b, 0)
+
   const save = async () => {
-    setError(null); setSaved(false)
+    setError(null); setSaved(false); setShowConfirm(false)
 
     const records = children
       .filter(c => c.student.group && attendance[activeDate]?.[c.student.id])
@@ -226,49 +249,52 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
     }
   }
 
-  const daysByMonth = groupByMonth(quickDays)
-  const selectionCount = Object.values(attendance[activeDate] || {}).filter(v => !!v).length
   const dayChildren = children.filter(c => hasCourseOnDay(c, activeDate))
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-      {/* Header */}
-      <div className="px-5 py-4 bg-gray-50 border-b border-gray-100">
-        <h2 className="font-semibold text-gray-800 flex items-center gap-2">
-          <CalendarCheck size={18} className="text-tahfidz-green" />
-          Présences
-        </h2>
-        <p className="text-xs text-gray-400 mt-0.5">
-          Cliquez sur un jour de cours pour afficher les enfants et marquer leur présence.
-        </p>
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+      {/* ── Header ── */}
+      <div className="px-5 py-4 bg-gray-50/60 border-b border-gray-100">
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold text-gray-800 flex items-center gap-2">
+            <CalendarCheck size={18} className="text-tahfidz-green" />
+            Présences
+          </h2>
+          <p className="text-xs text-gray-400">Cliquez un jour → marquez les enfants</p>
+        </div>
       </div>
 
       <div className="p-5 space-y-5">
-        {/* Date selector grouped by month */}
+
+        {/* ── Date selector ── */}
         <div className="space-y-3">
-          {Object.entries(daysByMonth).map(([month, days]) => (
+          {Object.entries(groupByMonth(quickDays)).map(([month, days]) => (
             <div key={month}>
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{month}</p>
-              <div className="flex gap-1.5 flex-wrap">
+              <p className="text-[11px] font-bold text-gray-300 uppercase tracking-wider mb-2">{month}</p>
+              <div className="flex gap-2 flex-wrap">
                 {days.map(d => {
                   const isActive = d === activeDate
                   const isMarked = markedDates.has(d)
-                  const [dayName, dayNum] = formatShortDate(d).split(" ")
+                  const label = dateLabel(d)
                   return (
                     <button key={d}
-                      onClick={() => { setActiveDate(d); setSaved(false); setError(null) }}
-                      className={`relative flex flex-col items-center px-3 py-2 rounded-xl border-2 transition min-w-[52px] ${
+                      onClick={() => { setActiveDate(d); setSaved(false); setError(null); setShowConfirm(false) }}
+                      className={`relative flex flex-col items-center px-3 py-2 rounded-xl border-2 transition-all duration-150 min-w-[60px] active:scale-95 ${
                         isActive
-                          ? "border-tahfidz-green bg-tahfidz-green-light"
+                          ? "border-tahfidz-green bg-tahfidz-green-light shadow-sm"
                           : isMarked
-                            ? "border-emerald-200 bg-emerald-50/40 text-gray-600 hover:border-emerald-300"
-                            : "border-gray-200 text-gray-500 hover:border-gray-300"
+                            ? "border-emerald-200 bg-emerald-50/50 text-gray-600 hover:border-emerald-300"
+                            : "border-gray-100 bg-white text-gray-400 hover:border-gray-300 hover:bg-gray-50"
                       }`}>
                       {isMarked && !isActive && (
-                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white" />
+                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
                       )}
-                      <span className={`text-xs font-medium capitalize ${isActive ? "text-tahfidz-green" : ""}`}>{dayName}</span>
-                      <span className={`text-base font-bold ${isActive ? "text-tahfidz-green" : "text-gray-700"}`}>{dayNum}</span>
+                      <span className={`text-[10px] font-semibold uppercase tracking-wide ${isActive ? "text-tahfidz-green" : isMarked ? "text-emerald-600" : "text-gray-400"}`}>
+                        {label.day}
+                      </span>
+                      <span className={`text-lg font-bold leading-tight ${isActive ? "text-tahfidz-green" : "text-gray-700"}`}>
+                        {label.num}
+                      </span>
                     </button>
                   )
                 })}
@@ -278,47 +304,67 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
 
           {quickDays.length > 0 && dayWindow < 90 && (
             <button onClick={() => setDayWindow(w => Math.min(w + 30, 90))}
-              className="text-xs text-gray-500 hover:text-tahfidz-green font-medium transition">
-              + Voir plus de dates
+              className="text-xs font-semibold text-tahfidz-green hover:text-tahfidz-green-dark transition flex items-center gap-1">
+              <ChevronRight size={12} /> Voir plus de dates
             </button>
           )}
         </div>
 
-        {/* Active day info */}
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-gray-800">
-            {formatFullDate(activeDate)}
-          </p>
+        {/* ── Active day bar ── */}
+        <div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
+          <div>
+            <p className="text-sm font-bold text-gray-800">{activeLabel.full}</p>
+            <p className="text-[11px] text-gray-400">
+              {dayChildren.length} enfant{dayChildren.length > 1 ? "s" : ""} inscrit{dayChildren.length > 1 ? "s" : ""}
+            </p>
+          </div>
           {markedDates.has(activeDate) && (
-            <span className="text-[10px] px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full font-medium">
-              Déjà marqué
+            <span className="flex items-center gap-1 text-[11px] px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full font-bold">
+              <Check size={10} /> Déjà marqué
             </span>
           )}
         </div>
 
-        {/* Messages */}
+        {/* ── Live summary chips ── */}
+        {isFuture && totalMarked > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {STATUS_OPTIONS.map(opt => {
+              const count = summary[opt.value]
+              if (!count) return null
+              return (
+                <span key={opt.value}
+                  className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border ${opt.light} ${opt.text} ${opt.border}`}>
+                  <opt.icon size={11} />
+                  {count} {opt.label.toLowerCase()}{count > 1 ? "s" : ""}
+                </span>
+              )
+            })}
+          </div>
+        )}
+
+        {/* ── Messages ── */}
         {error && (
-          <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
             <AlertCircle size={14} /> {error}
           </div>
         )}
         {saved && (
-          <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm font-medium">
-            <CalendarCheck size={14} /> Enregistré pour le {formatFullDate(activeDate)}
+          <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-sm font-semibold animate-in fade-in slide-in-from-top-1 duration-300">
+            <CalendarCheck size={14} /> Présence enregistrée pour le {activeLabel.full}
           </div>
         )}
 
-        {/* Children for active day */}
+        {/* ── Children cards ── */}
         {!isFuture ? (
-          <div className="text-center py-6">
+          <div className="text-center py-8 bg-gray-50 rounded-xl">
             <p className="text-sm text-gray-400">Sélectionnez un jour à venir.</p>
           </div>
         ) : loading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 size={24} className="animate-spin text-tahfidz-green" />
+          <div className="flex justify-center py-10">
+            <Loader2 size={28} className="animate-spin text-tahfidz-green" />
           </div>
         ) : dayChildren.length === 0 ? (
-          <div className="text-center py-6">
+          <div className="text-center py-8 bg-gray-50 rounded-xl">
             <p className="text-sm text-gray-400">
               {courseDayIndices.length === 0
                 ? "Aucun horaire de cours défini."
@@ -326,69 +372,111 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {dayChildren.map(child => {
-              const status = attendance[activeDate]?.[child.student.id] || ""
-              return (
-                <div key={child.id} className="rounded-xl border border-gray-100 p-4 bg-white shadow-sm">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full gradient-tahfidz flex items-center justify-center flex-shrink-0">
-                      <span className="text-white font-bold text-sm">{child.student.user.fullName.charAt(0)}</span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{child.student.user.fullName}</p>
-                      <p className="text-[10px] text-gray-400">
-                        <span className="bg-orange-50 text-orange-600 px-1 py-0.5 rounded mr-1">
-                          {RELATION_LABELS[child.relation] ?? child.relation}
-                        </span>
-                        {child.student.group?.name}
-                      </p>
-                    </div>
-                  </div>
+          <>
+            {/* Quick action */}
+            <button onClick={markAllPresent}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-emerald-200 text-emerald-600 text-xs font-bold hover:bg-emerald-50 hover:border-emerald-300 transition">
+              <Sparkles size={13} /> Tous présents ({dayChildren.length} enfants)
+            </button>
 
-                  <div className="flex gap-2 flex-wrap">
-                    {STATUS_OPTIONS.map(opt => {
-                      const isSelected = status === opt.value
-                      return (
-                        <button key={opt.value}
-                          onClick={() => selectStatus(child.student.id, opt.value)}
-                          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border-2 transition ${
-                            isSelected ? opt.active : opt.inactive
-                          }`}>
-                          <opt.icon size={12} />
+            <div className="space-y-3">
+              {dayChildren.map(child => {
+                const status = attendance[activeDate]?.[child.student.id] || ""
+                const opt = STATUS_OPTIONS.find(o => o.value === status)
+                return (
+                  <div key={child.id}
+                    className={`rounded-xl border p-4 transition-all duration-200 ${
+                      status ? `${opt?.light} ${opt?.border}` : "border-gray-100 bg-white"
+                    }`}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold text-sm shadow-sm ${
+                        status ? opt?.bg : "gradient-tahfidz"
+                      }`}>
+                        {child.student.user.fullName.charAt(0)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-gray-900 truncate">{child.student.user.fullName}</p>
+                        <p className="text-[10px] text-gray-400 truncate">
+                          <span className="bg-orange-50 text-orange-600 px-1 py-0.5 rounded mr-1 font-semibold">
+                            {RELATION_LABELS[child.relation] ?? child.relation}
+                          </span>
+                          {child.student.group?.name}
+                        </p>
+                      </div>
+                      {status && opt && (
+                        <span className={`ml-auto text-[10px] font-bold px-2 py-1 rounded-lg ${opt.light} ${opt.text}`}>
+                          <opt.icon size={10} className="inline mr-0.5" />
                           {opt.label}
-                        </button>
-                      )
-                    })}
-                  </div>
+                        </span>
+                      )}
+                    </div>
 
-                  {(status === "ABSENT" || status === "EXCUSED") && (
-                    <input type="text"
-                      value={notes[activeDate]?.[child.student.id] || ""}
-                      onChange={e => setNotes(p => ({
-                        ...p,
-                        [activeDate]: { ...(p[activeDate] || {}), [child.student.id]: e.target.value }
-                      }))}
-                      placeholder="Motif (maladie, voyage, rendez-vous…)"
-                      className="w-full mt-2 px-3 py-2 text-xs rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-tahfidz-green" />
-                  )}
-                </div>
-              )
-            })}
-          </div>
+                    <div className="flex gap-2 flex-wrap">
+                      {STATUS_OPTIONS.map(opt => {
+                        const isSelected = status === opt.value
+                        return (
+                          <button key={opt.value}
+                            onClick={() => selectStatus(child.student.id, opt.value)}
+                            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border-2 transition-all duration-150 active:scale-95 ${
+                              isSelected
+                                ? `${opt.bg} text-white border-transparent shadow-sm`
+                                : "border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50 bg-white"
+                            }`}>
+                            <opt.icon size={13} />
+                            {opt.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    {(status === "ABSENT" || status === "EXCUSED") && (
+                      <input type="text"
+                        value={notes[activeDate]?.[child.student.id] || ""}
+                        onChange={e => setNotes(p => ({
+                          ...p,
+                          [activeDate]: { ...(p[activeDate] || {}), [child.student.id]: e.target.value }
+                        }))}
+                        placeholder="Motif (maladie, voyage, rendez-vous…)"
+                        className="w-full mt-2.5 px-3 py-2 text-xs rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-tahfidz-green/20 focus:border-tahfidz-green transition" />
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </>
         )}
 
-        {/* Save button */}
+        {/* ── Save ── */}
         {isFuture && !loading && dayChildren.length > 0 && (
-          <button onClick={save} disabled={saving || selectionCount === 0}
-            className="w-full flex items-center justify-center gap-2 py-3 gradient-tahfidz text-white text-sm font-semibold rounded-xl hover:opacity-90 disabled:opacity-40 transition shadow-lg">
-            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-            {saving
-              ? "Enregistrement…"
-              : selectionCount > 0
-                ? `Enregistrer (${selectionCount})`
-                : "Choisir un statut"}
-          </button>
+          <div className="space-y-2 pt-2">
+            {showConfirm && totalMarked > 0 && (
+              <div className="bg-gray-50 rounded-xl p-3 text-xs text-gray-600 space-y-1">
+                <p className="font-semibold text-gray-700">Récapitulatif :</p>
+                {STATUS_OPTIONS.map(opt => {
+                  const count = summary[opt.value]
+                  if (!count) return null
+                  return (
+                    <div key={opt.value} className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${opt.bg}`} />
+                      <span>{count} {opt.label.toLowerCase()}{count > 1 ? "s" : ""}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            <button
+              onClick={() => { if (!showConfirm && totalMarked > 0) { setShowConfirm(true); setError(null) } else { save() } }}
+              disabled={saving || totalMarked === 0}
+              className="w-full flex items-center justify-center gap-2 py-3.5 gradient-tahfidz text-white text-sm font-bold rounded-xl hover:opacity-90 disabled:opacity-40 transition shadow-lg active:scale-[0.98]">
+              {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+              {saving
+                ? "Enregistrement…"
+                : !showConfirm
+                  ? `Enregistrer les présences (${totalMarked})`
+                  : "Confirmer l'enregistrement"}
+            </button>
+          </div>
         )}
       </div>
     </div>
