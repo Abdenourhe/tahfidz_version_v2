@@ -5,7 +5,7 @@ import { join } from "path"
 
 const TEMPLATES_PATH = join(process.cwd(), "src", "data", "certificateTemplates.json")
 
-const LEVELS = ["beginner", "intermediate", "advanced", "expert"]
+const LEVELS = ["beginner", "intermediate", "advanced", "expert", "attendance", "participation"]
 const REQUIRED_FIELDS = [
   "id", "title", "titleAr", "subtitle", "bodyText", "arabicVerse",
   "primaryColor", "accentColor", "lightColor", "textColor", "badgeEmoji",

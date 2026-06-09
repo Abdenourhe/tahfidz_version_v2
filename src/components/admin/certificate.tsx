@@ -266,6 +266,7 @@ export function CertificatePrint({ student, school, templates, activeKey: initia
   }
   const L = (locale as "fr" | "en" | "ar") ?? "fr"
   const cl = certLabels[L]
+  const isAr = L === "ar"
 
   const handlePrint = useCallback(() => {
     if (!certRef.current) return
@@ -313,7 +314,7 @@ export function CertificatePrint({ student, school, templates, activeKey: initia
     }, 400)
   }, [pageWidth, pageHeight, printSize])
 
-  const today   = new Date().toLocaleDateString(L === "ar" ? "ar-SA" : "fr-FR", { day: "numeric", month: "long", year: "numeric" })
+  const today   = new Date().toLocaleDateString(L === "ar" ? "ar-SA" : L === "en" ? "en-US" : "fr-FR", { day: "numeric", month: "long", year: "numeric" })
   const todayAr = new Date().toLocaleDateString("ar-SA", { day: "numeric", month: "long", year: "numeric" })
 
   const paperBg = PAPER_TEXTURES[t.paperTexture] || PAPER_TEXTURES.parchment
@@ -417,14 +418,14 @@ export function CertificatePrint({ student, school, templates, activeKey: initia
   )
 
   const borderFrameSvg = (color: string) => (
-    <svg width="100%" height="100%" style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 2 }}>
-      <rect x="18" y="18" width="calc(100% - 36px)" height="calc(100% - 36px)" fill="none" stroke={color} strokeWidth="2" opacity="0.35" rx="2"/>
-      <rect x="24" y="24" width="calc(100% - 48px)" height="calc(100% - 48px)" fill="none" stroke={color} strokeWidth="0.8" opacity="0.2" rx="1"/>
+    <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 2 }}>
+      <rect x="2" y="2" width="96" height="96" fill="none" stroke={color} strokeWidth="0.5" opacity="0.35" rx="0.5" vectorEffect="non-scaling-stroke"/>
+      <rect x="3" y="3" width="94" height="94" fill="none" stroke={color} strokeWidth="0.2" opacity="0.2" rx="0.3" vectorEffect="non-scaling-stroke"/>
       {/* Coins doubles */}
-      <path d="M18 40 L18 18 L40 18" fill="none" stroke={color} strokeWidth="2.5" opacity="0.5"/>
-      <path d={`Mcalc(100% - 40px) 18 Lcalc(100% - 18px) 18 Lcalc(100% - 18px) 40`} fill="none" stroke={color} strokeWidth="2.5" opacity="0.5"/>
-      <path d={`M18 calc(100% - 40px) L18 calc(100% - 18px) L40 calc(100% - 18px)`} fill="none" stroke={color} strokeWidth="2.5" opacity="0.5"/>
-      <path d={`Mcalc(100% - 40px) calc(100% - 18px) Lcalc(100% - 18px) calc(100% - 18px) Lcalc(100% - 18px) calc(100% - 40px)`} fill="none" stroke={color} strokeWidth="2.5" opacity="0.5"/>
+      <path d="M2 8 L2 2 L8 2" fill="none" stroke={color} strokeWidth="0.6" opacity="0.5" vectorEffect="non-scaling-stroke"/>
+      <path d="M92 2 L98 2 L98 8" fill="none" stroke={color} strokeWidth="0.6" opacity="0.5" vectorEffect="non-scaling-stroke"/>
+      <path d="M2 92 L2 98 L8 98" fill="none" stroke={color} strokeWidth="0.6" opacity="0.5" vectorEffect="non-scaling-stroke"/>
+      <path d="M92 98 L98 98 L98 92" fill="none" stroke={color} strokeWidth="0.6" opacity="0.5" vectorEffect="non-scaling-stroke"/>
     </svg>
   )
 
@@ -582,7 +583,7 @@ export function CertificatePrint({ student, school, templates, activeKey: initia
           <p dir="rtl" style={{
             color: t.primaryColor,
             fontFamily: `${t.fontFamilyAr}, 'Scheherazade New', serif`,
-            fontSize: "0.95rem", lineHeight: 1.5, letterSpacing: "0.04em",
+            fontSize: "0.95rem", lineHeight: 1.5, letterSpacing: isAr ? undefined : "0.04em",
             opacity: 0.75, marginBottom: "10px", textAlign: "center",
             fontWeight: 500,
           }}>
@@ -611,17 +612,17 @@ export function CertificatePrint({ student, school, templates, activeKey: initia
                 <span style={{ color: "white", fontWeight: "bold", fontSize: "16px" }}>{school.name.charAt(0)}</span>
               </div>
             )}
-            <div style={{ textAlign: "left" }}>
+            <div style={{ textAlign: isAr ? "right" : "left" }}>
               <p style={{
                 fontWeight: 700, fontSize: "0.85rem", color: t.textColor,
-                lineHeight: 1.1, letterSpacing: "0.04em",
+                lineHeight: 1.1, letterSpacing: isAr ? undefined : "0.04em",
                 fontFamily: "'Playfair Display', Georgia, serif",
               }}>
                 {school.name}
               </p>
               {school.city && (
-                <p style={{ fontSize: "0.6rem", color: t.primaryColor, fontWeight: 600, letterSpacing: "0.08em" }}>
-                  {school.city.toUpperCase()}
+                <p style={{ fontSize: "0.6rem", color: t.primaryColor, fontWeight: 600, letterSpacing: isAr ? undefined : "0.08em" }}>
+                  {isAr ? school.city : school.city.toUpperCase()}
                 </p>
               )}
             </div>
@@ -635,7 +636,7 @@ export function CertificatePrint({ student, school, templates, activeKey: initia
           {/* Sous-titre */}
           <p style={{
             color: t.accentColor, fontSize: "0.55rem", fontWeight: 700,
-            letterSpacing: "0.45em", textTransform: "uppercase", marginBottom: "6px",
+            letterSpacing: isAr ? undefined : "0.45em", textTransform: isAr ? undefined : "uppercase", marginBottom: "6px",
           }}>
             {t.subtitle}
           </p>
@@ -643,9 +644,9 @@ export function CertificatePrint({ student, school, templates, activeKey: initia
           {/* Titre principal */}
           <h1 style={{
             color: t.textColor, fontSize: isLandscape ? "1.8rem" : "2rem",
-            fontWeight: 700, letterSpacing: "0.12em", lineHeight: 1.05,
+            fontWeight: 700, letterSpacing: isAr ? undefined : "0.12em", lineHeight: 1.05,
             marginBottom: "3px", fontFamily: "'Playfair Display', Georgia, serif",
-            textTransform: "uppercase",
+            textTransform: isAr ? undefined : "uppercase",
             textShadow: `0 1px 2px ${t.primaryColor}10`,
           }}>
             {t.title}
@@ -653,7 +654,7 @@ export function CertificatePrint({ student, school, templates, activeKey: initia
           <p dir="rtl" style={{
             color: t.primaryColor, fontFamily: `${t.fontFamilyAr}, 'Scheherazade New', serif`,
             fontSize: "1.25rem", fontWeight: 700, lineHeight: 1.2, marginBottom: "8px",
-            letterSpacing: "0.02em",
+            letterSpacing: isAr ? undefined : "0.02em",
           }}>
             {t.titleAr}
           </p>
@@ -670,8 +671,8 @@ export function CertificatePrint({ student, school, templates, activeKey: initia
 
             {/* "Décerné à" */}
             <p style={{
-              color: "#9ca3af", fontSize: "0.52rem", textTransform: "uppercase",
-              letterSpacing: "0.35em", marginBottom: "6px", fontWeight: 600,
+              color: "#9ca3af", fontSize: "0.52rem", textTransform: isAr ? undefined : "uppercase",
+              letterSpacing: isAr ? undefined : "0.35em", marginBottom: "6px", fontWeight: 600,
             }}>
               {cl.awardedTo}
             </p>
@@ -681,7 +682,7 @@ export function CertificatePrint({ student, school, templates, activeKey: initia
               color: t.textColor, fontSize: isLandscape ? "1.6rem" : "1.8rem",
               fontWeight: 400, lineHeight: 1.15,
               fontFamily: "'Playfair Display', 'Cormorant Garamond', Georgia, serif",
-              fontStyle: "italic", letterSpacing: "0.04em",
+              fontStyle: "italic", letterSpacing: isAr ? undefined : "0.04em",
               textShadow: `0 1px 3px ${t.primaryColor}08`,
             }}>
               {student.fullName}
@@ -733,7 +734,7 @@ export function CertificatePrint({ student, school, templates, activeKey: initia
                   </p>
                   <p style={{
                     color: "#9ca3af", fontSize: "0.48rem",
-                    textTransform: "uppercase", letterSpacing: "0.12em", marginTop: "3px",
+                    textTransform: isAr ? undefined : "uppercase", letterSpacing: isAr ? undefined : "0.12em", marginTop: "3px",
                     fontWeight: 600,
                   }}>
                     {stat.label}
@@ -749,7 +750,7 @@ export function CertificatePrint({ student, school, templates, activeKey: initia
                 borderRadius: "9999px", border: `1.5px solid ${t.accentColor}25`,
                 background: `linear-gradient(135deg, ${t.primaryColor}06, ${t.accentColor}06)`,
               }}>
-                <span style={{ color: t.textColor, fontSize: "0.65rem", fontWeight: 600, letterSpacing: "0.05em" }}>
+                <span style={{ color: t.textColor, fontSize: "0.65rem", fontWeight: 600, letterSpacing: isAr ? undefined : "0.05em" }}>
                   {cl.group} : {student.groupName}
                 </span>
               </div>
@@ -802,7 +803,7 @@ export function CertificatePrint({ student, school, templates, activeKey: initia
                     <img src={qrDataUrl} alt="QR" style={{ width: "72px", height: "72px", display: "block" }} />
                     <p style={{
                       fontSize: "6px", marginTop: "2px", textAlign: "center",
-                      letterSpacing: "0.1em", textTransform: "uppercase",
+                      letterSpacing: isAr ? undefined : "0.1em", textTransform: isAr ? undefined : "uppercase",
                       color: t.primaryColor + "50", fontWeight: 600,
                     }}>
                       {cl.verify}
@@ -834,7 +835,7 @@ export function CertificatePrint({ student, school, templates, activeKey: initia
                     width: "100%", height: "2px",
                     background: t.accentColor, opacity: 0.45, marginBottom: "6px", borderRadius: "1px",
                   }} />
-                  <p style={{ color: "#9ca3af", fontSize: "0.5rem", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: "3px", fontWeight: 600 }}>
+                  <p style={{ color: "#9ca3af", fontSize: "0.5rem", textTransform: isAr ? undefined : "uppercase", letterSpacing: isAr ? undefined : "0.2em", marginBottom: "3px", fontWeight: 600 }}>
                     {cl.director}
                   </p>
                   <p style={{ color: t.textColor, fontSize: "0.75rem", fontWeight: 600, lineHeight: 1.25 }}>
@@ -853,7 +854,7 @@ export function CertificatePrint({ student, school, templates, activeKey: initia
                     width: "100%", height: "2px",
                     background: t.accentColor, opacity: 0.45, marginBottom: "6px", borderRadius: "1px",
                   }} />
-                  <p style={{ color: "#9ca3af", fontSize: "0.5rem", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: "3px", fontWeight: 600 }}>
+                  <p style={{ color: "#9ca3af", fontSize: "0.5rem", textTransform: isAr ? undefined : "uppercase", letterSpacing: isAr ? undefined : "0.2em", marginBottom: "3px", fontWeight: 600 }}>
                     {cl.teacher}
                   </p>
                   <p style={{ color: t.textColor, fontSize: "0.75rem", fontWeight: 600, lineHeight: 1.25 }}>
@@ -872,7 +873,7 @@ export function CertificatePrint({ student, school, templates, activeKey: initia
                     width: "100%", height: "2px",
                     background: t.accentColor, opacity: 0.45, marginBottom: "6px", borderRadius: "1px",
                   }} />
-                  <p style={{ color: "#9ca3af", fontSize: "0.5rem", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: "3px", fontWeight: 600 }}>
+                  <p style={{ color: "#9ca3af", fontSize: "0.5rem", textTransform: isAr ? undefined : "uppercase", letterSpacing: isAr ? undefined : "0.2em", marginBottom: "3px", fontWeight: 600 }}>
                     {cl.date}
                   </p>
                   <p style={{ color: t.textColor, fontSize: "0.75rem", fontWeight: 600, lineHeight: 1.25 }}>
@@ -897,7 +898,7 @@ export function CertificatePrint({ student, school, templates, activeKey: initia
               <div style={{ flex: 1, height: "1.5px", background: `linear-gradient(to right, transparent, ${t.primaryColor})`, borderRadius: "1px" }} />
               <span style={{
                 color: t.accentColor + "50", fontSize: "0.46rem",
-                letterSpacing: "0.25em", textTransform: "uppercase", whiteSpace: "nowrap", fontWeight: 600,
+                letterSpacing: isAr ? undefined : "0.25em", textTransform: isAr ? undefined : "uppercase", whiteSpace: "nowrap", fontWeight: 600,
               }}>
                 {school.name}{school.city ? ` — ${school.city}` : ""} — {cl.footer}
               </span>
@@ -1244,7 +1245,7 @@ export function CertificateTemplateEditor({ initialTemplates, locale }: EditorPr
             <div className="p-6" style={{ fontFamily: t.fontFamily + ", serif" }}>
               <p className="text-center mb-2 text-sm" dir="rtl" style={{ color: t.primaryColor, fontFamily: t.fontFamilyAr + ", serif" }}>{t.arabicVerse}</p>
               <div className="text-center mb-3">
-                <p className="text-[10px] font-bold tracking-[0.2em] uppercase mb-0.5" style={{ color: t.accentColor }}>{t.subtitle}</p>
+                <p className={`text-[10px] font-bold mb-0.5 ${L === "ar" ? "" : "tracking-[0.2em] uppercase"}`} style={{ color: t.accentColor }}>{t.subtitle}</p>
                 <h2 className="text-lg font-bold" style={{ color: t.textColor }}>{t.title}</h2>
                 <p className="text-base mt-0.5" dir="rtl" style={{ color: t.primaryColor, fontFamily: t.fontFamilyAr + ", serif" }}>{t.titleAr}</p>
               </div>
@@ -1254,7 +1255,7 @@ export function CertificateTemplateEditor({ initialTemplates, locale }: EditorPr
               <div className="flex items-center gap-3 mb-3 p-2 bg-white/80 rounded-lg border" style={{ borderColor: t.primaryColor + "20" }}>
                 <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm" style={{ background: `linear-gradient(135deg, ${t.primaryColor}, ${t.accentColor})` }}>A</div>
                 <div>
-                  <p className="text-[10px] text-gray-400 uppercase">{u("awardedTo")}</p>
+                  <p className={`text-[10px] text-gray-400 ${L === "ar" ? "" : "uppercase"}`}>{u("awardedTo")}</p>
                   <p className="text-sm font-bold" style={{ color: t.textColor }}>Ahmed Benali</p>
                 </div>
               </div>
