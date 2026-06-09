@@ -64,11 +64,11 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
       const nts: Record<string, string> = {}
       children.forEach(c => { att[c.student.id] = ""; nts[c.student.id] = "" })
 
-      // Fetch saved records for this date
+      // Fetch saved records for this date — use simple date to avoid timezone bugs
       const ids = children.filter(c => c.student.group).map(c => c.student.id)
       await Promise.all(ids.map(async id => {
         try {
-          const res  = await fetch(`/api/attendance?studentId=${id}&dateFrom=${date}T00:00:00Z&dateTo=${date}T23:59:59Z`)
+          const res  = await fetch(`/api/attendance?studentId=${id}&dateFrom=${date}&dateTo=${date}`)
           const data = await res.json()
           const rec  = (data.attendances || [])[0]
           if (rec?.status) {
@@ -332,17 +332,13 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                         })}
                       </div>
 
-                      {!hasChoice && (
-                        <p className="text-xs text-gray-400 italic mb-2">
-                          Aucun statut choisi
-                        </p>
+                      {(selected === "ABSENT" || selected === "EXCUSED") && (
+                        <input type="text"
+                          value={notes[child.student.id] || ""}
+                          onChange={e => setNotes(p => ({ ...p, [child.student.id]: e.target.value }))}
+                          placeholder="Motif (maladie, voyage, rendez-vous…)"
+                          className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-tahfidz-green" />
                       )}
-
-                      <input type="text"
-                        value={notes[child.student.id] || ""}
-                        onChange={e => setNotes(p => ({ ...p, [child.student.id]: e.target.value }))}
-                        placeholder="Motif (maladie, voyage, rendez-vous…)"
-                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-tahfidz-green" />
                     </>
                   ) : (
                     <p className="text-xs text-orange-600 bg-orange-100 px-3 py-2 rounded-lg">
@@ -364,8 +360,8 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
               {saving
                 ? "Enregistrement…"
                 : selectionCount > 0
-                  ? `Enregistrer ${selectionCount} statut${selectionCount > 1 ? "s" : ""}`
-                  : "Sélectionnez au moins un statut"}
+                  ? `Enregistrer (${selectionCount})`
+                  : "Choisir un statut"}
             </button>
           </div>
         )}

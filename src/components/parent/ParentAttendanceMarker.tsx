@@ -37,7 +37,8 @@ export default function ParentAttendanceMarker({
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
-  const [selectedDate, setSelectedDate] = useState<string>("")
+  const todayStr = new Date().toISOString().split("T")[0]
+  const [selectedDate, setSelectedDate] = useState<string>(todayStr)
   const childList = children ?? []
   const [selectedChild, setSelectedChild] = useState<string>(childId || childList[0]?.id || "")
   const [status, setStatus] = useState<string>("PRESENT")
@@ -46,15 +47,49 @@ export default function ParentAttendanceMarker({
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch("/api/parent-attendance")
-      const data = await res.json()
-      setRecords(data.attendances || [])
+      // Load from BOTH tables so parent sees complete history
+      const [paRes, attRes] = await Promise.all([
+        fetch("/api/parent-attendance"),
+        fetch(`/api/attendance?studentId=${selectedChild || ""}&dateFrom=${todayStr}&dateTo=${todayStr}`),
+      ])
+      const paData = await paRes.json()
+      const attData = await attRes.json()
+
+      const paRecords: AttendanceRecord[] = (paData.attendances || []).map((a: any) => ({
+        id: a.id,
+        studentId: a.studentId,
+        date: a.date,
+        status: a.status,
+        reason: a.reason,
+        validatedBy: a.validatedBy,
+        validatedAt: a.validatedAt,
+        student: a.student,
+      }))
+
+      const attRecords: AttendanceRecord[] = (attData.attendances || []).map((a: any) => ({
+        id: `att-${a.id}`,
+        studentId: a.studentId,
+        date: a.date,
+        status: a.status,
+        reason: a.notes,
+        validatedBy: a.recordedBy ? "system" : null,
+        validatedAt: a.createdAt,
+        student: a.student,
+      }))
+
+      // Merge and dedupe by studentId+date+status
+      const map = new Map<string, AttendanceRecord>()
+      ;[...attRecords, ...paRecords].forEach(r => {
+        const key = `${r.studentId}-${r.date}-${r.status}`
+        map.set(key, r)
+      })
+      setRecords(Array.from(map.values()).sort((a, b) => +new Date(b.date) - +new Date(a.date)))
     } catch (e) {
       console.error(e)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [selectedChild, todayStr])
 
   useEffect(() => { load() }, [load])
 
@@ -62,16 +97,24 @@ export default function ParentAttendanceMarker({
     if (!selectedDate || !selectedChild) return
     setSubmitting(true)
     try {
-      await fetch("/api/parent-attendance", {
+      // Save to parent-attendance (preserves teacher validation workflow)
+      const res = await fetch("/api/parent-attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ studentId: selectedChild, date: selectedDate, status, reason: reason || null }),
       })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        alert(err.error || "Erreur lors de l'enregistrement")
+        return
+      }
       setModalOpen(false)
       setReason("")
+      setStatus("PRESENT")
       load()
     } catch (e) {
       console.error(e)
+      alert("Erreur réseau")
     } finally {
       setSubmitting(false)
     }
