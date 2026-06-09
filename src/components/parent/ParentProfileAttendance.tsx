@@ -1,9 +1,9 @@
 "use client"
 // src/components/parent/ParentProfileAttendance.tsx
 // Parent sélectionne librement le statut de chaque enfant pour les jours à venir
-// Supporte la multisélection de jours et le filtrage par jours de cours du groupe
+// Supporte la multisélection de jours avec statuts différents par jour
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Save, Loader2, Check, Clock, BookOpen, X, CalendarCheck, AlertCircle, Calendar, Info, Trash2 } from "lucide-react"
 
 interface Child {
@@ -86,7 +86,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
 
   // State
   const [selectedDates, setSelectedDates] = useState<string[]>([tomorrow])
-  const [attendance, setAttendance] = useState<Record<string, string>>({})
+  const [attendance, setAttendance] = useState<Record<string, Record<string, string>>>({})
   const [notes,      setNotes]      = useState<Record<string, string>>({})
   const [loading,    setLoading]    = useState(false)
   const [saving,     setSaving]     = useState(false)
@@ -94,6 +94,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const [error,      setError]      = useState<string | null>(null)
   const [dayWindow,  setDayWindow]  = useState(30)
   const [markedDates, setMarkedDates] = useState<Set<string>>(new Set())
+  const prevSelectedRef = useRef<string[]>([])
 
   const activeDate = selectedDates[0] ?? tomorrow
   const isFuture   = activeDate > today
@@ -125,43 +126,72 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
 
   useEffect(() => { loadMarkedDates() }, [loadMarkedDates])
 
-  // ── Load existing records for the first selected date ──
-  const load = useCallback(async () => {
+  // ── Load attendance for a specific date ──
+  const loadDate = useCallback(async (dateStr: string) => {
+    const ids = children.filter(c => c.student.group).map(c => c.student.id)
+    const att: Record<string, string> = {}
+    const nts: Record<string, string> = {}
+    children.forEach(c => { nts[c.student.id] = "" })
+    await Promise.all(ids.map(async id => {
+      try {
+        const res = await fetch(`/api/attendance?studentId=${id}&dateFrom=${dateStr}&dateTo=${dateStr}`)
+        const data = await res.json()
+        const rec = (data.attendances || [])[0]
+        if (rec?.status) {
+          att[id] = rec.status
+          nts[id] = rec.notes || ""
+        }
+      } catch { /* ignore */ }
+    }))
+    setAttendance(prev => ({ ...prev, [dateStr]: att }))
+    setNotes(prev => ({ ...prev, ...nts }))
+  }, [children])
+
+  // ── Load all selected dates on mount / when selectedDates changes meaningfully ──
+  const loadAllSelected = useCallback(async () => {
     if (!isFuture) { setAttendance({}); setNotes({}); return }
     setLoading(true)
     try {
-      const att: Record<string, string> = {}
-      const nts: Record<string, string> = {}
-      children.forEach(c => { att[c.student.id] = ""; nts[c.student.id] = "" })
-
-      const ids = children.filter(c => c.student.group).map(c => c.student.id)
-      await Promise.all(ids.map(async id => {
-        try {
-          const res  = await fetch(`/api/attendance?studentId=${id}&dateFrom=${activeDate}&dateTo=${activeDate}`)
-          const data = await res.json()
-          const rec  = (data.attendances || [])[0]
-          if (rec?.status) {
-            att[id] = rec.status
-            nts[id] = rec.notes || ""
-          }
-        } catch { /* ignore */ }
-      }))
-
-      setAttendance(att)
-      setNotes(nts)
+      const allAtt: Record<string, Record<string, string>> = {}
+      const allNts: Record<string, string> = {}
+      for (const dateStr of selectedDates) {
+        const ids = children.filter(c => c.student.group).map(c => c.student.id)
+        const att: Record<string, string> = {}
+        await Promise.all(ids.map(async id => {
+          try {
+            const res = await fetch(`/api/attendance?studentId=${id}&dateFrom=${dateStr}&dateTo=${dateStr}`)
+            const data = await res.json()
+            const rec = (data.attendances || [])[0]
+            if (rec?.status) {
+              att[id] = rec.status
+              allNts[id] = rec.notes || allNts[id] || ""
+            }
+          } catch { /* ignore */ }
+        }))
+        allAtt[dateStr] = att
+      }
+      setAttendance(allAtt)
+      setNotes(allNts)
     } finally {
       setLoading(false)
     }
-  }, [activeDate, isFuture, children])
+  }, [selectedDates, isFuture, children])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { loadAllSelected() }, [loadAllSelected])
+
+  // ── Auto-load newly added dates ──
+  useEffect(() => {
+    const added = selectedDates.filter(d => !prevSelectedRef.current.includes(d))
+    added.forEach(d => loadDate(d))
+    prevSelectedRef.current = selectedDates
+  }, [selectedDates, loadDate])
 
   const toggleDate = (d: string) => {
     setSaved(false); setError(null)
     setSelectedDates(prev => {
       if (prev.includes(d)) {
         const next = prev.filter(x => x !== d)
-        return next.length > 0 ? next : [d] // keep at least one
+        return next.length > 0 ? next : [d]
       }
       return [...prev, d].sort()
     })
@@ -172,27 +202,36 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
     setSelectedDates([tomorrow])
   }
 
-  const selectStatus = (studentId: string, value: string) => {
+  const selectStatus = (studentId: string, date: string, value: string) => {
     setSaved(false); setError(null)
     setAttendance(prev => ({
       ...prev,
-      [studentId]: prev[studentId] === value ? "" : value
+      [date]: {
+        ...(prev[date] || {}),
+        [studentId]: prev[date]?.[studentId] === value ? "" : value
+      }
     }))
   }
 
   const save = async () => {
     setError(null); setSaved(false)
 
-    const records = children
-      .filter(c => c.student.group && attendance[c.student.id])
-      .map(c => ({
-        groupId:   c.student.group!.id,
-        studentId: c.student.id,
-        status:    attendance[c.student.id],
-        notes:     notes[c.student.id] || "",
-      }))
+    // Build records per date
+    const recordsByDate: Record<string, Array<{ groupId: string; studentId: string; status: string; notes: string }>> = {}
+    for (const dateStr of selectedDates) {
+      const dayRecords = children
+        .filter(c => c.student.group && attendance[dateStr]?.[c.student.id])
+        .map(c => ({
+          groupId:   c.student.group!.id,
+          studentId: c.student.id,
+          status:    attendance[dateStr][c.student.id],
+          notes:     notes[c.student.id] || "",
+        }))
+      if (dayRecords.length > 0) recordsByDate[dateStr] = dayRecords
+    }
 
-    if (records.length === 0) {
+    const allRecords = Object.values(recordsByDate).flat()
+    if (allRecords.length === 0) {
       setError("Sélectionnez au moins un statut pour enregistrer.")
       return
     }
@@ -201,7 +240,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
     try {
       const errs: string[] = []
 
-      for (const dateStr of selectedDates) {
+      for (const [dateStr, records] of Object.entries(recordsByDate)) {
         const byGroup = new Map<string, typeof records>()
         records.forEach(r => {
           if (!byGroup.has(r.groupId)) byGroup.set(r.groupId, [])
@@ -241,7 +280,6 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
       } else {
         setSaved(true)
         setTimeout(() => setSaved(false), 5000)
-        // Refresh marked dates after save
         loadMarkedDates()
       }
     } catch (e) {
@@ -251,10 +289,9 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
     }
   }
 
-
-
   const daysByMonth = groupByMonth(quickDays)
-  const selectionCount = Object.values(attendance).filter(v => !!v).length
+  const selectionCount = selectedDates.reduce((sum, d) =>
+    sum + Object.values(attendance[d] || {}).filter(v => !!v).length, 0)
   const multiMode = selectedDates.length > 1
 
   return (
@@ -266,7 +303,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
           Signaler la présence de mes enfants
         </h2>
         <p className="text-xs text-gray-400 mt-0.5">
-          Sélectionnez un ou plusieurs jours de cours, puis le statut de chaque enfant.
+          Sélectionnez un ou plusieurs jours de cours, puis le statut de chaque enfant pour chaque jour.
         </p>
       </div>
 
@@ -275,8 +312,8 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
         <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-100 rounded-xl text-blue-700 text-xs">
           <Info size={14} className="flex-shrink-0 mt-0.5" />
           <span>
-            Cliquez sur un jour pour le sélectionner. Cliquez à nouveau pour le désélectionner.
-            Vous pouvez sélectionner plusieurs jours à la fois.
+            Cliquez sur un jour pour le sélectionner. Vous pouvez sélectionner plusieurs jours.
+            Pour chaque enfant, choisissez un statut par jour.
           </span>
         </div>
 
@@ -379,33 +416,16 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
             {children
               .filter(child => selectedDates.some(d => hasCourseOnDay(child, d)))
               .map(child => {
-                const selected  = attendance[child.student.id] || ""
-                const hasChoice = !!selected
-
                 return (
                   <div key={child.id}
-                    className={`rounded-xl border p-4 transition ${
-                      hasChoice ? "border-tahfidz-green/40 bg-tahfidz-green-light/20" : "border-gray-100 bg-gray-50"
-                    }`}>
+                    className="rounded-xl border border-gray-100 bg-gray-50 p-4">
                     {/* Child header */}
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-10 h-10 rounded-full gradient-tahfidz flex items-center justify-center flex-shrink-0">
                         <span className="text-white font-bold text-sm">{child.student.user.fullName.charAt(0)}</span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-semibold text-gray-900 text-sm">{child.student.user.fullName}</p>
-                          {hasChoice && (
-                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                              selected === "PRESENT" ? "bg-green-100 text-green-700" :
-                              selected === "LATE"    ? "bg-yellow-100 text-yellow-700" :
-                              selected === "EXCUSED" ? "bg-blue-100 text-blue-700" :
-                              "bg-red-100 text-red-700"
-                            }`}>
-                              {STATUS_OPTIONS.find(o => o.value === selected)?.label}
-                            </span>
-                          )}
-                        </div>
+                        <p className="font-semibold text-gray-900 text-sm">{child.student.user.fullName}</p>
                         <p className="text-xs text-gray-400 mt-0.5">
                           <span className="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded mr-1.5">
                             {RELATION_LABELS[child.relation] ?? child.relation}
@@ -415,29 +435,43 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                       </div>
                     </div>
 
-                    {/* Status buttons */}
-                    <div className="flex gap-2 flex-wrap mb-2.5">
-                      {STATUS_OPTIONS.map(opt => {
-                        const isSelected = selected === opt.value
+                    {/* Days grid for this child */}
+                    <div className="space-y-2">
+                      {selectedDates.filter(d => hasCourseOnDay(child, d)).map(d => {
+                        const selected = attendance[d]?.[child.student.id] || ""
                         return (
-                          <button key={opt.value}
-                            onClick={() => selectStatus(child.student.id, opt.value)}
-                            className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl border-2 transition ${
-                              isSelected ? opt.active : opt.inactive
-                            }`}>
-                            <opt.icon size={12} />
-                            {opt.label}
-                          </button>
+                          <div key={d} className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-gray-500 w-14 shrink-0">{formatShortDate(d)}</span>
+                            <div className="flex gap-1.5 flex-wrap">
+                              {STATUS_OPTIONS.map(opt => {
+                                const isSelected = selected === opt.value
+                                return (
+                                  <button key={opt.value}
+                                    onClick={() => selectStatus(child.student.id, d, opt.value)}
+                                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold border transition ${
+                                      isSelected ? opt.active : opt.inactive
+                                    }`}>
+                                    <opt.icon size={10} />
+                                    {opt.label}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
                         )
                       })}
                     </div>
 
-                    {(selected === "ABSENT" || selected === "EXCUSED") && (
+                    {/* Notes if any day is ABSENT or EXCUSED */}
+                    {selectedDates.some(d => {
+                      const s = attendance[d]?.[child.student.id]
+                      return s === "ABSENT" || s === "EXCUSED"
+                    }) && (
                       <input type="text"
                         value={notes[child.student.id] || ""}
                         onChange={e => setNotes(p => ({ ...p, [child.student.id]: e.target.value }))}
                         placeholder="Motif (maladie, voyage, rendez-vous…)"
-                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-tahfidz-green" />
+                        className="w-full mt-2 px-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-tahfidz-green" />
                     )}
                   </div>
                 )
@@ -464,7 +498,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
               {saving
                 ? "Enregistrement…"
                 : selectionCount > 0
-                  ? `Enregistrer pour ${selectedDates.length} jour${selectedDates.length > 1 ? "s" : ""} (${selectionCount})`
+                  ? `Enregistrer ${selectionCount} statut${selectionCount > 1 ? "s" : ""} sur ${selectedDates.length} jour${selectedDates.length > 1 ? "s" : ""}`
                   : "Choisir un statut"}
             </button>
           </div>
