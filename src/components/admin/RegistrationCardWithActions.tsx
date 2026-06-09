@@ -50,12 +50,40 @@ export function RegistrationCardWithActions({ student, inviteUrl, school }: Prop
   const handleDownloadPDF = async () => {
     if (!templateRef.current) return
     setIsGeneratingPDF(true)
-    await new Promise((resolve) => setTimeout(resolve, 200))
+    await new Promise((resolve) => setTimeout(resolve, 300))
+
+    const el = templateRef.current
+    const originalStyles = {
+      position: el.style.position,
+      left: el.style.left,
+      top: el.style.top,
+      zIndex: el.style.zIndex,
+      pointerEvents: el.style.pointerEvents,
+      opacity: el.style.opacity,
+      visibility: el.style.visibility,
+    }
+
     try {
-      const canvas = await html2canvas(templateRef.current, {
-        scale: 2,
+      // Positionner hors écran mais rendu pour forcer le calcul des polices et du layout
+      el.style.position = "absolute"
+      el.style.left = "-9999px"
+      el.style.top = "0"
+      el.style.zIndex = "auto"
+      el.style.pointerEvents = "auto"
+      el.style.opacity = "1"
+      el.style.visibility = "visible"
+
+      // Attendre que les polices (notamment les polices arabes) soient chargées
+      if (document.fonts && document.fonts.ready) {
+        await document.fonts.ready
+      }
+      await new Promise((resolve) => setTimeout(resolve, 200))
+
+      const canvas = await html2canvas(el, {
+        scale: 3,
         useCORS: true,
         backgroundColor: "#ffffff",
+        logging: false,
       })
       const imgData = canvas.toDataURL("image/png")
       const pdf = new jsPDF("p", "mm", "a4")
@@ -69,6 +97,14 @@ export function RegistrationCardWithActions({ student, inviteUrl, school }: Prop
     } catch (err) {
       console.error("[PDF ERROR]", err)
     } finally {
+      // Restaurer les styles originaux
+      el.style.position = originalStyles.position
+      el.style.left = originalStyles.left
+      el.style.top = originalStyles.top
+      el.style.zIndex = originalStyles.zIndex
+      el.style.pointerEvents = originalStyles.pointerEvents
+      el.style.opacity = originalStyles.opacity
+      el.style.visibility = originalStyles.visibility
       setIsGeneratingPDF(false)
     }
   }

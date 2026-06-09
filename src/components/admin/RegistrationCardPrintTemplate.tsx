@@ -87,7 +87,7 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
         padding: "16mm",
         background: "#ffffff",
         color: "#1a1a1a",
-        fontFamily: "'Arial','Helvetica',sans-serif",
+        fontFamily: isRTL ? "'Noto Naskh Arabic', 'Amiri', 'Arial', sans-serif" : "'Arial', 'Helvetica', sans-serif",
         fontSize: "11pt",
         lineHeight: 1.4,
         boxSizing: "border-box",
@@ -118,7 +118,7 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
           </div>
         </div>
         <div style={{ textAlign: isRTL ? "left" : "right" }}>
-          <div style={{ fontSize: "9pt", color: "#666", textTransform: "uppercase", fontWeight: 600 }}>{t("title")}</div>
+          <div style={{ fontSize: "9pt", color: "#666", textTransform: isRTL ? undefined : "uppercase", fontWeight: 600 }}>{t("title")}</div>
           <div style={{ fontSize: "11pt", color: "#333", fontFamily: "monospace", marginTop: "4px" }}>{s.studentCode}</div>
         </div>
       </div>
@@ -136,28 +136,28 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
             )}
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.5px" }}>{t("fullName")}</div>
+            <div style={{ fontSize: "8pt", color: "#666", textTransform: isRTL ? undefined : "uppercase", fontWeight: 600, letterSpacing: isRTL ? undefined : "0.5px" }}>{t("fullName")}</div>
             <div style={{ fontSize: "16pt", fontWeight: "bold", color: "#111", letterSpacing: "0.3px" }}>{u.fullName?.toUpperCase?.() || u.fullName}</div>
             {u.fullNameAr && <div style={{ fontSize: "12pt", color: "#444", marginTop: "2px" }}>{u.fullNameAr}</div>}
 
             <div style={{ display: "flex", gap: "20px", marginTop: "10px", flexWrap: "wrap" }}>
-              <div style={{ minWidth: "80px" }}><div style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase" }}>{t("studentCode")}</div><div style={{ fontSize: "10pt", fontWeight: "bold", color: "#222" }}>{s.studentCode}</div></div>
-              <div style={{ minWidth: "60px" }}><div style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase" }}>{t("gender")}</div><div style={{ fontSize: "10pt", fontWeight: "bold", color: "#222" }}>{gender}</div></div>
-              <div style={{ minWidth: "100px" }}><div style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase" }}>{t("dateOfBirth")}</div><div style={{ fontSize: "10pt", fontWeight: "bold", color: "#222" }}>{fmtDate(s.dateOfBirth)}</div></div>
-              <div style={{ minWidth: "100px" }}><div style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase" }}>{t("enrollmentDate")}</div><div style={{ fontSize: "10pt", fontWeight: "bold", color: "#222" }}>{fmtDate(u.createdAt)}</div></div>
+              <div style={{ minWidth: "80px" }}><div style={{ fontSize: "8pt", color: "#666", textTransform: isRTL ? undefined : "uppercase" }}>{t("studentCode")}</div><div style={{ fontSize: "10pt", fontWeight: "bold", color: "#222" }}>{s.studentCode}</div></div>
+              <div style={{ minWidth: "60px" }}><div style={{ fontSize: "8pt", color: "#666", textTransform: isRTL ? undefined : "uppercase" }}>{t("gender")}</div><div style={{ fontSize: "10pt", fontWeight: "bold", color: "#222" }}>{gender}</div></div>
+              <div style={{ minWidth: "100px" }}><div style={{ fontSize: "8pt", color: "#666", textTransform: isRTL ? undefined : "uppercase" }}>{t("dateOfBirth")}</div><div style={{ fontSize: "10pt", fontWeight: "bold", color: "#222" }}>{fmtDate(s.dateOfBirth)}</div></div>
+              <div style={{ minWidth: "100px" }}><div style={{ fontSize: "8pt", color: "#666", textTransform: isRTL ? undefined : "uppercase" }}>{t("enrollmentDate")}</div><div style={{ fontSize: "10pt", fontWeight: "bold", color: "#222" }}>{fmtDate(u.createdAt)}</div></div>
             </div>
 
             {(natLabel !== "—" || langLabel) && (
               <div style={{ display: "flex", gap: "16px", marginTop: "10px", paddingTop: "8px", borderTop: "1px solid #e0e0e0" }}>
                 {natLabel !== "—" && (
                   <div>
-                    <span style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase" }}>{t("nationality")} : </span>
+                    <span style={{ fontSize: "8pt", color: "#666", textTransform: isRTL ? undefined : "uppercase" }}>{t("nationality")} : </span>
                     <span style={{ fontSize: "9pt", fontWeight: 600, color: "#333" }}>{natLabel}</span>
                   </div>
                 )}
                 {langLabel && (
                   <div>
-                    <span style={{ fontSize: "8pt", color: "#666", textTransform: "uppercase" }}>{t("languages")} : </span>
+                    <span style={{ fontSize: "8pt", color: "#666", textTransform: isRTL ? undefined : "uppercase" }}>{t("languages")} : </span>
                     <span style={{ fontSize: "9pt", fontWeight: 600, color: "#333" }}>{langLabel}</span>
                   </div>
                 )}
@@ -168,7 +168,7 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
 
         {/* Scolarité */}
         <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "12px 14px" }}>
-          <div style={{ fontSize: "10pt", fontWeight: "bold", color: "#1D9E75", textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.5px" }}>{t("schooling")}</div>
+          <div style={{ fontSize: "10pt", fontWeight: "bold", color: "#1D9E75", textTransform: isRTL ? undefined : "uppercase", marginBottom: "8px", letterSpacing: isRTL ? undefined : "0.5px" }}>{t("schooling")}</div>
           <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
             <div style={{ minWidth: "90px" }}>
               <div style={{ fontSize: "9pt", color: "#555" }}>{t("group")}</div>
@@ -198,7 +198,7 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
         {/* Contact + Parents */}
         <div style={{ display: "flex", gap: "20px", flexDirection: isRTL ? "row-reverse" : "row" }}>
           <div style={{ flex: 1, background: "#fafafa", border: "1px solid #e5e5e5", borderRadius: "8px", padding: "12px 14px" }}>
-            <div style={{ fontSize: "10pt", fontWeight: "bold", color: "#444", textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.5px" }}>{t("contact")}</div>
+            <div style={{ fontSize: "10pt", fontWeight: "bold", color: "#444", textTransform: isRTL ? undefined : "uppercase", marginBottom: "8px", letterSpacing: isRTL ? undefined : "0.5px" }}>{t("contact")}</div>
             <div style={{ fontSize: "10pt", color: "#333", lineHeight: 1.7 }}>
               <div><span style={{ color: "#666", fontSize: "9pt" }}>{t("email")} : </span>{u.email}</div>
               {u.phone && <div><span style={{ color: "#666", fontSize: "9pt" }}>{t("phone")} : </span>{u.phone}</div>}
@@ -209,7 +209,7 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
             </div>
           </div>
           <div style={{ flex: 1, background: "#fafafa", border: "1px solid #e5e5e5", borderRadius: "8px", padding: "12px 14px" }}>
-            <div style={{ fontSize: "10pt", fontWeight: "bold", color: "#444", textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.5px" }}>{t("parents")}</div>
+            <div style={{ fontSize: "10pt", fontWeight: "bold", color: "#444", textTransform: isRTL ? undefined : "uppercase", marginBottom: "8px", letterSpacing: isRTL ? undefined : "0.5px" }}>{t("parents")}</div>
             {s.parentLinks?.length > 0 ? (
               <div style={{ fontSize: "10pt", color: "#333", lineHeight: 1.7 }}>
                 {s.parentLinks.map((link: any) => (
@@ -243,7 +243,7 @@ export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Pr
         {/* Medical */}
         {s.medicalNotes && (
           <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px", padding: "10px 14px" }}>
-            <div style={{ fontSize: "10pt", fontWeight: "bold", color: "#dc2626", textTransform: "uppercase", marginBottom: "4px", letterSpacing: "0.5px" }}>{t("medicalInfo")}</div>
+            <div style={{ fontSize: "10pt", fontWeight: "bold", color: "#dc2626", textTransform: isRTL ? undefined : "uppercase", marginBottom: "4px", letterSpacing: isRTL ? undefined : "0.5px" }}>{t("medicalInfo")}</div>
             <div style={{ fontSize: "10pt", color: "#991b1b", whiteSpace: "pre-wrap" }}>{s.medicalNotes}</div>
           </div>
         )}
