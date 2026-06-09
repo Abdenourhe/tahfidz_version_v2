@@ -6,7 +6,7 @@ import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
 import { useSession } from "next-auth/react"
-import { LayoutDashboard, Link2, Bell, LogOut, User, Video } from "lucide-react"
+import { LayoutDashboard, Link2, Bell, LogOut, User, Video, CalendarDays } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { TopBarControls } from "@/components/layout/TopBarControls"
@@ -32,6 +32,7 @@ export function ParentNav({ user, schoolName, schoolLogo }: ParentNavProps) {
   const navItems = [
     { label: tN("dashboard"),   href: "/parent/dashboard",      icon: LayoutDashboard },
     { label: locale === "ar" ? "ربط طفل" : locale === "en" ? "Link a child" : "Lier un enfant", href: "/parent/link", icon: Link2 },
+    { label: locale === "ar" ? "الحضور" : locale === "en" ? "Attendance" : "Présence", href: "/parent/attendance", icon: CalendarDays },
     { label: tN("halaqa"), href: "/parent/halaqa", icon: Video },
     { label: tN("notifications"), href: "/parent/notifications", icon: Bell },
     { label: locale === "ar" ? "ملفي الشخصي" : locale === "en" ? "My profile" : "Mon profil",  href: "/parent/profile", icon: User },

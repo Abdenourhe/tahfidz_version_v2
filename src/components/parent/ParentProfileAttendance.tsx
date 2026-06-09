@@ -155,8 +155,13 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
       const errs: string[] = []
       for (const res of responses) {
         if (!res.ok) {
-          try { const j = await res.json(); errs.push(j.error || `Erreur ${res.status}`) }
-          catch { errs.push(`Erreur ${res.status}`) }
+          try {
+            const j = await res.json()
+            if (typeof j.error === "string") errs.push(j.error)
+            else if (j.error) errs.push(JSON.stringify(j.error))
+            else if (j.message) errs.push(j.message)
+            else errs.push(`Erreur ${res.status}`)
+          } catch { errs.push(`Erreur ${res.status}`) }
         }
       }
 

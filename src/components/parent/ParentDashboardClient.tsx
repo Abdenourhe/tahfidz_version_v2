@@ -4,11 +4,11 @@
 import { useState } from "react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { AvatarLightbox } from "@/components/AvatarLightbox"
-import { BookOpen, CalendarDays, GraduationCap, Star, TrendingUp, User } from "lucide-react"
+import { BookOpen, CalendarDays, GraduationCap, Star, TrendingUp, User, ArrowRight } from "lucide-react"
 import ParentDailyLogView from "./ParentDailyLogView"
-import ParentAttendanceMarker from "./ParentAttendanceMarker"
 import { useSession } from "next-auth/react"
 import Image from "next/image"
+import Link from "next/link"
 
 interface Child {
   id: string
@@ -29,7 +29,6 @@ interface Props {
 function ChildCard({ child }: { child: Child }) {
   const { locale } = useLanguage()
   const t = useT("parentDashboardClient")
-  const [tab, setTab] = useState<"memorization" | "attendance">("memorization")
   const { data: session } = useSession()
   const schoolName = (session?.user as any)?.schoolName || "TAHFIDZ"
   const schoolLogo = (session?.user as any)?.schoolLogo
@@ -98,45 +97,25 @@ function ChildCard({ child }: { child: Child }) {
             ))}
           </div>
         )}
+
+        {/* Quick link to attendance */}
+        <Link
+          href="/parent/attendance"
+          className="mt-4 flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+        >
+          <div className="flex items-center gap-2">
+            <CalendarDays size={16} className="text-emerald-600 dark:text-emerald-400" />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+              {locale === "ar" ? "تسجيل الحضور" : locale === "en" ? "Mark attendance" : "Marquer la présence"}
+            </span>
+          </div>
+          <ArrowRight size={14} className="text-gray-400" />
+        </Link>
       </div>
 
-      {/* Tabs style pills */}
+      {/* Daily log */}
       <div className="px-5 md:px-6 pb-5 md:pb-6">
-        <div className="flex gap-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
-          <button
-            onClick={() => setTab("memorization")}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition ${
-              tab === "memorization"
-                ? "bg-white dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 shadow-sm"
-                : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-            }`}
-          >
-            <BookOpen size={16} />
-            {t("memorizationTab")}
-          </button>
-          <button
-            onClick={() => setTab("attendance")}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition ${
-              tab === "attendance"
-                ? "bg-white dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 shadow-sm"
-                : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-            }`}
-          >
-            <CalendarDays size={16} />
-            {t("attendanceTab")}
-          </button>
-        </div>
-
-        <div className="mt-4">
-          {tab === "memorization" && <ParentDailyLogView childId={child.id} />}
-          {tab === "attendance" && (
-            <ParentAttendanceMarker
-              childId={child.id}
-              children={[{ id: child.id, fullName: child.user.fullName }]}
-              showTitle={false}
-            />
-          )}
-        </div>
+        <ParentDailyLogView childId={child.id} />
       </div>
     </div>
   )

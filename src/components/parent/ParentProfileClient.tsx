@@ -8,11 +8,11 @@ import { formatDate, formatAge, statusLabel } from "@/lib/utils"
 import { ProfileHeader } from "@/components/profile/ProfileHeader"
 import { StatCard } from "@/components/profile/StatCard"
 import { ProfileAccordion } from "@/components/profile/ProfileAccordion"
-import { ParentProfileAttendance } from "@/components/parent/ParentProfileAttendance"
+
 import { ParentProfileSettings } from "@/components/parent/ParentProfileSettings"
 import {
   Phone, Mail, Link2, BookOpen, Star, CalendarCheck, GraduationCap,
-  TrendingUp, Award, User, Bug, Settings, Globe, Languages
+  TrendingUp, Award, User, Bug, Settings, Globe, Languages, ArrowRight
 } from "lucide-react"
 import { FeedbackModal } from "@/components/shared/FeedbackModal"
 
@@ -278,9 +278,21 @@ export function ParentProfileClient({
             </div>
           </ProfileAccordion>
 
-          <ProfileAccordion title={t("markAttendance")} icon={CalendarCheck} delay={0.6}>
-            <ParentProfileAttendance children={parent.childrenLinks as any} />
-          </ProfileAccordion>
+          <Link
+            href="/parent/attendance"
+            className="flex items-center justify-between p-4 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-emerald-200 dark:hover:border-emerald-800 transition"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
+                <CalendarCheck size={18} className="text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{t("markAttendance")}</p>
+                <p className="text-xs text-gray-400">{locale === "ar" ? "تسجيل حضور أطفالي" : locale === "en" ? "Mark my children's attendance" : "Marquer la présence de mes enfants"}</p>
+              </div>
+            </div>
+            <ArrowRight size={16} className="text-gray-400" />
+          </Link>
         </>
       )}
 
