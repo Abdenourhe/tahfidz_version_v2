@@ -1,9 +1,10 @@
 "use client"
 // src/components/parent/ParentProfileAttendance.tsx
 // Parent sélectionne librement le statut de chaque enfant pour les jours à venir
+// Supporte la multisélection de jours et le filtrage par jours de cours du groupe
 
 import { useState, useEffect, useCallback } from "react"
-import { Save, Loader2, Check, Clock, BookOpen, X, ChevronLeft, ChevronRight, CalendarCheck, AlertCircle, Calendar, Info } from "lucide-react"
+import { Save, Loader2, Check, Clock, BookOpen, X, CalendarCheck, AlertCircle, Calendar, Info, Trash2 } from "lucide-react"
 
 interface Child {
   id: string
@@ -26,6 +27,10 @@ const STATUS_OPTIONS = [
 const RELATION_LABELS: Record<string, string> = { father: "Père", mother: "Mère", guardian: "Tuteur" }
 
 const DAY_KEYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const
+const MONTH_NAMES: Record<string, string> = {
+  "0": "Janvier", "1": "Février", "2": "Mars", "3": "Avril", "4": "Mai", "5": "Juin",
+  "6": "Juillet", "7": "Août", "8": "Septembre", "9": "Octobre", "10": "Novembre", "11": "Décembre",
+}
 
 function getCourseDayIndices(children: Child[]): number[] {
   const indices = new Set<number>()
@@ -49,18 +54,30 @@ function hasCourseOnDay(child: Child, dateStr: string): boolean {
   return !!schedule[dayKey] || !!schedule[dayKey.toUpperCase()]
 }
 
-// Returns date string YYYY-MM-DD offset from today
 function offsetDate(days: number): string {
   const d = new Date()
   d.setDate(d.getDate() + days)
   return d.toISOString().split("T")[0]
 }
 
-function formatDateLabel(dateStr: string): string {
+function formatShortDate(dateStr: string): string {
   const d = new Date(`${dateStr}T12:00:00`)
-  const tomorrow = offsetDate(1)
-  const prefix = dateStr === tomorrow ? "Demain · " : ""
-  return prefix + d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+  return d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric" })
+}
+
+function formatFullDate(dateStr: string): string {
+  const d = new Date(`${dateStr}T12:00:00`)
+  return d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })
+}
+
+function groupByMonth(days: string[]): Record<string, string[]> {
+  return days.reduce((acc, d) => {
+    const date = new Date(`${d}T12:00:00`)
+    const key = `${MONTH_NAMES[date.getMonth()]} ${date.getFullYear()}`
+    if (!acc[key]) acc[key] = []
+    acc[key].push(d)
+    return acc
+  }, {} as Record<string, string[]>)
 }
 
 export function ParentProfileAttendance({ children }: { children: Child[] }) {
@@ -68,8 +85,8 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const tomorrow = offsetDate(1)
 
   // State
-  const [date,       setDate]       = useState(tomorrow)
-  const [attendance, setAttendance] = useState<Record<string, string>>({})   // "" = no selection
+  const [selectedDates, setSelectedDates] = useState<string[]>([tomorrow])
+  const [attendance, setAttendance] = useState<Record<string, string>>({})
   const [notes,      setNotes]      = useState<Record<string, string>>({})
   const [loading,    setLoading]    = useState(false)
   const [saving,     setSaving]     = useState(false)
@@ -77,31 +94,29 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const [error,      setError]      = useState<string | null>(null)
   const [dayWindow,  setDayWindow]  = useState(30)
 
-  const isFuture = date > today
+  const activeDate = selectedDates[0] ?? tomorrow
+  const isFuture   = activeDate > today
 
-  // ── Load existing records for this date (so we can restore what was saved) ──
+  // ── Load existing records for the first selected date ──
   const load = useCallback(async () => {
     if (!isFuture) { setAttendance({}); setNotes({}); return }
     setLoading(true)
     try {
-      // Reset first — no defaults
       const att: Record<string, string> = {}
       const nts: Record<string, string> = {}
       children.forEach(c => { att[c.student.id] = ""; nts[c.student.id] = "" })
 
-      // Fetch saved records for this date — use simple date to avoid timezone bugs
       const ids = children.filter(c => c.student.group).map(c => c.student.id)
       await Promise.all(ids.map(async id => {
         try {
-          const res  = await fetch(`/api/attendance?studentId=${id}&dateFrom=${date}&dateTo=${date}`)
+          const res  = await fetch(`/api/attendance?studentId=${id}&dateFrom=${activeDate}&dateTo=${activeDate}`)
           const data = await res.json()
           const rec  = (data.attendances || [])[0]
           if (rec?.status) {
-            att[id] = rec.status   // Restore saved status
+            att[id] = rec.status
             nts[id] = rec.notes || ""
           }
-          // If no record found → stays "" (no selection)
-        } catch { /* ignore individual fetch errors */ }
+        } catch { /* ignore */ }
       }))
 
       setAttendance(att)
@@ -109,34 +124,37 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
     } finally {
       setLoading(false)
     }
-  }, [date, isFuture, children])
+  }, [activeDate, isFuture, children])
 
   useEffect(() => { load() }, [load])
 
-  // ── Select / deselect a status ──
-  const select = (studentId: string, value: string) => {
+  const toggleDate = (d: string) => {
+    setSaved(false); setError(null)
+    setSelectedDates(prev => {
+      if (prev.includes(d)) {
+        const next = prev.filter(x => x !== d)
+        return next.length > 0 ? next : [d] // keep at least one
+      }
+      return [...prev, d].sort()
+    })
+  }
+
+  const clearDates = () => {
+    setSaved(false); setError(null)
+    setSelectedDates([tomorrow])
+  }
+
+  const selectStatus = (studentId: string, value: string) => {
     setSaved(false); setError(null)
     setAttendance(prev => ({
       ...prev,
-      [studentId]: prev[studentId] === value ? "" : value  // toggle off if same
+      [studentId]: prev[studentId] === value ? "" : value
     }))
   }
 
-  // ── Navigate days (only future) ──
-  const navigate = (dir: number) => {
-    const d = new Date(date)
-    d.setDate(d.getDate() + dir)
-    const next = d.toISOString().split("T")[0]
-    if (next >= tomorrow) {
-      setDate(next); setSaved(false); setError(null)
-    }
-  }
-
-  // ── Save ──
   const save = async () => {
     setError(null); setSaved(false)
 
-    // Collect only children with a selection
     const records = children
       .filter(c => c.student.group && attendance[c.student.id])
       .map(c => ({
@@ -153,40 +171,40 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
 
     setSaving(true)
     try {
-      // Group records by groupId
-      const byGroup = new Map<string, typeof records>()
-      records.forEach(r => {
-        if (!byGroup.has(r.groupId)) byGroup.set(r.groupId, [])
-        byGroup.get(r.groupId)!.push(r)
-      })
-
-      // Send one request per group
-      const responses = await Promise.all(
-        [...byGroup.entries()].map(([groupId, grpRecords]) =>
-          fetch("/api/attendance", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              groupId,
-              date:       `${date}T12:00:00.000Z`,
-              studentIds: grpRecords.map(r => r.studentId),
-              records:    grpRecords.map(r => ({ studentId: r.studentId, status: r.status, notes: r.notes })),
-            }),
-          })
-        )
-      )
-
-      // Check errors
       const errs: string[] = []
-      for (const res of responses) {
-        if (!res.ok) {
-          try {
-            const j = await res.json()
-            if (typeof j.error === "string") errs.push(j.error)
-            else if (j.error) errs.push(JSON.stringify(j.error))
-            else if (j.message) errs.push(j.message)
-            else errs.push(`Erreur ${res.status}`)
-          } catch { errs.push(`Erreur ${res.status}`) }
+
+      for (const dateStr of selectedDates) {
+        const byGroup = new Map<string, typeof records>()
+        records.forEach(r => {
+          if (!byGroup.has(r.groupId)) byGroup.set(r.groupId, [])
+          byGroup.get(r.groupId)!.push(r)
+        })
+
+        const responses = await Promise.all(
+          [...byGroup.entries()].map(([groupId, grpRecords]) =>
+            fetch("/api/attendance", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                groupId,
+                date:       `${dateStr}T12:00:00.000Z`,
+                studentIds: grpRecords.map(r => r.studentId),
+                records:    grpRecords.map(r => ({ studentId: r.studentId, status: r.status, notes: r.notes })),
+              }),
+            })
+          )
+        )
+
+        for (const res of responses) {
+          if (!res.ok) {
+            try {
+              const j = await res.json()
+              if (typeof j.error === "string") errs.push(`${dateStr}: ${j.error}`)
+              else if (j.error) errs.push(`${dateStr}: ${JSON.stringify(j.error)}`)
+              else if (j.message) errs.push(`${dateStr}: ${j.message}`)
+              else errs.push(`${dateStr}: Erreur ${res.status}`)
+            } catch { errs.push(`${dateStr}: Erreur ${res.status}`) }
+          }
         }
       }
 
@@ -203,7 +221,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
     }
   }
 
-  // ── Course days only ──
+  // ── Course days ──
   const courseDayIndices = getCourseDayIndices(children)
   const quickDays = Array.from({ length: dayWindow }, (_, i) => offsetDate(i + 1))
     .filter(d => {
@@ -211,8 +229,9 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
       return courseDayIndices.includes(dayIdx)
     })
 
-  // How many selections made
+  const daysByMonth = groupByMonth(quickDays)
   const selectionCount = Object.values(attendance).filter(v => !!v).length
+  const multiMode = selectedDates.length > 1
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
@@ -223,7 +242,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
           Signaler la présence de mes enfants
         </h2>
         <p className="text-xs text-gray-400 mt-0.5">
-          Choisissez un jour <strong>à venir</strong> et indiquez le statut de chaque enfant
+          Sélectionnez un ou plusieurs jours de cours, puis le statut de chaque enfant.
         </p>
       </div>
 
@@ -232,36 +251,47 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
         <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-100 rounded-xl text-blue-700 text-xs">
           <Info size={14} className="flex-shrink-0 mt-0.5" />
           <span>
-            Cliquez sur un statut pour le sélectionner. Cliquez à nouveau pour le désélectionner.
-            Les enregistrements passés sont restaurés automatiquement.
+            Cliquez sur un jour pour le sélectionner. Cliquez à nouveau pour le désélectionner.
+            Vous pouvez sélectionner plusieurs jours à la fois.
           </span>
         </div>
 
         {/* Date selector */}
-        <div className="space-y-2">
-          <label className="block text-xs font-medium text-gray-600">Choisir le jour</label>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-medium text-gray-600">Choisir le(s) jour(s)</label>
+            {multiMode && (
+              <button onClick={clearDates} className="text-xs text-red-500 hover:text-red-600 flex items-center gap-1 transition">
+                <Trash2 size={12} /> Tout désélectionner
+              </button>
+            )}
+          </div>
 
-          {/* Quick buttons */}
-          <div className="flex gap-1.5 flex-wrap">
-            {quickDays.map(d => {
-              const dayDate   = new Date(`${d}T12:00:00`)
-              const dayName   = dayDate.toLocaleDateString("fr-FR", { weekday: "short" })
-              const dayNum    = dayDate.getDate()
-              const isActive  = d === date
-              // Count how many children have a selection for this date (shown as dot)
-              return (
-                <button key={d}
-                  onClick={() => { setDate(d); setSaved(false); setError(null) }}
-                  className={`flex flex-col items-center px-3 py-2 rounded-xl border-2 transition min-w-[52px] ${
-                    isActive
-                      ? "border-tahfidz-green bg-tahfidz-green-light"
-                      : "border-gray-200 text-gray-500 hover:border-gray-300"
-                  }`}>
-                  <span className={`text-xs font-medium capitalize ${isActive ? "text-tahfidz-green" : ""}`}>{dayName}</span>
-                  <span className={`text-base font-bold ${isActive ? "text-tahfidz-green" : "text-gray-700"}`}>{dayNum}</span>
-                </button>
-              )
-            })}
+          {/* Grouped by month */}
+          <div className="space-y-3">
+            {Object.entries(daysByMonth).map(([month, days]) => (
+              <div key={month}>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{month}</p>
+                <div className="flex gap-1.5 flex-wrap">
+                  {days.map(d => {
+                    const isSelected = selectedDates.includes(d)
+                    const [dayName, dayNum] = formatShortDate(d).split(" ")
+                    return (
+                      <button key={d}
+                        onClick={() => toggleDate(d)}
+                        className={`flex flex-col items-center px-3 py-2 rounded-xl border-2 transition min-w-[52px] ${
+                          isSelected
+                            ? "border-tahfidz-green bg-tahfidz-green-light"
+                            : "border-gray-200 text-gray-500 hover:border-gray-300"
+                        }`}>
+                        <span className={`text-xs font-medium capitalize ${isSelected ? "text-tahfidz-green" : ""}`}>{dayName}</span>
+                        <span className={`text-base font-bold ${isSelected ? "text-tahfidz-green" : "text-gray-700"}`}>{dayNum}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
 
           {quickDays.length > 0 && dayWindow < 90 && (
@@ -273,15 +303,26 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
             </button>
           )}
 
-          <p className="text-xs text-tahfidz-green font-medium flex items-center gap-1.5">
-            <Calendar size={11} /> <span className="capitalize">{formatDateLabel(date)}</span>
-          </p>
+          {/* Selected dates summary */}
+          <div className="flex items-center gap-2">
+            <Calendar size={12} className="text-tahfidz-green" />
+            <p className="text-xs text-tahfidz-green font-medium">
+              {multiMode
+                ? `${selectedDates.length} jours sélectionnés`
+                : formatFullDate(activeDate)}
+            </p>
+          </div>
+          {multiMode && (
+            <p className="text-[10px] text-gray-400">
+              {selectedDates.map(formatFullDate).join(" · ")}
+            </p>
+          )}
         </div>
 
         {/* Messages */}
         {!isFuture && (
           <div className="flex items-center gap-2 p-3 bg-orange-50 border border-orange-200 rounded-lg text-orange-700 text-sm">
-            <AlertCircle size={14} /> Sélectionnez un jour à venir (demain ou après)
+            <AlertCircle size={14} /> Sélectionnez un jour à venir
           </div>
         )}
         {error && (
@@ -291,7 +332,10 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
         )}
         {saved && (
           <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm font-medium">
-            <CalendarCheck size={14} /> Enregistré pour le {formatDateLabel(date)} · Enseignant et admin notifiés
+            <CalendarCheck size={14} />
+            {multiMode
+              ? `Enregistré pour ${selectedDates.length} jours · Enseignant et admin notifiés`
+              : `Enregistré pour le ${formatFullDate(activeDate)} · Enseignant et admin notifiés`}
           </div>
         )}
 
@@ -303,7 +347,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
         ) : (
           <div className="space-y-3">
             {children
-              .filter(child => hasCourseOnDay(child, date))
+              .filter(child => selectedDates.some(d => hasCourseOnDay(child, d)))
               .map(child => {
                 const selected  = attendance[child.student.id] || ""
                 const hasChoice = !!selected
@@ -341,13 +385,13 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                       </div>
                     </div>
 
-                    {/* Status buttons — no default selection */}
+                    {/* Status buttons */}
                     <div className="flex gap-2 flex-wrap mb-2.5">
                       {STATUS_OPTIONS.map(opt => {
                         const isSelected = selected === opt.value
                         return (
                           <button key={opt.value}
-                            onClick={() => select(child.student.id, opt.value)}
+                            onClick={() => selectStatus(child.student.id, opt.value)}
                             className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl border-2 transition ${
                               isSelected ? opt.active : opt.inactive
                             }`}>
@@ -369,12 +413,12 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                 )
               })}
 
-            {children.filter(c => hasCourseOnDay(c, date)).length === 0 && (
+            {children.filter(c => selectedDates.some(d => hasCourseOnDay(c, d))).length === 0 && (
               <div className="text-center py-8">
                 <p className="text-sm text-gray-400">
                   {courseDayIndices.length === 0
                     ? "Aucun horaire de cours défini pour vos enfants."
-                    : "Aucun enfant n'a cours ce jour-là."}
+                    : "Aucun enfant n'a cours aux jours sélectionnés."}
                 </p>
               </div>
             )}
@@ -382,7 +426,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
         )}
 
         {/* Save button */}
-        {isFuture && !loading && children.some(c => hasCourseOnDay(c, date)) && (
+        {isFuture && !loading && children.some(c => selectedDates.some(d => hasCourseOnDay(c, d))) && (
           <div className="space-y-2">
             <button onClick={save} disabled={saving || selectionCount === 0}
               className="w-full flex items-center justify-center gap-2 py-3 gradient-tahfidz text-white text-sm font-semibold rounded-xl hover:opacity-90 disabled:opacity-40 transition">
@@ -390,7 +434,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
               {saving
                 ? "Enregistrement…"
                 : selectionCount > 0
-                  ? `Enregistrer (${selectionCount})`
+                  ? `Enregistrer pour ${selectedDates.length} jour${selectedDates.length > 1 ? "s" : ""} (${selectionCount})`
                   : "Choisir un statut"}
             </button>
           </div>
