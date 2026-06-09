@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import {
   Save, Loader2, Check, Clock, BookOpen, X,
   CalendarCheck, AlertCircle, ChevronLeft, ChevronRight,
-  Users, Sparkles
+  Sparkles, CalendarDays, Undo2
 } from "lucide-react"
 
 interface Child {
@@ -62,13 +62,14 @@ function offsetDate(days: number): string {
   return d.toISOString().split("T")[0]
 }
 
-function dateLabel(dateStr: string): { day: string; num: number; month: string; full: string } {
+function dateLabel(dateStr: string): { day: string; num: number; month: string; full: string; weekdayIndex: number } {
   const d = new Date(`${dateStr}T12:00:00`)
   return {
     day: DAY_SHORT[d.getDay()],
     num: d.getDate(),
     month: MONTH_NAMES[d.getMonth()],
     full: d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }),
+    weekdayIndex: d.getDay(),
   }
 }
 
@@ -80,6 +81,38 @@ function groupByMonth(days: string[]): Record<string, string[]> {
     acc[key].push(d)
     return acc
   }, {} as Record<string, string[]>)
+}
+
+/* Mini calendar: build a grid for the month of activeDate */
+function buildMonthGrid(activeDate: string, markedDates: Set<string>, quickDays: string[]) {
+  const d = new Date(`${activeDate}T12:00:00`)
+  const year = d.getFullYear()
+  const month = d.getMonth()
+  const firstDay = new Date(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0)
+  const startOffset = firstDay.getDay() // 0=Sun
+  const daysInMonth = lastDay.getDate()
+
+  const quickSet = new Set(quickDays)
+
+  const cells: { dateStr?: string; dayNum?: number; isMarked: boolean; isQuick: boolean; isToday: boolean }[] = []
+
+  // empty slots before 1st
+  for (let i = 0; i < startOffset; i++) cells.push({ isMarked: false, isQuick: false, isToday: false })
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = new Date(year, month, day).toISOString().split("T")[0]
+    const todayStr = new Date().toISOString().split("T")[0]
+    cells.push({
+      dateStr,
+      dayNum: day,
+      isMarked: markedDates.has(dateStr),
+      isQuick: quickSet.has(dateStr),
+      isToday: dateStr === todayStr,
+    })
+  }
+
+  return cells
 }
 
 export function ParentProfileAttendance({ children }: { children: Child[] }) {
@@ -96,6 +129,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const [dayWindow,   setDayWindow]   = useState(30)
   const [markedDates, setMarkedDates] = useState<Set<string>>(new Set())
   const [showConfirm, setShowConfirm] = useState(false)
+  const [animKey,     setAnimKey]     = useState(0)
 
   const isFuture = activeDate > todayStr
   const activeLabel = dateLabel(activeDate)
@@ -107,6 +141,32 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
       const dayIdx = new Date(`${d}T12:00:00`).getDay()
       return courseDayIndices.includes(dayIdx)
     })
+
+  const activeIndex = quickDays.indexOf(activeDate)
+  const canGoPrev = activeIndex > 0
+  const canGoNext = activeIndex >= 0 && activeIndex < quickDays.length - 1
+
+  const goPrev = () => { if (canGoPrev) changeDay(quickDays[activeIndex - 1]) }
+  const goNext = () => { if (canGoNext) changeDay(quickDays[activeIndex + 1]) }
+
+  function changeDay(d: string) {
+    setActiveDate(d)
+    setSaved(false)
+    setError(null)
+    setShowConfirm(false)
+    setAnimKey(k => k + 1)
+  }
+
+  /* ── Swipe handling ── */
+  const touchStartX = useRef<number | null>(null)
+  const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.changedTouches[0].screenX }
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current == null) return
+    const diff = touchStartX.current - e.changedTouches[0].screenX
+    if (diff > 50) goNext()
+    else if (diff < -50) goPrev()
+    touchStartX.current = null
+  }
 
   /* ── Load marked dates ── */
   const loadMarkedDates = useCallback(async () => {
@@ -170,6 +230,12 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
     const next: Record<string, string> = {}
     dayChildren.forEach(c => { next[c.student.id] = "PRESENT" })
     setAttendance(prev => ({ ...prev, [activeDate]: next }))
+  }
+
+  const clearAll = () => {
+    setSaved(false); setError(null); setShowConfirm(false)
+    setAttendance(prev => ({ ...prev, [activeDate]: {} }))
+    setNotes(prev => ({ ...prev, [activeDate]: {} }))
   }
 
   const summary = (() => {
@@ -251,8 +317,13 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
 
   const dayChildren = children.filter(c => hasCourseOnDay(c, activeDate))
 
+  /* Mini calendar grid */
+  const monthCells = buildMonthGrid(activeDate, markedDates, quickDays)
+
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm"
+      onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+
       {/* ── Header ── */}
       <div className="px-5 py-4 bg-gray-50/60 border-b border-gray-100">
         <div className="flex items-center justify-between">
@@ -260,7 +331,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
             <CalendarCheck size={18} className="text-tahfidz-green" />
             Présences
           </h2>
-          <p className="text-xs text-gray-400">Cliquez un jour → marquez les enfants</p>
+          <p className="text-xs text-gray-400">Glissez ← → sur mobile</p>
         </div>
       </div>
 
@@ -278,7 +349,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                   const label = dateLabel(d)
                   return (
                     <button key={d}
-                      onClick={() => { setActiveDate(d); setSaved(false); setError(null); setShowConfirm(false) }}
+                      onClick={() => changeDay(d)}
                       className={`relative flex flex-col items-center px-3 py-2 rounded-xl border-2 transition-all duration-150 min-w-[60px] active:scale-95 ${
                         isActive
                           ? "border-tahfidz-green bg-tahfidz-green-light shadow-sm"
@@ -310,19 +381,66 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
           )}
         </div>
 
-        {/* ── Active day bar ── */}
-        <div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
-          <div>
-            <p className="text-sm font-bold text-gray-800">{activeLabel.full}</p>
-            <p className="text-[11px] text-gray-400">
-              {dayChildren.length} enfant{dayChildren.length > 1 ? "s" : ""} inscrit{dayChildren.length > 1 ? "s" : ""}
+        {/* ── Mini month calendar ── */}
+        <div className="bg-gray-50 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <CalendarDays size={14} className="text-gray-400" />
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+              {activeLabel.month} {new Date(`${activeDate}T12:00:00`).getFullYear()}
             </p>
           </div>
-          {markedDates.has(activeDate) && (
-            <span className="flex items-center gap-1 text-[11px] px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full font-bold">
-              <Check size={10} /> Déjà marqué
-            </span>
-          )}
+          <div className="grid grid-cols-7 gap-1">
+            {["D", "L", "M", "M", "J", "V", "S"].map((h, i) => (
+              <div key={i} className="text-center text-[9px] font-bold text-gray-300 py-1">{h}</div>
+            ))}
+            {monthCells.map((cell, i) => (
+              <button key={i}
+                disabled={!cell.isQuick}
+                onClick={() => cell.dateStr && cell.isQuick && changeDay(cell.dateStr)}
+                className={`aspect-square rounded-lg text-[10px] font-bold flex items-center justify-center transition ${
+                  cell.dateStr === activeDate
+                    ? "bg-tahfidz-green text-white shadow-sm"
+                    : cell.isMarked
+                      ? "bg-emerald-100 text-emerald-700"
+                      : cell.isToday
+                        ? "bg-orange-100 text-orange-600"
+                        : cell.isQuick
+                          ? "hover:bg-gray-100 text-gray-600"
+                          : "text-gray-200 cursor-default"
+                }`}>
+                {cell.dayNum}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Active day bar with arrows ── */}
+        <div className="flex items-center gap-3">
+          <button onClick={goPrev} disabled={!canGoPrev}
+            className="p-2 rounded-xl border border-gray-200 text-gray-400 hover:text-gray-700 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition active:scale-95">
+            <ChevronLeft size={16} />
+          </button>
+
+          <div className="flex-1 bg-gray-50 rounded-xl px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-bold text-gray-800">{activeLabel.full}</p>
+                <p className="text-[11px] text-gray-400">
+                  {dayChildren.length} enfant{dayChildren.length > 1 ? "s" : ""} inscrit{dayChildren.length > 1 ? "s" : ""}
+                </p>
+              </div>
+              {markedDates.has(activeDate) && (
+                <span className="flex items-center gap-1 text-[11px] px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full font-bold">
+                  <Check size={10} /> Déjà marqué
+                </span>
+              )}
+            </div>
+          </div>
+
+          <button onClick={goNext} disabled={!canGoNext}
+            className="p-2 rounded-xl border border-gray-200 text-gray-400 hover:text-gray-700 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition active:scale-95">
+            <ChevronRight size={16} />
+          </button>
         </div>
 
         {/* ── Live summary chips ── */}
@@ -339,12 +457,15 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                 </span>
               )
             })}
+            <button onClick={clearAll} className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition">
+              <Undo2 size={10} /> Réinitialiser
+            </button>
           </div>
         )}
 
         {/* ── Messages ── */}
         {error && (
-          <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+          <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm animate-in fade-in slide-in-from-top-1 duration-200">
             <AlertCircle size={14} /> {error}
           </div>
         )}
@@ -373,21 +494,28 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
           </div>
         ) : (
           <>
-            {/* Quick action */}
-            <button onClick={markAllPresent}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-emerald-200 text-emerald-600 text-xs font-bold hover:bg-emerald-50 hover:border-emerald-300 transition">
-              <Sparkles size={13} /> Tous présents ({dayChildren.length} enfants)
-            </button>
+            {/* Quick actions */}
+            <div className="flex gap-2">
+              <button onClick={markAllPresent}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-emerald-200 text-emerald-600 text-xs font-bold hover:bg-emerald-50 hover:border-emerald-300 transition active:scale-95">
+                <Sparkles size={13} /> Tous présents
+              </button>
+              <button onClick={clearAll}
+                className="px-4 py-2.5 rounded-xl border-2 border-dashed border-gray-200 text-gray-400 text-xs font-bold hover:bg-gray-50 hover:border-gray-300 transition active:scale-95">
+                <Undo2 size={13} />
+              </button>
+            </div>
 
-            <div className="space-y-3">
-              {dayChildren.map(child => {
+            <div key={animKey} className="space-y-3">
+              {dayChildren.map((child, idx) => {
                 const status = attendance[activeDate]?.[child.student.id] || ""
                 const opt = STATUS_OPTIONS.find(o => o.value === status)
                 return (
                   <div key={child.id}
-                    className={`rounded-xl border p-4 transition-all duration-200 ${
+                    className={`rounded-xl border p-4 transition-all duration-200 animate-in fade-in slide-in-from-bottom-2 ${
                       status ? `${opt?.light} ${opt?.border}` : "border-gray-100 bg-white"
-                    }`}>
+                    }`}
+                    style={{ animationDelay: `${idx * 60}ms`, animationFillMode: "both" }}>
                     <div className="flex items-center gap-3 mb-3">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold text-sm shadow-sm ${
                         status ? opt?.bg : "gradient-tahfidz"
@@ -446,9 +574,9 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
           </>
         )}
 
-        {/* ── Save ── */}
+        {/* ── Sticky save bar ── */}
         {isFuture && !loading && dayChildren.length > 0 && (
-          <div className="space-y-2 pt-2">
+          <div className="sticky bottom-0 -mx-5 -mb-5 px-5 pb-5 pt-3 bg-white/95 backdrop-blur-sm border-t border-gray-100 space-y-2">
             {showConfirm && totalMarked > 0 && (
               <div className="bg-gray-50 rounded-xl p-3 text-xs text-gray-600 space-y-1">
                 <p className="font-semibold text-gray-700">Récapitulatif :</p>
