@@ -144,49 +144,63 @@ export function CertificateViewer({ student, school, templates, defaultTemplateI
   return (
     <div className="space-y-6">
       {/* Toolbar */}
-      {!hideToolbar && <div className="flex items-center gap-3 no-print">
-        <Link href={`/admin/students/${student.id}`} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition">
-          <ArrowLeft size={18} className="text-gray-500" />
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {isAr ? "الشهادة" : L === "en" ? "Certificate" : "Certificat"}
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{student.fullName}</p>
+      {!hideToolbar && <div className="space-y-3 no-print">
+        <div className="flex items-center gap-3">
+          <Link href={`/admin/students/${student.id}`} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition">
+            <ArrowLeft size={18} className="text-gray-500" />
+          </Link>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              {isAr ? "الشهادة" : L === "en" ? "Certificate" : "Certificat"}
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{student.fullName}</p>
+          </div>
+
+          {templates.length > 1 && (
+            <div className="relative">
+              <select
+                value={activeId}
+                onChange={(e) => setActiveId(e.target.value)}
+                className="appearance-none bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm rounded-xl pl-4 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+              >
+                {templates.map((tpl) => (
+                  <option key={tpl.id} value={tpl.id}>
+                    {tpl.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleDownloadPDF}
+              disabled={isPdfLoading}
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white text-sm font-semibold rounded-xl hover:opacity-90 disabled:opacity-60 transition shadow-lg"
+            >
+              {isPdfLoading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+              PDF
+            </button>
+            <button
+              onClick={handlePrint}
+              className="flex items-center gap-2 px-5 py-2.5 bg-gray-700 text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition shadow-lg"
+            >
+              <Printer size={16} /> {isAr ? "طباعة" : L === "en" ? "Print" : "Imprimer"}
+            </button>
+          </div>
         </div>
 
-        {templates.length > 1 && (
-          <div className="relative">
-            <select
-              value={activeId}
-              onChange={(e) => setActiveId(e.target.value)}
-              className="appearance-none bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm rounded-xl pl-4 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
-            >
-              {templates.map((tpl) => (
-                <option key={tpl.id} value={tpl.id}>
-                  {tpl.name}
-                </option>
-              ))}
-            </select>
-            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-          </div>
-        )}
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleDownloadPDF}
-            disabled={isPdfLoading}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white text-sm font-semibold rounded-xl hover:opacity-90 disabled:opacity-60 transition shadow-lg"
-          >
-            {isPdfLoading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-            PDF
-          </button>
-          <button
-            onClick={handlePrint}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gray-700 text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition shadow-lg"
-          >
-            <Printer size={16} /> {isAr ? "طباعة" : L === "en" ? "Print" : "Imprimer"}
-          </button>
+        {/* Note editor — outside certificate */}
+        <div className="max-w-xl">
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder={isAr ? "اكتب ملاحظة تظهر في الشهادة…" : L === "en" ? "Write a note to appear on the certificate…" : "Écrivez une note qui apparaîtra sur le certificat…"}
+            maxLength={200}
+            rows={2}
+            className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+          />
         </div>
       </div>}
 
@@ -420,47 +434,17 @@ export function CertificateViewer({ student, school, templates, defaultTemplateI
                 </div>
               )}
 
-              {/* Note / Observation */}
-              <div className="w-full mb-4" style={{ maxWidth: isLandscape ? "85%" : "460px" }}>
-                {hideToolbar ? (
-                  note && (
-                    <p
-                      className="text-center text-sm italic leading-relaxed px-4 py-3"
-                      style={{ color: t.textColor + "cc", fontFamily: "'Georgia', 'Times New Roman', serif" }}
-                    >
-                      « {note} »
-                    </p>
-                  )
-                ) : (
-                  <div
-                    className="w-full rounded-lg px-4 py-3"
-                    style={{
-                      background: t.lightColor,
-                      border: `1px dashed ${t.accentColor}40`,
-                    }}
+              {/* Note / Observation (read-only inside certificate) */}
+              {note.trim().length > 0 && (
+                <div className="w-full mb-4" style={{ maxWidth: isLandscape ? "85%" : "460px" }}>
+                  <p
+                    className="text-center text-sm italic leading-relaxed px-4 py-2"
+                    style={{ color: t.textColor + "cc", fontFamily: "'Georgia', 'Times New Roman', serif" }}
                   >
-                    <textarea
-                      value={note}
-                      onChange={(e) => setNote(e.target.value)}
-                      placeholder={isAr ? "اكتب ملاحظة أو تعليق…" : L === "en" ? "Write a note or observation…" : "Écrivez une note ou observation…"}
-                      maxLength={200}
-                      rows={2}
-                      className="w-full text-sm italic text-center leading-relaxed resize-none border-0 p-0"
-                      style={{
-                        color: t.textColor + "cc",
-                        fontFamily: "'Georgia', 'Times New Roman', serif",
-                        background: "transparent",
-                        outline: "none",
-                      }}
-                    />
-                    {note.length > 0 && (
-                      <p className="text-[9px] text-right mt-1" style={{ color: t.accentColor + "80" }}>
-                        {note.length}/200
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
+                    « {note.trim()} »
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Footer */}
