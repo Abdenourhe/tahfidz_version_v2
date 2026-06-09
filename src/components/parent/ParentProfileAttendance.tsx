@@ -1,9 +1,7 @@
 "use client"
-// src/components/parent/ParentProfileAttendance.tsx
-// Parent sélectionne librement le statut de chaque enfant pour les jours à venir
-// Supporte la multisélection de jours avec statuts différents par jour
+// ParentProfileAttendance.tsx — Timeline par jour avec statuts individuels
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Save, Loader2, Check, Clock, BookOpen, X, CalendarCheck, AlertCircle, Calendar, Info, Trash2 } from "lucide-react"
 
 interface Child {
@@ -18,10 +16,10 @@ interface Child {
 }
 
 const STATUS_OPTIONS = [
-  { value: "PRESENT", label: "Présent", icon: Check,    active: "bg-green-500 text-white border-green-500",   inactive: "border-gray-200 text-gray-500 hover:border-green-400 hover:text-green-600" },
-  { value: "LATE",    label: "Retard",  icon: Clock,    active: "bg-yellow-500 text-white border-yellow-500", inactive: "border-gray-200 text-gray-500 hover:border-yellow-400 hover:text-yellow-600" },
-  { value: "EXCUSED", label: "Excusé",  icon: BookOpen, active: "bg-blue-500 text-white border-blue-500",     inactive: "border-gray-200 text-gray-500 hover:border-blue-400 hover:text-blue-600" },
-  { value: "ABSENT",  label: "Absent",  icon: X,        active: "bg-red-500 text-white border-red-500",       inactive: "border-gray-200 text-gray-500 hover:border-red-400 hover:text-red-600" },
+  { value: "PRESENT", label: "Présent", icon: Check,    active: "bg-emerald-500 text-white border-emerald-500 shadow-sm",   inactive: "border-gray-200 text-gray-500 hover:border-emerald-300 hover:text-emerald-600 bg-white" },
+  { value: "LATE",    label: "Retard",  icon: Clock,    active: "bg-amber-500 text-white border-amber-500 shadow-sm", inactive: "border-gray-200 text-gray-500 hover:border-amber-300 hover:text-amber-600 bg-white" },
+  { value: "EXCUSED", label: "Excusé",  icon: BookOpen, active: "bg-blue-500 text-white border-blue-500 shadow-sm",     inactive: "border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-600 bg-white" },
+  { value: "ABSENT",  label: "Absent",  icon: X,        active: "bg-red-500 text-white border-red-500 shadow-sm",       inactive: "border-gray-200 text-gray-500 hover:border-red-300 hover:text-red-600 bg-white" },
 ]
 
 const RELATION_LABELS: Record<string, string> = { father: "Père", mother: "Mère", guardian: "Tuteur" }
@@ -84,20 +82,15 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const today    = offsetDate(0)
   const tomorrow = offsetDate(1)
 
-  // State
   const [selectedDates, setSelectedDates] = useState<string[]>([tomorrow])
   const [attendance, setAttendance] = useState<Record<string, Record<string, string>>>({})
-  const [notes,      setNotes]      = useState<Record<string, string>>({})
+  const [notes,      setNotes]      = useState<Record<string, Record<string, string>>>({})
   const [loading,    setLoading]    = useState(false)
   const [saving,     setSaving]     = useState(false)
   const [saved,      setSaved]      = useState(false)
   const [error,      setError]      = useState<string | null>(null)
   const [dayWindow,  setDayWindow]  = useState(30)
   const [markedDates, setMarkedDates] = useState<Set<string>>(new Set())
-  const prevSelectedRef = useRef<string[]>([])
-
-  const activeDate = selectedDates[0] ?? tomorrow
-  const isFuture   = activeDate > today
 
   // ── Course days ──
   const courseDayIndices = getCourseDayIndices(children)
@@ -107,7 +100,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
       return courseDayIndices.includes(dayIdx)
     })
 
-  // ── Load which days already have attendances (for all visible days) ──
+  // ── Load marked dates (all visible) ──
   const loadMarkedDates = useCallback(async () => {
     if (quickDays.length === 0) return
     const start = quickDays[0]
@@ -117,8 +110,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
       const data = await res.json()
       const marked = new Set<string>()
       ;(data.attendances || []).forEach((a: any) => {
-        const dateKey = a.date.split("T")[0]
-        marked.add(dateKey)
+        marked.add(a.date.split("T")[0])
       })
       setMarkedDates(marked)
     } catch { /* ignore */ }
@@ -126,65 +118,39 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
 
   useEffect(() => { loadMarkedDates() }, [loadMarkedDates])
 
-  // ── Load attendance for a specific date ──
-  const loadDate = useCallback(async (dateStr: string) => {
-    const ids = children.filter(c => c.student.group).map(c => c.student.id)
-    const att: Record<string, string> = {}
-    const nts: Record<string, string> = {}
-    children.forEach(c => { nts[c.student.id] = "" })
-    await Promise.all(ids.map(async id => {
-      try {
-        const res = await fetch(`/api/attendance?studentId=${id}&dateFrom=${dateStr}&dateTo=${dateStr}`)
-        const data = await res.json()
-        const rec = (data.attendances || [])[0]
-        if (rec?.status) {
-          att[id] = rec.status
-          nts[id] = rec.notes || ""
-        }
-      } catch { /* ignore */ }
-    }))
-    setAttendance(prev => ({ ...prev, [dateStr]: att }))
-    setNotes(prev => ({ ...prev, ...nts }))
-  }, [children])
-
-  // ── Load all selected dates on mount / when selectedDates changes meaningfully ──
-  const loadAllSelected = useCallback(async () => {
-    if (!isFuture) { setAttendance({}); setNotes({}); return }
+  // ── Load all selected dates ──
+  const load = useCallback(async () => {
     setLoading(true)
     try {
       const allAtt: Record<string, Record<string, string>> = {}
-      const allNts: Record<string, string> = {}
+      const allNts: Record<string, Record<string, string>> = {}
+
       for (const dateStr of selectedDates) {
+        if (dateStr <= today) continue
+        allAtt[dateStr] = {}
+        allNts[dateStr] = {}
         const ids = children.filter(c => c.student.group).map(c => c.student.id)
-        const att: Record<string, string> = {}
         await Promise.all(ids.map(async id => {
           try {
             const res = await fetch(`/api/attendance?studentId=${id}&dateFrom=${dateStr}&dateTo=${dateStr}`)
             const data = await res.json()
             const rec = (data.attendances || [])[0]
             if (rec?.status) {
-              att[id] = rec.status
-              allNts[id] = rec.notes || allNts[id] || ""
+              allAtt[dateStr][id] = rec.status
+              allNts[dateStr][id] = rec.notes || ""
             }
           } catch { /* ignore */ }
         }))
-        allAtt[dateStr] = att
       }
+
       setAttendance(allAtt)
       setNotes(allNts)
     } finally {
       setLoading(false)
     }
-  }, [selectedDates, isFuture, children])
+  }, [selectedDates, today, children])
 
-  useEffect(() => { loadAllSelected() }, [loadAllSelected])
-
-  // ── Auto-load newly added dates ──
-  useEffect(() => {
-    const added = selectedDates.filter(d => !prevSelectedRef.current.includes(d))
-    added.forEach(d => loadDate(d))
-    prevSelectedRef.current = selectedDates
-  }, [selectedDates, loadDate])
+  useEffect(() => { load() }, [load])
 
   const toggleDate = (d: string) => {
     setSaved(false); setError(null)
@@ -216,7 +182,6 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const save = async () => {
     setError(null); setSaved(false)
 
-    // Build records per date
     const recordsByDate: Record<string, Array<{ groupId: string; studentId: string; status: string; notes: string }>> = {}
     for (const dateStr of selectedDates) {
       const dayRecords = children
@@ -225,7 +190,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
           groupId:   c.student.group!.id,
           studentId: c.student.id,
           status:    attendance[dateStr][c.student.id],
-          notes:     notes[c.student.id] || "",
+          notes:     notes[dateStr]?.[c.student.id] || "",
         }))
       if (dayRecords.length > 0) recordsByDate[dateStr] = dayRecords
     }
@@ -300,10 +265,10 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
       <div className="px-5 py-4 bg-gray-50 border-b border-gray-100">
         <h2 className="font-semibold text-gray-800 flex items-center gap-2">
           <CalendarCheck size={18} className="text-tahfidz-green" />
-          Signaler la présence de mes enfants
+          Présences
         </h2>
         <p className="text-xs text-gray-400 mt-0.5">
-          Sélectionnez un ou plusieurs jours de cours, puis le statut de chaque enfant pour chaque jour.
+          Sélectionnez les jours de cours et indiquez le statut de chaque enfant.
         </p>
       </div>
 
@@ -312,23 +277,22 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
         <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-100 rounded-xl text-blue-700 text-xs">
           <Info size={14} className="flex-shrink-0 mt-0.5" />
           <span>
-            Cliquez sur un jour pour le sélectionner. Vous pouvez sélectionner plusieurs jours.
-            Pour chaque enfant, choisissez un statut par jour.
+            Les jours avec un point vert sont déjà marqués.
+            Vous pouvez modifier ou ajouter des jours.
           </span>
         </div>
 
         {/* Date selector */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-medium text-gray-600">Choisir le(s) jour(s)</label>
+            <label className="text-xs font-medium text-gray-600">Jours de cours</label>
             {multiMode && (
               <button onClick={clearDates} className="text-xs text-red-500 hover:text-red-600 flex items-center gap-1 transition">
-                <Trash2 size={12} /> Tout désélectionner
+                <Trash2 size={12} /> Réinitialiser
               </button>
             )}
           </div>
 
-          {/* Grouped by month */}
           <div className="space-y-3">
             {Object.entries(daysByMonth).map(([month, days]) => (
               <div key={month}>
@@ -362,36 +326,21 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
           </div>
 
           {quickDays.length > 0 && dayWindow < 90 && (
-            <button
-              onClick={() => setDayWindow(w => Math.min(w + 30, 90))}
-              className="text-xs text-gray-500 hover:text-tahfidz-green font-medium transition"
-            >
+            <button onClick={() => setDayWindow(w => Math.min(w + 30, 90))}
+              className="text-xs text-gray-500 hover:text-tahfidz-green font-medium transition">
               + Voir plus de dates
             </button>
           )}
 
-          {/* Selected dates summary */}
           <div className="flex items-center gap-2">
             <Calendar size={12} className="text-tahfidz-green" />
             <p className="text-xs text-tahfidz-green font-medium">
-              {multiMode
-                ? `${selectedDates.length} jours sélectionnés`
-                : formatFullDate(activeDate)}
+              {multiMode ? `${selectedDates.length} jours sélectionnés` : formatFullDate(selectedDates[0])}
             </p>
           </div>
-          {multiMode && (
-            <p className="text-[10px] text-gray-400">
-              {selectedDates.map(formatFullDate).join(" · ")}
-            </p>
-          )}
         </div>
 
         {/* Messages */}
-        {!isFuture && (
-          <div className="flex items-center gap-2 p-3 bg-orange-50 border border-orange-200 rounded-lg text-orange-700 text-sm">
-            <AlertCircle size={14} /> Sélectionnez un jour à venir
-          </div>
-        )}
         {error && (
           <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
             <AlertCircle size={14} /> {error}
@@ -401,88 +350,95 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
           <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm font-medium">
             <CalendarCheck size={14} />
             {multiMode
-              ? `Enregistré pour ${selectedDates.length} jours · Enseignant et admin notifiés`
-              : `Enregistré pour le ${formatFullDate(activeDate)} · Enseignant et admin notifiés`}
+              ? `Enregistré pour ${selectedDates.length} jours`
+              : `Enregistré pour le ${formatFullDate(selectedDates[0])}`}
           </div>
         )}
 
-        {/* Children list */}
-        {!isFuture ? null : loading ? (
+        {/* Timeline */}
+        {loading ? (
           <div className="flex justify-center py-8">
             <Loader2 size={24} className="animate-spin text-tahfidz-green" />
           </div>
         ) : (
-          <div className="space-y-3">
-            {children
-              .filter(child => selectedDates.some(d => hasCourseOnDay(child, d)))
-              .map(child => {
-                return (
-                  <div key={child.id}
-                    className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-                    {/* Child header */}
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-full gradient-tahfidz flex items-center justify-center flex-shrink-0">
-                        <span className="text-white font-bold text-sm">{child.student.user.fullName.charAt(0)}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 text-sm">{child.student.user.fullName}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          <span className="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded mr-1.5">
-                            {RELATION_LABELS[child.relation] ?? child.relation}
-                          </span>
-                          {child.student.group?.name ?? <span className="text-orange-500">Sans groupe</span>}
-                        </p>
-                      </div>
-                    </div>
+          <div className="space-y-4">
+            {selectedDates.filter(d => d > today).map(dateStr => {
+              const dayChildren = children.filter(c => hasCourseOnDay(c, dateStr))
+              if (dayChildren.length === 0) return null
 
-                    {/* Days grid for this child */}
-                    <div className="space-y-2">
-                      {selectedDates.filter(d => hasCourseOnDay(child, d)).map(d => {
-                        const selected = attendance[d]?.[child.student.id] || ""
-                        return (
-                          <div key={d} className="flex items-center gap-2">
-                            <span className="text-xs font-medium text-gray-500 w-14 shrink-0">{formatShortDate(d)}</span>
+              return (
+                <div key={dateStr} className="rounded-xl border border-gray-100 overflow-hidden">
+                  {/* Day header */}
+                  <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+                    <p className="text-sm font-semibold text-gray-700">{formatFullDate(dateStr)}</p>
+                    {markedDates.has(dateStr) && (
+                      <span className="text-[10px] px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full font-medium">
+                        Déjà marqué
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Children for this day */}
+                  <div className="p-3 space-y-3">
+                    {dayChildren.map(child => {
+                      const status = attendance[dateStr]?.[child.student.id] || ""
+                      return (
+                        <div key={child.id} className="flex items-start gap-3">
+                          <div className="w-9 h-9 rounded-full gradient-tahfidz flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span className="text-white font-bold text-xs">{child.student.user.fullName.charAt(0)}</span>
+                          </div>
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900">{child.student.user.fullName}</p>
+                              <p className="text-[10px] text-gray-400">
+                                <span className="bg-orange-50 text-orange-600 px-1 py-0.5 rounded mr-1">
+                                  {RELATION_LABELS[child.relation] ?? child.relation}
+                                </span>
+                                {child.student.group?.name}
+                              </p>
+                            </div>
+
                             <div className="flex gap-1.5 flex-wrap">
                               {STATUS_OPTIONS.map(opt => {
-                                const isSelected = selected === opt.value
+                                const isSelected = status === opt.value
                                 return (
                                   <button key={opt.value}
-                                    onClick={() => selectStatus(child.student.id, d, opt.value)}
-                                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold border transition ${
+                                    onClick={() => selectStatus(child.student.id, dateStr, opt.value)}
+                                    className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition ${
                                       isSelected ? opt.active : opt.inactive
                                     }`}>
-                                    <opt.icon size={10} />
+                                    <opt.icon size={11} />
                                     {opt.label}
                                   </button>
                                 )
                               })}
                             </div>
+
+                            {(status === "ABSENT" || status === "EXCUSED") && (
+                              <input type="text"
+                                value={notes[dateStr]?.[child.student.id] || ""}
+                                onChange={e => setNotes(p => ({
+                                  ...p,
+                                  [dateStr]: { ...(p[dateStr] || {}), [child.student.id]: e.target.value }
+                                }))}
+                                placeholder="Motif (maladie, voyage, rendez-vous…)"
+                                className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-tahfidz-green" />
+                            )}
                           </div>
-                        )
-                      })}
-                    </div>
-
-                    {/* Notes if any day is ABSENT or EXCUSED */}
-                    {selectedDates.some(d => {
-                      const s = attendance[d]?.[child.student.id]
-                      return s === "ABSENT" || s === "EXCUSED"
-                    }) && (
-                      <input type="text"
-                        value={notes[child.student.id] || ""}
-                        onChange={e => setNotes(p => ({ ...p, [child.student.id]: e.target.value }))}
-                        placeholder="Motif (maladie, voyage, rendez-vous…)"
-                        className="w-full mt-2 px-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-tahfidz-green" />
-                    )}
+                        </div>
+                      )
+                    })}
                   </div>
-                )
-              })}
+                </div>
+              )
+            })}
 
-            {children.filter(c => selectedDates.some(d => hasCourseOnDay(c, d))).length === 0 && (
+            {selectedDates.filter(d => d > today).length === 0 && (
               <div className="text-center py-8">
                 <p className="text-sm text-gray-400">
                   {courseDayIndices.length === 0
-                    ? "Aucun horaire de cours défini pour vos enfants."
-                    : "Aucun enfant n'a cours aux jours sélectionnés."}
+                    ? "Aucun horaire de cours défini."
+                    : "Sélectionnez un jour de cours pour commencer."}
                 </p>
               </div>
             )}
@@ -490,18 +446,14 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
         )}
 
         {/* Save button */}
-        {isFuture && !loading && children.some(c => selectedDates.some(d => hasCourseOnDay(c, d))) && (
-          <div className="space-y-2">
-            <button onClick={save} disabled={saving || selectionCount === 0}
-              className="w-full flex items-center justify-center gap-2 py-3 gradient-tahfidz text-white text-sm font-semibold rounded-xl hover:opacity-90 disabled:opacity-40 transition">
-              {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
-              {saving
-                ? "Enregistrement…"
-                : selectionCount > 0
-                  ? `Enregistrer ${selectionCount} statut${selectionCount > 1 ? "s" : ""} sur ${selectedDates.length} jour${selectedDates.length > 1 ? "s" : ""}`
-                  : "Choisir un statut"}
-            </button>
-          </div>
+        {selectionCount > 0 && (
+          <button onClick={save} disabled={saving}
+            className="w-full flex items-center justify-center gap-2 py-3 gradient-tahfidz text-white text-sm font-semibold rounded-xl hover:opacity-90 disabled:opacity-50 transition shadow-lg">
+            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            {saving
+              ? "Enregistrement…"
+              : `Enregistrer ${selectionCount} statut${selectionCount > 1 ? "s" : ""} sur ${selectedDates.length} jour${selectedDates.length > 1 ? "s" : ""}`}
+          </button>
         )}
       </div>
     </div>
