@@ -1,8 +1,8 @@
 "use client"
-// ParentProfileAttendance.tsx — Timeline par jour avec statuts individuels
+// ParentProfileAttendance.tsx — Un jour actif à la fois, affichage immédiat
 
 import { useState, useEffect, useCallback } from "react"
-import { Save, Loader2, Check, Clock, BookOpen, X, CalendarCheck, AlertCircle, Calendar, Info, Trash2 } from "lucide-react"
+import { Save, Loader2, Check, Clock, BookOpen, X, CalendarCheck, AlertCircle, Info } from "lucide-react"
 
 interface Child {
   id: string
@@ -65,7 +65,7 @@ function formatShortDate(dateStr: string): string {
 
 function formatFullDate(dateStr: string): string {
   const d = new Date(`${dateStr}T12:00:00`)
-  return d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })
+  return d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
 }
 
 function groupByMonth(days: string[]): Record<string, string[]> {
@@ -82,15 +82,17 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const today    = offsetDate(0)
   const tomorrow = offsetDate(1)
 
-  const [selectedDates, setSelectedDates] = useState<string[]>([tomorrow])
-  const [attendance, setAttendance] = useState<Record<string, Record<string, string>>>({})
-  const [notes,      setNotes]      = useState<Record<string, Record<string, string>>>({})
-  const [loading,    setLoading]    = useState(false)
-  const [saving,     setSaving]     = useState(false)
-  const [saved,      setSaved]      = useState(false)
-  const [error,      setError]      = useState<string | null>(null)
-  const [dayWindow,  setDayWindow]  = useState(30)
-  const [markedDates, setMarkedDates] = useState<Set<string>>(new Set())
+  const [activeDate,   setActiveDate]   = useState<string>(tomorrow)
+  const [attendance,   setAttendance]   = useState<Record<string, Record<string, string>>>({})
+  const [notes,        setNotes]        = useState<Record<string, Record<string, string>>>({})
+  const [loading,      setLoading]      = useState(false)
+  const [saving,       setSaving]       = useState(false)
+  const [saved,        setSaved]        = useState(false)
+  const [error,        setError]        = useState<string | null>(null)
+  const [dayWindow,    setDayWindow]    = useState(30)
+  const [markedDates,  setMarkedDates]  = useState<Set<string>>(new Set())
+
+  const isFuture = activeDate > today
 
   // ── Course days ──
   const courseDayIndices = getCourseDayIndices(children)
@@ -118,63 +120,41 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
 
   useEffect(() => { loadMarkedDates() }, [loadMarkedDates])
 
-  // ── Load all selected dates ──
+  // ── Load active date ──
   const load = useCallback(async () => {
+    if (!isFuture) { setAttendance({}); setNotes({}); return }
     setLoading(true)
     try {
-      const allAtt: Record<string, Record<string, string>> = {}
-      const allNts: Record<string, Record<string, string>> = {}
-
-      for (const dateStr of selectedDates) {
-        if (dateStr <= today) continue
-        allAtt[dateStr] = {}
-        allNts[dateStr] = {}
-        const ids = children.filter(c => c.student.group).map(c => c.student.id)
-        await Promise.all(ids.map(async id => {
-          try {
-            const res = await fetch(`/api/attendance?studentId=${id}&dateFrom=${dateStr}&dateTo=${dateStr}`)
-            const data = await res.json()
-            const rec = (data.attendances || [])[0]
-            if (rec?.status) {
-              allAtt[dateStr][id] = rec.status
-              allNts[dateStr][id] = rec.notes || ""
-            }
-          } catch { /* ignore */ }
-        }))
-      }
-
-      setAttendance(allAtt)
-      setNotes(allNts)
+      const att: Record<string, string> = {}
+      const nts: Record<string, string> = {}
+      const ids = children.filter(c => c.student.group).map(c => c.student.id)
+      await Promise.all(ids.map(async id => {
+        try {
+          const res = await fetch(`/api/attendance?studentId=${id}&dateFrom=${activeDate}&dateTo=${activeDate}`)
+          const data = await res.json()
+          const rec = (data.attendances || [])[0]
+          if (rec?.status) {
+            att[id] = rec.status
+            nts[id] = rec.notes || ""
+          }
+        } catch { /* ignore */ }
+      }))
+      setAttendance(prev => ({ ...prev, [activeDate]: att }))
+      setNotes(prev => ({ ...prev, [activeDate]: nts }))
     } finally {
       setLoading(false)
     }
-  }, [selectedDates, today, children])
+  }, [activeDate, isFuture, children])
 
   useEffect(() => { load() }, [load])
 
-  const toggleDate = (d: string) => {
-    setSaved(false); setError(null)
-    setSelectedDates(prev => {
-      if (prev.includes(d)) {
-        const next = prev.filter(x => x !== d)
-        return next.length > 0 ? next : [d]
-      }
-      return [...prev, d].sort()
-    })
-  }
-
-  const clearDates = () => {
-    setSaved(false); setError(null)
-    setSelectedDates([tomorrow])
-  }
-
-  const selectStatus = (studentId: string, date: string, value: string) => {
+  const selectStatus = (studentId: string, value: string) => {
     setSaved(false); setError(null)
     setAttendance(prev => ({
       ...prev,
-      [date]: {
-        ...(prev[date] || {}),
-        [studentId]: prev[date]?.[studentId] === value ? "" : value
+      [activeDate]: {
+        ...(prev[activeDate] || {}),
+        [studentId]: prev[activeDate]?.[studentId] === value ? "" : value
       }
     }))
   }
@@ -182,61 +162,53 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const save = async () => {
     setError(null); setSaved(false)
 
-    const recordsByDate: Record<string, Array<{ groupId: string; studentId: string; status: string; notes: string }>> = {}
-    for (const dateStr of selectedDates) {
-      const dayRecords = children
-        .filter(c => c.student.group && attendance[dateStr]?.[c.student.id])
-        .map(c => ({
-          groupId:   c.student.group!.id,
-          studentId: c.student.id,
-          status:    attendance[dateStr][c.student.id],
-          notes:     notes[dateStr]?.[c.student.id] || "",
-        }))
-      if (dayRecords.length > 0) recordsByDate[dateStr] = dayRecords
-    }
+    const records = children
+      .filter(c => c.student.group && attendance[activeDate]?.[c.student.id])
+      .map(c => ({
+        groupId:   c.student.group!.id,
+        studentId: c.student.id,
+        status:    attendance[activeDate][c.student.id],
+        notes:     notes[activeDate]?.[c.student.id] || "",
+      }))
 
-    const allRecords = Object.values(recordsByDate).flat()
-    if (allRecords.length === 0) {
+    if (records.length === 0) {
       setError("Sélectionnez au moins un statut pour enregistrer.")
       return
     }
 
     setSaving(true)
     try {
-      const errs: string[] = []
+      const byGroup = new Map<string, typeof records>()
+      records.forEach(r => {
+        if (!byGroup.has(r.groupId)) byGroup.set(r.groupId, [])
+        byGroup.get(r.groupId)!.push(r)
+      })
 
-      for (const [dateStr, records] of Object.entries(recordsByDate)) {
-        const byGroup = new Map<string, typeof records>()
-        records.forEach(r => {
-          if (!byGroup.has(r.groupId)) byGroup.set(r.groupId, [])
-          byGroup.get(r.groupId)!.push(r)
-        })
-
-        const responses = await Promise.all(
-          [...byGroup.entries()].map(([groupId, grpRecords]) =>
-            fetch("/api/attendance", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                groupId,
-                date:       `${dateStr}T12:00:00.000Z`,
-                studentIds: grpRecords.map(r => r.studentId),
-                records:    grpRecords.map(r => ({ studentId: r.studentId, status: r.status, notes: r.notes })),
-              }),
-            })
-          )
+      const responses = await Promise.all(
+        [...byGroup.entries()].map(([groupId, grpRecords]) =>
+          fetch("/api/attendance", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              groupId,
+              date:       `${activeDate}T12:00:00.000Z`,
+              studentIds: grpRecords.map(r => r.studentId),
+              records:    grpRecords.map(r => ({ studentId: r.studentId, status: r.status, notes: r.notes })),
+            }),
+          })
         )
+      )
 
-        for (const res of responses) {
-          if (!res.ok) {
-            try {
-              const j = await res.json()
-              if (typeof j.error === "string") errs.push(`${dateStr}: ${j.error}`)
-              else if (j.error) errs.push(`${dateStr}: ${JSON.stringify(j.error)}`)
-              else if (j.message) errs.push(`${dateStr}: ${j.message}`)
-              else errs.push(`${dateStr}: Erreur ${res.status}`)
-            } catch { errs.push(`${dateStr}: Erreur ${res.status}`) }
-          }
+      const errs: string[] = []
+      for (const res of responses) {
+        if (!res.ok) {
+          try {
+            const j = await res.json()
+            if (typeof j.error === "string") errs.push(j.error)
+            else if (j.error) errs.push(JSON.stringify(j.error))
+            else if (j.message) errs.push(j.message)
+            else errs.push(`Erreur ${res.status}`)
+          } catch { errs.push(`Erreur ${res.status}`) }
         }
       }
 
@@ -255,9 +227,8 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   }
 
   const daysByMonth = groupByMonth(quickDays)
-  const selectionCount = selectedDates.reduce((sum, d) =>
-    sum + Object.values(attendance[d] || {}).filter(v => !!v).length, 0)
-  const multiMode = selectedDates.length > 1
+  const selectionCount = Object.values(attendance[activeDate] || {}).filter(v => !!v).length
+  const dayChildren = children.filter(c => hasCourseOnDay(c, activeDate))
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
@@ -268,62 +239,42 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
           Présences
         </h2>
         <p className="text-xs text-gray-400 mt-0.5">
-          Sélectionnez les jours de cours et indiquez le statut de chaque enfant.
+          Cliquez sur un jour de cours pour afficher les enfants et marquer leur présence.
         </p>
       </div>
 
       <div className="p-5 space-y-5">
-        {/* Info */}
-        <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-100 rounded-xl text-blue-700 text-xs">
-          <Info size={14} className="flex-shrink-0 mt-0.5" />
-          <span>
-            Les jours avec un point vert sont déjà marqués.
-            Vous pouvez modifier ou ajouter des jours.
-          </span>
-        </div>
-
-        {/* Date selector */}
+        {/* Date selector grouped by month */}
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-medium text-gray-600">Jours de cours</label>
-            {multiMode && (
-              <button onClick={clearDates} className="text-xs text-red-500 hover:text-red-600 flex items-center gap-1 transition">
-                <Trash2 size={12} /> Réinitialiser
-              </button>
-            )}
-          </div>
-
-          <div className="space-y-3">
-            {Object.entries(daysByMonth).map(([month, days]) => (
-              <div key={month}>
-                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{month}</p>
-                <div className="flex gap-1.5 flex-wrap">
-                  {days.map(d => {
-                    const isSelected = selectedDates.includes(d)
-                    const isMarked = markedDates.has(d)
-                    const [dayName, dayNum] = formatShortDate(d).split(" ")
-                    return (
-                      <button key={d}
-                        onClick={() => toggleDate(d)}
-                        className={`relative flex flex-col items-center px-3 py-2 rounded-xl border-2 transition min-w-[52px] ${
-                          isSelected
-                            ? "border-tahfidz-green bg-tahfidz-green-light"
-                            : isMarked
-                              ? "border-emerald-200 bg-emerald-50/40 text-gray-600 hover:border-emerald-300"
-                              : "border-gray-200 text-gray-500 hover:border-gray-300"
-                        }`}>
-                        {isMarked && !isSelected && (
-                          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white" />
-                        )}
-                        <span className={`text-xs font-medium capitalize ${isSelected ? "text-tahfidz-green" : ""}`}>{dayName}</span>
-                        <span className={`text-base font-bold ${isSelected ? "text-tahfidz-green" : "text-gray-700"}`}>{dayNum}</span>
-                      </button>
-                    )
-                  })}
-                </div>
+          {Object.entries(daysByMonth).map(([month, days]) => (
+            <div key={month}>
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{month}</p>
+              <div className="flex gap-1.5 flex-wrap">
+                {days.map(d => {
+                  const isActive = d === activeDate
+                  const isMarked = markedDates.has(d)
+                  const [dayName, dayNum] = formatShortDate(d).split(" ")
+                  return (
+                    <button key={d}
+                      onClick={() => { setActiveDate(d); setSaved(false); setError(null) }}
+                      className={`relative flex flex-col items-center px-3 py-2 rounded-xl border-2 transition min-w-[52px] ${
+                        isActive
+                          ? "border-tahfidz-green bg-tahfidz-green-light"
+                          : isMarked
+                            ? "border-emerald-200 bg-emerald-50/40 text-gray-600 hover:border-emerald-300"
+                            : "border-gray-200 text-gray-500 hover:border-gray-300"
+                      }`}>
+                      {isMarked && !isActive && (
+                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white" />
+                      )}
+                      <span className={`text-xs font-medium capitalize ${isActive ? "text-tahfidz-green" : ""}`}>{dayName}</span>
+                      <span className={`text-base font-bold ${isActive ? "text-tahfidz-green" : "text-gray-700"}`}>{dayNum}</span>
+                    </button>
+                  )
+                })}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
 
           {quickDays.length > 0 && dayWindow < 90 && (
             <button onClick={() => setDayWindow(w => Math.min(w + 30, 90))}
@@ -331,13 +282,18 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
               + Voir plus de dates
             </button>
           )}
+        </div>
 
-          <div className="flex items-center gap-2">
-            <Calendar size={12} className="text-tahfidz-green" />
-            <p className="text-xs text-tahfidz-green font-medium">
-              {multiMode ? `${selectedDates.length} jours sélectionnés` : formatFullDate(selectedDates[0])}
-            </p>
-          </div>
+        {/* Active day info */}
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-gray-800">
+            {formatFullDate(activeDate)}
+          </p>
+          {markedDates.has(activeDate) && (
+            <span className="text-[10px] px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full font-medium">
+              Déjà marqué
+            </span>
+          )}
         </div>
 
         {/* Messages */}
@@ -348,111 +304,90 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
         )}
         {saved && (
           <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm font-medium">
-            <CalendarCheck size={14} />
-            {multiMode
-              ? `Enregistré pour ${selectedDates.length} jours`
-              : `Enregistré pour le ${formatFullDate(selectedDates[0])}`}
+            <CalendarCheck size={14} /> Enregistré pour le {formatFullDate(activeDate)}
           </div>
         )}
 
-        {/* Timeline */}
-        {loading ? (
+        {/* Children for active day */}
+        {!isFuture ? (
+          <div className="text-center py-6">
+            <p className="text-sm text-gray-400">Sélectionnez un jour à venir.</p>
+          </div>
+        ) : loading ? (
           <div className="flex justify-center py-8">
             <Loader2 size={24} className="animate-spin text-tahfidz-green" />
           </div>
+        ) : dayChildren.length === 0 ? (
+          <div className="text-center py-6">
+            <p className="text-sm text-gray-400">
+              {courseDayIndices.length === 0
+                ? "Aucun horaire de cours défini."
+                : "Aucun enfant n'a cours ce jour-là."}
+            </p>
+          </div>
         ) : (
-          <div className="space-y-4">
-            {selectedDates.filter(d => d > today).map(dateStr => {
-              const dayChildren = children.filter(c => hasCourseOnDay(c, dateStr))
-              if (dayChildren.length === 0) return null
-
+          <div className="space-y-3">
+            {dayChildren.map(child => {
+              const status = attendance[activeDate]?.[child.student.id] || ""
               return (
-                <div key={dateStr} className="rounded-xl border border-gray-100 overflow-hidden">
-                  {/* Day header */}
-                  <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-                    <p className="text-sm font-semibold text-gray-700">{formatFullDate(dateStr)}</p>
-                    {markedDates.has(dateStr) && (
-                      <span className="text-[10px] px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full font-medium">
-                        Déjà marqué
-                      </span>
-                    )}
+                <div key={child.id} className="rounded-xl border border-gray-100 p-4 bg-white shadow-sm">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full gradient-tahfidz flex items-center justify-center flex-shrink-0">
+                      <span className="text-white font-bold text-sm">{child.student.user.fullName.charAt(0)}</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{child.student.user.fullName}</p>
+                      <p className="text-[10px] text-gray-400">
+                        <span className="bg-orange-50 text-orange-600 px-1 py-0.5 rounded mr-1">
+                          {RELATION_LABELS[child.relation] ?? child.relation}
+                        </span>
+                        {child.student.group?.name}
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Children for this day */}
-                  <div className="p-3 space-y-3">
-                    {dayChildren.map(child => {
-                      const status = attendance[dateStr]?.[child.student.id] || ""
+                  <div className="flex gap-2 flex-wrap">
+                    {STATUS_OPTIONS.map(opt => {
+                      const isSelected = status === opt.value
                       return (
-                        <div key={child.id} className="flex items-start gap-3">
-                          <div className="w-9 h-9 rounded-full gradient-tahfidz flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <span className="text-white font-bold text-xs">{child.student.user.fullName.charAt(0)}</span>
-                          </div>
-                          <div className="flex-1 min-w-0 space-y-2">
-                            <div>
-                              <p className="text-sm font-semibold text-gray-900">{child.student.user.fullName}</p>
-                              <p className="text-[10px] text-gray-400">
-                                <span className="bg-orange-50 text-orange-600 px-1 py-0.5 rounded mr-1">
-                                  {RELATION_LABELS[child.relation] ?? child.relation}
-                                </span>
-                                {child.student.group?.name}
-                              </p>
-                            </div>
-
-                            <div className="flex gap-1.5 flex-wrap">
-                              {STATUS_OPTIONS.map(opt => {
-                                const isSelected = status === opt.value
-                                return (
-                                  <button key={opt.value}
-                                    onClick={() => selectStatus(child.student.id, dateStr, opt.value)}
-                                    className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition ${
-                                      isSelected ? opt.active : opt.inactive
-                                    }`}>
-                                    <opt.icon size={11} />
-                                    {opt.label}
-                                  </button>
-                                )
-                              })}
-                            </div>
-
-                            {(status === "ABSENT" || status === "EXCUSED") && (
-                              <input type="text"
-                                value={notes[dateStr]?.[child.student.id] || ""}
-                                onChange={e => setNotes(p => ({
-                                  ...p,
-                                  [dateStr]: { ...(p[dateStr] || {}), [child.student.id]: e.target.value }
-                                }))}
-                                placeholder="Motif (maladie, voyage, rendez-vous…)"
-                                className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-tahfidz-green" />
-                            )}
-                          </div>
-                        </div>
+                        <button key={opt.value}
+                          onClick={() => selectStatus(child.student.id, opt.value)}
+                          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border-2 transition ${
+                            isSelected ? opt.active : opt.inactive
+                          }`}>
+                          <opt.icon size={12} />
+                          {opt.label}
+                        </button>
                       )
                     })}
                   </div>
+
+                  {(status === "ABSENT" || status === "EXCUSED") && (
+                    <input type="text"
+                      value={notes[activeDate]?.[child.student.id] || ""}
+                      onChange={e => setNotes(p => ({
+                        ...p,
+                        [activeDate]: { ...(p[activeDate] || {}), [child.student.id]: e.target.value }
+                      }))}
+                      placeholder="Motif (maladie, voyage, rendez-vous…)"
+                      className="w-full mt-2 px-3 py-2 text-xs rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-tahfidz-green" />
+                  )}
                 </div>
               )
             })}
-
-            {selectedDates.filter(d => d > today).length === 0 && (
-              <div className="text-center py-8">
-                <p className="text-sm text-gray-400">
-                  {courseDayIndices.length === 0
-                    ? "Aucun horaire de cours défini."
-                    : "Sélectionnez un jour de cours pour commencer."}
-                </p>
-              </div>
-            )}
           </div>
         )}
 
         {/* Save button */}
-        {selectionCount > 0 && (
-          <button onClick={save} disabled={saving}
-            className="w-full flex items-center justify-center gap-2 py-3 gradient-tahfidz text-white text-sm font-semibold rounded-xl hover:opacity-90 disabled:opacity-50 transition shadow-lg">
+        {isFuture && !loading && dayChildren.length > 0 && (
+          <button onClick={save} disabled={saving || selectionCount === 0}
+            className="w-full flex items-center justify-center gap-2 py-3 gradient-tahfidz text-white text-sm font-semibold rounded-xl hover:opacity-90 disabled:opacity-40 transition shadow-lg">
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
             {saving
               ? "Enregistrement…"
-              : `Enregistrer ${selectionCount} statut${selectionCount > 1 ? "s" : ""} sur ${selectedDates.length} jour${selectedDates.length > 1 ? "s" : ""}`}
+              : selectionCount > 0
+                ? `Enregistrer (${selectionCount})`
+                : "Choisir un statut"}
           </button>
         )}
       </div>
