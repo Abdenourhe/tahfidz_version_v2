@@ -94,6 +94,8 @@ model School {
   country   String?    @default("DZ")
   phone     String?
   logo      String?
+  directorSignature String?
+  teacherSignature  String?
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
@@ -108,6 +110,7 @@ model School {
   auditLogs      AuditLog[] @relation("SchoolAuditLogs")
   feedbacks      Feedback[] @relation("SchoolFeedbacks")
   parentInvites  ParentInvite[]
+  certificateTemplates CertificateTemplate[]
 
   @@index([slug])
   @@map("schools")
@@ -964,10 +967,17 @@ model HalaqaEvaluation {
 
 model CertificateTemplate {
   id        String   @id @default(cuid())
-  level     String   @unique
-  config    Json
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  name      String   // Nom affiché, ex: "Mémorisation", "Assiduité"...
+  nameAr    String?
+  config    Json     // Configuration complète du template
+  isDefault Boolean  @default(false)
+  sortOrder Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([schoolId, name])
+  @@index([schoolId])
   @@map("certificate_templates")
 }
