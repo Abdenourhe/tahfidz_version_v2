@@ -25,6 +25,7 @@ export function CertificateViewer({ student, school, templates, defaultTemplateI
   const [isPdfLoading, setIsPdfLoading] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [activeId, setActiveId] = useState(defaultTemplateId || templates[0]?.id)
+  const [note, setNote] = useState("")
 
   useEffect(() => {
     setMounted(true)
@@ -172,6 +173,18 @@ export function CertificateViewer({ student, school, templates, defaultTemplateI
         )}
 
         <div className="flex items-center gap-2">
+          {!hideToolbar && (
+            <div className="hidden md:flex items-center gap-2 mr-2">
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder={isAr ? "ملاحظة (اختياري)" : L === "en" ? "Note (optional)" : "Note / observation (optionnelle)"}
+                rows={1}
+                maxLength={200}
+                className="w-48 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none transition"
+              />
+            </div>
+          )}
           <button
             onClick={handleDownloadPDF}
             disabled={isPdfLoading}
