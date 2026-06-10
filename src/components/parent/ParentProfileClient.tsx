@@ -1,6 +1,7 @@
 "use client"
 import { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { motion } from "framer-motion"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 
@@ -24,7 +25,7 @@ interface ChildLink {
     totalStars: number
     currentStreak: number
     dateOfBirth: Date | null
-    user: { fullName: string; fullNameAr: string | null }
+    user: { fullName: string; fullNameAr: string | null; avatar: string | null }
     group: { name: string } | null
     teacher: { user: { fullName: string; phone: string | null; email: string } } | null
     memorizationProgress: {
@@ -150,8 +151,12 @@ export function ParentProfileClient({
                   >
                     <Link href={`/parent/child/${s.id}`}
                       className="flex items-center gap-3 p-5 bg-gradient-to-r from-tahfidz-green-light/40 to-transparent dark:from-emerald-900/20 border-b border-gray-100 dark:border-gray-700 hover:from-tahfidz-green-light/70 transition group">
-                      <div className="w-14 h-14 rounded-2xl gradient-tahfidz flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-                        <span className="text-white font-bold text-xl">{s.user.fullName.charAt(0)}</span>
+                      <div className="w-14 h-14 rounded-2xl gradient-tahfidz flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
+                        {s.user.avatar ? (
+                          <Image src={s.user.avatar} alt={s.user.fullName} width={56} height={56} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-white font-bold text-xl">{s.user.fullName.charAt(0)}</span>
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">

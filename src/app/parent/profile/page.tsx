@@ -17,7 +17,7 @@ export default async function ParentProfilePage() {
         include: {
           student: {
             include: {
-              user: { select: { fullName: true, fullNameAr: true } },
+              user: { select: { fullName: true, fullNameAr: true, avatar: true } },
               group: { select: { name: true } },
               teacher: { include: { user: { select: { fullName: true, phone: true, email: true } } } },
               memorizationProgress: {

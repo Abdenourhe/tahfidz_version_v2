@@ -5,7 +5,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { Menu, Bell, X, LogOut, User } from "lucide-react"
+import { Menu, Bell, X, LogOut } from "lucide-react"
 import { TopBarControls } from "./TopBarControls"
 import { useT } from "@/contexts/LanguageContext"
 import { cn } from "@/lib/utils"
@@ -129,7 +129,7 @@ export function MobileHeader({
         </div>
       </header>
 
-      {/* Drawer avec animation */}
+      {/* Drawer */}
       <AnimatePresence>
         {menuOpen && (
           <>
@@ -149,7 +149,7 @@ export function MobileHeader({
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed start-0 top-0 bottom-0 w-72 bg-white dark:bg-gray-900 z-50 shadow-2xl flex flex-col"
+              className="fixed start-0 top-0 bottom-0 w-72 bg-white dark:bg-gray-900 z-50 shadow-2xl flex flex-col h-[100dvh]"
             >
               {/* User section */}
               <div className="px-4 py-4 border-b border-gray-100 dark:border-gray-800">
@@ -166,6 +166,11 @@ export function MobileHeader({
                     <p className="text-[11px] text-gray-400 truncate">{session?.user?.email || ""}</p>
                   </div>
                 </div>
+              </div>
+
+              {/* Nav controls */}
+              <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800">
+                <TopBarControls dropdownAlign="left" />
               </div>
 
               {/* Navigation */}
@@ -191,18 +196,26 @@ export function MobileHeader({
                     </Link>
                   </motion.div>
                 ))}
-              </nav>
 
-              {/* Footer */}
-              <div className="p-3 border-t border-gray-100 dark:border-gray-800 space-y-1">
-                <button
+                {/* Separator */}
+                <div className="my-2 border-t border-gray-100 dark:border-gray-800" />
+
+                {/* Logout */}
+                <motion.button
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: links.length * 0.05 }}
                   onClick={() => { setMenuOpen(false); signOut({ callbackUrl: "/login" }) }}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full"
                 >
                   <LogOut size={16} />
                   <span>{t("logout") || "Déconnexion"}</span>
-                </button>
-                <p className="text-[10px] text-gray-300 text-center pt-1">{displayName}</p>
+                </motion.button>
+              </nav>
+
+              {/* Footer */}
+              <div className="p-4 border-t border-gray-100 dark:border-gray-800">
+                <p className="text-[10px] text-gray-300 text-center">{displayName}</p>
               </div>
             </motion.div>
           </>
