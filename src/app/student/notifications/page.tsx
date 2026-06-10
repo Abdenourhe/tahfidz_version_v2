@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation"
 interface Notification {
   id: string; type: string; title: string; titleAr?: string | null
   message: string; isRead: boolean; createdAt: string
+  data?: Record<string, any>
 }
 
 export default function StudentNotificationsPage() {
@@ -139,7 +140,7 @@ export default function StudentNotificationsPage() {
                       body: JSON.stringify({ ids: [notif.id] }),
                     }).then(() => load())
                   }
-                  if (notif.type === "direct_message") router.push("/student/messages")
+                  if (notif.data?.url) router.push(notif.data.url)
                 }}>
                 <div className={`w-10 h-10 rounded-xl ${tc.bg} flex items-center justify-center flex-shrink-0`}>
                   <tc.icon size={18} className={tc.color} />

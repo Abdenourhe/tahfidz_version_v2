@@ -2,6 +2,7 @@
 // src/app/admin/notifications/page.tsx — with delete option
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { formatDate } from "@/lib/utils"
 import { Bell, CheckCheck, BookOpen, Star, Award, Megaphone, Link2, Trash2, Loader2 } from "lucide-react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
@@ -14,9 +15,11 @@ interface Notification {
   message: string
   isRead: boolean
   createdAt: string
+  data?: Record<string, any>
 }
 
 export default function AdminNotificationsPage() {
+  const router = useRouter()
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 
@@ -159,10 +162,17 @@ export default function AdminNotificationsPage() {
               <div key={notif.id}
                 className={`bg-white dark:bg-gray-900 rounded-xl border p-4 flex gap-4 transition hover:shadow-sm ${!notif.isRead ? "border-tahfidz-green/30 bg-tahfidz-green-light/20" : "border-gray-100 dark:border-gray-800"}`}>
                 <div className={`w-10 h-10 rounded-xl ${tc.bg} flex items-center justify-center flex-shrink-0 cursor-pointer`}
-                  onClick={() => !notif.isRead && markRead(notif.id)}>
+                  onClick={() => {
+                    if (!notif.isRead) markRead(notif.id)
+                    if (notif.data?.url) router.push(notif.data.url)
+                  }}>
                   <tc.icon size={18} className={tc.color} />
                 </div>
-                <div className="flex-1 min-w-0 cursor-pointer" onClick={() => !notif.isRead && markRead(notif.id)}>
+                <div className="flex-1 min-w-0 cursor-pointer"
+                  onClick={() => {
+                    if (!notif.isRead) markRead(notif.id)
+                    if (notif.data?.url) router.push(notif.data.url)
+                  }}>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${tc.bg} ${tc.color}`}>{tc.label}</span>
                     <p className={`text-sm font-semibold ${!notif.isRead ? "text-gray-900 dark:text-gray-100" : "text-gray-600 dark:text-gray-400"}`}>{notif.title}</p>

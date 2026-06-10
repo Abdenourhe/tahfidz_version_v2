@@ -9,6 +9,7 @@ import { useLanguage, useT } from "@/contexts/LanguageContext"
 interface Notification {
   id: string; type: string; title: string; titleAr?: string | null
   message: string; isRead: boolean; createdAt: string
+  data?: Record<string, any>
 }
 
 export default function TeacherNotificationsPage() {
@@ -150,7 +151,7 @@ export default function TeacherNotificationsPage() {
                 <div className="flex-1 min-w-0 cursor-pointer"
                   onClick={() => {
                     if (!notif.isRead) markRead(notif.id)
-                    if (notif.type === "direct_message") router.push("/teacher/messages")
+                    if (notif.data?.url) router.push(notif.data.url)
                   }}>
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className={`text-sm font-semibold ${!notif.isRead ? "text-gray-900 dark:text-gray-100" : "text-gray-700 dark:text-gray-300"}`}>

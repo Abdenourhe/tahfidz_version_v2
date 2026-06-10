@@ -87,10 +87,7 @@ export default function ParentNotificationsPage() {
 
   const handleClick = (notif: Notification) => {
     if (!notif.isRead) markRead(notif.id)
-    if (notif.type === "direct_message") {
-      const url = notif.data?.url || (notif.data?.studentId ? `/parent/child/${notif.data.studentId}` : "/parent/dashboard")
-      router.push(url)
-    }
+    if (notif.data?.url) router.push(notif.data.url)
   }
 
   if (loading) {
