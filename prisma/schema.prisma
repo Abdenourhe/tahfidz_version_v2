@@ -82,34 +82,34 @@ enum EvaluationDecision {
 // ==================== ÉCOLE (tenant racine) ====================
 
 model School {
-  id        String     @id @default(uuid())
-  name      String
-  nameAr    String?
-  slug      String     @unique
-  plan      SchoolPlan @default(FREE)
-  isActive  Boolean    @default(true)
-  settings  Json       @default("{}")
-  address   String?
-  city      String?
-  country   String?    @default("DZ")
-  phone     String?
-  logo      String?
+  id                String     @id @default(uuid())
+  name              String
+  nameAr            String?
+  slug              String     @unique
+  plan              SchoolPlan @default(FREE)
+  isActive          Boolean    @default(true)
+  settings          Json       @default("{}")
+  address           String?
+  city              String?
+  country           String?    @default("DZ")
+  phone             String?
+  logo              String?
   directorSignature String?
   teacherSignature  String?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
 
-  users          User[]
-  groups         Group[]
-  halaqaSessions  HalaqaSession[] @relation("SchoolHalaqa")
-  announcements  Announcement[]
-  notifications  Notification[]
-  exams          Exam[]
-  directMessages DirectMessage[]
-  badges         Badge[]
-  auditLogs      AuditLog[] @relation("SchoolAuditLogs")
-  feedbacks      Feedback[] @relation("SchoolFeedbacks")
-  parentInvites  ParentInvite[]
+  users                User[]
+  groups               Group[]
+  halaqaSessions       HalaqaSession[]       @relation("SchoolHalaqa")
+  announcements        Announcement[]
+  notifications        Notification[]
+  exams                Exam[]
+  directMessages       DirectMessage[]
+  badges               Badge[]
+  auditLogs            AuditLog[]            @relation("SchoolAuditLogs")
+  feedbacks            Feedback[]            @relation("SchoolFeedbacks")
+  parentInvites        ParentInvite[]
   certificateTemplates CertificateTemplate[]
 
   @@index([slug])
@@ -141,17 +141,18 @@ model User {
   teacherProfile Teacher?
   parentProfile  Parent?
   studentProfile Student?
-  
-  teacherHalaqaSessions HalaqaSession[]     @relation("TeacherHalaqa")
-  studentHalaqaEvals    HalaqaEvaluation[]  @relation("StudentHalaqaEval")
 
-  notifications    Notification[]
-  sentMessages     DirectMessage[] @relation("SentMessages")
-  receivedMessages DirectMessage[] @relation("ReceivedMessages")
-  sessions         Session[]
-  announcements    Announcement[]
-  auditLogs        AuditLog[] @relation("UserAuditLogs")
-  feedbacks        Feedback[] @relation("UserFeedbacks")
+  teacherHalaqaSessions HalaqaSession[]    @relation("TeacherHalaqa")
+  studentHalaqaEvals    HalaqaEvaluation[] @relation("StudentHalaqaEval")
+
+  notifications     Notification[]
+  sentMessages      DirectMessage[]    @relation("SentMessages")
+  receivedMessages  DirectMessage[]    @relation("ReceivedMessages")
+  messageReactions  MessageReaction[]
+  sessions          Session[]
+  announcements     Announcement[]
+  auditLogs         AuditLog[]         @relation("UserAuditLogs")
+  feedbacks         Feedback[]         @relation("UserFeedbacks")
   parentAttendances ParentAttendance[]
   dailyLogsCreated  DailyProgressLog[]
   dailyLogComments  DailyLogComment[]
@@ -203,8 +204,8 @@ model Teacher {
 }
 
 model Parent {
-  id              String @id @default(uuid())
-  userId          String @unique
+  id              String  @id @default(uuid())
+  userId          String  @unique
   nationality     String?
   spokenLanguages String?
 
@@ -220,30 +221,29 @@ model Student {
   studentCode    String    @unique
   dateOfBirth    DateTime?
   enrollmentDate DateTime  @default(now())
-  emergencyPhone  String?
+  emergencyPhone String?
   // ← AJOUTÉ : Adresse complète
-  address         String?
-  city            String?
-  postalCode      String?
+  address        String?
+  city           String?
+  postalCode     String?
   // ← AJOUTÉ : Notes médicales
-  medicalNotes    String?   @db.Text
+  medicalNotes   String?   @db.Text
   groupId        String?
   teacherId      String?
 
+  currentSurahId   Int?
+  currentSurahNote String?
+  nationality      String?
+  spokenLanguages  String?
+  totalStars       Int       @default(0)
+  currentStreak    Int       @default(0)
+  longestStreak    Int       @default(0)
+  lastActivityDate DateTime?
+  status           String    @default("active")
 
-  currentSurahId    Int?
-  currentSurahNote  String?
-  nationality       String?
-  spokenLanguages   String?
-  totalStars        Int       @default(0)
-  currentStreak     Int       @default(0)
-  longestStreak     Int       @default(0)
-  lastActivityDate  DateTime?
-  status            String    @default("active")
-
-  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  group                Group?                @relation(fields: [groupId], references: [id])
-  teacher              Teacher?              @relation(fields: [teacherId], references: [id])
+  user                 User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group                Group?                 @relation(fields: [groupId], references: [id])
+  teacher              Teacher?               @relation(fields: [teacherId], references: [id])
   parentLinks          ParentStudentLink[]
   parentInvites        ParentInvite[]
   memorizationProgress MemorizationProgress[]
@@ -280,16 +280,16 @@ model ParentStudentLink {
 // ==================== INVITATIONS PARENT ====================
 
 model ParentInvite {
-  id         String   @id @default(cuid())
-  code       String   @unique
-  studentId  String   @unique
-  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  schoolId   String
-  school     School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  used       Boolean  @default(false)
-  usedAt     DateTime?
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
+  id        String    @id @default(cuid())
+  code      String    @unique
+  studentId String    @unique
+  student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  schoolId  String
+  school    School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  used      Boolean   @default(false)
+  usedAt    DateTime?
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
 
   @@index([code])
   @@index([studentId])
@@ -311,13 +311,13 @@ model Group {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
 
-  school        School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  teacher       Teacher             @relation(fields: [teacherId], references: [id])
-  students      Student[]
-  exams         Exam[]
-  announcements GroupAnnouncement[]
-  attendances   Attendance[]
-  halaqaSessions HalaqaSession[]      @relation("GroupHalaqa")
+  school         School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  teacher        Teacher             @relation(fields: [teacherId], references: [id])
+  students       Student[]
+  exams          Exam[]
+  announcements  GroupAnnouncement[]
+  attendances    Attendance[]
+  halaqaSessions HalaqaSession[]     @relation("GroupHalaqa")
 
   @@index([schoolId])
   @@index([teacherId])
@@ -334,7 +334,7 @@ model Surah {
   verseCount      Int
   juzNumber       Int
   revelationType  String
-  difficultyLevel Int     @default(3)
+  difficultyLevel Int    @default(3)
   orderInMushaf   Int
 
   progressRecords  MemorizationProgress[]
@@ -366,9 +366,9 @@ model MemorizationProgress {
   completedAt          DateTime?
   updatedAt            DateTime           @updatedAt
 
-  student       Student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  teacher       Teacher?           @relation(fields: [teacherId], references: [id])
-  surah         Surah              @relation(fields: [surahId], references: [id])
+  student       Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher       Teacher?        @relation(fields: [teacherId], references: [id])
+  surah         Surah           @relation(fields: [surahId], references: [id])
   evaluation    Evaluation?
   statusHistory StatusHistory[]
 
@@ -379,15 +379,15 @@ model MemorizationProgress {
 }
 
 model StatusHistory {
-  id               String             @id @default(uuid())
-  progressId       String
-  oldStatus        MemorizationStatus
-  newStatus        MemorizationStatus
-  changedBy        String
-  versesMemorized  Int?
-  quality          ProgressQuality?
-  changedAt        DateTime           @default(now())
-  note             String?
+  id              String             @id @default(uuid())
+  progressId      String
+  oldStatus       MemorizationStatus
+  newStatus       MemorizationStatus
+  changedBy       String
+  versesMemorized Int?
+  quality         ProgressQuality?
+  changedAt       DateTime           @default(now())
+  note            String?
 
   progress MemorizationProgress @relation(fields: [progressId], references: [id], onDelete: Cascade)
 
@@ -414,51 +414,51 @@ model MemorizedSurah {
 // ==================== CARNET QUOTIDIEN ====================
 
 model DailyProgressLog {
-  id                 String   @id @default(uuid())
-  studentId          String
-  date               DateTime @db.Date
-  createdById        String
+  id          String   @id @default(uuid())
+  studentId   String
+  date        DateTime @db.Date
+  createdById String
 
   // Hifz
-  hifzFromSurahId    Int?
-  hifzFromVerse      Int?
-  hifzToSurahId      Int?
-  hifzToVerse        Int?
-  hifzNote           String?  @db.Text
+  hifzFromSurahId Int?
+  hifzFromVerse   Int?
+  hifzToSurahId   Int?
+  hifzToVerse     Int?
+  hifzNote        String? @db.Text
 
   // Muraja'a
-  murajaFromSurahId  Int?
-  murajaFromVerse    Int?
-  murajaToSurahId    Int?
-  murajaToVerse      Int?
-  murajaNote         String?  @db.Text
+  murajaFromSurahId Int?
+  murajaFromVerse   Int?
+  murajaToSurahId   Int?
+  murajaToVerse     Int?
+  murajaNote        String? @db.Text
 
   // Talqin
-  talqinFromSurahId  Int?
-  talqinFromVerse    Int?
-  talqinToSurahId    Int?
-  talqinToVerse      Int?
-  talqinNote         String?  @db.Text
+  talqinFromSurahId Int?
+  talqinFromVerse   Int?
+  talqinToSurahId   Int?
+  talqinToVerse     Int?
+  talqinNote        String? @db.Text
 
   // Cours scientifique
-  courseBook         String?
-  courseFromPage     Int?
-  courseToPage       Int?
-  courseNote         String?  @db.Text
+  courseBook     String?
+  courseFromPage Int?
+  courseToPage   Int?
+  courseNote     String? @db.Text
 
   // Assiduité / Observations
   attendanceStatus   String?
-  teacherObservation String?  @db.Text
-  parentObservation  String?  @db.Text
+  teacherObservation String? @db.Text
+  parentObservation  String? @db.Text
 
   // Global
-  globalScore        Int?
+  globalScore Int?
 
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  createdBy User    @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  student   Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdBy User              @relation(fields: [createdById], references: [id], onDelete: Cascade)
   comments  DailyLogComment[]
 
   @@unique([studentId, date])
@@ -469,7 +469,7 @@ model DailyProgressLog {
 model DailyLogComment {
   id         String   @id @default(uuid())
   dailyLogId String
-  section    String   // HIFZ, MURAJA, TALQIN, COURSE, ATTENDANCE, GENERAL
+  section    String // HIFZ, MURAJA, TALQIN, COURSE, ATTENDANCE, GENERAL
   userId     String
   message    String   @db.Text
   createdAt  DateTime @default(now())
@@ -507,8 +507,8 @@ model Evaluation {
   decision            EvaluationDecision
 
   progress MemorizationProgress @relation(fields: [progressId], references: [id], onDelete: Cascade)
-  student  Student               @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  teacher  Teacher               @relation(fields: [teacherId], references: [id])
+  student  Student              @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher  Teacher              @relation(fields: [teacherId], references: [id])
 
   @@index([studentId])
   @@index([teacherId])
@@ -539,18 +539,18 @@ model Attendance {
 }
 
 model ParentAttendance {
-  id           String           @id @default(uuid())
-  studentId    String
-  parentId     String
-  date         DateTime         @db.Date
-  status       AttendanceStatus
-  reason       String?
-  validatedBy  String?
-  validatedAt  DateTime?
-  createdAt    DateTime         @default(now())
+  id          String           @id @default(uuid())
+  studentId   String
+  parentId    String
+  date        DateTime         @db.Date
+  status      AttendanceStatus
+  reason      String?
+  validatedBy String?
+  validatedAt DateTime?
+  createdAt   DateTime         @default(now())
 
-  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  parent    User    @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  parent  User    @relation(fields: [parentId], references: [id], onDelete: Cascade)
 
   @@index([studentId, date])
   @@index([parentId, date])
@@ -573,7 +573,7 @@ model Badge {
   criteriaValue Int
   rarity        BadgeRarity @default(COMMON)
 
-  school        School?       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  school        School?        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   studentBadges StudentBadge[]
 
   @@index([schoolId])
@@ -676,18 +676,18 @@ model Notification {
 // ==================== STATISTIQUES ====================
 
 model StudentStats {
-  id                     String    @id @default(uuid())
-  studentId              String    @unique
-  totalSurahsMemorized   Int       @default(0)
-  totalVersesMemorized   Int       @default(0)
-  totalEvaluationScore   Int       @default(0)
-  evaluationCount        Int       @default(0)
-  averageScore           Float     @default(0)
-  attendanceRate         Float     @default(0)
-  currentStreakStart      DateTime?
-  longestStreakStart      DateTime?
-  longestStreakEnd        DateTime?
-  lastCalculatedAt        DateTime  @default(now())
+  id                   String    @id @default(uuid())
+  studentId            String    @unique
+  totalSurahsMemorized Int       @default(0)
+  totalVersesMemorized Int       @default(0)
+  totalEvaluationScore Int       @default(0)
+  evaluationCount      Int       @default(0)
+  averageScore         Float     @default(0)
+  attendanceRate       Float     @default(0)
+  currentStreakStart   DateTime?
+  longestStreakStart   DateTime?
+  longestStreakEnd     DateTime?
+  lastCalculatedAt     DateTime  @default(now())
 
   student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
@@ -713,9 +713,9 @@ model ErrorLog {
 // ==================== AUDIT LOG ====================
 
 model AuditLog {
-  id         String   @id @default(uuid())
-  schoolId   String
-  userId     String
+  id       String @id @default(uuid())
+  schoolId String
+  userId   String
 
   action     String
   actorId    String
@@ -723,21 +723,21 @@ model AuditLog {
   actorEmail String?
   actorName  String?
 
-  entityType String?   // ← AJOUTÉ (pour compatibilité avec l'ancienne base)
-  entityId   String?   // ← AJOUTÉ (pour compatibilité avec l'ancienne base)
+  entityType String? // ← AJOUTÉ (pour compatibilité avec l'ancienne base)
+  entityId   String? // ← AJOUTÉ (pour compatibilité avec l'ancienne base)
 
   targetType String?
   targetId   String?
   targetName String?
 
-  details    String?
-  severity   String   @default("INFO")
-  oldValues  Json?
-  newValues  Json?
+  details   String?
+  severity  String  @default("INFO")
+  oldValues Json?
+  newValues Json?
 
-  ipAddress  String?
-  userAgent  String?
-  createdAt  DateTime @default(now())
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
 
   school School @relation("SchoolAuditLogs", fields: [schoolId], references: [id], onDelete: Cascade)
   user   User   @relation("UserAuditLogs", fields: [userId], references: [id], onDelete: Cascade)
@@ -754,15 +754,15 @@ model AuditLog {
 // ==================== BROADCAST ====================
 
 model Broadcast {
-  id          String   @id @default(uuid())
-  schoolId    String?
-  title       String
-  message     String   @db.Text
-  target      String   @default("all")
-  sentBy      String
-  sentAt      DateTime @default(now())
-  readCount   Int      @default(0)
-  totalCount  Int      @default(0)
+  id         String   @id @default(uuid())
+  schoolId   String?
+  title      String
+  message    String   @db.Text
+  target     String   @default("all")
+  sentBy     String
+  sentAt     DateTime @default(now())
+  readCount  Int      @default(0)
+  totalCount Int      @default(0)
 
   @@index([schoolId])
   @@index([sentAt])
@@ -799,21 +799,44 @@ model Exam {
 // ==================== MESSAGES DIRECTS ====================
 
 model DirectMessage {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   schoolId   String
   fromUserId String
   toUserId   String
   subject    String
-  body       String   @db.Text
-  isRead     Boolean  @default(false)
-  sentAt     DateTime @default(now())
+  body       String    @db.Text
+  isRead     Boolean   @default(false)
+  sentAt     DateTime  @default(now())
+  deletedAt  DateTime?
+
+  replyToId String?
+  replyTo   DirectMessage?  @relation("MessageThread", fields: [replyToId], references: [id])
+  replies   DirectMessage[] @relation("MessageThread")
+
+  reactions MessageReaction[]
 
   school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  fromUser User   @relation("SentMessages",     fields: [fromUserId], references: [id])
-  toUser   User   @relation("ReceivedMessages", fields: [toUserId],   references: [id])
+  fromUser User   @relation("SentMessages", fields: [fromUserId], references: [id])
+  toUser   User   @relation("ReceivedMessages", fields: [toUserId], references: [id])
 
   @@index([schoolId, toUserId, isRead])
+  @@index([schoolId, sentAt])
   @@map("direct_messages")
+}
+
+model MessageReaction {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message DirectMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+  @@map("message_reactions")
 }
 
 // ==================== DEMANDES D'INSCRIPTION ====================
@@ -853,20 +876,20 @@ model SchoolRequest {
 // CORRIGÉ : ENUMs remplacés par String pour éviter les problèmes de types PostgreSQL
 
 model Feedback {
-  id          String   @id @default(uuid())
-  schoolId    String
-  userId      String
-  type        String   @default("BUG")           // BUG, SUGGESTION, FEEDBACK, OTHER
-  category    String   @default("GENERAL")       // UI, PERFORMANCE, FEATURE, BUG, OTHER
-  title       String
-  message     String   @db.Text
-  screenshot  String?
-  status      String   @default("PENDING")       // PENDING, IN_PROGRESS, RESOLVED, CLOSED
-  priority    String   @default("LOW")           // LOW, MEDIUM, HIGH, CRITICAL
-  adminNote   String?  @db.Text
-  resolvedAt  DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String    @id @default(uuid())
+  schoolId   String
+  userId     String
+  type       String    @default("BUG") // BUG, SUGGESTION, FEEDBACK, OTHER
+  category   String    @default("GENERAL") // UI, PERFORMANCE, FEATURE, BUG, OTHER
+  title      String
+  message    String    @db.Text
+  screenshot String?
+  status     String    @default("PENDING") // PENDING, IN_PROGRESS, RESOLVED, CLOSED
+  priority   String    @default("LOW") // LOW, MEDIUM, HIGH, CRITICAL
+  adminNote  String?   @db.Text
+  resolvedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   school School @relation("SchoolFeedbacks", fields: [schoolId], references: [id], onDelete: Cascade)
   user   User   @relation("UserFeedbacks", fields: [userId], references: [id], onDelete: Cascade)
@@ -898,42 +921,42 @@ enum HalaqaMode {
 }
 
 model HalaqaSession {
-  id           String    @id @default(cuid())
-  meetingID    String    @unique
-  meetingName  String
-  roomUrl      String    // URL join prof (MODERATOR)
-  attendeeUrl  String?   // URL join élève (VIEWER)
-  guestUrl     String?   // URL join parent (OBSERVER)
-  
-  schoolId     String
-  school       School    @relation("SchoolHalaqa", fields: [schoolId], references: [id], onDelete: Cascade)
-  
-  teacherId    String
-  teacher      User      @relation("TeacherHalaqa", fields: [teacherId], references: [id], onDelete: Cascade)
-  studentIds   String[]  // Array of student User IDs
-  
-  groupId      String?
-  group        Group?    @relation("GroupHalaqa", fields: [groupId], references: [id], onDelete: SetNull)
-  
-  type         HalaqaType
-  status       HalaqaStatus @default(SCHEDULED)
-  mode         HalaqaMode   @default(AUDIO_ONLY)
-  
-  scheduledAt  DateTime
-  startedAt    DateTime?
-  endedAt      DateTime?
-  duration     Int?        // minutes
-  
+  id          String  @id @default(cuid())
+  meetingID   String  @unique
+  meetingName String
+  roomUrl     String // URL join prof (MODERATOR)
+  attendeeUrl String? // URL join élève (VIEWER)
+  guestUrl    String? // URL join parent (OBSERVER)
+
+  schoolId String
+  school   School @relation("SchoolHalaqa", fields: [schoolId], references: [id], onDelete: Cascade)
+
+  teacherId  String
+  teacher    User     @relation("TeacherHalaqa", fields: [teacherId], references: [id], onDelete: Cascade)
+  studentIds String[] // Array of student User IDs
+
+  groupId String?
+  group   Group?  @relation("GroupHalaqa", fields: [groupId], references: [id], onDelete: SetNull)
+
+  type   HalaqaType
+  status HalaqaStatus @default(SCHEDULED)
+  mode   HalaqaMode   @default(AUDIO_ONLY)
+
+  scheduledAt DateTime
+  startedAt   DateTime?
+  endedAt     DateTime?
+  duration    Int? // minutes
+
   recordingUrl String?
   recordingId  String?
-  
-  sourah       String?
-  verses       String?
-  
-  evaluations  HalaqaEvaluation[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
+
+  sourah String?
+  verses String?
+
+  evaluations HalaqaEvaluation[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
   @@index([schoolId])
   @@index([teacherId])
   @@index([groupId])
@@ -943,22 +966,22 @@ model HalaqaSession {
 }
 
 model HalaqaEvaluation {
-  id                String   @id @default(cuid())
-  sessionId         String
-  session           HalaqaSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  studentId         String
-  student           User     @relation("StudentHalaqaEval", fields: [studentId], references: [id], onDelete: Cascade)
-  
+  id        String        @id @default(cuid())
+  sessionId String
+  session   HalaqaSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  studentId String
+  student   User          @relation("StudentHalaqaEval", fields: [studentId], references: [id], onDelete: Cascade)
+
   sourah            String?
   verses            String?
   tajweedScore      Int?
   memorizationScore Int?
   fluencyScore      Int?
-  notes             String?  @db.Text
-  
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
+  notes             String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@unique([sessionId, studentId])
   @@index([sessionId])
   @@index([studentId])
@@ -969,9 +992,9 @@ model CertificateTemplate {
   id        String   @id @default(cuid())
   schoolId  String
   school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  name      String   // Nom affiché, ex: "Mémorisation", "Assiduité"...
+  name      String // Nom affiché, ex: "Mémorisation", "Assiduité"...
   nameAr    String?
-  config    Json     // Configuration complète du template
+  config    Json // Configuration complète du template
   isDefault Boolean  @default(false)
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())

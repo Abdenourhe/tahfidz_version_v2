@@ -9,6 +9,7 @@ const sendSchema = z.object({
   toUserId: z.string().uuid(),
   subject:  z.string().min(1).max(200),
   body:     z.string().min(1).max(5000),
+  replyToId: z.string().uuid().optional(),
 })
 
 export async function GET(req: Request) {
@@ -17,43 +18,71 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const type = searchParams.get("type") || "all"
   const otherUserId = searchParams.get("otherUserId")
-  let where: any =
-    type === "sent" ? { fromUserId: session.user.id }
-    : type === "inbox" ? { toUserId: session.user.id }
-    : type === "conversation" && otherUserId ? {
-        schoolId: session.user.schoolId,
-        OR: [
-          { fromUserId: session.user.id, toUserId: otherUserId },
-          { fromUserId: otherUserId, toUserId: session.user.id },
-        ],
-      }
-    : { OR: [{ fromUserId: session.user.id }, { toUserId: session.user.id }] }
+
+  let where: any = { deletedAt: null }
+
+  if (type === "sent") {
+    where = { ...where, fromUserId: session.user.id }
+  } else if (type === "inbox") {
+    where = { ...where, toUserId: session.user.id }
+  } else if (type === "conversation" && otherUserId) {
+    where = {
+      ...where,
+      schoolId: session.user.schoolId,
+      OR: [
+        { fromUserId: session.user.id, toUserId: otherUserId },
+        { fromUserId: otherUserId, toUserId: session.user.id },
+      ],
+    }
+  } else {
+    where = {
+      ...where,
+      OR: [{ fromUserId: session.user.id }, { toUserId: session.user.id }],
+    }
+  }
+
   const messages = await prisma.directMessage.findMany({
     where,
     include: {
       fromUser: { select: { fullName: true, role: true } },
       toUser:   { select: { fullName: true, role: true } },
+      replyTo:  { select: { body: true, fromUser: { select: { fullName: true } } } },
+      reactions: { select: { emoji: true, userId: true } },
     },
     orderBy: { sentAt: "desc" },
-    take: 50,
+    take: 100,
   })
+
   const unreadCount = await prisma.directMessage.count({
-    where: { toUserId: session.user.id, isRead: false },
+    where: { toUserId: session.user.id, isRead: false, deletedAt: null },
   })
+
   return NextResponse.json({ messages, unreadCount })
 }
 
 export async function POST(req: Request) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
-  const body   = await req.json()
+  const body = await req.json()
   const parsed = sendSchema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
-  const { toUserId, subject, body: msgBody } = parsed.data
+
+  const { toUserId, subject, body: msgBody, replyToId } = parsed.data
   const toUser = await prisma.user.findUnique({ where: { id: toUserId }, select: { id:true, fullName:true, email:true } })
   if (!toUser) return NextResponse.json({ error: "Destinataire introuvable" }, { status: 404 })
+
   const fromUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { fullName:true } })
-  const message = await prisma.directMessage.create({ data: { schoolId: session.user.schoolId, fromUserId: session.user.id, toUserId, subject, body: msgBody } })
+  const message = await prisma.directMessage.create({
+    data: {
+      schoolId: session.user.schoolId,
+      fromUserId: session.user.id,
+      toUserId,
+      subject,
+      body: msgBody,
+      replyToId,
+    }
+  })
+
   await prisma.notification.create({
     data: {
       schoolId: session.user.schoolId,
@@ -64,7 +93,7 @@ export async function POST(req: Request) {
       data: { messageId: message.id, fromUserId: session.user.id },
     },
   })
-  // Email notification via SendGrid
+
   if (toUser.email && isMailConfigured()) {
     try {
       await sendMail({
@@ -74,6 +103,7 @@ export async function POST(req: Request) {
       })
     } catch(e) { console.error("Email error:", e) }
   }
+
   return NextResponse.json({ message }, { status: 201 })
 }
 
@@ -86,6 +116,7 @@ export async function DELETE(req: Request) {
   await prisma.directMessage.deleteMany({
     where: {
       schoolId: session.user.schoolId,
+      deletedAt: null,
       OR: [
         { fromUserId: session.user.id, toUserId: otherUserId },
         { fromUserId: otherUserId, toUserId: session.user.id },
