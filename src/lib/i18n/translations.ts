@@ -19,6 +19,7 @@ export const translations = {
     certificates:   { fr: "Certificats",       en: "Certificates",     ar: "الشهادات" },
     reports:        { fr: "Rapports",          en: "Reports",          ar: "التقارير" },
     // Sections
+    main:           { fr: "Principal",         en: "Main",             ar: "الرئيسية" },
     management:     { fr: "Gestion",           en: "Management",       ar: "الإدارة" },
     academic:       { fr: "Pédagogie",         en: "Academic",         ar: "الأكاديمية" },
     system:         { fr: "Système",           en: "System",           ar: "النظام" },

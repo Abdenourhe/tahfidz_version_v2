@@ -17,56 +17,87 @@ import { useT } from "@/contexts/LanguageContext"
 import { cn } from "@/lib/utils"
 import { useSession, signOut } from "next-auth/react"
 
-const ROLE_NAV: Record<string, { href: string; labelKey: string; icon: typeof LayoutDashboard }[]> = {
+const ROLE_NAV: Record<string, { sectionKey?: string; items: { href: string; labelKey: string; icon: typeof LayoutDashboard }[] }[]> = {
   admin: [
-    { href: "/admin/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
-    { href: "/admin/stats", labelKey: "statistics", icon: BarChart3 },
-    { href: "/admin/students", labelKey: "students", icon: GraduationCap },
-    { href: "/admin/teachers", labelKey: "teachers", icon: Users },
-    { href: "/admin/parents", labelKey: "parents", icon: UserCheck },
-    { href: "/admin/admins", labelKey: "admins", icon: ShieldCheck },
-    { href: "/admin/groups", labelKey: "groups", icon: BookOpen },
-    { href: "/admin/attendance", labelKey: "attendance", icon: CalendarCheck },
-    { href: "/admin/halaqa", labelKey: "halaqa", icon: Video },
-    { href: "/admin/announcements", labelKey: "announcements", icon: Megaphone },
-    { href: "/admin/notifications", labelKey: "notifications", icon: Bell },
-    { href: "/admin/settings", labelKey: "settings", icon: Settings },
-    { href: "/admin/profile", labelKey: "profile", icon: UserCircle },
+    {
+      sectionKey: "main",
+      items: [
+        { href: "/admin/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
+        { href: "/admin/stats", labelKey: "statistics", icon: BarChart3 },
+        { href: "/admin/announcements", labelKey: "announcements", icon: Megaphone },
+        { href: "/admin/notifications", labelKey: "notifications", icon: Bell },
+        { href: "/admin/profile", labelKey: "profile", icon: UserCircle },
+      ],
+    },
+    {
+      sectionKey: "management",
+      items: [
+        { href: "/admin/students", labelKey: "students", icon: GraduationCap },
+        { href: "/admin/teachers", labelKey: "teachers", icon: Users },
+        { href: "/admin/parents", labelKey: "parents", icon: UserCheck },
+        { href: "/admin/admins", labelKey: "admins", icon: ShieldCheck },
+        { href: "/admin/groups", labelKey: "groups", icon: BookOpen },
+        { href: "/admin/attendance", labelKey: "attendance", icon: CalendarCheck },
+        { href: "/admin/halaqa", labelKey: "halaqa", icon: Video },
+      ],
+    },
+    {
+      sectionKey: "system",
+      items: [
+        { href: "/admin/settings", labelKey: "settings", icon: Settings },
+      ],
+    },
   ],
   teacher: [
-    { href: "/teacher/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
-    { href: "/teacher/students", labelKey: "students", icon: Users },
-    { href: "/teacher/groups", labelKey: "groups", icon: BookOpen },
-    { href: "/teacher/memorization", labelKey: "memorization", icon: BookMarked },
-    { href: "/teacher/attendance", labelKey: "attendance", icon: CalendarCheck },
-    { href: "/teacher/evaluations", labelKey: "evaluations", icon: Award },
-    { href: "/teacher/halaqa", labelKey: "halaqa", icon: Video },
-    { href: "/teacher/messages", labelKey: "messaging", icon: MessageSquare },
-    { href: "/teacher/announcements", labelKey: "announcements", icon: Megaphone },
-    { href: "/teacher/notifications", labelKey: "notifications", icon: Bell },
-    { href: "/teacher/profile", labelKey: "profile", icon: UserCircle },
+    {
+      items: [
+        { href: "/teacher/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
+        { href: "/teacher/students", labelKey: "students", icon: Users },
+        { href: "/teacher/groups", labelKey: "groups", icon: BookOpen },
+        { href: "/teacher/memorization", labelKey: "memorization", icon: BookMarked },
+        { href: "/teacher/attendance", labelKey: "attendance", icon: CalendarCheck },
+        { href: "/teacher/evaluations", labelKey: "evaluations", icon: Award },
+        { href: "/teacher/halaqa", labelKey: "halaqa", icon: Video },
+        { href: "/teacher/messages", labelKey: "messaging", icon: MessageSquare },
+        { href: "/teacher/announcements", labelKey: "announcements", icon: Megaphone },
+        { href: "/teacher/notifications", labelKey: "notifications", icon: Bell },
+        { href: "/teacher/profile", labelKey: "profile", icon: UserCircle },
+      ],
+    },
   ],
   student: [
-    { href: "/student/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
-    { href: "/student/progress", labelKey: "progress", icon: BookOpen },
-    { href: "/student/halaqa", labelKey: "halaqa", icon: Video },
-    { href: "/student/badges", labelKey: "badges", icon: Star },
-    { href: "/student/attendance", labelKey: "attendance", icon: CalendarCheck },
-    { href: "/student/notifications", labelKey: "notifications", icon: Bell },
-    { href: "/student/daily-log", labelKey: "dailyLog", icon: ClipboardList },
-    { href: "/student/profile", labelKey: "profile", icon: UserCircle },
+    {
+      items: [
+        { href: "/student/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
+        { href: "/student/progress", labelKey: "progress", icon: BookOpen },
+        { href: "/student/halaqa", labelKey: "halaqa", icon: Video },
+        { href: "/student/badges", labelKey: "badges", icon: Star },
+        { href: "/student/attendance", labelKey: "attendance", icon: CalendarCheck },
+        { href: "/student/notifications", labelKey: "notifications", icon: Bell },
+        { href: "/student/daily-log", labelKey: "dailyLog", icon: ClipboardList },
+        { href: "/student/profile", labelKey: "profile", icon: UserCircle },
+      ],
+    },
   ],
   parent: [
-    { href: "/parent/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
-    { href: "/parent/link", labelKey: "linkChild", icon: Link2 },
-    { href: "/parent/attendance", labelKey: "attendance", icon: CalendarCheck },
-    { href: "/parent/halaqa", labelKey: "halaqa", icon: Video },
-    { href: "/parent/notifications", labelKey: "notifications", icon: Bell },
-    { href: "/parent/profile", labelKey: "profile", icon: UserCircle },
+    {
+      items: [
+        { href: "/parent/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
+        { href: "/parent/link", labelKey: "linkChild", icon: Link2 },
+        { href: "/parent/attendance", labelKey: "attendance", icon: CalendarCheck },
+        { href: "/parent/halaqa", labelKey: "halaqa", icon: Video },
+        { href: "/parent/notifications", labelKey: "notifications", icon: Bell },
+        { href: "/parent/profile", labelKey: "profile", icon: UserCircle },
+      ],
+    },
   ],
   superadmin: [
-    { href: "/admin/super", labelKey: "dashboard", icon: LayoutDashboard },
-    { href: "/superadmin/profile", labelKey: "profile", icon: UserCircle },
+    {
+      items: [
+        { href: "/admin/super", labelKey: "dashboard", icon: LayoutDashboard },
+        { href: "/superadmin/profile", labelKey: "profile", icon: UserCircle },
+      ],
+    },
   ],
 }
 
@@ -195,34 +226,45 @@ export function MobileHeader({
 
               {/* Navigation links */}
               {navItems.length > 0 && (
-                <motion.nav
-                  variants={containerVariants}
-                  initial="hidden"
-                  animate="show"
-                  className="p-3 space-y-0.5"
-                >
-                  {navItems.map((item) => {
-                    const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
-                    const Icon = item.icon
-                    return (
-                      <motion.div key={item.href} variants={itemVariants}>
-                        <Link
-                          href={item.href}
-                          onClick={() => setMenuOpen(false)}
-                          className={cn(
-                            "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition",
-                            isActive
-                              ? "bg-tahfidz-green-light text-tahfidz-green"
-                              : "text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
-                          )}
-                        >
-                          <Icon size={18} strokeWidth={isActive ? 2.5 : 1.5} />
-                          <span>{t(item.labelKey) || item.labelKey}</span>
-                        </Link>
-                      </motion.div>
-                    )
-                  })}
-                </motion.nav>
+                <div className="flex-1 overflow-y-auto py-2">
+                  {navItems.map((section, si) => (
+                    <div key={si} className="px-3 mb-2">
+                      {section.sectionKey && (
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 mb-1 mt-2">
+                          {t(section.sectionKey) || section.sectionKey}
+                        </p>
+                      )}
+                      <motion.nav
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="show"
+                        className="space-y-0.5"
+                      >
+                        {section.items.map((item) => {
+                          const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+                          const Icon = item.icon
+                          return (
+                            <motion.div key={item.href} variants={itemVariants}>
+                              <Link
+                                href={item.href}
+                                onClick={() => setMenuOpen(false)}
+                                className={cn(
+                                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition",
+                                  isActive
+                                    ? "bg-tahfidz-green-light text-tahfidz-green"
+                                    : "text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
+                                )}
+                              >
+                                <Icon size={18} strokeWidth={isActive ? 2.5 : 1.5} />
+                                <span>{t(item.labelKey) || item.labelKey}</span>
+                              </Link>
+                            </motion.div>
+                          )
+                        })}
+                      </motion.nav>
+                    </div>
+                  ))}
+                </div>
               )}
 
               {/* Controls */}
