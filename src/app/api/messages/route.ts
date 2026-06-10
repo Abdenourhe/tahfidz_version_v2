@@ -117,7 +117,7 @@ export async function POST(req: Request) {
   if (toUserWithPrefs.messageNotifications) {
     const redirectUrl = toUserWithPrefs.role === "TEACHER"
       ? "/teacher/messages"
-      : (studentIdForNotif ? `/parent/child/${studentIdForNotif}` : "/parent/dashboard")
+      : (studentIdForNotif ? `/parent/child/${studentIdForNotif}?chat=open` : "/parent/dashboard")
 
     await prisma.notification.create({
       data: {

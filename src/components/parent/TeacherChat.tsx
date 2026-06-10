@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
+import { useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { Send, Loader2, MessageCircle, X, Trash2, ChevronDown } from "lucide-react"
 import { ChatBubble, ChatMessage } from "@/components/shared/ChatBubble"
@@ -50,7 +51,8 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
   childName: string
   studentId: string
 }) {
-  const [open, setOpen] = useState(false)
+  const searchParams = useSearchParams()
+  const [open, setOpen] = useState(searchParams.get("chat") === "open")
   const [messages, setMessages] = useState<Message[]>([])
   const [text, setText] = useState("")
   const [loading, setLoading] = useState(false)
