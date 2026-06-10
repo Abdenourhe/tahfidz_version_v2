@@ -10,9 +10,8 @@ import { StatCard } from "@/components/profile/StatCard"
 import { ProfileAccordion } from "@/components/profile/ProfileAccordion"
 
 import { ParentProfileSettings } from "@/components/parent/ParentProfileSettings"
-import { Phone, Mail, BookOpen, Star, Award, User, Bug, Settings, Globe, Languages, ArrowRight, LogOut } from "lucide-react"
+import { Phone, Mail, BookOpen, Star, Award, User, Bug, Settings, Globe, Languages, ArrowRight } from "lucide-react"
 import { FeedbackModal } from "@/components/shared/FeedbackModal"
-import { signOut } from "next-auth/react"
 
 interface Props {
   parent: {
@@ -92,17 +91,6 @@ export function ParentProfileClient({
       <ProfileAccordion title={t("settings")} icon={Settings} delay={0.5}>
         <ParentProfileSettings />
       </ProfileAccordion>
-
-      {/* Logout */}
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => signOut({ callbackUrl: "/login" })}
-        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-xl text-sm font-bold hover:bg-red-100 transition"
-      >
-        <LogOut size={16} />
-        <span>{L === "ar" ? "تسجيل الخروج" : L === "en" ? "Log out" : "Se déconnecter"}</span>
-      </motion.button>
 
       {/* Report bug */}
       <motion.button
