@@ -41,17 +41,25 @@ export async function GET(req: Request) {
     }
   }
 
-  const messages = await prisma.directMessage.findMany({
+  const rawMessages = await prisma.directMessage.findMany({
     where,
     include: {
       fromUser: { select: { fullName: true, role: true } },
       toUser:   { select: { fullName: true, role: true } },
-      replyTo:  { select: { body: true, fromUser: { select: { fullName: true } } } },
+      replyTo:  { select: { body: true, deletedAt: true, fromUser: { select: { fullName: true } } } },
       reactions: { select: { emoji: true, userId: true } },
     },
     orderBy: { sentAt: "desc" },
     take: 100,
   })
+
+  // Masquer le contenu des messages supprimés dans les citations
+  const messages = rawMessages.map(m => ({
+    ...m,
+    replyTo: m.replyTo && m.replyTo.deletedAt
+      ? { body: "Message supprimé", fromUser: m.replyTo.fromUser }
+      : m.replyTo,
+  }))
 
   const unreadCount = await prisma.directMessage.count({
     where: { toUserId: session.user.id, isRead: false, deletedAt: null },
