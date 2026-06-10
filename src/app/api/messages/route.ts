@@ -16,9 +16,17 @@ export async function GET(req: Request) {
   if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
   const { searchParams } = new URL(req.url)
   const type = searchParams.get("type") || "all"
-  const where =
+  const otherUserId = searchParams.get("otherUserId")
+  let where: any =
     type === "sent" ? { fromUserId: session.user.id }
     : type === "inbox" ? { toUserId: session.user.id }
+    : type === "conversation" && otherUserId ? {
+        schoolId: session.user.schoolId,
+        OR: [
+          { fromUserId: session.user.id, toUserId: otherUserId },
+          { fromUserId: otherUserId, toUserId: session.user.id },
+        ],
+      }
     : { OR: [{ fromUserId: session.user.id }, { toUserId: session.user.id }] }
   const messages = await prisma.directMessage.findMany({
     where,

@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
-import { Send, Loader2, MessageCircle, X, User } from "lucide-react"
+import { Send, Loader2, MessageCircle, X, User, Trash2 } from "lucide-react"
 
 interface Message {
   id: string
@@ -12,10 +12,11 @@ interface Message {
   fromUser: { fullName: string; role: string }
 }
 
-export function TeacherChat({ teacherUserId, teacherName, parentUserId }: {
+export function TeacherChat({ teacherUserId, teacherName, parentUserId, childName }: {
   teacherUserId: string
   teacherName: string
   parentUserId: string
+  childName: string
 }) {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
@@ -25,7 +26,6 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId }: {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   const load = async () => {
-    setLoading(true)
     try {
       const res = await fetch(`/api/messages?type=all`)
       const data = await res.json()
@@ -35,11 +35,15 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId }: {
       )
       setMessages(filtered.reverse())
     } catch (e) { console.error(e) }
-    finally { setLoading(false) }
   }
 
   useEffect(() => {
-    if (open) load()
+    if (open) {
+      setLoading(true)
+      load().finally(() => setLoading(false))
+      const id = setInterval(load, 5000)
+      return () => clearInterval(id)
+    }
   }, [open])
 
   useEffect(() => {
@@ -53,7 +57,11 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId }: {
       const res = await fetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ toUserId: teacherUserId, subject: "Message parent", body: text.trim() }),
+        body: JSON.stringify({
+          toUserId: teacherUserId,
+          subject: `Parent de ${childName}`,
+          body: text.trim()
+        }),
       })
       if (res.ok) {
         setText("")
@@ -61,6 +69,14 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId }: {
       }
     } catch (e) { console.error(e) }
     finally { setSending(false) }
+  }
+
+  const clearChat = async () => {
+    if (!confirm("Vider cette conversation ?")) return
+    try {
+      await fetch(`/api/messages?otherUserId=${teacherUserId}`, { method: "DELETE" })
+      setMessages([])
+    } catch (e) { console.error(e) }
   }
 
   if (!open) {
@@ -73,7 +89,7 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId }: {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden mt-3">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
         <div className="flex items-center gap-2">
@@ -82,14 +98,19 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId }: {
           </div>
           <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{teacherName}</p>
         </div>
-        <button onClick={() => setOpen(false)} className="p-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition">
-          <X size={14} className="text-gray-400" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button onClick={clearChat} className="p-1.5 rounded-lg hover:bg-red-100 text-red-400 hover:text-red-600 transition" title="Vider">
+            <Trash2 size={13} />
+          </button>
+          <button onClick={() => setOpen(false)} className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+            <X size={14} className="text-gray-400" />
+          </button>
+        </div>
       </div>
 
       {/* Messages */}
       <div className="h-64 overflow-y-auto p-3 space-y-2">
-        {loading ? (
+        {loading && messages.length === 0 ? (
           <div className="flex justify-center py-4"><Loader2 size={16} className="animate-spin text-gray-300" /></div>
         ) : messages.length === 0 ? (
           <p className="text-center text-xs text-gray-400 py-4">Aucun message. Écrivez le premier !</p>
@@ -101,6 +122,7 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId }: {
                 <div className={`max-w-[80%] px-3 py-2 rounded-xl text-xs ${
                   isMe ? "bg-tahfidz-green text-white rounded-br-sm" : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-bl-sm"
                 }`}>
+                  {!isMe && <p className="text-[9px] font-bold text-tahfidz-green mb-0.5">{m.fromUser.fullName}</p>}
                   <p className="whitespace-pre-wrap">{m.body}</p>
                   <p className={`text-[9px] mt-1 ${isMe ? "text-white/60" : "text-gray-400"}`}>
                     {new Date(m.sentAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
