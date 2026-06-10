@@ -55,7 +55,6 @@ const {
             email,
             name:       superAdmin.fullName,
             role:       "SUPERADMIN",
-            avatar:     superAdmin.avatar ?? undefined,
             schoolId:   superAdmin.schoolId ?? "",
             schoolSlug: superAdmin.school?.slug ?? "platform",
             schoolName: superAdmin.school?.name ?? "TAHFIDZ Platform",
@@ -109,7 +108,6 @@ const {
           email,
           name:       user.fullName,
           role:       user.role,
-          avatar:     user.avatar ?? undefined,
           schoolId:   school.id,
           schoolSlug: school.slug,
           schoolName: school.name,
@@ -131,7 +129,6 @@ const {
         token.role = user.role
         token.schoolId = user.schoolId
         token.schoolSlug = user.schoolSlug
-        token.avatar = user.avatar
       }
       return token
     },
@@ -141,7 +138,6 @@ const {
         session.user.role = token.role as string
         session.user.schoolId = token.schoolId as string
         session.user.schoolSlug = token.schoolSlug as string
-        session.user.avatar = token.avatar as string | undefined
       }
       return session
     },
@@ -155,7 +151,6 @@ declare module "next-auth" {
     role: string
     schoolId: string
     schoolSlug: string
-    avatar?: string
   }
   interface Session {
     user: {
@@ -165,7 +160,6 @@ declare module "next-auth" {
       role: string
       schoolId: string
       schoolSlug: string
-      avatar?: string
     }
   }
 }
