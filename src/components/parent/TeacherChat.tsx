@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
-import { Send, Loader2, MessageCircle, X, User, Trash2 } from "lucide-react"
+import { Send, Loader2, MessageCircle, X, Trash2 } from "lucide-react"
 
 interface Message {
   id: string
@@ -24,6 +24,13 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
+
+  const scrollToBottom = (smooth = true) => {
+    setTimeout(() => {
+      bottomRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto" })
+    }, 50)
+  }
 
   const load = async () => {
     try {
@@ -40,15 +47,20 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
   useEffect(() => {
     if (open) {
       setLoading(true)
-      load().finally(() => setLoading(false))
-      const id = setInterval(load, 5000)
+      load().finally(() => {
+        setLoading(false)
+        scrollToBottom(false)
+      })
+      const id = setInterval(() => {
+        load().then(() => scrollToBottom(true))
+      }, 5000)
       return () => clearInterval(id)
     }
   }, [open])
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
+    scrollToBottom(true)
+  }, [messages.length])
 
   const send = async () => {
     if (!text.trim()) return
@@ -65,7 +77,8 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
       })
       if (res.ok) {
         setText("")
-        load()
+        await load()
+        scrollToBottom(true)
       }
     } catch (e) { console.error(e) }
     finally { setSending(false) }
@@ -90,13 +103,11 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden mt-3">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-tahfidz-green-light flex items-center justify-center">
-            <User size={14} className="text-tahfidz-green" />
-          </div>
-          <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{teacherName}</p>
+      {/* Header compact — pas de nom dupliqué */}
+      <div className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+          <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Discussion</span>
         </div>
         <div className="flex items-center gap-1">
           <button onClick={clearChat} className="p-1.5 rounded-lg hover:bg-red-100 text-red-400 hover:text-red-600 transition" title="Vider">
@@ -109,7 +120,7 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
       </div>
 
       {/* Messages */}
-      <div className="h-64 overflow-y-auto p-3 space-y-2">
+      <div ref={scrollAreaRef} className="h-64 overflow-y-auto p-3 space-y-2 scroll-smooth">
         {loading && messages.length === 0 ? (
           <div className="flex justify-center py-4"><Loader2 size={16} className="animate-spin text-gray-300" /></div>
         ) : messages.length === 0 ? (
@@ -119,11 +130,12 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
             const isMe = m.fromUserId === parentUserId
             return (
               <div key={m.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[80%] px-3 py-2 rounded-xl text-xs ${
-                  isMe ? "bg-tahfidz-green text-white rounded-br-sm" : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-bl-sm"
+                <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-xs ${
+                  isMe
+                    ? "bg-tahfidz-green text-white rounded-br-sm"
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-bl-sm"
                 }`}>
-                  {!isMe && <p className="text-[9px] font-bold text-tahfidz-green mb-0.5">{m.fromUser.fullName}</p>}
-                  <p className="whitespace-pre-wrap">{m.body}</p>
+                  <p className="whitespace-pre-wrap leading-relaxed">{m.body}</p>
                   <p className={`text-[9px] mt-1 ${isMe ? "text-white/60" : "text-gray-400"}`}>
                     {new Date(m.sentAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
                   </p>
@@ -142,10 +154,10 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
           onChange={e => setText(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send() } }}
           placeholder="Écrivez un message..."
-          className="flex-1 text-xs px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:outline-none focus:ring-1 focus:ring-tahfidz-green"
+          className="flex-1 text-xs px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:outline-none focus:ring-1 focus:ring-tahfidz-green"
         />
         <button onClick={send} disabled={sending || !text.trim()}
-          className="p-2 rounded-xl bg-tahfidz-green text-white hover:opacity-90 disabled:opacity-40 transition">
+          className="p-2.5 rounded-xl bg-tahfidz-green text-white hover:opacity-90 disabled:opacity-40 transition">
           {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
         </button>
       </div>
