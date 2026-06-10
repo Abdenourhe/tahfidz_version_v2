@@ -12,6 +12,7 @@ import { ProfileAccordion } from "@/components/profile/ProfileAccordion"
 import { ParentProfileSettings } from "@/components/parent/ParentProfileSettings"
 import { Phone, Mail, BookOpen, Star, Award, User, Bug, Settings, Globe, Languages, ArrowRight } from "lucide-react"
 import { FeedbackModal } from "@/components/shared/FeedbackModal"
+import { AvatarUploader } from "@/components/shared/AvatarUploader"
 
 interface Props {
   parent: {
@@ -38,6 +39,7 @@ export function ParentProfileClient({
   parent, totalChildren, totalMemorized, totalStars, totalBadges, schoolName, schoolCity,
 }: Props) {
   const [showFeedback, setShowFeedback] = useState(false)
+  const [avatar, setAvatar] = useState(parent.user.avatar)
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
   const t = useT("parentProfileClient")
@@ -52,9 +54,17 @@ export function ParentProfileClient({
         nameAr={parent.user.fullNameAr}
         role={t("parent")}
         avatarLetter={parent.user.fullName.charAt(0)}
-        avatar={parent.user.avatar || undefined}
+        avatar={avatar || undefined}
         avatarColor="bg-orange-500"
         roleColor="bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300"
+        avatarNode={
+          <AvatarUploader
+            currentAvatar={avatar}
+            name={parent.user.fullName}
+            size={80}
+            onUploaded={(url) => setAvatar(url)}
+          />
+        }
       >
         <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
           <span className="flex items-center gap-1"><Mail size={13} /> {parent.user.email}</span>

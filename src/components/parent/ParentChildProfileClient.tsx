@@ -10,6 +10,7 @@ import {
   TrendingUp, Flame, ChevronRight
 } from "lucide-react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
+import { AvatarUploader } from "@/components/shared/AvatarUploader"
 
 interface Progress {
   id: string; surahId: number; currentVerse: number; completionPercentage: number
@@ -92,6 +93,7 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
   const t = useT("parentChildProfileClient_2")
 
   const [student, setStudent] = useState<Student | null>(null)
+  const [studentAvatar, setStudentAvatar] = useState<string | null>(null)
   const [progress, setProgress] = useState<Progress[]>([])
   const [evaluations, setEvaluations] = useState<Evaluation[]>([])
   const [attendances, setAttendances] = useState<Attendance[]>([])
@@ -116,7 +118,11 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
         evalRes.ok ? evalRes.json() : null,
         attRes.ok ? attRes.json() : null,
       ])
-      if (studData?.student) { setStudent(studData.student); setBadges(studData.student.studentBadges || []) }
+      if (studData?.student) {
+        setStudent(studData.student)
+        setStudentAvatar(studData.student.user.avatar || null)
+        setBadges(studData.student.studentBadges || [])
+      }
       if (progData?.progress) setProgress(progData.progress)
       if (evalData?.evaluations) setEvaluations(evalData.evaluations)
       if (attData?.attendances) setAttendances(attData.attendances)
@@ -171,13 +177,13 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
       {/* ── Hero ── */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
         <div className="flex items-start gap-4">
-          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl gradient-tahfidz flex items-center justify-center flex-shrink-0 shadow-lg overflow-hidden">
-            {u.avatar ? (
-              <Image src={u.avatar} alt={u.fullName} width={96} height={96} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-white font-bold text-3xl sm:text-4xl">{u.fullName.charAt(0)}</span>
-            )}
-          </div>
+          <AvatarUploader
+            currentAvatar={studentAvatar}
+            name={u.fullName}
+            size={96}
+            uploadUrl={`/api/students/${studentId}/avatar`}
+            onUploaded={(url) => setStudentAvatar(url)}
+          />
           <div className="flex-1 min-w-0">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{u.fullName}</h1>
             {u.fullNameAr && <p className="arabic text-gray-500 dark:text-gray-400 text-sm">{u.fullNameAr}</p>}

@@ -12,6 +12,7 @@ interface ProfileHeaderProps {
   avatarLetter: string
   avatarColor?: string
   children?: ReactNode
+  avatarNode?: ReactNode
 }
 
 export function ProfileHeader({
@@ -23,6 +24,7 @@ export function ProfileHeader({
   avatarLetter,
   avatarColor = "bg-tahfidz-green",
   children,
+  avatarNode,
 }: ProfileHeaderProps) {
   return (
     <motion.div
@@ -32,21 +34,25 @@ export function ProfileHeader({
       className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6"
     >
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          className={`relative w-20 h-20 rounded-2xl ${avatarColor} flex items-center justify-center flex-shrink-0 shadow-lg overflow-hidden`}
-        >
-          {avatar ? (
-            <Image src={avatar} alt={name} width={80} height={80} className="w-full h-full object-cover" />
-          ) : (
-            <span className="text-white font-bold text-3xl">{avatarLetter}</span>
-          )}
+        {avatarNode ? (
+          <div className="flex-shrink-0">{avatarNode}</div>
+        ) : (
           <motion.div
-            className="absolute inset-0 rounded-2xl ring-2 ring-white/30"
-            animate={{ scale: [1, 1.05, 1] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          />
-        </motion.div>
+            whileHover={{ scale: 1.05 }}
+            className={`relative w-20 h-20 rounded-2xl ${avatarColor} flex items-center justify-center flex-shrink-0 shadow-lg overflow-hidden`}
+          >
+            {avatar ? (
+              <Image src={avatar} alt={name} width={80} height={80} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-white font-bold text-3xl">{avatarLetter}</span>
+            )}
+            <motion.div
+              className="absolute inset-0 rounded-2xl ring-2 ring-white/30"
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            />
+          </motion.div>
+        )}
 
         <div className="flex-1 text-center sm:text-left min-w-0">
           <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
