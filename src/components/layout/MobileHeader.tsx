@@ -10,7 +10,7 @@ import {
   LayoutDashboard, GraduationCap, Users, BookOpen, BookMarked,
   CalendarCheck, Award, MessageSquare, Megaphone, UserCircle,
   Link2, Video, Star, ClipboardList, BarChart3, ShieldCheck,
-  Settings, Monitor, UserCheck,
+  Settings, UserCheck,
 } from "lucide-react"
 import { TopBarControls } from "./TopBarControls"
 import { useT } from "@/contexts/LanguageContext"
@@ -20,13 +20,17 @@ import { useSession, signOut } from "next-auth/react"
 const ROLE_NAV: Record<string, { href: string; labelKey: string; icon: typeof LayoutDashboard }[]> = {
   admin: [
     { href: "/admin/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
+    { href: "/admin/stats", labelKey: "statistics", icon: BarChart3 },
     { href: "/admin/students", labelKey: "students", icon: GraduationCap },
     { href: "/admin/teachers", labelKey: "teachers", icon: Users },
     { href: "/admin/parents", labelKey: "parents", icon: UserCheck },
+    { href: "/admin/admins", labelKey: "admins", icon: ShieldCheck },
     { href: "/admin/groups", labelKey: "groups", icon: BookOpen },
     { href: "/admin/attendance", labelKey: "attendance", icon: CalendarCheck },
+    { href: "/admin/halaqa", labelKey: "halaqa", icon: Video },
     { href: "/admin/announcements", labelKey: "announcements", icon: Megaphone },
     { href: "/admin/notifications", labelKey: "notifications", icon: Bell },
+    { href: "/admin/settings", labelKey: "settings", icon: Settings },
     { href: "/admin/profile", labelKey: "profile", icon: UserCircle },
   ],
   teacher: [
@@ -36,16 +40,20 @@ const ROLE_NAV: Record<string, { href: string; labelKey: string; icon: typeof La
     { href: "/teacher/memorization", labelKey: "memorization", icon: BookMarked },
     { href: "/teacher/attendance", labelKey: "attendance", icon: CalendarCheck },
     { href: "/teacher/evaluations", labelKey: "evaluations", icon: Award },
+    { href: "/teacher/halaqa", labelKey: "halaqa", icon: Video },
     { href: "/teacher/messages", labelKey: "messaging", icon: MessageSquare },
+    { href: "/teacher/announcements", labelKey: "announcements", icon: Megaphone },
     { href: "/teacher/notifications", labelKey: "notifications", icon: Bell },
     { href: "/teacher/profile", labelKey: "profile", icon: UserCircle },
   ],
   student: [
     { href: "/student/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
     { href: "/student/progress", labelKey: "progress", icon: BookOpen },
+    { href: "/student/halaqa", labelKey: "halaqa", icon: Video },
     { href: "/student/badges", labelKey: "badges", icon: Star },
     { href: "/student/attendance", labelKey: "attendance", icon: CalendarCheck },
     { href: "/student/notifications", labelKey: "notifications", icon: Bell },
+    { href: "/student/daily-log", labelKey: "dailyLog", icon: ClipboardList },
     { href: "/student/profile", labelKey: "profile", icon: UserCircle },
   ],
   parent: [
