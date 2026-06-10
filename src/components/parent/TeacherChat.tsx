@@ -1,6 +1,6 @@
 "use client"
-import { useState, useEffect, useRef } from "react"
-import { Send, Loader2, MessageCircle, X, Trash2 } from "lucide-react"
+import { useState, useEffect, useRef, useCallback } from "react"
+import { Send, Loader2, MessageCircle, X, Trash2, ChevronDown } from "lucide-react"
 
 interface Message {
   id: string
@@ -11,6 +11,8 @@ interface Message {
   sentAt: string
   fromUser: { fullName: string; role: string }
 }
+
+const NEAR_BOTTOM_THRESHOLD = 80 // px
 
 export function TeacherChat({ teacherUserId, teacherName, parentUserId, childName }: {
   teacherUserId: string
@@ -23,14 +25,28 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
   const [text, setText] = useState("")
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
+  const [showNewBadge, setShowNewBadge] = useState(false)
+
   const bottomRef = useRef<HTMLDivElement>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const prevCountRef = useRef(0)
+  const isNearBottomRef = useRef(true)
 
-  const scrollToBottom = (smooth = true) => {
+  const checkNearBottom = useCallback(() => {
+    const el = scrollAreaRef.current
+    if (!el) return true
+    const { scrollTop, scrollHeight, clientHeight } = el
+    const near = scrollHeight - scrollTop - clientHeight < NEAR_BOTTOM_THRESHOLD
+    isNearBottomRef.current = near
+    return near
+  }, [])
+
+  const scrollToBottom = useCallback((smooth = true) => {
     setTimeout(() => {
       bottomRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto" })
-    }, 50)
-  }
+      setShowNewBadge(false)
+    }, 30)
+  }, [])
 
   const load = async () => {
     try {
@@ -40,27 +56,41 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
         (m.fromUserId === parentUserId && m.toUserId === teacherUserId) ||
         (m.fromUserId === teacherUserId && m.toUserId === parentUserId)
       )
-      setMessages(filtered.reverse())
+      const newMessages = filtered.reverse()
+      const prevCount = prevCountRef.current
+      const newCount = newMessages.length
+
+      setMessages(prev => {
+        // Si nouveaux messages arrivés ET on n'est pas en bas => badge
+        if (newCount > prev.length && prev.length > 0 && !isNearBottomRef.current) {
+          setShowNewBadge(true)
+        }
+        return newMessages
+      })
+
+      prevCountRef.current = newCount
+
+      // Scroll auto uniquement si on était en bas ou première ouverture
+      if (newCount > 0 && (prevCount === 0 || isNearBottomRef.current)) {
+        scrollToBottom(prevCount === 0 ? false : true)
+      }
     } catch (e) { console.error(e) }
   }
 
   useEffect(() => {
     if (open) {
+      prevCountRef.current = 0
       setLoading(true)
-      load().finally(() => {
-        setLoading(false)
-        scrollToBottom(false)
-      })
-      const id = setInterval(() => {
-        load().then(() => scrollToBottom(true))
-      }, 5000)
+      load().finally(() => setLoading(false))
+      const id = setInterval(load, 5000)
       return () => clearInterval(id)
     }
   }, [open])
 
-  useEffect(() => {
-    scrollToBottom(true)
-  }, [messages.length])
+  const handleScroll = () => {
+    const near = checkNearBottom()
+    if (near) setShowNewBadge(false)
+  }
 
   const send = async () => {
     if (!text.trim()) return
@@ -89,6 +119,7 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
     try {
       await fetch(`/api/messages?otherUserId=${teacherUserId}`, { method: "DELETE" })
       setMessages([])
+      prevCountRef.current = 0
     } catch (e) { console.error(e) }
   }
 
@@ -102,8 +133,8 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden mt-3">
-      {/* Header compact — pas de nom dupliqué */}
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden mt-3 relative">
+      {/* Header compact */}
       <div className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
@@ -120,7 +151,7 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
       </div>
 
       {/* Messages */}
-      <div ref={scrollAreaRef} className="h-64 overflow-y-auto p-3 space-y-2 scroll-smooth">
+      <div ref={scrollAreaRef} onScroll={handleScroll} className="h-64 overflow-y-auto p-3 space-y-2 scroll-smooth relative">
         {loading && messages.length === 0 ? (
           <div className="flex justify-center py-4"><Loader2 size={16} className="animate-spin text-gray-300" /></div>
         ) : messages.length === 0 ? (
@@ -145,6 +176,16 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
           })
         )}
         <div ref={bottomRef} />
+
+        {/* Badge nouveaux messages flottant */}
+        {showNewBadge && (
+          <button
+            onClick={() => scrollToBottom(true)}
+            className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1 px-3 py-1.5 bg-tahfidz-green text-white text-[11px] font-bold rounded-full shadow-lg hover:bg-emerald-700 transition animate-bounce"
+          >
+            <ChevronDown size={12} /> Nouveaux messages
+          </button>
+        )}
       </div>
 
       {/* Input */}
