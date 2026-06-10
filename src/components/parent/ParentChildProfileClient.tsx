@@ -10,7 +10,9 @@ import {
   TrendingUp, Flame, ChevronRight
 } from "lucide-react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
+import { useSession } from "next-auth/react"
 import { AvatarUploader } from "@/components/shared/AvatarUploader"
+import { TeacherChat } from "@/components/parent/TeacherChat"
 
 interface Progress {
   id: string; surahId: number; currentVerse: number; completionPercentage: number
@@ -36,7 +38,7 @@ interface Student {
   studentCode: string; dateOfBirth?: string | null; enrollmentDate: string; emergencyPhone?: string | null
   user: { fullName: string; fullNameAr?: string | null; email: string; phone?: string | null; gender?: string | null; avatar?: string | null }
   group?: { name: string; nameAr?: string | null; level: string } | null
-  teacher?: { user: { fullName: string; phone?: string | null; email: string } } | null
+  teacher?: { user: { id: string; fullName: string; phone?: string | null; email: string } } | null
   _count: { memorizedSurahs: number; studentBadges: number }
 }
 
@@ -91,6 +93,8 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
   const t = useT("parentChildProfileClient_2")
+  const { data: session } = useSession()
+  const parentUserId = session?.user?.id
 
   const [student, setStudent] = useState<Student | null>(null)
   const [studentAvatar, setStudentAvatar] = useState<string | null>(null)
@@ -235,24 +239,33 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
 
       {/* ── Enseignant ── */}
       {student.teacher && (
-        <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl px-4 py-3">
-          <div className="w-9 h-9 rounded-lg bg-tahfidz-green-light dark:bg-emerald-900/20 flex items-center justify-center flex-shrink-0">
-            <GraduationCap size={16} className="text-tahfidz-green" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] text-gray-400 uppercase tracking-wide">{t("teacher")}</p>
-            <p className="text-sm font-bold text-gray-800 dark:text-gray-200 truncate">{student.teacher.user.fullName}</p>
-          </div>
-          <div className="flex gap-2">
-            {student.teacher.user.phone && (
-              <a href={`tel:${student.teacher.user.phone}`} className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-green-600 hover:bg-green-50 transition">
-                <Phone size={14} />
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 shadow-sm">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-lg bg-tahfidz-green-light dark:bg-emerald-900/20 flex items-center justify-center flex-shrink-0">
+              <GraduationCap size={16} className="text-tahfidz-green" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] text-gray-400 uppercase tracking-wide">{t("teacher")}</p>
+              <p className="text-sm font-bold text-gray-800 dark:text-gray-200 truncate">{student.teacher.user.fullName}</p>
+            </div>
+            <div className="flex gap-2">
+              {student.teacher.user.phone && (
+                <a href={`tel:${student.teacher.user.phone}`} className="p-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-green-600 hover:bg-green-100 transition">
+                  <Phone size={14} />
+                </a>
+              )}
+              <a href={`mailto:${student.teacher.user.email}`} className="p-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-blue-600 hover:bg-blue-100 transition">
+                <Mail size={14} />
               </a>
-            )}
-            <a href={`mailto:${student.teacher.user.email}`} className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-blue-600 hover:bg-blue-50 transition">
-              <Mail size={14} />
-            </a>
+            </div>
           </div>
+          {parentUserId && student.teacher && (
+            <TeacherChat
+              teacherUserId={student.teacher.user.id}
+              teacherName={student.teacher.user.fullName}
+              parentUserId={parentUserId}
+            />
+          )}
         </div>
       )}
 
