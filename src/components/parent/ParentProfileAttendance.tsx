@@ -107,11 +107,14 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const [markedDates, setMarkedDates] = useState<Set<string>>(new Set())
   const [showConfirm, setShowConfirm] = useState(false)
   const [animKey,     setAnimKey]     = useState(0)
+  const [selectedChildId, setSelectedChildId] = useState<string>("all")
+
+  const activeChildren = selectedChildId === "all" ? children : children.filter(c => c.student.id === selectedChildId)
 
   const isFuture = activeDate > todayStr
   const activeLabel = dateLabel(activeDate)
 
-  const courseDayIndices = getCourseDayIndices(children)
+  const courseDayIndices = getCourseDayIndices(activeChildren)
   const quickDays = Array.from({ length: 90 }, (_, i) => offsetDate(i + 1))
     .filter(d => courseDayIndices.includes(new Date(`${d}T12:00:00`).getDay()))
 
@@ -125,6 +128,14 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   function changeDay(d: string) {
     setActiveDate(d); setSaved(false); setError(null); setShowConfirm(false); setAnimKey(k => k + 1)
   }
+
+  /* Reset active date when switching child to first available course day */
+  useEffect(() => {
+    if (quickDays.length > 0 && !quickDays.includes(activeDate)) {
+      setActiveDate(quickDays[0])
+      setSaved(false); setError(null); setShowConfirm(false); setAnimKey(k => k + 1)
+    }
+  }, [selectedChildId])
 
   /* Swipe */
   const touchStartX = useRef<number | null>(null)
@@ -291,6 +302,40 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
             ))}
           </div>
         </div>
+
+        {/* Child tabs */}
+        {children.length > 1 && (
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            <button
+              onClick={() => setSelectedChildId("all")}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border transition whitespace-nowrap ${
+                selectedChildId === "all"
+                  ? "bg-tahfidz-green text-white border-tahfidz-green"
+                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              Tous
+            </button>
+            {children.map(child => (
+              <button
+                key={child.student.id}
+                onClick={() => setSelectedChildId(child.student.id)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border transition whitespace-nowrap ${
+                  selectedChildId === child.student.id
+                    ? "bg-tahfidz-green text-white border-tahfidz-green"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                {child.student.user.avatar ? (
+                  <Image src={child.student.user.avatar} alt={child.student.user.fullName} width={20} height={20} className="w-5 h-5 rounded-full object-cover" />
+                ) : (
+                  <span className="w-5 h-5 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-[9px] font-bold">{child.student.user.fullName.charAt(0)}</span>
+                )}
+                {child.student.user.fullName}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Active day bar */}
         <div className="flex items-center gap-2 sm:gap-3">
