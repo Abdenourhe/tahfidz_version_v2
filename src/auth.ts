@@ -131,6 +131,7 @@ const {
         token.role = user.role
         token.schoolId = user.schoolId
         token.schoolSlug = user.schoolSlug
+        token.avatar = user.avatar
       }
       return token
     },
@@ -140,6 +141,7 @@ const {
         session.user.role = token.role as string
         session.user.schoolId = token.schoolId as string
         session.user.schoolSlug = token.schoolSlug as string
+        session.user.avatar = token.avatar as string | undefined
       }
       return session
     },
@@ -153,6 +155,7 @@ declare module "next-auth" {
     role: string
     schoolId: string
     schoolSlug: string
+    avatar?: string
   }
   interface Session {
     user: {
@@ -162,6 +165,7 @@ declare module "next-auth" {
       role: string
       schoolId: string
       schoolSlug: string
+      avatar?: string
     }
   }
 }

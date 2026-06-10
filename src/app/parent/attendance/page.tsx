@@ -17,7 +17,7 @@ export default async function ParentAttendancePage() {
         include: {
           student: {
             include: {
-              user: { select: { fullName: true, fullNameAr: true } },
+              user: { select: { fullName: true, fullNameAr: true, avatar: true } },
               group: { select: { id: true, name: true, schedule: true } },
               teacher: { include: { user: { select: { fullName: true } } } },
             },

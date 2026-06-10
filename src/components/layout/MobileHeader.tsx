@@ -5,11 +5,11 @@ import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { Menu, Bell, X } from "lucide-react"
+import { Menu, Bell, X, LogOut, User } from "lucide-react"
 import { TopBarControls } from "./TopBarControls"
 import { useT } from "@/contexts/LanguageContext"
 import { cn } from "@/lib/utils"
-import { useSession } from "next-auth/react"
+import { useSession, signOut } from "next-auth/react"
 
 const ROLE_LINKS: Record<string, { href: string; labelKey: string }[]> = {
   superadmin: [
@@ -46,6 +46,8 @@ const ROLE_LINKS: Record<string, { href: string; labelKey: string }[]> = {
   parent: [
     { href: "/parent/dashboard", labelKey: "dashboard" },
     { href: "/parent/link", labelKey: "linkChild" },
+    { href: "/parent/attendance", labelKey: "attendance" },
+    { href: "/parent/halaqa", labelKey: "halaqa" },
     { href: "/parent/notifications", labelKey: "notifications" },
     { href: "/parent/profile", labelKey: "profile" },
   ],
@@ -149,9 +151,21 @@ export function MobileHeader({
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               className="fixed start-0 top-0 bottom-0 w-72 bg-white dark:bg-gray-900 z-50 shadow-2xl flex flex-col"
             >
-              {/* Header avec TopBarControls */}
-              <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-center">
-                <TopBarControls dropdownAlign="left" />
+              {/* User section */}
+              <div className="px-4 py-4 border-b border-gray-100 dark:border-gray-800">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-tahfidz-green flex items-center justify-center overflow-hidden flex-shrink-0">
+                    {session?.user?.avatar ? (
+                      <Image src={session.user.avatar} alt={session.user.name || ""} width={48} height={48} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-white font-bold text-lg">{(session?.user?.name || "?").charAt(0)}</span>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-sm text-gray-900 dark:text-white truncate">{session?.user?.name || "Utilisateur"}</p>
+                    <p className="text-[11px] text-gray-400 truncate">{session?.user?.email || ""}</p>
+                  </div>
+                </div>
               </div>
 
               {/* Navigation */}
@@ -180,8 +194,15 @@ export function MobileHeader({
               </nav>
 
               {/* Footer */}
-              <div className="p-4 border-t border-gray-100 dark:border-gray-800">
-                <p className="text-xs text-gray-400 text-center">{displayName}</p>
+              <div className="p-3 border-t border-gray-100 dark:border-gray-800 space-y-1">
+                <button
+                  onClick={() => { setMenuOpen(false); signOut({ callbackUrl: "/login" }) }}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full"
+                >
+                  <LogOut size={16} />
+                  <span>{t("logout") || "Déconnexion"}</span>
+                </button>
+                <p className="text-[10px] text-gray-300 text-center pt-1">{displayName}</p>
               </div>
             </motion.div>
           </>

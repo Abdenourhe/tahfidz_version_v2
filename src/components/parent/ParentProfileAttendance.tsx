@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import Image from "next/image"
 import {
   Save, Loader2, Check, Clock, BookOpen, X,
   CalendarCheck, AlertCircle, ChevronLeft, ChevronRight,
@@ -12,7 +13,7 @@ interface Child {
   relation: string
   student: {
     id: string
-    user: { fullName: string; fullNameAr?: string | null }
+    user: { fullName: string; fullNameAr?: string | null; avatar?: string | null }
     group: { id: string; name: string; schedule?: Record<string, string> | null } | null
     teacher: { user: { fullName: string } } | null
   }
@@ -388,10 +389,14 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
 
                     {/* Child header */}
                     <div className="flex items-center gap-3 mb-3">
-                      <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold text-sm shadow-sm ${
+                      <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold text-sm shadow-sm overflow-hidden ${
                         status ? opt?.bg : "gradient-tahfidz"
                       }`}>
-                        {child.student.user.fullName.charAt(0)}
+                        {child.student.user.avatar ? (
+                          <Image src={child.student.user.avatar} alt={child.student.user.fullName} width={40} height={40} className="w-full h-full object-cover" />
+                        ) : (
+                          child.student.user.fullName.charAt(0)
+                        )}
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-bold text-gray-900 truncate">{child.student.user.fullName}</p>
