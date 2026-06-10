@@ -22,6 +22,17 @@ const {
   trustHost: true,
   session: { strategy: "jwt", maxAge: 8 * 60 * 60 },
   pages: { signIn: "/login", error: "/login" },
+  cookies: {
+    sessionToken: {
+      name: `__Secure-tahfidz.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: true,
+      },
+    },
+  },
   providers: [
     Credentials({
       async authorize(credentials) {
