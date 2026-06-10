@@ -13,6 +13,9 @@ export function useSidebarCollapsed() {
       const stored = localStorage.getItem(STORAGE_KEY)
       if (stored !== null) setCollapsedState(stored === "true")
     } catch { /* ignore */ }
+    const handler = (e: Event) => setCollapsedState((e as CustomEvent).detail)
+    window.addEventListener(EVENT_NAME, handler)
+    return () => window.removeEventListener(EVENT_NAME, handler)
   }, [])
 
   const setCollapsed = useCallback((value: boolean) => {
