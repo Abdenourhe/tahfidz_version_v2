@@ -2,37 +2,24 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Bell, MessageCircle } from "lucide-react"
+import { X, Bell } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 
-interface Notification {
+interface Toast {
   id: string
-  type: string
   title: string
   message: string
-  data: Record<string, any>
-  isRead: boolean
-  createdAt: string
-}
-
-interface NotificationPrefs {
-  messageNotifications: boolean
-  evaluationNotifications: boolean
-  attendanceNotifications: boolean
-  soundEnabled: boolean
+  url?: string
 }
 
 interface NotificationContextType {
   unreadCount: number
-  notifications: Notification[]
-  prefs: NotificationPrefs | null
   refresh: () => Promise<void>
 }
 
 const NotificationContext = createContext<NotificationContextType>({
   unreadCount: 0,
-  notifications: [],
-  prefs: null,
   refresh: async () => {},
 })
 
@@ -56,71 +43,64 @@ function playBeep() {
 }
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
-  const [notifications, setNotifications] = useState<Notification[]>([])
+  const { data: session, status } = useSession()
   const [unreadCount, setUnreadCount] = useState(0)
-  const [prefs, setPrefs] = useState<NotificationPrefs | null>(null)
-  const [toasts, setToasts] = useState<{ id: string; title: string; message: string; url?: string }[]>([])
+  const [toasts, setToasts] = useState<Toast[]>([])
+  const [soundEnabled, setSoundEnabled] = useState(true)
   const prevCountRef = useRef(0)
   const router = useRouter()
 
-  const fetchPrefs = useCallback(async () => {
-    try {
-      const res = await fetch("/api/profile/notifications")
-      if (res.ok) setPrefs(await res.json())
-    } catch { /* ignore */ }
-  }, [])
-
   const refresh = useCallback(async () => {
+    if (status !== "authenticated" || !session?.user?.id) return
     try {
-      const [notifRes, prefsRes] = await Promise.all([
-        fetch("/api/notifications?unread=true"),
-        prefs ? Promise.resolve(null) : fetch("/api/profile/notifications"),
-      ])
-      if (notifRes.ok) {
-        const data = await notifRes.json()
-        const newCount = data.unreadCount || 0
-        const newNotifs: Notification[] = data.notifications || []
+      const res = await fetch("/api/notifications?unread=true", { cache: "no-store" })
+      if (!res.ok) return
+      const data = await res.json()
+      const newCount = data.unreadCount || 0
+      const newNotifs = data.notifications || []
 
-        // Detect new notifications
-        if (newCount > prevCountRef.current && prevCountRef.current > 0) {
-          const latest = newNotifs[0]
-          if (latest) {
-            const shouldShow =
-              (latest.type === "direct_message" && prefs?.messageNotifications !== false) ||
-              (latest.type === "evaluation" && prefs?.evaluationNotifications !== false) ||
-              (latest.type === "attendance" && prefs?.attendanceNotifications !== false)
-
-            if (shouldShow) {
-              setToasts(prev => [...prev, {
-                id: latest.id,
-                title: latest.title,
-                message: latest.message,
-                url: latest.data?.url,
-              }])
-              if (prefs?.soundEnabled !== false) playBeep()
-            }
-          }
+      if (newCount > prevCountRef.current && prevCountRef.current > 0) {
+        const latest = newNotifs[0]
+        if (latest) {
+          setToasts(prev => [...prev, {
+            id: latest.id,
+            title: latest.title,
+            message: latest.message,
+            url: latest.data?.url,
+          }])
+          if (soundEnabled) playBeep()
         }
-
-        prevCountRef.current = newCount
-        setUnreadCount(newCount)
-        setNotifications(newNotifs)
       }
-      if (prefsRes && prefsRes.ok) setPrefs(await prefsRes.json())
+      prevCountRef.current = newCount
+      setUnreadCount(newCount)
     } catch { /* ignore */ }
-  }, [prefs])
+  }, [status, session, soundEnabled])
 
+  // Load sound preference once
   useEffect(() => {
-    fetchPrefs()
+    if (status !== "authenticated") return
+    fetch("/api/profile/notifications")
+      .then(r => r.ok ? r.json() : null)
+      .then(prefs => { if (prefs) setSoundEnabled(prefs.soundEnabled !== false) })
+      .catch(() => {})
+  }, [status])
+
+  // Poll only when authenticated
+  useEffect(() => {
+    if (status !== "authenticated") {
+      prevCountRef.current = 0
+      setUnreadCount(0)
+      return
+    }
     refresh()
     const id = setInterval(refresh, 10000)
     return () => clearInterval(id)
-  }, [fetchPrefs, refresh])
+  }, [status, refresh])
 
   const removeToast = (id: string) => setToasts(prev => prev.filter(t => t.id !== id))
 
   return (
-    <NotificationContext.Provider value={{ unreadCount, notifications, prefs, refresh }}>
+    <NotificationContext.Provider value={{ unreadCount, refresh }}>
       {children}
 
       {/* Toast stack */}
