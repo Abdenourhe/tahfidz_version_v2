@@ -135,6 +135,11 @@ model User {
   updatedAt     DateTime  @updatedAt
   lastLoginAt   DateTime?
 
+  messageNotifications    Boolean @default(true)
+  evaluationNotifications Boolean @default(true)
+  attendanceNotifications Boolean @default(true)
+  soundEnabled            Boolean @default(true)
+
   school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
   adminProfile   Admin?

@@ -3,6 +3,7 @@
 import { SessionProvider } from "next-auth/react"
 import { ThemeProvider } from "next-themes"
 import { LanguageProvider } from "@/contexts/LanguageContext"
+import { NotificationProvider } from "@/contexts/NotificationContext"
 import type { Session } from "next-auth"
 
 export function Providers({
@@ -16,7 +17,9 @@ export function Providers({
     <SessionProvider session={session}>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <LanguageProvider>
-          {children}
+          <NotificationProvider>
+            {children}
+          </NotificationProvider>
         </LanguageProvider>
       </ThemeProvider>
     </SessionProvider>

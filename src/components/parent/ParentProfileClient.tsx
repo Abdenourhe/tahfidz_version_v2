@@ -13,6 +13,7 @@ import { ParentProfileSettings } from "@/components/parent/ParentProfileSettings
 import { Phone, Mail, BookOpen, Star, Award, User, Bug, Settings, Globe, Languages, ArrowRight } from "lucide-react"
 import { FeedbackModal } from "@/components/shared/FeedbackModal"
 import { AvatarUploader } from "@/components/shared/AvatarUploader"
+import { NotificationSettings } from "@/components/shared/NotificationSettings"
 
 interface Props {
   parent: {
@@ -101,6 +102,9 @@ export function ParentProfileClient({
       <ProfileAccordion title={t("settings")} icon={Settings} delay={0.5}>
         <ParentProfileSettings />
       </ProfileAccordion>
+
+      {/* Notification settings */}
+      <NotificationSettings />
 
       {/* Report bug */}
       <motion.button

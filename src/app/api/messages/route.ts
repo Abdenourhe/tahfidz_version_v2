@@ -79,7 +79,13 @@ export async function POST(req: Request) {
   const toUser = await prisma.user.findUnique({ where: { id: toUserId }, select: { id:true, fullName:true, email:true } })
   if (!toUser) return NextResponse.json({ error: "Destinataire introuvable" }, { status: 404 })
 
-  const fromUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { fullName:true } })
+  const fromUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { fullName:true, role:true } })
+  const toUserWithPrefs = await prisma.user.findUnique({
+    where: { id: toUserId },
+    select: { id:true, fullName:true, email:true, role:true, messageNotifications:true },
+  })
+  if (!toUserWithPrefs) return NextResponse.json({ error: "Destinataire introuvable" }, { status: 404 })
+
   const message = await prisma.directMessage.create({
     data: {
       schoolId: session.user.schoolId,
@@ -91,21 +97,28 @@ export async function POST(req: Request) {
     }
   })
 
-  await prisma.notification.create({
-    data: {
-      schoolId: session.user.schoolId,
-      userId: toUserId, type: "direct_message",
-      title: `Nouveau message : ${subject}`,
-      titleAr: `رسالة جديدة : ${subject}`,
-      message: `De : ${fromUser?.fullName ?? "Inconnu"}\n${msgBody.slice(0,150)}${msgBody.length>150?"…":""}`,
-      data: { messageId: message.id, fromUserId: session.user.id },
-    },
-  })
+  // Notification conditionnelle selon les préférences du destinataire
+  if (toUserWithPrefs.messageNotifications) {
+    const redirectUrl = toUserWithPrefs.role === "TEACHER"
+      ? "/teacher/messages"
+      : "/parent/dashboard"
 
-  if (toUser.email && isMailConfigured()) {
+    await prisma.notification.create({
+      data: {
+        schoolId: session.user.schoolId,
+        userId: toUserId, type: "direct_message",
+        title: `Nouveau message : ${subject}`,
+        titleAr: `رسالة جديدة : ${subject}`,
+        message: `De : ${fromUser?.fullName ?? "Inconnu"}\n${msgBody.slice(0,150)}${msgBody.length>150?"…":""}`,
+        data: { messageId: message.id, fromUserId: session.user.id, url: redirectUrl },
+      },
+    })
+  }
+
+  if (toUserWithPrefs.email && isMailConfigured()) {
     try {
       await sendMail({
-        to: toUser.email,
+        to: toUserWithPrefs.email,
         subject: `[TAHFIDZ] ${subject}`,
         html: `<div style="font-family:sans-serif;padding:24px;max-width:560px;"><h2>📬 Nouveau message</h2><p><strong>De :</strong> ${fromUser?.fullName ?? "Inconnu"}</p><p><strong>Objet :</strong> ${subject}</p><div style="background:#f9fafb;padding:16px;border-radius:8px;white-space:pre-wrap;">${msgBody}</div><p style="margin-top:20px;"><a href="${process.env.NEXT_PUBLIC_APP_URL}" style="background:#1D9E75;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;">Voir sur TAHFIDZ</a></p></div>`,
       })

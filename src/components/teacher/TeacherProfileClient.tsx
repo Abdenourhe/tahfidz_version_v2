@@ -13,6 +13,7 @@ import {
   Bug, Settings
 } from "lucide-react"
 import { FeedbackModal } from "@/components/shared/FeedbackModal"
+import { NotificationSettings } from "@/components/shared/NotificationSettings"
 
 interface Props {
   teacher: {
@@ -106,6 +107,8 @@ export function TeacherProfileClient({ teacher, totalStudents, schoolName, schoo
           </div>
         )}
       </ProfileAccordion>
+
+      <NotificationSettings />
 
       <ProfileAccordion title={t("quickActions")} icon={Settings} delay={0.5}>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
