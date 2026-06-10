@@ -1,12 +1,14 @@
 "use client"
-// src/app/parent/notifications/page.tsx — with delete
+// src/app/parent/notifications/page.tsx — with delete + click to navigate
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { formatDate } from "@/lib/utils"
-import { Bell, CheckCheck, BookOpen, Star, Award, Trash2, Loader2 } from "lucide-react"
+import { Bell, CheckCheck, BookOpen, Star, Award, Trash2, Loader2, Mail } from "lucide-react"
 
 interface Notification {
-  id: string; type: string; title: string; message: string; isRead: boolean; createdAt: string
+  id: string; type: string; title: string; message: string; isRead: boolean; createdAt: string;
+  data: Record<string, any>
 }
 
 const typeIcon: Record<string, { icon: typeof Bell; color: string; bg: string }> = {
@@ -19,9 +21,11 @@ const typeIcon: Record<string, { icon: typeof Bell; color: string; bg: string }>
   memorization_progress_updated: { icon: Star,    color: "text-tahfidz-gold",  bg: "bg-tahfidz-gold-light" },
   attendance_absent_reported:  { icon: Bell,     color: "text-red-500",       bg: "bg-red-50" },
   attendance_validated:        { icon: CheckCheck, color: "text-green-600",   bg: "bg-green-50" },
+  direct_message:              { icon: Mail,     color: "text-blue-600",      bg: "bg-blue-50" },
 }
 
 export default function ParentNotificationsPage() {
+  const router = useRouter()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount,   setUnreadCount]   = useState(0)
   const [loading,       setLoading]       = useState(true)
@@ -36,6 +40,16 @@ export default function ParentNotificationsPage() {
   }
 
   useEffect(() => { load() }, [])
+
+  const markRead = async (id: string) => {
+    await fetch("/api/notifications", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: [id] }),
+    })
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n))
+    setUnreadCount(prev => Math.max(0, prev - 1))
+  }
 
   const markAllRead = async () => {
     await fetch("/api/notifications", {
@@ -68,6 +82,13 @@ export default function ParentNotificationsPage() {
       setUnreadCount(0)
     } finally {
       setDeletingAll(false)
+    }
+  }
+
+  const handleClick = (notif: Notification) => {
+    if (!notif.isRead) markRead(notif.id)
+    if (notif.type === "direct_message") {
+      router.push(notif.data?.url || "/parent/dashboard")
     }
   }
 
@@ -109,7 +130,8 @@ export default function ParentNotificationsPage() {
             const tc = typeIcon[notif.type] ?? { icon: Bell, color: "text-gray-500", bg: "bg-gray-50" }
             return (
               <div key={notif.id}
-                className={`bg-white rounded-xl border p-4 flex gap-4 group transition ${!notif.isRead ? "border-tahfidz-green/30 bg-tahfidz-green-light/20" : "border-gray-100 hover:border-gray-200"}`}>
+                onClick={() => handleClick(notif)}
+                className={`bg-white rounded-xl border p-4 flex gap-4 group transition cursor-pointer ${!notif.isRead ? "border-tahfidz-green/30 bg-tahfidz-green-light/20" : "border-gray-100 hover:border-gray-200"}`}>
                 <div className={`w-10 h-10 rounded-xl ${tc.bg} flex items-center justify-center flex-shrink-0`}>
                   <tc.icon size={18} className={tc.color} />
                 </div>
@@ -119,7 +141,7 @@ export default function ParentNotificationsPage() {
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {!notif.isRead && <div className="w-2 h-2 rounded-full bg-tahfidz-green" />}
                       <button
-                        onClick={() => deleteOne(notif.id)}
+                        onClick={(e) => { e.stopPropagation(); deleteOne(notif.id) }}
                         disabled={deletingId === notif.id}
                         className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition disabled:opacity-50"
                         title="Supprimer cette notification"
