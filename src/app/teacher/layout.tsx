@@ -8,6 +8,7 @@ import { TeacherSidebar } from "@/components/layout/TeacherSidebar"
 import { TeacherBottomNav } from "@/components/layout/TeacherBottomNav"
 import { MobileHeader } from "@/components/layout/MobileHeader"
 import { TopBar } from "@/components/layout/TopBar"
+import { CollapsibleMain } from "@/components/layout/CollapsibleMain"
 import { Providers } from "@/components/Providers"
 import { LanguageProvider } from "@/contexts/LanguageContext"
 
@@ -29,14 +30,14 @@ export default async function TeacherLayout({ children }: { children: React.Reac
             <TeacherSidebar user={(session.user as any)} schoolName={school?.name ?? undefined} schoolLogo={school?.logo ?? undefined} />
           </div>
 
-          <main className="flex-1 overflow-y-auto flex flex-col md:ms-64">
+          <CollapsibleMain className="flex-col">
             <div className="hidden md:block"><TopBar /></div>
             <div className="md:hidden"><MobileHeader role="teacher" schoolName={school?.name ?? undefined} schoolLogo={school?.logo ?? undefined} /></div>
 
             <div className="max-w-7xl mx-auto w-full px-4 md:px-6 py-4 md:py-8 pb-24 md:pb-8">
               {children}
             </div>
-          </main>
+          </CollapsibleMain>
 
           {/* Mobile bottom nav */}
           <div className="md:hidden"><TeacherBottomNav /></div>

@@ -15,6 +15,7 @@ interface Props {
   iconInactiveClass?: string
   iconContainerClass?: string
   className?: string
+  collapsed?: boolean
 }
 
 export function NotificationNavItem({
@@ -27,14 +28,19 @@ export function NotificationNavItem({
   iconInactiveClass = "text-gray-400",
   iconContainerClass,
   className,
+  collapsed,
 }: Props) {
   const { unreadCount } = useNotification()
 
+  const iconSize = collapsed ? 22 : (iconContainerClass ? 16 : 18)
   const iconEl = (
     <>
-      <Bell size={iconContainerClass ? 16 : 18} className={cn(isActive ? iconActiveClass : iconInactiveClass)} />
+      <Bell size={iconSize} className={cn(isActive ? iconActiveClass : iconInactiveClass)} />
       {unreadCount > 0 && (
-        <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
+        <span className={cn(
+          "absolute min-w-[16px] h-4 px-1 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none",
+          collapsed ? "-top-2 -right-2" : "-top-1.5 -right-1.5"
+        )}>
           {unreadCount > 99 ? "99+" : unreadCount}
         </span>
       )}
@@ -44,8 +50,10 @@ export function NotificationNavItem({
   return (
     <Link
       href={href}
+      title={collapsed ? label : undefined}
       className={cn(
-        "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150 group",
+        "flex items-center rounded-xl text-sm transition-all duration-150 group",
+        collapsed ? "justify-center px-2 py-3" : "gap-3 px-3 py-2.5",
         isActive ? activeClass : inactiveClass,
         className,
       )}
@@ -59,7 +67,7 @@ export function NotificationNavItem({
           {iconEl}
         </div>
       )}
-      <span className="flex-1 truncate">{label}</span>
+      {!collapsed && <span className="flex-1 truncate">{label}</span>}
     </Link>
   )
 }
