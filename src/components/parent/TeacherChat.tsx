@@ -44,15 +44,20 @@ function useScrollBehavior(
   return { showJumpBtn, scrollToBottom, onScroll }
 }
 
-export function TeacherChat({ teacherUserId, teacherName, parentUserId, childName, studentId }: {
+export function TeacherChat({ teacherUserId, teacherName, parentUserId, childName, studentId, open, onOpenChange }: {
   teacherUserId: string
   teacherName: string
   parentUserId: string
   childName: string
   studentId: string
+  open?: boolean
+  onOpenChange?: (v: boolean) => void
 }) {
   const searchParams = useSearchParams()
-  const [open, setOpen] = useState(searchParams.get("chat") === "open")
+  const [internalOpen, setInternalOpen] = useState(searchParams.get("chat") === "open")
+  const isControlled = open !== undefined
+  const chatOpen = isControlled ? open : internalOpen
+  const setChatOpen = isControlled ? onOpenChange! : setInternalOpen
   const [messages, setMessages] = useState<Message[]>([])
   const [text, setText] = useState("")
   const [loading, setLoading] = useState(false)
@@ -148,9 +153,10 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
 
   let lastDateLabel = ""
 
-  if (!open) {
+  if (!chatOpen) {
+    if (isControlled) return null
     return (
-      <motion.button onClick={() => setOpen(true)} whileTap={{ scale: 0.95 }}
+      <motion.button onClick={() => setChatOpen(true)} whileTap={{ scale: 0.95 }}
         className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-tahfidz-green text-white text-sm font-medium hover:opacity-90 transition shadow-sm">
         <MessageCircle size={14} /> Contacter
       </motion.button>
@@ -172,7 +178,7 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
           <motion.button whileTap={{ scale: 0.85 }} onClick={clearChat} className="p-2 rounded-xl hover:bg-red-50 text-gray-400 hover:text-red-500 transition" title="Vider">
             <Trash2 size={14} />
           </motion.button>
-          <motion.button whileTap={{ scale: 0.85 }} onClick={() => setOpen(false)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 transition">
+          <motion.button whileTap={{ scale: 0.85 }} onClick={() => setChatOpen(false)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 transition">
             <X size={16} />
           </motion.button>
         </div>

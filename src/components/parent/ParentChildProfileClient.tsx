@@ -7,7 +7,7 @@ import Image from "next/image"
 import {
   ArrowLeft, BookOpen, Star, Award, CalendarCheck, GraduationCap,
   Phone, Mail, RefreshCw, Loader2, CheckCircle2, RotateCcw, X, Clock,
-  TrendingUp, Flame, ChevronRight
+  TrendingUp, Flame, ChevronRight, MessageCircle
 } from "lucide-react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { useSession } from "next-auth/react"
@@ -85,6 +85,68 @@ function SectionTitle({ icon: Icon, title, count }: { icon: any; title: string; 
       <Icon size={14} className="text-gray-400" />
       <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">{title}</h3>
       {count !== undefined && <span className="text-[10px] bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded-full font-bold">{count}</span>}
+    </div>
+  )
+}
+
+function TeacherChatCard({ student, parentUserId, studentId }: { student: Student; parentUserId?: string; studentId: string }) {
+  const [chatOpen, setChatOpen] = useState(false)
+  if (!student.teacher) return null
+  return (
+    <div className="bg-gradient-to-br from-emerald-50/60 to-white dark:from-emerald-900/10 dark:to-gray-900 rounded-2xl border border-emerald-100/60 dark:border-emerald-800/30 p-5 shadow-sm">
+      <div className="flex items-center gap-4">
+        {/* Avatar */}
+        <div className="relative shrink-0">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-tahfidz-green to-emerald-600 flex items-center justify-center text-white text-lg font-bold shadow-sm">
+            {student.teacher.user.fullName.charAt(0).toUpperCase()}
+          </div>
+          <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white dark:border-gray-900 rounded-full" />
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-base font-bold text-gray-900 dark:text-gray-100">{student.teacher.user.fullName}</p>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-tahfidz-green-light dark:bg-emerald-900/30 text-tahfidz-green font-semibold tracking-wide">ENSEIGNANT</span>
+          </div>
+          <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" /> En ligne
+          </p>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-2 mt-4">
+        {student.teacher.user.phone && (
+          <a href={`tel:${student.teacher.user.phone}`} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-green-50 hover:text-green-700 hover:border-green-200 transition">
+            <Phone size={14} /> Appeler
+          </a>
+        )}
+        <a href={`mailto:${student.teacher.user.email}`} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition">
+          <Mail size={14} /> Email
+        </a>
+        {parentUserId && (
+          <button onClick={() => setChatOpen(v => !v)}
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-tahfidz-green text-white text-sm font-medium hover:opacity-90 transition shadow-sm">
+            <MessageCircle size={14} /> {chatOpen ? "Fermer" : "Contacter"}
+          </button>
+        )}
+      </div>
+
+      {/* Chat panel */}
+      {chatOpen && parentUserId && (
+        <div className="mt-3">
+          <TeacherChat
+            teacherUserId={student.teacher.user.id}
+            teacherName={student.teacher.user.fullName}
+            parentUserId={parentUserId}
+            childName={student.user.fullName}
+            studentId={studentId}
+            open={chatOpen}
+            onOpenChange={setChatOpen}
+          />
+        </div>
+      )}
     </div>
   )
 }
@@ -239,51 +301,7 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
 
       {/* ── Enseignant ── */}
       {student.teacher && (
-        <div className="bg-gradient-to-br from-emerald-50/60 to-white dark:from-emerald-900/10 dark:to-gray-900 rounded-2xl border border-emerald-100/60 dark:border-emerald-800/30 p-5 shadow-sm">
-          <div className="flex items-center gap-4">
-            {/* Avatar */}
-            <div className="relative shrink-0">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-tahfidz-green to-emerald-600 flex items-center justify-center text-white text-lg font-bold shadow-sm">
-                {student.teacher.user.fullName.charAt(0).toUpperCase()}
-              </div>
-              <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white dark:border-gray-900 rounded-full" />
-            </div>
-
-            {/* Info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-base font-bold text-gray-900 dark:text-gray-100">{student.teacher.user.fullName}</p>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-tahfidz-green-light dark:bg-emerald-900/30 text-tahfidz-green font-semibold tracking-wide">ENSEIGNANT</span>
-              </div>
-              <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" /> En ligne
-              </p>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-2 mt-4">
-            {student.teacher.user.phone && (
-              <a href={`tel:${student.teacher.user.phone}`} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-green-50 hover:text-green-700 hover:border-green-200 transition">
-                <Phone size={14} /> Appeler
-              </a>
-            )}
-            <a href={`mailto:${student.teacher.user.email}`} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition">
-              <Mail size={14} /> Email
-            </a>
-            {parentUserId && (
-              <div className="flex-1">
-                <TeacherChat
-                  teacherUserId={student.teacher.user.id}
-                  teacherName={student.teacher.user.fullName}
-                  parentUserId={parentUserId}
-                  childName={student.user.fullName}
-                  studentId={studentId}
-                />
-              </div>
-            )}
-          </div>
-        </div>
+        <TeacherChatCard student={student} parentUserId={parentUserId} studentId={studentId} />
       )}
 
       {/* ── Mémorisation en cours ── */}
