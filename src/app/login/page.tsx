@@ -85,6 +85,23 @@ const ROLE_DASHBOARD: Record<string, string> = {
   STUDENT:    "/student/dashboard",
 }
 
+const ROLE_ROUTE_RULES = [
+  { prefix: "/admin/super", allowed: ["SUPERADMIN"] },
+  { prefix: "/superadmin",  allowed: ["SUPERADMIN"] },
+  { prefix: "/admin",       allowed: ["ADMIN", "SUPERADMIN"] },
+  { prefix: "/teacher",     allowed: ["TEACHER", "ADMIN", "SUPERADMIN"] },
+  { prefix: "/parent",      allowed: ["PARENT", "ADMIN", "SUPERADMIN"] },
+  { prefix: "/student",     allowed: ["STUDENT", "ADMIN", "SUPERADMIN"] },
+]
+
+function isRouteAllowed(role: string, pathname: string) {
+  if (pathname === "/") return true
+  for (const rule of ROLE_ROUTE_RULES) {
+    if (pathname.startsWith(rule.prefix)) return rule.allowed.includes(role)
+  }
+  return true
+}
+
 /* ═══════════════════════════════════════════════════════════════════
    CERCLE ISLAMIQUE — COORDONNÉES PRÉCALCULÉES
    ═══════════════════════════════════════════════════════════════════ */
@@ -214,7 +231,9 @@ function LoginForm() {
       const res     = await fetch("/api/auth/session")
       const session = await res.json()
       const role    = session?.user?.role
-      router.push(ROLE_DASHBOARD[role] ?? callbackUrl)
+      const dashboard = ROLE_DASHBOARD[role] ?? "/"
+      const target = callbackUrl && isRouteAllowed(role, callbackUrl) ? callbackUrl : dashboard
+      router.push(target)
       router.refresh()
     } catch {
       setError(t("genericError"))

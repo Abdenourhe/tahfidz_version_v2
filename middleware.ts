@@ -21,6 +21,7 @@ const PUBLIC_PATHS = [
 const ROLE_ROUTES: Array<{ prefix: string; allowed: string[] }> = [
   { prefix: "/admin/super",       allowed: ["SUPERADMIN"] },
   { prefix: "/api/admin/schools", allowed: ["SUPERADMIN"] },
+  { prefix: "/superadmin",        allowed: ["SUPERADMIN"] },
   { prefix: "/admin",             allowed: ["ADMIN", "SUPERADMIN"] },
   { prefix: "/teacher",           allowed: ["TEACHER", "ADMIN", "SUPERADMIN"] },
   { prefix: "/parent",            allowed: ["PARENT", "ADMIN", "SUPERADMIN"] },
