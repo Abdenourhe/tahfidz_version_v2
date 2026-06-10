@@ -5,11 +5,75 @@ import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { Menu, Bell, X, LogOut } from "lucide-react"
+import {
+  Menu, Bell, X, LogOut,
+  LayoutDashboard, GraduationCap, Users, BookOpen, BookMarked,
+  CalendarCheck, Award, MessageSquare, Megaphone, UserCircle,
+  Link2, Video, Star, ClipboardList, BarChart3, ShieldCheck,
+  Settings, Monitor, UserCheck,
+} from "lucide-react"
 import { TopBarControls } from "./TopBarControls"
 import { useT } from "@/contexts/LanguageContext"
 import { cn } from "@/lib/utils"
 import { useSession, signOut } from "next-auth/react"
+
+const ROLE_NAV: Record<string, { href: string; labelKey: string; icon: typeof LayoutDashboard }[]> = {
+  admin: [
+    { href: "/admin/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
+    { href: "/admin/students", labelKey: "students", icon: GraduationCap },
+    { href: "/admin/teachers", labelKey: "teachers", icon: Users },
+    { href: "/admin/parents", labelKey: "parents", icon: UserCheck },
+    { href: "/admin/groups", labelKey: "groups", icon: BookOpen },
+    { href: "/admin/attendance", labelKey: "attendance", icon: CalendarCheck },
+    { href: "/admin/announcements", labelKey: "announcements", icon: Megaphone },
+    { href: "/admin/notifications", labelKey: "notifications", icon: Bell },
+    { href: "/admin/profile", labelKey: "profile", icon: UserCircle },
+  ],
+  teacher: [
+    { href: "/teacher/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
+    { href: "/teacher/students", labelKey: "students", icon: Users },
+    { href: "/teacher/groups", labelKey: "groups", icon: BookOpen },
+    { href: "/teacher/memorization", labelKey: "memorization", icon: BookMarked },
+    { href: "/teacher/attendance", labelKey: "attendance", icon: CalendarCheck },
+    { href: "/teacher/evaluations", labelKey: "evaluations", icon: Award },
+    { href: "/teacher/messages", labelKey: "messaging", icon: MessageSquare },
+    { href: "/teacher/notifications", labelKey: "notifications", icon: Bell },
+    { href: "/teacher/profile", labelKey: "profile", icon: UserCircle },
+  ],
+  student: [
+    { href: "/student/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
+    { href: "/student/progress", labelKey: "progress", icon: BookOpen },
+    { href: "/student/badges", labelKey: "badges", icon: Star },
+    { href: "/student/attendance", labelKey: "attendance", icon: CalendarCheck },
+    { href: "/student/notifications", labelKey: "notifications", icon: Bell },
+    { href: "/student/profile", labelKey: "profile", icon: UserCircle },
+  ],
+  parent: [
+    { href: "/parent/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
+    { href: "/parent/link", labelKey: "linkChild", icon: Link2 },
+    { href: "/parent/attendance", labelKey: "attendance", icon: CalendarCheck },
+    { href: "/parent/halaqa", labelKey: "halaqa", icon: Video },
+    { href: "/parent/notifications", labelKey: "notifications", icon: Bell },
+    { href: "/parent/profile", labelKey: "profile", icon: UserCircle },
+  ],
+  superadmin: [
+    { href: "/admin/super", labelKey: "dashboard", icon: LayoutDashboard },
+    { href: "/superadmin/profile", labelKey: "profile", icon: UserCircle },
+  ],
+}
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.03, delayChildren: 0.05 },
+  },
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, x: -12 },
+  show: { opacity: 1, x: 0, transition: { type: "spring" as const, stiffness: 350, damping: 28 } },
+}
 
 export function MobileHeader({
   role,
@@ -28,6 +92,7 @@ export function MobileHeader({
   const displayName = schoolName || "TAHFIDZ"
   const logo = schoolLogo
   const schoolSlug = session?.user?.schoolSlug
+  const navItems = ROLE_NAV[role] ?? []
 
   return (
     <>
@@ -86,7 +151,7 @@ export function MobileHeader({
         </div>
       </header>
 
-      {/* Drawer — secondary actions only */}
+      {/* Drawer */}
       <AnimatePresence>
         {menuOpen && (
           <>
@@ -120,24 +185,45 @@ export function MobileHeader({
                 </div>
               </div>
 
+              {/* Navigation links */}
+              {navItems.length > 0 && (
+                <motion.nav
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="show"
+                  className="p-3 space-y-0.5"
+                >
+                  {navItems.map((item) => {
+                    const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+                    const Icon = item.icon
+                    return (
+                      <motion.div key={item.href} variants={itemVariants}>
+                        <Link
+                          href={item.href}
+                          onClick={() => setMenuOpen(false)}
+                          className={cn(
+                            "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition",
+                            isActive
+                              ? "bg-tahfidz-green-light text-tahfidz-green"
+                              : "text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
+                          )}
+                        >
+                          <Icon size={18} strokeWidth={isActive ? 2.5 : 1.5} />
+                          <span>{t(item.labelKey) || item.labelKey}</span>
+                        </Link>
+                      </motion.div>
+                    )
+                  })}
+                </motion.nav>
+              )}
+
               {/* Controls */}
-              <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-800">
+              <div className="px-5 py-3 border-t border-b border-gray-100 dark:border-gray-800">
                 <TopBarControls dropdownAlign="left" />
               </div>
 
-              {/* Secondary links (parent only) */}
-              {role === "parent" && (
-                <nav className="p-4 space-y-1 flex-1">
-                  <p className="text-[10px] font-bold text-gray-300 uppercase tracking-wider px-3 mb-2">{t("quickLinks") || "Liens rapides"}</p>
-                  <Link href="/parent/link" onClick={() => setMenuOpen(false)}
-                    className={cn("flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors", pathname === "/parent/link" ? "bg-tahfidz-green-light text-tahfidz-green font-semibold" : "text-gray-600 hover:bg-gray-50")}>
-                    {t("linkChild") || "Lier un enfant"}
-                  </Link>
-                </nav>
-              )}
-
               {/* Logout */}
-              <div className="p-4 border-t border-gray-100 dark:border-gray-800">
+              <div className="p-4 mt-auto border-t border-gray-100 dark:border-gray-800">
                 <motion.button
                   whileTap={{ scale: 0.98 }}
                   onClick={() => { setMenuOpen(false); signOut({ callbackUrl: "/login" }) }}
