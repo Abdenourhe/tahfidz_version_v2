@@ -1,6 +1,7 @@
 "use client"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
+import { useSearchParams } from "next/navigation"
 import { CheckCircle2, XCircle, Loader2, Filter, CalendarDays, Users, AlertTriangle, Save, Clock, BookOpen } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 
@@ -29,11 +30,15 @@ export default function TeacherAttendanceValidation() {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
   const t = useT("teacherAttendanceValidation")
+  const searchParams = useSearchParams()
+  const highlightStudentId = searchParams.get("studentId")
+  const highlightDate = searchParams.get("date")
+  const alertRowRef = useRef<HTMLTableRowElement | null>(null)
 
   /* ── Group + Date ── */
   const [groups, setGroups] = useState<Group[]>([])
   const [selectedGroup, setSelectedGroup] = useState<string>("")
-  const [date, setDate] = useState<string>(new Date().toISOString().split("T")[0])
+  const [date, setDate] = useState<string>(highlightDate || new Date().toISOString().split("T")[0])
 
   /* ── Students + Attendance ── */
   const [students, setStudents] = useState<Student[]>([])
@@ -56,9 +61,21 @@ export default function TeacherAttendanceValidation() {
       .then(d => {
         const g: Group[] = d.groups || []
         setGroups(g)
-        if (g[0]) setSelectedGroup(g[0].id)
+        if (highlightStudentId) {
+          // Find group containing the highlighted student
+          const targetGroup = g.find((grp: any) =>
+            grp.students?.some((s: any) => s.id === highlightStudentId)
+          )
+          if (targetGroup) {
+            setSelectedGroup(targetGroup.id)
+          } else if (g[0]) {
+            setSelectedGroup(g[0].id)
+          }
+        } else if (g[0]) {
+          setSelectedGroup(g[0].id)
+        }
       })
-  }, [])
+  }, [highlightStudentId])
 
   /* ── Load students + attendance + parent alerts ── */
   const loadSheet = useCallback(async () => {
@@ -105,6 +122,13 @@ export default function TeacherAttendanceValidation() {
   }, [selectedGroup, date])
 
   useEffect(() => { loadSheet() }, [loadSheet])
+
+  /* ── Scroll to highlighted alert ── */
+  useEffect(() => {
+    if (alertRowRef.current) {
+      alertRowRef.current.scrollIntoView({ behavior: "smooth", block: "center" })
+    }
+  }, [alertsFilter, alerts, highlightStudentId])
 
   /* ── Load all alerts ── */
   const loadAlerts = useCallback(async () => {
@@ -327,8 +351,14 @@ export default function TeacherAttendanceValidation() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {filteredAlerts.map((r) => (
-                  <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                {filteredAlerts.map((r) => {
+                  const isHighlighted = highlightStudentId === r.student.id && (!highlightDate || r.date.startsWith(highlightDate))
+                  return (
+                  <tr
+                    key={r.id}
+                    ref={isHighlighted ? alertRowRef : undefined}
+                    className={`hover:bg-gray-50 dark:hover:bg-gray-800/50 transition ${isHighlighted ? "ring-2 ring-tahfidz-green bg-tahfidz-green-light/30" : ""}`}
+                  >
                     <td className="px-3 py-2">{formatDate(r.date, L)}</td>
                     <td className="px-3 py-2 font-medium text-gray-900 dark:text-gray-100">{r.student.user.fullName}</td>
                     <td className="px-3 py-2 text-gray-500">{r.parent.fullName}</td>
@@ -363,7 +393,7 @@ export default function TeacherAttendanceValidation() {
                       )}
                     </td>
                   </tr>
-                ))}
+                )})}
                 {filteredAlerts.length === 0 && (
                   <tr>
                     <td colSpan={6} className="px-3 py-6 text-center text-gray-400 text-sm">

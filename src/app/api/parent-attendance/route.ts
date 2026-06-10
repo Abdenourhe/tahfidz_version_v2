@@ -99,7 +99,7 @@ export async function POST(req: Request) {
               titleAr: `غياب مسجل: ${studentName}`,
               message: `${studentName} marqué absent le ${date}${reason ? ` — Raison: ${reason}` : ""}`,
               messageAr: `${studentName} مسجل غائب بتاريخ ${date}${reason ? ` — السبب: ${reason}` : ""}`,
-              data: { attendanceId: attendance.id, studentId, date, reason, url: "/admin/attendance" },
+              data: { attendanceId: attendance.id, studentId, date, reason, url: `/admin/attendance?studentId=${studentId}&date=${date}` },
             })),
           })
         }
@@ -125,7 +125,7 @@ export async function POST(req: Request) {
               titleAr: `غياب مسجل: ${studentName}`,
               message: `${studentName} marqué absent le ${date}${reason ? ` — Raison: ${reason}` : ""}`,
               messageAr: `${studentName} مسجل غائب بتاريخ ${date}${reason ? ` — السبب: ${reason}` : ""}`,
-              data: { attendanceId: attendance.id, studentId, date, reason, url: "/teacher/attendance" },
+              data: { attendanceId: attendance.id, studentId, date, reason, url: `/teacher/attendance?studentId=${studentId}&date=${date}` },
             },
           })
         }

@@ -308,7 +308,7 @@ export async function POST(req: Request) {
               type:      "attendance",
               title:     `${emoji} ${student.user.fullName} : ${statusLabel}${recorder}`,
               message:   `${isFutureDate ? "Prévision" : "Présence"} du ${dateStr}${futureLabel}${record.notes ? ` — Motif : ${record.notes}` : ""}`,
-              data:      { studentId: student.id, status: record.status, date: attendanceDate.toISOString(), recordedBy: session.user.role, url: ROLE_URL[r.role] },
+              data:      { studentId: student.id, status: record.status, date: attendanceDate.toISOString(), recordedBy: session.user.role, url: `${ROLE_URL[r.role]}?studentId=${student.id}&date=${attendanceDate.toISOString().split("T")[0]}` },
             })),
           })
         } catch {/* swallow notification errors */}
