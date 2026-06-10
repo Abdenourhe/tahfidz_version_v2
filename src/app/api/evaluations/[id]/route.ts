@@ -26,12 +26,22 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const evaluation = await prisma.evaluation.findUnique({
     where: { id: (await params).id },
     include: {
-      student: { include: { user: { select: { fullName: true, email: true } } } },
-      teacher: { include: { user: { select: { fullName: true } } } },
+      student: { include: { user: { select: { fullName: true, email: true, schoolId: true, id: true } }, parentLinks: { where: { isVerified: true }, include: { parent: { select: { userId: true } } } } } },
+      teacher: { include: { user: { select: { fullName: true, id: true } } } },
       progress: { include: { surah: true, statusHistory: { orderBy: { changedAt: "desc" }, take: 5 } } },
     },
   })
   if (!evaluation) return NextResponse.json({ error: "Introuvable" }, { status: 404 })
+
+  const isAuthorized =
+    session.user.role === "SUPERADMIN" ||
+    (session.user.role === "ADMIN" && evaluation.student.user.schoolId === session.user.schoolId) ||
+    (session.user.role === "TEACHER" && evaluation.teacher?.user?.id === session.user.id) ||
+    (session.user.role === "STUDENT" && evaluation.student.user.id === session.user.id) ||
+    (session.user.role === "PARENT" && evaluation.student.parentLinks.some((l: any) => l.parent.userId === session.user.id))
+
+  if (!isAuthorized) return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
+
   return NextResponse.json({ evaluation })
 }
 
@@ -81,11 +91,19 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const existing = await prisma.evaluation.findUnique({
     where: { id: (await params).id },
     include: {
-      progress: { include: { surah: { select: { nameFr: true, nameAr: true } } } },
-      student:  { include: { user: { select: { id: true, fullName: true } } } },
+      progress: { select: { id: true, surahId: true, endVerse: true, surah: { select: { nameFr: true, nameAr: true } } } },
+      student:  { include: { user: { select: { id: true, fullName: true, schoolId: true } } } },
+      teacher:  { include: { user: { select: { id: true } } } },
     },
   })
   if (!existing) return NextResponse.json({ error: "Introuvable" }, { status: 404 })
+
+  const isAuthorized =
+    session.user.role === "SUPERADMIN" ||
+    (session.user.role === "ADMIN" && existing.student.user.schoolId === session.user.schoolId) ||
+    (session.user.role === "TEACHER" && existing.teacher?.user?.id === session.user.id)
+
+  if (!isAuthorized) return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
 
   const tajwid  = parsed.data.tajwid  ?? existing.tajwid  ?? existing.tajweedScore ?? 0
   const makhraj = parsed.data.makhraj ?? existing.makhraj ?? existing.makharijScore ?? 0
@@ -140,6 +158,22 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             sourceId:    (await params).id,
             reason:      `Mémorisation approuvée : ${existing.progress.surah.nameFr}`,
             awardedBy:   session.user.id,
+          },
+        })
+      }
+
+      // Créer l'entrée mémorisée
+      const memExists = await prisma.memorizedSurah.findUnique({ where: { progressId: existing.progress.id } })
+      if (!memExists) {
+        await prisma.memorizedSurah.create({
+          data: {
+            studentId: existing.studentId,
+            surahId: existing.progress.surahId,
+            progressId: existing.progress.id,
+            versesMemorized: existing.progress.endVerse ?? 0,
+            finalScore: newScore,
+            teacherNotes: parsed.data.teacherNotes ?? existing.teacherNotes,
+            starsEarned: stars,
           },
         })
       }

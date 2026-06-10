@@ -21,6 +21,7 @@ export async function GET(req: Request) {
 
     const where: Record<string,unknown> = { status: statusFilter }
     if (teacher) where.student = { teacherId: teacher.id }
+    if (session.user.role === "ADMIN") where.student = { ...(where.student as object || {}), user: { schoolId: session.user.schoolId } }
 
     const progress = await prisma.memorizationProgress.findMany({
       where,
@@ -166,6 +167,20 @@ export async function POST(req: Request) {
           where: { id: studentId },
           data: { totalStars: { increment: 10 } },
         })
+
+        // Créer l'entrée mémorisée
+        const memExists = await prisma.memorizedSurah.findUnique({ where: { progressId: existing.id } })
+        if (!memExists) {
+          await prisma.memorizedSurah.create({
+            data: {
+              studentId,
+              surahId,
+              progressId: existing.id,
+              versesMemorized: surah.verseCount,
+              starsEarned: 10,
+            },
+          })
+        }
       }
     }
 

@@ -36,6 +36,9 @@ export async function GET(req: NextRequest) {
       where.teacherId = teacher.id
     } else {
       // Admin can filter by teacher or group
+      if (session.user.role === "ADMIN") {
+        where.user = { schoolId: session.user.schoolId }
+      }
       if (teacherId) where.teacherId = teacherId
       if (groupId)   where.groupId   = groupId
     }

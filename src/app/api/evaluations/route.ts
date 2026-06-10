@@ -42,6 +42,11 @@ export async function GET(req: Request) {
 
   if (studentId && !["PARENT"].includes(session.user.role)) where.studentId = studentId
 
+  // Admin/Superadmin : restreindre à leur école
+  if (["ADMIN", "SUPERADMIN"].includes(session.user.role)) {
+    where.student = { user: { schoolId: session.user.schoolId } }
+  }
+
   const [evaluations, total] = await Promise.all([
     prisma.evaluation.findMany({
       where,
@@ -137,7 +142,7 @@ export async function POST(req: Request) {
     ? "NEEDS_REVISION"
     : "IN_PROGRESS"
 
-  await prisma.memorizationProgress.update({
+  const progress = await prisma.memorizationProgress.update({
     where: { id: data.progressId },
     data: {
       status: newStatus,
@@ -152,6 +157,23 @@ export async function POST(req: Request) {
       },
     },
   })
+
+  // Créer l'entrée mémorisée si approuvé
+  if (newStatus === "MEMORIZED") {
+    const existing = await prisma.memorizedSurah.findUnique({ where: { progressId: data.progressId } })
+    if (!existing) {
+      await prisma.memorizedSurah.create({
+        data: {
+          studentId: data.studentId,
+          surahId: progress.surahId,
+          progressId: data.progressId,
+          versesMemorized: progress.endVerse ?? 0,
+          finalScore,
+          teacherNotes: data.teacherNotes,
+        },
+      })
+    }
+  }
 
   // Attribuer des étoiles si approuvé
   if (data.decision === "APPROVED") {

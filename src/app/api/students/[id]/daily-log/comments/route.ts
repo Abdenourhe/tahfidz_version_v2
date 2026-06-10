@@ -25,6 +25,30 @@ export async function GET(
       return NextResponse.json({ error: "dailyLogId et section requis" }, { status: 400 })
     }
 
+    // Vérifier que l'utilisateur a accès à cet élève
+    const student = await prisma.student.findUnique({
+      where: { id: studentId },
+      include: {
+        teacher: { select: { userId: true } },
+        parentLinks: { where: { isVerified: true }, include: { parent: { select: { userId: true } } } },
+        user: { select: { schoolId: true } },
+      },
+    })
+    if (!student) {
+      return NextResponse.json({ error: "Élève introuvable" }, { status: 404 })
+    }
+
+    const isAuthorized =
+      session.user.role === "ADMIN" ||
+      session.user.role === "SUPERADMIN" ||
+      student.teacher?.userId === session.user.id ||
+      student.parentLinks.some((l) => l.parent.userId === session.user.id) ||
+      student.user.schoolId === session.user.schoolId
+
+    if (!isAuthorized) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
+    }
+
     const comments = await prisma.dailyLogComment.findMany({
       where: { dailyLogId, section },
       include: {

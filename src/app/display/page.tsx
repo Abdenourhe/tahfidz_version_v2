@@ -7,7 +7,15 @@ interface Data    { topStudents:Student[]; groupStats:Group[]; totalMemorized:nu
 const MEDAL: Record<number,{bg:string;t:string;l:string}> = {1:{bg:"bg-yellow-400",t:"text-yellow-900",l:"🥇"},2:{bg:"bg-gray-300",t:"text-gray-700",l:"🥈"},3:{bg:"bg-orange-400",t:"text-orange-900",l:"🥉"}}
 export default function DisplayPage() {
   const [data,setData]=useState<Data|null>(null); const [slide,setSlide]=useState<"top"|"groups"|"verse">("top"); const [dark,setDark]=useState(true); const [loading,setLoading]=useState(true)
-  const fetch_=useCallback(async()=>{try{const r=await fetch("/api/display");const d=await r.json();setData(d)}catch{}finally{setLoading(false)}},[])
+  const fetch_=useCallback(async()=>{
+    try {
+      const hostname = typeof window !== "undefined" ? window.location.hostname : ""
+      const schoolSlug = hostname.includes(".") ? hostname.split(".")[0] : hostname
+      const r = await fetch(`/api/display?schoolSlug=${encodeURIComponent(schoolSlug)}`)
+      const d = await r.json()
+      setData(d)
+    } catch {} finally { setLoading(false) }
+  },[])
   useEffect(()=>{fetch_();const id=setInterval(fetch_,60000);return()=>clearInterval(id)},[fetch_])
   useEffect(()=>{const slides:("top"|"groups"|"verse")[]=(["top","groups","verse"]);let i=0;const id=setInterval(()=>{i=(i+1)%slides.length;setSlide(slides[i])},12000);return()=>clearInterval(id)},[])
   const bg=dark?"bg-gray-950":"bg-gradient-to-br from-green-50 to-white"; const txt=dark?"text-white":"text-gray-900"; const card=dark?"bg-gray-900 border-gray-800":"bg-white border-gray-200"

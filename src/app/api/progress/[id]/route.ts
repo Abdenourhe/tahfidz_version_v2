@@ -84,6 +84,21 @@ export async function PATCH(
       },
     })
 
+    // Créer l'entrée mémorisée si status = MEMORIZED
+    if (parsed.data.status === "MEMORIZED") {
+      const memExists = await prisma.memorizedSurah.findUnique({ where: { progressId: prog.id } })
+      if (!memExists) {
+        await prisma.memorizedSurah.create({
+          data: {
+            studentId: prog.student.id,
+            surahId: prog.surahId,
+            progressId: prog.id,
+            versesMemorized: prog.surah.verseCount,
+          },
+        })
+      }
+    }
+
     // READY_FOR_RECITATION → notify teacher (triggered by student OR parent)
     if (parsed.data.status === "READY_FOR_RECITATION" && (isOwner || isParent)) {
       const teacherUserId = prog.student.teacher?.user?.id

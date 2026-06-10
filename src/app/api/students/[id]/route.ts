@@ -40,7 +40,7 @@ export async function GET(req: NextRequest, { params }: Params) {
         user: {
           select: {
             id: true, fullName: true, fullNameAr: true, email: true,
-            phone: true, gender: true, avatar: true, isActive: true, createdAt: true,
+            phone: true, gender: true, avatar: true, isActive: true, createdAt: true, schoolId: true,
           },
         },
         group:   { select: { id: true, name: true, level: true } },
@@ -55,8 +55,14 @@ export async function GET(req: NextRequest, { params }: Params) {
 
     if (!student) return NextResponse.json({ error: "Élève non trouvé" }, { status: 404 })
 
+    const teacher = session.user.role === "TEACHER"
+      ? await prisma.teacher.findUnique({ where: { userId: session.user.id }, select: { id: true } })
+      : null
+
     const isAuthorized =
-      ["ADMIN", "SUPERADMIN", "TEACHER"].includes(session.user.role) ||
+      session.user.role === "SUPERADMIN" ||
+      (session.user.role === "ADMIN" && student.user.schoolId === session.user.schoolId) ||
+      (session.user.role === "TEACHER" && student.teacherId === teacher?.id) ||
       (session.user.role === "PARENT" && student.parentLinks.some((l: any) => l.parent.userId === session.user.id))
 
     if (!isAuthorized) {
@@ -205,10 +211,14 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const existingStudent = await prisma.student.findUnique({ where: { id }, include: { user: true } })
     if (!existingStudent) return NextResponse.json({ error: "Élève non trouvé" }, { status: 404 })
 
+    const teacher = session.user.role === "TEACHER"
+      ? await prisma.teacher.findUnique({ where: { userId: session.user.id }, select: { id: true } })
+      : null
+
     const isAuthorized =
       session.user.role === "SUPERADMIN" ||
       (session.user.role === "ADMIN" && session.user.schoolId === existingStudent.user.schoolId) ||
-      (session.user.role === "TEACHER" && existingStudent.teacherId === (session.user as any).teacherProfile?.id)
+      (session.user.role === "TEACHER" && existingStudent.teacherId === teacher?.id)
 
     if (!isAuthorized) return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
 

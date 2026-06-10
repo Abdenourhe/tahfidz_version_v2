@@ -2,10 +2,24 @@
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
 
-export async function GET() {
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url)
+  const schoolSlug = searchParams.get("schoolSlug")
+
+  if (!schoolSlug) {
+    return NextResponse.json({ error: "schoolSlug requis" }, { status: 400 })
+  }
+
+  const school = await prisma.school.findUnique({ where: { slug: schoolSlug }, select: { id: true } })
+  if (!school) {
+    return NextResponse.json({ error: "École introuvable" }, { status: 404 })
+  }
+
+  const schoolId = school.id
+
   const [students, groups, totalMemorized] = await Promise.all([
     prisma.student.findMany({
-      where: { status: "active", user: { isActive: true } },
+      where: { status: "active", user: { isActive: true, schoolId } },
       include: {
         user: { select: { fullName: true, fullNameAr: true } },
         group: { select: { name: true } },
@@ -16,13 +30,13 @@ export async function GET() {
       take: 20,
     }),
     prisma.group.findMany({
-      where: { isActive: true },
+      where: { isActive: true, schoolId },
       include: {
         students: { select: { totalStars: true, _count: { select: { memorizedSurahs: true } } } },
         _count: { select: { students: true } },
       },
     }),
-    prisma.memorizationProgress.count({ where: { status: "MEMORIZED" } }),
+    prisma.memorizationProgress.count({ where: { status: "MEMORIZED", student: { user: { schoolId } } } }),
   ])
   const topStudents = students.map((s, idx) => ({
     id: s.id, rank: idx + 1, user: s.user, group: s.group,
