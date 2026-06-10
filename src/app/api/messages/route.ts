@@ -98,11 +98,26 @@ export async function POST(req: Request) {
     }
   })
 
+  // Trouver l'élève lié à cette conversation si studentId non fourni
+  let studentIdForNotif = studentId
+  if (!studentIdForNotif) {
+    const linkedStudent = await prisma.student.findFirst({
+      where: {
+        OR: [
+          { teacher: { userId: session.user.id }, parentLinks: { some: { parent: { userId: toUserId }, isVerified: true } } },
+          { teacher: { userId: toUserId }, parentLinks: { some: { parent: { userId: session.user.id }, isVerified: true } } },
+        ]
+      },
+      select: { id: true }
+    })
+    if (linkedStudent) studentIdForNotif = linkedStudent.id
+  }
+
   // Notification conditionnelle selon les préférences du destinataire
   if (toUserWithPrefs.messageNotifications) {
     const redirectUrl = toUserWithPrefs.role === "TEACHER"
       ? "/teacher/messages"
-      : "/parent/dashboard"
+      : (studentIdForNotif ? `/parent/child/${studentIdForNotif}` : "/parent/dashboard")
 
     await prisma.notification.create({
       data: {
@@ -111,7 +126,7 @@ export async function POST(req: Request) {
         title: `Nouveau message : ${subject}`,
         titleAr: `رسالة جديدة : ${subject}`,
         message: `De : ${fromUser?.fullName ?? "Inconnu"}\n${msgBody.slice(0,150)}${msgBody.length>150?"…":""}`,
-        data: { messageId: message.id, fromUserId: session.user.id, url: redirectUrl, studentId },
+        data: { messageId: message.id, fromUserId: session.user.id, url: redirectUrl, studentId: studentIdForNotif },
       },
     })
   }
