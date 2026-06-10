@@ -151,7 +151,7 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
   if (!open) {
     return (
       <motion.button onClick={() => setOpen(true)} whileTap={{ scale: 0.95 }}
-        className="flex items-center gap-2 px-4 py-2.5 bg-tahfidz-green text-white text-xs font-bold rounded-xl hover:opacity-90 transition shadow-sm">
+        className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-tahfidz-green text-white text-sm font-medium hover:opacity-90 transition shadow-sm">
         <MessageCircle size={14} /> Contacter
       </motion.button>
     )
