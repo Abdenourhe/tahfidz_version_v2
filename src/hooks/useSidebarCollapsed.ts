@@ -35,8 +35,3 @@ export function useSidebarCollapsed() {
   return { collapsed, setCollapsed, toggle }
 }
 
-export function listenSidebarCollapsed(callback: (collapsed: boolean) => void) {
-  const handler = (e: Event) => callback((e as CustomEvent).detail)
-  window.addEventListener(EVENT_NAME, handler)
-  return () => window.removeEventListener(EVENT_NAME, handler)
-}

@@ -44,7 +44,6 @@ export function TeacherSidebar({ user, schoolName, schoolLogo }: TeacherSidebarP
   const { data: session } = useSession()
   const { collapsed } = useSidebarCollapsed()
   const t = useT("teacherSidebar")
-  const tA = useT("auth")
 
   const displayName = schoolName || "TAHFIDZ"
   const logo = schoolLogo
