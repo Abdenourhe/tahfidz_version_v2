@@ -3,8 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-  Send, Loader2, MessageCircle, X, Trash2,
-  ChevronDown, CheckCheck
+  Send, Loader2, MessageCircle, X, Trash2, ChevronDown
 } from "lucide-react"
 
 interface Message {
@@ -42,7 +41,6 @@ function useScrollBehavior(
     setShowJumpBtn(!isAtBottom())
   }, [isAtBottom])
 
-  // Auto-scroll quand les deps changent ET qu'on est déjà en bas
   useEffect(() => {
     if (isAtBottom()) {
       scrollToBottom("smooth")
@@ -64,11 +62,9 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
   const [text, setText] = useState("")
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
-  const [typing, setTyping] = useState(false)
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const lastLenRef = useRef(0)
 
   const { showJumpBtn, scrollToBottom, onScroll } = useScrollBehavior(scrollRef, [messages.length])
 
@@ -89,7 +85,6 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
 
   useEffect(() => {
     if (open) {
-      lastLenRef.current = 0
       setLoading(true)
       load().finally(() => {
         setLoading(false)
@@ -100,16 +95,6 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
       return () => clearInterval(id)
     }
   }, [open]) // eslint-disable-line
-
-  // Typing indicator simulation (if last message is from me and no reply yet)
-  useEffect(() => {
-    const last = messages[messages.length - 1]
-    if (last && last.fromUserId === parentUserId) {
-      setTyping(true)
-      const t = setTimeout(() => setTyping(false), 3000)
-      return () => clearTimeout(t)
-    }
-  }, [messages, parentUserId])
 
   const send = async () => {
     if (!text.trim()) return
@@ -138,11 +123,10 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
     try {
       await fetch(`/api/messages?otherUserId=${teacherUserId}`, { method: "DELETE" })
       setMessages([])
-      lastLenRef.current = 0
     } catch (e) { console.error(e) }
   }
 
-  // Group messages by sender consecutively
+  // Group consecutive messages by sender
   const groups: { isMe: boolean; items: Message[] }[] = []
   messages.forEach(m => {
     const isMe = m.fromUserId === parentUserId
@@ -172,19 +156,11 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
       transition={{ type: "spring", stiffness: 300, damping: 25 }}
       className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-lg overflow-hidden mt-3"
     >
-      {/* ── Header ── */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-emerald-50 to-white dark:from-emerald-900/20 dark:to-gray-900 border-b border-gray-100 dark:border-gray-800">
-        <div className="flex items-center gap-2.5">
-          <div className="relative">
-            <div className="w-8 h-8 rounded-full bg-tahfidz-green flex items-center justify-center text-white text-xs font-bold">
-              {teacherName.charAt(0).toUpperCase()}
-            </div>
-            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 border-2 border-white dark:border-gray-900 rounded-full" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-gray-800 dark:text-gray-200 leading-tight">{teacherName}</p>
-            <p className="text-[10px] text-gray-400">En ligne</p>
-          </div>
+      {/* ── Header : PAS de nom dupliqué ── */}
+      <div className="flex items-center justify-between px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-green-500" />
+          <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Discussion</span>
         </div>
         <div className="flex items-center gap-0.5">
           <motion.button
@@ -198,7 +174,7 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
           <motion.button
             whileTap={{ scale: 0.85 }}
             onClick={() => setOpen(false)}
-            className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 transition"
+            className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 transition"
           >
             <X size={16} />
           </motion.button>
@@ -233,30 +209,35 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
             groups.map((group, gi) => (
               <motion.div
                 key={gi}
-                initial={{ opacity: 0, y: 12, scale: 0.96 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ type: "spring", stiffness: 400, damping: 28 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ type: "spring", stiffness: 400, damping: 28, delay: gi * 0.02 }}
                 className={`flex flex-col ${group.isMe ? "items-end" : "items-start"}`}
               >
                 {group.items.map((m, mi) => {
                   const isLast = mi === group.items.length - 1
+                  const isFirst = mi === 0
                   return (
                     <div
                       key={m.id}
-                      className={`max-w-[82%] px-3.5 py-2 text-[13px] leading-relaxed ${
+                      className={`max-w-[82%] px-3.5 py-2 text-[13px] leading-relaxed shadow-sm ${
                         group.isMe
-                          ? "bg-tahfidz-green text-white rounded-2xl rounded-br-md"
-                          : "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-2xl rounded-bl-md"
-                      } ${mi > 0 ? (group.isMe ? "rounded-br-2xl mt-0.5" : "rounded-bl-2xl mt-0.5") : "mt-1"}`}
+                          ? "bg-tahfidz-green text-white"
+                          : "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200"
+                      } ${
+                        isFirst && isLast
+                          ? "rounded-2xl " + (group.isMe ? "rounded-br-md" : "rounded-bl-md")
+                          : isFirst
+                          ? "rounded-t-2xl " + (group.isMe ? "rounded-br-md rounded-bl-lg" : "rounded-bl-md rounded-br-lg")
+                          : isLast
+                          ? "rounded-b-2xl " + (group.isMe ? "rounded-br-md rounded-tr-lg" : "rounded-bl-md rounded-tl-lg")
+                          : "rounded-lg " + (group.isMe ? "rounded-r-md" : "rounded-l-md")
+                      } ${mi > 0 ? "mt-0.5" : "mt-1"}`}
                     >
-                      {mi === 0 && !group.isMe && (
-                        <p className="text-[10px] font-semibold text-tahfidz-green mb-0.5">{teacherName}</p>
-                      )}
                       <p className="whitespace-pre-wrap">{m.body}</p>
                       {isLast && (
-                        <p className={`text-[9px] mt-1 flex items-center gap-1 ${group.isMe ? "text-emerald-100" : "text-gray-400"}`}>
+                        <p className={`text-[9px] mt-1 ${group.isMe ? "text-emerald-100" : "text-gray-400"}`}>
                           {new Date(m.sentAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
-                          {group.isMe && <CheckCheck size={10} className="opacity-70" />}
                         </p>
                       )}
                     </div>
@@ -264,24 +245,6 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
                 })}
               </motion.div>
             ))
-          )}
-        </AnimatePresence>
-
-        {/* Typing indicator */}
-        <AnimatePresence>
-          {typing && messages.length > 0 && messages[messages.length - 1].fromUserId === parentUserId && (
-            <motion.div
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 6 }}
-              className="flex items-start gap-1 mt-1"
-            >
-              <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl rounded-bl-md px-3 py-2 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-              </div>
-            </motion.div>
           )}
         </AnimatePresence>
 
