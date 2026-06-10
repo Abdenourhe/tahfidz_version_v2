@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import {
   Save, Loader2, Check, Clock, BookOpen, X,
   CalendarCheck, AlertCircle, ChevronLeft, ChevronRight,
-  Sparkles, CalendarDays, Undo2
+  Sparkles, Undo2
 } from "lucide-react"
 
 interface Child {
@@ -28,7 +28,6 @@ const STATUS_OPTIONS = [
 const RELATION_LABELS: Record<string, string> = { father: "Père", mother: "Mère", guardian: "Tuteur" }
 
 const DAY_KEYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const
-const DAY_SHORT = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"] as const
 const MONTH_NAMES = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
   "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
@@ -62,53 +61,38 @@ function offsetDate(days: number): string {
   return d.toISOString().split("T")[0]
 }
 
-function dateLabel(dateStr: string): { day: string; num: number; month: string; full: string; weekdayIndex: number } {
+function dateLabel(dateStr: string): { full: string } {
   const d = new Date(`${dateStr}T12:00:00`)
   return {
-    day: DAY_SHORT[d.getDay()],
-    num: d.getDate(),
-    month: MONTH_NAMES[d.getMonth()],
-    full: d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }),
-    weekdayIndex: d.getDay(),
+    full: d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }),
   }
 }
 
-function groupByMonth(days: string[]): Record<string, string[]> {
-  return days.reduce((acc, d) => {
-    const date = new Date(`${d}T12:00:00`)
-    const key = `${MONTH_NAMES[date.getMonth()]} ${date.getFullYear()}`
-    if (!acc[key]) acc[key] = []
-    acc[key].push(d)
-    return acc
-  }, {} as Record<string, string[]>)
-}
-
 /* Mini calendar: build a grid for the month of activeDate */
-function buildMonthGrid(activeDate: string, markedDates: Set<string>, quickDays: string[]) {
+function buildMonthGrid(activeDate: string, courseDayIndices: number[]) {
   const d = new Date(`${activeDate}T12:00:00`)
   const year = d.getFullYear()
   const month = d.getMonth()
   const firstDay = new Date(year, month, 1)
   const lastDay = new Date(year, month + 1, 0)
-  const startOffset = firstDay.getDay() // 0=Sun
+  const startOffset = firstDay.getDay()
   const daysInMonth = lastDay.getDate()
 
-  const quickSet = new Set(quickDays)
+  const todayStr = new Date().toISOString().split("T")[0]
 
-  const cells: { dateStr?: string; dayNum?: number; isMarked: boolean; isQuick: boolean; isToday: boolean }[] = []
+  const cells: { dateStr?: string; dayNum?: number; isCourseDay: boolean; isToday: boolean; isFuture: boolean }[] = []
 
-  // empty slots before 1st
-  for (let i = 0; i < startOffset; i++) cells.push({ isMarked: false, isQuick: false, isToday: false })
+  for (let i = 0; i < startOffset; i++) cells.push({ isCourseDay: false, isToday: false, isFuture: false })
 
   for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = new Date(year, month, day).toISOString().split("T")[0]
-    const todayStr = new Date().toISOString().split("T")[0]
+    const weekday = new Date(year, month, day).getDay()
     cells.push({
       dateStr,
       dayNum: day,
-      isMarked: markedDates.has(dateStr),
-      isQuick: quickSet.has(dateStr),
+      isCourseDay: courseDayIndices.includes(weekday),
       isToday: dateStr === todayStr,
+      isFuture: dateStr > todayStr,
     })
   }
 
@@ -126,7 +110,6 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const [saving,      setSaving]      = useState(false)
   const [saved,       setSaved]       = useState(false)
   const [error,       setError]       = useState<string | null>(null)
-  const [dayWindow,   setDayWindow]   = useState(30)
   const [markedDates, setMarkedDates] = useState<Set<string>>(new Set())
   const [showConfirm, setShowConfirm] = useState(false)
   const [animKey,     setAnimKey]     = useState(0)
@@ -134,13 +117,10 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const isFuture = activeDate > todayStr
   const activeLabel = dateLabel(activeDate)
 
-  /* ── Course days ── */
+  /* ── Course days & quick list (90 days) ── */
   const courseDayIndices = getCourseDayIndices(children)
-  const quickDays = Array.from({ length: dayWindow }, (_, i) => offsetDate(i + 1))
-    .filter(d => {
-      const dayIdx = new Date(`${d}T12:00:00`).getDay()
-      return courseDayIndices.includes(dayIdx)
-    })
+  const quickDays = Array.from({ length: 90 }, (_, i) => offsetDate(i + 1))
+    .filter(d => courseDayIndices.includes(new Date(`${d}T12:00:00`).getDay()))
 
   const activeIndex = quickDays.indexOf(activeDate)
   const canGoPrev = activeIndex > 0
@@ -318,7 +298,8 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const dayChildren = children.filter(c => hasCourseOnDay(c, activeDate))
 
   /* Mini calendar grid */
-  const monthCells = buildMonthGrid(activeDate, markedDates, quickDays)
+  const monthCells = buildMonthGrid(activeDate, courseDayIndices)
+  const monthYear = new Date(`${activeDate}T12:00:00`)
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm"
@@ -335,59 +316,22 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
         </div>
       </div>
 
-      <div className="p-5 space-y-5">
+      <div className="p-5 space-y-4">
 
-        {/* ── Date selector ── */}
-        <div className="space-y-3">
-          {Object.entries(groupByMonth(quickDays)).map(([month, days]) => (
-            <div key={month}>
-              <p className="text-[11px] font-bold text-gray-300 uppercase tracking-wider mb-2">{month}</p>
-              <div className="flex gap-2 flex-wrap">
-                {days.map(d => {
-                  const isActive = d === activeDate
-                  const isMarked = markedDates.has(d)
-                  const label = dateLabel(d)
-                  return (
-                    <button key={d}
-                      onClick={() => changeDay(d)}
-                      className={`relative flex flex-col items-center px-3 py-2 rounded-xl border-2 transition-all duration-150 min-w-[60px] active:scale-95 ${
-                        isActive
-                          ? "border-tahfidz-green bg-tahfidz-green-light shadow-sm"
-                          : isMarked
-                            ? "border-emerald-200 bg-emerald-50/50 text-gray-600 hover:border-emerald-300"
-                            : "border-gray-100 bg-white text-gray-400 hover:border-gray-300 hover:bg-gray-50"
-                      }`}>
-                      {isMarked && !isActive && (
-                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
-                      )}
-                      <span className={`text-[10px] font-semibold uppercase tracking-wide ${isActive ? "text-tahfidz-green" : isMarked ? "text-emerald-600" : "text-gray-400"}`}>
-                        {label.day}
-                      </span>
-                      <span className={`text-lg font-bold leading-tight ${isActive ? "text-tahfidz-green" : "text-gray-700"}`}>
-                        {label.num}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          ))}
-
-          {quickDays.length > 0 && dayWindow < 90 && (
-            <button onClick={() => setDayWindow(w => Math.min(w + 30, 90))}
-              className="text-xs font-semibold text-tahfidz-green hover:text-tahfidz-green-dark transition flex items-center gap-1">
-              <ChevronRight size={12} /> Voir plus de dates
-            </button>
-          )}
-        </div>
-
-        {/* ── Mini month calendar ── */}
-        <div className="bg-gray-50 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <CalendarDays size={14} className="text-gray-400" />
+        {/* ── Compact mini calendar ── */}
+        <div className="bg-gray-50 rounded-xl p-3">
+          <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-              {activeLabel.month} {new Date(`${activeDate}T12:00:00`).getFullYear()}
+              {MONTH_NAMES[monthYear.getMonth()]} {monthYear.getFullYear()}
             </p>
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1 text-[9px] text-gray-400">
+                <span className="w-2 h-2 rounded-full bg-emerald-400" /> Marqué
+              </span>
+              <span className="flex items-center gap-1 text-[9px] text-gray-400">
+                <span className="w-2 h-2 rounded-full bg-tahfidz-green" /> Sélectionné
+              </span>
+            </div>
           </div>
           <div className="grid grid-cols-7 gap-1">
             {["D", "L", "M", "M", "J", "V", "S"].map((h, i) => (
@@ -395,18 +339,18 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
             ))}
             {monthCells.map((cell, i) => (
               <button key={i}
-                disabled={!cell.isQuick}
-                onClick={() => cell.dateStr && cell.isQuick && changeDay(cell.dateStr)}
-                className={`aspect-square rounded-lg text-[10px] font-bold flex items-center justify-center transition ${
+                disabled={!cell.isCourseDay || !cell.isFuture}
+                onClick={() => cell.dateStr && cell.isCourseDay && cell.isFuture && changeDay(cell.dateStr)}
+                className={`h-8 rounded-lg text-[10px] font-bold flex items-center justify-center transition active:scale-90 ${
                   cell.dateStr === activeDate
                     ? "bg-tahfidz-green text-white shadow-sm"
-                    : cell.isMarked
-                      ? "bg-emerald-100 text-emerald-700"
-                      : cell.isToday
-                        ? "bg-orange-100 text-orange-600"
-                        : cell.isQuick
-                          ? "hover:bg-gray-100 text-gray-600"
-                          : "text-gray-200 cursor-default"
+                    : cell.isToday
+                      ? "bg-orange-100 text-orange-600"
+                      : cell.isFuture && cell.isCourseDay
+                        ? markedDates.has(cell.dateStr!)
+                          ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                          : "hover:bg-gray-200 text-gray-600"
+                        : "text-gray-200 cursor-default"
                 }`}>
                 {cell.dayNum}
               </button>
@@ -457,7 +401,8 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                 </span>
               )
             })}
-            <button onClick={clearAll} className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition">
+            <button onClick={clearAll}
+              className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition active:scale-95">
               <Undo2 size={10} /> Réinitialiser
             </button>
           </div>

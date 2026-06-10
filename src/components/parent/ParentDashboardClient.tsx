@@ -151,12 +151,12 @@ export function ParentDashboardClient({ todayDate, children, missingTomorrowIds 
                     ? `لم يتم تسجيل حضور ${missingChildren[0].user.fullName} ليوم الغد`
                     : locale === "en"
                       ? `${missingChildren[0].user.fullName}'s attendance for tomorrow is not marked`
-                      : `La présence de ${missingChildren[0].user.fullName} pour demain n'est pas signalée`)
+                      : `Vous n'avez pas marqué la présence de ${missingChildren[0].user.fullName} pour demain`)
                 : (locale === "ar"
                     ? `لم يتم تسجيل حضور ${missingChildren.length} أطفال ليوم الغد`
                     : locale === "en"
                       ? `${missingChildren.length} children's attendance for tomorrow is not marked`
-                      : `La présence de ${missingChildren.length} enfants pour demain n'est pas signalée`)}
+                      : `Vous n'avez pas marqué la présence de ${missingChildren.length} enfants pour demain`)}
             </p>
             <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
               {locale === "ar" ? "انقر للتسجيل →" : locale === "en" ? "Click to mark →" : "Cliquez pour marquer →"}
