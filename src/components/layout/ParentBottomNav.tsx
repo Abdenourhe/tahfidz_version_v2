@@ -5,13 +5,13 @@ import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
 import { useT } from "@/contexts/LanguageContext"
 import {
-  LayoutDashboard, Link2, Bell, UserCircle, CalendarDays,
+  LayoutDashboard, Bell, UserCircle, CalendarDays, Video,
 } from "lucide-react"
 
 const MOBILE_NAV = [
   { href: "/parent/dashboard", icon: LayoutDashboard, key: "dashboard" },
-  { href: "/parent/link", icon: Link2, key: "linkChild" },
   { href: "/parent/attendance", icon: CalendarDays, key: "attendance" },
+  { href: "/parent/halaqa", icon: Video, key: "halaqa" },
   { href: "/parent/notifications", icon: Bell, key: "notifications" },
   { href: "/parent/profile", icon: UserCircle, key: "profile" },
 ]
@@ -22,7 +22,6 @@ export function ParentBottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
-      {/* Floating dock */}
       <div className="mx-4 mb-4 safe-area-pb">
         <div className="flex items-center justify-around h-16 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl rounded-2xl shadow-xl shadow-black/10 dark:shadow-black/30 border border-gray-200/50 dark:border-gray-800/50">
           {MOBILE_NAV.map((item) => {
@@ -35,7 +34,6 @@ export function ParentBottomNav() {
                 href={item.href}
                 className="relative flex flex-col items-center justify-center gap-0.5 w-full h-full tap-feedback"
               >
-                {/* Active indicator dot */}
                 {isActive && (
                   <motion.div
                     layoutId="parentBottomNavDot"
@@ -43,8 +41,6 @@ export function ParentBottomNav() {
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
-
-                {/* Icon with spring animation */}
                 <motion.div
                   animate={isActive ? { scale: 1.15, y: -2 } : { scale: 1, y: 0 }}
                   transition={{ type: "spring", stiffness: 400, damping: 15 }}
@@ -55,8 +51,6 @@ export function ParentBottomNav() {
                     className={isActive ? "text-tahfidz-green" : "text-gray-400 dark:text-gray-500"}
                   />
                 </motion.div>
-
-                {/* Label */}
                 <motion.span
                   animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0.6, y: 0 }}
                   className={`text-[9px] font-semibold ${isActive ? "text-tahfidz-green" : "text-gray-400 dark:text-gray-500"}`}

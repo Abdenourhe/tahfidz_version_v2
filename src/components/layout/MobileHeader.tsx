@@ -11,48 +11,6 @@ import { useT } from "@/contexts/LanguageContext"
 import { cn } from "@/lib/utils"
 import { useSession, signOut } from "next-auth/react"
 
-const ROLE_LINKS: Record<string, { href: string; labelKey: string }[]> = {
-  superadmin: [
-    { href: "/superadmin/audit", labelKey: "audit" },
-    { href: "/superadmin/profile", labelKey: "profile" },
-  ],
-  teacher: [
-    { href: "/teacher/dashboard", labelKey: "dashboard" },
-    { href: "/teacher/students", labelKey: "students" },
-    { href: "/teacher/groups", labelKey: "groups" },
-    { href: "/teacher/memorization", labelKey: "memorization" },
-    { href: "/teacher/attendance", labelKey: "attendance" },
-    { href: "/teacher/evaluations", labelKey: "evaluations" },
-    { href: "/teacher/announcements", labelKey: "announcements" },
-    { href: "/teacher/notifications", labelKey: "notifications" },
-    { href: "/teacher/profile", labelKey: "profile" },
-  ],
-  admin: [
-    { href: "/admin/dashboard", labelKey: "dashboard" },
-    { href: "/admin/students", labelKey: "students" },
-    { href: "/admin/teachers", labelKey: "teachers" },
-    { href: "/admin/groups", labelKey: "groups" },
-    { href: "/admin/announcements", labelKey: "announcements" },
-    { href: "/admin/notifications", labelKey: "notifications" },
-    { href: "/admin/settings", labelKey: "settings" },
-  ],
-  student: [
-    { href: "/student/dashboard", labelKey: "dashboard" },
-    { href: "/student/progress", labelKey: "progress" },
-    { href: "/student/badges", labelKey: "badges" },
-    { href: "/student/attendance", labelKey: "attendance" },
-    { href: "/student/notifications", labelKey: "notifications" },
-  ],
-  parent: [
-    { href: "/parent/dashboard", labelKey: "dashboard" },
-    { href: "/parent/link", labelKey: "linkChild" },
-    { href: "/parent/attendance", labelKey: "attendance" },
-    { href: "/parent/halaqa", labelKey: "halaqa" },
-    { href: "/parent/notifications", labelKey: "notifications" },
-    { href: "/parent/profile", labelKey: "profile" },
-  ],
-}
-
 export function MobileHeader({
   role,
   schoolName,
@@ -67,7 +25,6 @@ export function MobileHeader({
   const t = useT("nav")
   const { data: session } = useSession()
 
-  const links = ROLE_LINKS[role] || []
   const displayName = schoolName || "TAHFIDZ"
   const logo = schoolLogo
   const schoolSlug = session?.user?.schoolSlug
@@ -106,7 +63,7 @@ export function MobileHeader({
             </AnimatePresence>
           </button>
 
-          <Link href={`/${role}/dashboard`} className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-tahfidz-green flex items-center justify-center overflow-hidden">
               {logo ? (
                 <Image src={logo} alt={displayName} width={32} height={32} className="w-full h-full object-cover" />
@@ -120,7 +77,7 @@ export function MobileHeader({
                 <span className="text-[10px] font-mono text-tahfidz-green text-center">{schoolSlug}</span>
               )}
             </div>
-          </Link>
+          </div>
 
           <Link href={`/${role}/notifications`} className="p-2 -mr-2 relative active:scale-95 tap-feedback">
             <Bell size={20} className="text-gray-600 dark:text-gray-400" />
@@ -129,11 +86,10 @@ export function MobileHeader({
         </div>
       </header>
 
-      {/* Drawer */}
+      {/* Drawer — secondary actions only */}
       <AnimatePresence>
         {menuOpen && (
           <>
-            {/* Overlay */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -143,7 +99,6 @@ export function MobileHeader({
               onClick={() => setMenuOpen(false)}
             />
 
-            {/* Drawer */}
             <motion.div
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
@@ -152,7 +107,7 @@ export function MobileHeader({
               className="fixed start-0 top-0 bottom-0 w-72 bg-white dark:bg-gray-900 z-50 shadow-2xl flex flex-col h-[100dvh]"
             >
               {/* User section */}
-              <div className="px-4 py-4 border-b border-gray-100 dark:border-gray-800">
+              <div className="px-5 py-5 border-b border-gray-100 dark:border-gray-800">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-xl bg-tahfidz-green flex items-center justify-center overflow-hidden flex-shrink-0">
                     {session?.user?.avatar ? (
@@ -168,54 +123,31 @@ export function MobileHeader({
                 </div>
               </div>
 
-              {/* Nav controls */}
-              <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800">
+              {/* Controls */}
+              <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-800">
                 <TopBarControls dropdownAlign="left" />
               </div>
 
-              {/* Navigation */}
-              <nav className="p-3 space-y-1 overflow-y-auto flex-1">
-                {links.map((item, i) => (
-                  <motion.div
-                    key={item.href}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                  >
-                    <Link
-                      href={item.href}
-                      onClick={() => setMenuOpen(false)}
-                      className={cn(
-                        "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors",
-                        pathname === item.href || pathname.startsWith(item.href + "/")
-                          ? "bg-tahfidz-green-light dark:bg-emerald-900/20 text-tahfidz-green font-semibold"
-                          : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
-                      )}
-                    >
-                      <span className="flex-1">{t(item.labelKey)}</span>
-                    </Link>
-                  </motion.div>
-                ))}
+              {/* Secondary links */}
+              <nav className="p-4 space-y-1 flex-1">
+                <p className="text-[10px] font-bold text-gray-300 uppercase tracking-wider px-3 mb-2">{t("quickLinks") || "Liens rapides"}</p>
+                <Link href={`/${role}/link`} onClick={() => setMenuOpen(false)}
+                  className={cn("flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors", pathname === `/${role}/link` ? "bg-tahfidz-green-light text-tahfidz-green font-semibold" : "text-gray-600 hover:bg-gray-50")}>
+                  {t("linkChild") || "Lier un enfant"}
+                </Link>
+              </nav>
 
-                {/* Separator */}
-                <div className="my-2 border-t border-gray-100 dark:border-gray-800" />
-
-                {/* Logout */}
+              {/* Logout */}
+              <div className="p-4 border-t border-gray-100 dark:border-gray-800">
                 <motion.button
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: links.length * 0.05 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => { setMenuOpen(false); signOut({ callbackUrl: "/login" }) }}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full"
                 >
                   <LogOut size={16} />
                   <span>{t("logout") || "Déconnexion"}</span>
                 </motion.button>
-              </nav>
-
-              {/* Footer */}
-              <div className="p-4 border-t border-gray-100 dark:border-gray-800">
-                <p className="text-[10px] text-gray-300 text-center">{displayName}</p>
+                <p className="text-[10px] text-gray-300 text-center mt-2">{displayName}</p>
               </div>
             </motion.div>
           </>
