@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
@@ -16,35 +16,46 @@ import { TopBarControls } from "./TopBarControls"
 import { useT } from "@/contexts/LanguageContext"
 import { cn } from "@/lib/utils"
 import { useSession, signOut } from "next-auth/react"
+import { useNotification } from "@/contexts/NotificationContext"
 
-const ROLE_NAV: Record<string, { sectionKey?: string; items: { href: string; labelKey: string; icon: typeof LayoutDashboard }[] }[]> = {
+// ─── Role label mapping ─────────────────────────────────────────────────────
+const ROLE_LABELS: Record<string, string> = {
+  ADMIN: "Administrateur",
+  TEACHER: "Enseignant",
+  STUDENT: "Élève",
+  PARENT: "Parent",
+  SUPERADMIN: "Super Admin",
+}
+
+// ─── Navigation config with optional icon colors ────────────────────────────
+const ROLE_NAV: Record<string, { sectionKey?: string; items: { href: string; labelKey: string; icon: typeof LayoutDashboard; color?: string }[] }[]> = {
   admin: [
     {
       sectionKey: "main",
       items: [
-        { href: "/admin/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
-        { href: "/admin/stats", labelKey: "statistics", icon: BarChart3 },
-        { href: "/admin/announcements", labelKey: "announcements", icon: Megaphone },
-        { href: "/admin/notifications", labelKey: "notifications", icon: Bell },
-        { href: "/admin/profile", labelKey: "profile", icon: UserCircle },
+        { href: "/admin/dashboard", labelKey: "dashboard", icon: LayoutDashboard, color: "text-emerald-600" },
+        { href: "/admin/stats", labelKey: "statistics", icon: BarChart3, color: "text-blue-600" },
+        { href: "/admin/announcements", labelKey: "announcements", icon: Megaphone, color: "text-amber-600" },
+        { href: "/admin/notifications", labelKey: "notifications", icon: Bell, color: "text-purple-600" },
+        { href: "/admin/profile", labelKey: "profile", icon: UserCircle, color: "text-gray-600" },
       ],
     },
     {
       sectionKey: "management",
       items: [
-        { href: "/admin/students", labelKey: "students", icon: GraduationCap },
-        { href: "/admin/teachers", labelKey: "teachers", icon: Users },
-        { href: "/admin/parents", labelKey: "parents", icon: UserCheck },
-        { href: "/admin/admins", labelKey: "admins", icon: ShieldCheck },
-        { href: "/admin/groups", labelKey: "groups", icon: BookOpen },
-        { href: "/admin/attendance", labelKey: "attendance", icon: CalendarCheck },
-        { href: "/admin/halaqa", labelKey: "halaqa", icon: Video },
+        { href: "/admin/students", labelKey: "students", icon: GraduationCap, color: "text-emerald-600" },
+        { href: "/admin/teachers", labelKey: "teachers", icon: Users, color: "text-blue-600" },
+        { href: "/admin/parents", labelKey: "parents", icon: UserCheck, color: "text-orange-600" },
+        { href: "/admin/admins", labelKey: "admins", icon: ShieldCheck, color: "text-red-600" },
+        { href: "/admin/groups", labelKey: "groups", icon: BookOpen, color: "text-indigo-600" },
+        { href: "/admin/attendance", labelKey: "attendance", icon: CalendarCheck, color: "text-teal-600" },
+        { href: "/admin/halaqa", labelKey: "halaqa", icon: Video, color: "text-red-600" },
       ],
     },
     {
       sectionKey: "system",
       items: [
-        { href: "/admin/settings", labelKey: "settings", icon: Settings },
+        { href: "/admin/settings", labelKey: "settings", icon: Settings, color: "text-gray-600" },
       ],
     },
   ],
@@ -131,7 +142,36 @@ export function MobileHeader({
   const displayName = schoolName || "TAHFIDZ"
   const logo = schoolLogo
   const schoolSlug = session?.user?.schoolSlug
-  const navItems = ROLE_NAV[role] ?? []
+  const navSections = ROLE_NAV[role] ?? []
+
+  // ── Avatar + user info from API ───────────────────────────────────────────
+  const [userInfo, setUserInfo] = useState<{ avatar?: string | null; fullName?: string; role?: string } | null>(null)
+
+  useEffect(() => {
+    fetch("/api/user/me")
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d && setUserInfo(d.user))
+      .catch(() => {})
+  }, [])
+
+  // ── Notification badge (from global context) ──────────────────────────────
+  const { unreadCount } = useNotification()
+
+  // ── Scroll to active link when drawer opens ───────────────────────────────
+  const drawerRef = useRef<HTMLDivElement>(null)
+  const activeLinkRef = useRef<HTMLAnchorElement>(null)
+
+  useEffect(() => {
+    if (menuOpen && activeLinkRef.current && drawerRef.current) {
+      setTimeout(() => {
+        activeLinkRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
+      }, 250)
+    }
+  }, [menuOpen])
+
+  const userDisplayName = userInfo?.fullName || session?.user?.name || "Utilisateur"
+  const userEmail = session?.user?.email || ""
+  const userRoleLabel = ROLE_LABELS[userInfo?.role || session?.user?.role || ""] || userInfo?.role || ""
 
   return (
     <>
@@ -144,23 +184,11 @@ export function MobileHeader({
           >
             <AnimatePresence mode="wait">
               {menuOpen ? (
-                <motion.div
-                  key="close"
-                  initial={{ rotate: -90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 90, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
+                <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.2 }}>
                   <X size={22} className="text-gray-700 dark:text-gray-300" />
                 </motion.div>
               ) : (
-                <motion.div
-                  key="menu"
-                  initial={{ rotate: 90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: -90, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
+                <motion.div key="menu" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.2 }}>
                   <Menu size={22} className="text-gray-700 dark:text-gray-300" />
                 </motion.div>
               )}
@@ -177,15 +205,17 @@ export function MobileHeader({
             </div>
             <div className="flex flex-col">
               <span className="font-bold text-gray-900 dark:text-white text-sm">{displayName}</span>
-              {schoolSlug && (
-                <span className="text-[10px] font-mono text-tahfidz-green text-center">{schoolSlug}</span>
-              )}
+              {schoolSlug && <span className="text-[10px] font-mono text-tahfidz-green text-center">{schoolSlug}</span>}
             </div>
           </div>
 
           <Link href={`/${role}/notifications`} className="p-2 -mr-2 relative active:scale-95 tap-feedback">
             <Bell size={20} className="text-gray-600 dark:text-gray-400" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+            {unreadCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 min-w-[14px] h-[14px] px-0.5 bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
           </Link>
         </div>
       </header>
@@ -204,6 +234,7 @@ export function MobileHeader({
             />
 
             <motion.div
+              ref={drawerRef}
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
@@ -215,19 +246,28 @@ export function MobileHeader({
               <div className="px-5 py-5 border-b border-gray-100 dark:border-gray-800">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-xl bg-tahfidz-green flex items-center justify-center overflow-hidden flex-shrink-0">
-                    <span className="text-white font-bold text-lg">{(session?.user?.name || "?").charAt(0)}</span>
+                    {userInfo?.avatar ? (
+                      <img src={userInfo.avatar} alt={userDisplayName} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-white font-bold text-lg">{userDisplayName.charAt(0).toUpperCase()}</span>
+                    )}
                   </div>
                   <div className="min-w-0">
-                    <p className="font-bold text-sm text-gray-900 dark:text-white truncate">{session?.user?.name || "Utilisateur"}</p>
-                    <p className="text-[11px] text-gray-400 truncate">{session?.user?.email || ""}</p>
+                    <p className="font-bold text-sm text-gray-900 dark:text-white truncate">{userDisplayName}</p>
+                    <p className="text-[11px] text-gray-400 truncate">{userEmail}</p>
+                    {userRoleLabel && (
+                      <span className="inline-block mt-0.5 text-[9px] px-1.5 py-0.5 rounded-full bg-tahfidz-green-light dark:bg-emerald-900/30 text-tahfidz-green font-bold uppercase tracking-wider">
+                        {userRoleLabel}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
 
               {/* Navigation links */}
-              {navItems.length > 0 && (
+              {navSections.length > 0 && (
                 <div className="flex-1 overflow-y-auto py-2">
-                  {navItems.map((section, si) => (
+                  {navSections.map((section, si) => (
                     <div key={si} className="px-3 mb-2">
                       {section.sectionKey && (
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 mb-1 mt-2">
@@ -243,9 +283,11 @@ export function MobileHeader({
                         {section.items.map((item) => {
                           const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
                           const Icon = item.icon
+                          const isNotification = item.href.endsWith("/notifications")
                           return (
                             <motion.div key={item.href} variants={itemVariants}>
                               <Link
+                                ref={isActive ? activeLinkRef : undefined}
                                 href={item.href}
                                 onClick={() => setMenuOpen(false)}
                                 className={cn(
@@ -255,8 +297,20 @@ export function MobileHeader({
                                     : "text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
                                 )}
                               >
-                                <Icon size={18} strokeWidth={isActive ? 2.5 : 1.5} />
-                                <span>{t(item.labelKey) || item.labelKey}</span>
+                                <Icon
+                                  size={18}
+                                  strokeWidth={isActive ? 2.5 : 1.5}
+                                  className={cn(
+                                    "shrink-0",
+                                    isActive ? (item.color || "text-tahfidz-green") : (item.color || "text-gray-400 dark:text-gray-500")
+                                  )}
+                                />
+                                <span className="flex-1">{t(item.labelKey) || item.labelKey}</span>
+                                {isNotification && unreadCount > 0 && (
+                                  <span className="min-w-[18px] h-[18px] px-1 bg-red-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center">
+                                    {unreadCount > 99 ? "99+" : unreadCount}
+                                  </span>
+                                )}
                               </Link>
                             </motion.div>
                           )
@@ -273,7 +327,7 @@ export function MobileHeader({
               </div>
 
               {/* Logout */}
-              <div className="p-4 mt-auto border-t border-gray-100 dark:border-gray-800">
+              <div className="p-4 border-t border-gray-100 dark:border-gray-800">
                 <motion.button
                   whileTap={{ scale: 0.98 }}
                   onClick={() => { setMenuOpen(false); signOut({ callbackUrl: "/login" }) }}

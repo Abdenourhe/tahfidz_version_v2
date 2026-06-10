@@ -124,7 +124,7 @@ export async function checkAndAwardBadges(studentId: string) {
           titleAr: `وسام جديد: ${badge.nameAr} ${badge.icon}`,
           message: badge.description,
           messageAr: badge.descriptionAr,
-          data: { badgeId: badge.id },
+          data: { badgeId: badge.id, url: "/student/badges" },
         },
       })
 

@@ -105,32 +105,48 @@ export async function PATCH(
       const who = isParent ? "son parent" : "lui-même"
 
       if (teacherUserId) {
-        await prisma.notification.create({
-          data: {
-            schoolId:  session.user.schoolId,
-            userId:  teacherUserId,
-            type:    "progress_update",
-            title:   `⏳ ${prog.student.user.fullName} est prêt à réciter`,
-            titleAr: `⏳ ${prog.student.user.fullName} جاهز للتلاوة`,
-            message: `Sourate ${prog.surah.nameFr} — ${newVerse}/${prog.surah.verseCount} versets. Signalé par ${who}. Cliquez pour évaluer.`,
-            data:    { progressId: (await params).id, studentId: prog.student.id, reportedBy: session.user.role },
-          },
+        const teacherPrefs = await prisma.user.findUnique({
+          where: { id: teacherUserId },
+          select: { evaluationNotifications: true },
         })
+        if (teacherPrefs?.evaluationNotifications !== false) {
+          await prisma.notification.create({
+            data: {
+              schoolId:  session.user.schoolId,
+              userId:  teacherUserId,
+              type:    "progress_update",
+              title:   `⏳ ${prog.student.user.fullName} est prêt à réciter`,
+              titleAr: `⏳ ${prog.student.user.fullName} جاهز للتلاوة`,
+              message: `Sourate ${prog.surah.nameFr} — ${newVerse}/${prog.surah.verseCount} versets. Signalé par ${who}. Cliquez pour évaluer.`,
+              data:    { url: "/teacher/students", progressId: (await params).id, studentId: prog.student.id, reportedBy: session.user.role },
+            },
+          })
+        }
       }
 
       // Notify parents (if student triggered)
       if (isOwner) {
+        const parentUserIds = prog.student.parentLinks.map(l => l.parent.user.id)
+        const parentUsers = parentUserIds.length > 0
+          ? await prisma.user.findMany({
+              where: { id: { in: parentUserIds } },
+              select: { id: true, evaluationNotifications: true },
+            })
+          : []
+        const allowedParentIds = new Set(parentUsers.filter(u => u.evaluationNotifications !== false).map(u => u.id))
         for (const link of prog.student.parentLinks) {
-          await prisma.notification.create({
-            data: {
-              schoolId:  session.user.schoolId,
-              userId:  link.parent.user.id,
-              type:    "progress_update",
-              title:   `📖 ${prog.student.user.fullName} a terminé ${prog.surah.nameFr}`,
-              message: `Votre enfant a complété la sourate et attend l'évaluation de l'enseignant.`,
-              data:    { progressId: (await params).id },
-            },
-          })
+          if (allowedParentIds.has(link.parent.user.id)) {
+            await prisma.notification.create({
+              data: {
+                schoolId:  session.user.schoolId,
+                userId:  link.parent.user.id,
+                type:    "progress_update",
+                title:   `📖 ${prog.student.user.fullName} a terminé ${prog.surah.nameFr}`,
+                message: `Votre enfant a complété la sourate et attend l'évaluation de l'enseignant.`,
+                data:    { url: "/parent/dashboard", progressId: (await params).id },
+              },
+            })
+          }
         }
       }
     }
@@ -157,45 +173,61 @@ export async function PATCH(
     const updatedBy    = isParent ? " (mis à jour par le parent)" : ""
 
     if (teacherUserId && shouldNotify) {
-      const title = completed
-        ? `🎉 ${prog.student.user.fullName} — 100% de ${prog.surah.nameFr}${updatedBy}`
-        : milestone
-          ? `📊 ${prog.student.user.fullName} — ${milestone}% de ${prog.surah.nameFr}${updatedBy}`
-          : `📖 ${prog.student.user.fullName} — Verset ${newVerse}/${prog.surah.verseCount} de ${prog.surah.nameFr}${updatedBy}`
-
-      const message = completed
-        ? `Tous les ${prog.surah.verseCount} versets sont complétés${isParent ? " (signalé par le parent)" : ""}. En attente de validation.`
-        : `Verset ${newVerse}/${prog.surah.verseCount} (${Math.round(newPct)}%)${delta > 1 ? ` — +${delta} versets` : ""}${isParent ? ` — mis à jour par le parent` : ""}`
-
-      await prisma.notification.create({
-        data: {
-          schoolId:  session.user.schoolId,
-          userId:  teacherUserId,
-          type:    "progress_update",
-          title,
-          message,
-          data:    { progressId: (await params).id, currentVerse: newVerse, percentage: Math.round(newPct), milestone, updatedBy: session.user.role },
-        },
+      const teacherPrefs = await prisma.user.findUnique({
+        where: { id: teacherUserId },
+        select: { evaluationNotifications: true },
       })
+      if (teacherPrefs?.evaluationNotifications !== false) {
+        const title = completed
+          ? `🎉 ${prog.student.user.fullName} — 100% de ${prog.surah.nameFr}${updatedBy}`
+          : milestone
+            ? `📊 ${prog.student.user.fullName} — ${milestone}% de ${prog.surah.nameFr}${updatedBy}`
+            : `📖 ${prog.student.user.fullName} — Verset ${newVerse}/${prog.surah.verseCount} de ${prog.surah.nameFr}${updatedBy}`
+
+        const message = completed
+          ? `Tous les ${prog.surah.verseCount} versets sont complétés${isParent ? " (signalé par le parent)" : ""}. En attente de validation.`
+          : `Verset ${newVerse}/${prog.surah.verseCount} (${Math.round(newPct)}%)${delta > 1 ? ` — +${delta} versets` : ""}${isParent ? ` — mis à jour par le parent` : ""}`
+
+        await prisma.notification.create({
+          data: {
+            schoolId:  session.user.schoolId,
+            userId:  teacherUserId,
+            type:    "progress_update",
+            title,
+            message,
+            data:    { url: "/teacher/students", progressId: (await params).id, currentVerse: newVerse, percentage: Math.round(newPct), milestone, updatedBy: session.user.role },
+          },
+        })
+      }
     }
 
     // Notify parents at milestones or completion (only if student triggered, not parent)
     if ((milestone || completed) && isOwner) {
+      const parentUserIds = prog.student.parentLinks.map(l => l.parent.user.id)
+      const parentUsers = parentUserIds.length > 0
+        ? await prisma.user.findMany({
+            where: { id: { in: parentUserIds } },
+            select: { id: true, evaluationNotifications: true },
+          })
+        : []
+      const allowedParentIds = new Set(parentUsers.filter(u => u.evaluationNotifications !== false).map(u => u.id))
       for (const link of prog.student.parentLinks) {
-        await prisma.notification.create({
-          data: {
-            schoolId:  session.user.schoolId,
-            userId:  link.parent.user.id,
-            type:    "progress_update",
-            title:   completed
-              ? `🌟 ${prog.student.user.fullName} a terminé ${prog.surah.nameFr} !`
-              : `🌟 ${prog.student.user.fullName} — ${milestone}% de ${prog.surah.nameFr}`,
-            message: completed
-              ? `Votre enfant a mémorisé tous les ${prog.surah.verseCount} versets. Bravo !`
-              : `Votre enfant a atteint ${milestone}% de la sourate ${prog.surah.nameFr}.`,
-            data:    { progressId: (await params).id, milestone, percentage: Math.round(newPct) },
-          },
-        })
+        if (allowedParentIds.has(link.parent.user.id)) {
+          await prisma.notification.create({
+            data: {
+              schoolId:  session.user.schoolId,
+              userId:  link.parent.user.id,
+              type:    "progress_update",
+              title:   completed
+                ? `🌟 ${prog.student.user.fullName} a terminé ${prog.surah.nameFr} !`
+                : `🌟 ${prog.student.user.fullName} — ${milestone}% de ${prog.surah.nameFr}`,
+              message: completed
+                ? `Votre enfant a mémorisé tous les ${prog.surah.verseCount} versets. Bravo !`
+                : `Votre enfant a atteint ${milestone}% de la sourate ${prog.surah.nameFr}.`,
+              data:    { url: "/parent/dashboard", progressId: (await params).id, milestone, percentage: Math.round(newPct) },
+            },
+          })
+        }
       }
     }
   }

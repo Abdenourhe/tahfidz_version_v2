@@ -83,18 +83,25 @@ export async function POST(req: Request) {
       })
 
       if (admins.length > 0) {
-        await prisma.notification.createMany({
-          data: admins.map((a) => ({
-            schoolId: a.schoolId,
-            userId: a.id,
-            type: "ATTENDANCE_ABSENT_REPORTED",
-            title: `Absence signalée: ${studentName}`,
-            titleAr: `غياب مسجل: ${studentName}`,
-            message: `${studentName} marqué absent le ${date}${reason ? ` — Raison: ${reason}` : ""}`,
-            messageAr: `${studentName} مسجل غائب بتاريخ ${date}${reason ? ` — السبب: ${reason}` : ""}`,
-            data: { attendanceId: attendance.id, studentId, date, reason },
-          })),
+        const adminPrefs = await prisma.user.findMany({
+          where: { id: { in: admins.map(a => a.id) } },
+          select: { id: true, attendanceNotifications: true },
         })
+        const enabledAdmins = adminPrefs.filter(u => u.attendanceNotifications !== false)
+        if (enabledAdmins.length > 0) {
+          await prisma.notification.createMany({
+            data: enabledAdmins.map((a) => ({
+              schoolId,
+              userId: a.id,
+              type: "ATTENDANCE_ABSENT_REPORTED",
+              title: `Absence signalée: ${studentName}`,
+              titleAr: `غياب مسجل: ${studentName}`,
+              message: `${studentName} marqué absent le ${date}${reason ? ` — Raison: ${reason}` : ""}`,
+              messageAr: `${studentName} مسجل غائب بتاريخ ${date}${reason ? ` — السبب: ${reason}` : ""}`,
+              data: { attendanceId: attendance.id, studentId, date, reason, url: "/admin/attendance" },
+            })),
+          })
+        }
       }
 
       // Notify teacher
@@ -103,18 +110,24 @@ export async function POST(req: Request) {
         select: { teacher: { select: { userId: true } } },
       })
       if (studentWithTeacher?.teacher?.userId) {
-        await prisma.notification.create({
-          data: {
-            schoolId,
-            userId: studentWithTeacher.teacher.userId,
-            type: "ATTENDANCE_ABSENT_REPORTED",
-            title: `Absence signalée: ${studentName}`,
-            titleAr: `غياب مسجل: ${studentName}`,
-            message: `${studentName} marqué absent le ${date}${reason ? ` — Raison: ${reason}` : ""}`,
-            messageAr: `${studentName} مسجل غائب بتاريخ ${date}${reason ? ` — السبب: ${reason}` : ""}`,
-            data: { attendanceId: attendance.id, studentId, date, reason },
-          },
+        const teacherPrefs = await prisma.user.findUnique({
+          where: { id: studentWithTeacher.teacher.userId },
+          select: { attendanceNotifications: true },
         })
+        if (teacherPrefs?.attendanceNotifications !== false) {
+          await prisma.notification.create({
+            data: {
+              schoolId,
+              userId: studentWithTeacher.teacher.userId,
+              type: "ATTENDANCE_ABSENT_REPORTED",
+              title: `Absence signalée: ${studentName}`,
+              titleAr: `غياب مسجل: ${studentName}`,
+              message: `${studentName} marqué absent le ${date}${reason ? ` — Raison: ${reason}` : ""}`,
+              messageAr: `${studentName} مسجل غائب بتاريخ ${date}${reason ? ` — السبب: ${reason}` : ""}`,
+              data: { attendanceId: attendance.id, studentId, date, reason, url: "/teacher/attendance" },
+            },
+          })
+        }
       }
     }
 

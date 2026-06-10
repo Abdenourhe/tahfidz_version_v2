@@ -13,6 +13,7 @@ export async function GET(req: Request) {
   const notifications = await prisma.notification.findMany({
     where: {
       userId: session.user.id,
+      schoolId: session.user.schoolId,
       ...(unreadOnly ? { isRead: false } : {}),
     },
     orderBy: { createdAt: "desc" },
@@ -20,7 +21,7 @@ export async function GET(req: Request) {
   })
 
   const unreadCount = await prisma.notification.count({
-    where: { userId: session.user.id, isRead: false },
+    where: { userId: session.user.id, schoolId: session.user.schoolId, isRead: false },
   })
 
   return NextResponse.json({ notifications, unreadCount })
@@ -35,12 +36,12 @@ export async function PATCH(req: Request) {
 
   if (markAll) {
     await prisma.notification.updateMany({
-      where: { userId: session.user.id, isRead: false },
+      where: { userId: session.user.id, schoolId: session.user.schoolId, isRead: false },
       data: { isRead: true, readAt: new Date() },
     })
   } else if (ids?.length > 0) {
     await prisma.notification.updateMany({
-      where: { userId: session.user.id, id: { in: ids } },
+      where: { userId: session.user.id, schoolId: session.user.schoolId, id: { in: ids } },
       data: { isRead: true, readAt: new Date() },
     })
   }
@@ -54,7 +55,7 @@ export async function DELETE(req: Request) {
 
   const { searchParams } = new URL(req.url)
   if (searchParams.get("deleteAll") === "true") {
-    await prisma.notification.deleteMany({ where: { userId: session.user.id } })
+    await prisma.notification.deleteMany({ where: { userId: session.user.id, schoolId: session.user.schoolId } })
   }
 
   return NextResponse.json({ success: true })

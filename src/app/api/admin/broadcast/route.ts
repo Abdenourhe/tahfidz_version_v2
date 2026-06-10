@@ -30,16 +30,23 @@ export async function POST(request: Request) {
     for (const school of schools) {
       const adminIds = school.users.map(u => u.id)
       if (adminIds.length === 0) continue
+      const admins = await prisma.user.findMany({
+        where: { id: { in: adminIds } },
+        select: { id: true, messageNotifications: true },
+      })
+      const enabledAdmins = admins.filter(u => u.messageNotifications !== false)
+      if (enabledAdmins.length === 0) continue
       await prisma.notification.createMany({
-        data: adminIds.map(userId => ({
+        data: enabledAdmins.map(u => ({
           schoolId: school.id,
-          userId,
+          userId: u.id,
           type:     "announcement",
           title:    "Message de la plateforme TAHFIDZ",
           message:  message.trim(),
+          data:     { url: "/admin/announcements" },
         })),
       })
-      totalNotifs += adminIds.length
+      totalNotifs += enabledAdmins.length
     }
 
     // Audit log

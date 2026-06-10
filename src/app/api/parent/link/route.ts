@@ -63,9 +63,10 @@ export async function POST(req: Request) {
   })
 
   // Notifier l'admin
-  const admins = await prisma.user.findMany({ where: { role: "ADMIN", isActive: true } })
+  const admins = await prisma.user.findMany({ where: { role: "ADMIN", isActive: true }, select: { id: true, schoolId: true, messageNotifications: true } })
+  const enabledAdmins = admins.filter(u => u.messageNotifications !== false)
   await Promise.all(
-    admins.map(admin =>
+    enabledAdmins.map(admin =>
       prisma.notification.create({
         data: {
           userId: admin.id,
@@ -73,7 +74,7 @@ export async function POST(req: Request) {
           type: "parent_link",
           title: "Nouveau lien parent-élève",
           message: `${(session.user as any).name} s'est lié à l'élève ${student.user.fullName}`,
-          data: { linkId: link.id, studentId: student.id },
+          data: { linkId: link.id, studentId: student.id, url: "/admin/parents" },
         },
       })
     )

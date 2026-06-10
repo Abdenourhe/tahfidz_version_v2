@@ -110,18 +110,34 @@ export async function POST(req: Request) {
 
     const uniqueIds = [...new Set(targetUserIds)].filter(id => id !== session.user.id)
     if (uniqueIds.length > 0) {
-      const TYPE_EMOJI: Record<string, string> = { GENERAL:"📢", EVENT:"📅", ACHIEVEMENT:"🏆", URGENT:"⚠️" }
-      await prisma.notification.createMany({
-        data: uniqueIds.map(userId => ({
-          userId,
-          schoolId: session.user.schoolId,
-          type:    "announcement",
-          title:   `${TYPE_EMOJI[data.type] ?? "📢"} ${data.title}`,
-          titleAr: data.titleAr ?? undefined,
-          message: data.content.length > 200 ? data.content.slice(0, 200) + "…" : data.content,
-          data: { announcementId: announcement.id, type: data.type },
-        })),
+      // Respect message notification preferences (used as fallback for announcements)
+      const users = await prisma.user.findMany({
+        where: { id: { in: uniqueIds } },
+        select: { id: true, role: true, messageNotifications: true },
       })
+      const enabledUsers = users.filter(u => u.messageNotifications !== false)
+
+      const ROLE_URL: Record<string, string> = {
+        STUDENT: "/student/announcements",
+        PARENT:  "/parent/dashboard",
+        TEACHER: "/teacher/announcements",
+        ADMIN:   "/admin/announcements",
+      }
+
+      if (enabledUsers.length > 0) {
+        const TYPE_EMOJI: Record<string, string> = { GENERAL:"📢", EVENT:"📅", ACHIEVEMENT:"🏆", URGENT:"⚠️" }
+        await prisma.notification.createMany({
+          data: enabledUsers.map(u => ({
+            userId:    u.id,
+            schoolId:  session.user.schoolId,
+            type:      "announcement",
+            title:     `${TYPE_EMOJI[data.type] ?? "📢"} ${data.title}`,
+            titleAr:   data.titleAr ?? undefined,
+            message:   data.content.length > 200 ? data.content.slice(0, 200) + "…" : data.content,
+            data:      { announcementId: announcement.id, type: data.type, url: ROLE_URL[u.role] },
+          })),
+        })
+      }
     }
   }
 

@@ -196,32 +196,45 @@ export async function POST(req: Request) {
           where: { id: data.studentId },
           data: { totalStars: { increment: stars } },
         }),
-        prisma.notification.create({
+      ])
+
+      const toUserWithPrefs = await prisma.user.findUnique({
+        where: { id: student.userId },
+        select: { evaluationNotifications: true }
+      })
+      if (toUserWithPrefs?.evaluationNotifications !== false) {
+        await prisma.notification.create({
           data: {
             schoolId: session.user.schoolId,
             userId: student.userId,
             type: "evaluation",
             title: `Évaluation validée — ${finalScore}/100 🌟`,
             message: `Votre récitation a été approuvée. Vous gagnez ${stars} étoile${stars > 1 ? "s" : ""} !`,
-            data: { evaluationId: evaluation.id, score: finalScore, stars },
+            data: { evaluationId: evaluation.id, score: finalScore, stars, url: "/student/evaluations" },
           },
-        }),
-      ])
+        })
+      }
     }
   } else {
     // Notification de révision requise
     const student = await prisma.student.findUnique({ where: { id: data.studentId } })
     if (student) {
-      await prisma.notification.create({
-        data: {
-          schoolId: session.user.schoolId,
-          userId: student.userId,
-          type: "evaluation",
-          title: "Révision requise",
-          message: data.teacherNotes || "Votre enseignant a demandé une révision. Continuez vos efforts !",
-          data: { evaluationId: evaluation.id },
-        },
+      const toUserWithPrefs = await prisma.user.findUnique({
+        where: { id: student.userId },
+        select: { evaluationNotifications: true }
       })
+      if (toUserWithPrefs?.evaluationNotifications !== false) {
+        await prisma.notification.create({
+          data: {
+            schoolId: session.user.schoolId,
+            userId: student.userId,
+            type: "evaluation",
+            title: "Révision requise",
+            message: data.teacherNotes || "Votre enseignant a demandé une révision. Continuez vos efforts !",
+            data: { evaluationId: evaluation.id, url: "/student/evaluations" },
+          },
+        })
+      }
     }
   }
 

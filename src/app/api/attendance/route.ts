@@ -284,18 +284,35 @@ export async function POST(req: Request) {
       const isFutureDate     = attendanceDate > new Date()
       const recorder         = isParentRecorded ? " (signalé par parent)" : ""
       const futureLabel      = isFutureDate ? " — Jour à venir" : ""
-      try {
-        await prisma.notification.createMany({
-          data: [...recipientIds].map(userId => ({
-            userId,
-            schoolId: session.user.schoolId,
-            type:    "attendance",
-            title:   `${emoji} ${student.user.fullName} : ${statusLabel}${recorder}`,
-            message: `${isFutureDate ? "Prévision" : "Présence"} du ${dateStr}${futureLabel}${record.notes ? ` — Motif : ${record.notes}` : ""}`,
-            data:    { studentId: student.id, status: record.status, date: attendanceDate.toISOString(), recordedBy: session.user.role },
-          })),
-        })
-      } catch {/* swallow notification errors */}
+
+      // Respect attendance notification preferences
+      const recipients = await prisma.user.findMany({
+        where: { id: { in: [...recipientIds] } },
+        select: { id: true, role: true, attendanceNotifications: true },
+      })
+      const enabledRecipients = recipients.filter(r => r.attendanceNotifications !== false)
+
+      const ROLE_URL: Record<string, string> = {
+        STUDENT: "/student/attendance",
+        PARENT:  "/parent/attendance",
+        TEACHER: "/teacher/attendance",
+        ADMIN:   "/admin/attendance",
+      }
+
+      if (enabledRecipients.length > 0) {
+        try {
+          await prisma.notification.createMany({
+            data: enabledRecipients.map(r => ({
+              userId:    r.id,
+              schoolId:  session.user.schoolId,
+              type:      "attendance",
+              title:     `${emoji} ${student.user.fullName} : ${statusLabel}${recorder}`,
+              message:   `${isFutureDate ? "Prévision" : "Présence"} du ${dateStr}${futureLabel}${record.notes ? ` — Motif : ${record.notes}` : ""}`,
+              data:      { studentId: student.id, status: record.status, date: attendanceDate.toISOString(), recordedBy: session.user.role, url: ROLE_URL[r.role] },
+            })),
+          })
+        } catch {/* swallow notification errors */}
+      }
     }
   }
 

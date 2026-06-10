@@ -177,18 +177,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       select: { user: { select: { fullName: true, schoolId: true } } },
     })
     if (student && parentLinks.length > 0) {
-      await prisma.notification.createMany({
-        data: parentLinks.map((link) => ({
-          schoolId: student.user.schoolId,
-          userId: link.parent.user.id,
-          type: "DAILY_LOG_UPDATED",
-          title: `Carnet du jour : ${student.user.fullName}`,
-          titleAr: `سجل اليوم: ${student.user.fullName}`,
-          message: `Le carnet de suivi du ${data.date} a été rempli par l'enseignant.`,
-          messageAr: `تم ملء سجل المتابعة بتاريخ ${data.date} من قبل المعلم.`,
-          data: { logId: log.id, studentId: id, date: data.date },
-        })),
+      const parentUserIds = parentLinks.map((link) => link.parent.user.id)
+      const parentUsers = await prisma.user.findMany({
+        where: { id: { in: parentUserIds } },
+        select: { id: true, evaluationNotifications: true },
       })
+      const enabledParents = parentUsers.filter(u => u.evaluationNotifications !== false)
+      if (enabledParents.length > 0) {
+        await prisma.notification.createMany({
+          data: enabledParents.map((u) => ({
+            schoolId: student.user.schoolId,
+            userId: u.id,
+            type: "DAILY_LOG_UPDATED",
+            title: `Carnet du jour : ${student.user.fullName}`,
+            titleAr: `سجل اليوم: ${student.user.fullName}`,
+            message: `Le carnet de suivi du ${data.date} a été rempli par l'enseignant.`,
+            messageAr: `تم ملء سجل المتابعة بتاريخ ${data.date} من قبل المعلم.`,
+            data: { logId: log.id, studentId: id, date: data.date, url: "/parent/dashboard" },
+          })),
+        })
+      }
     }
 
     return NextResponse.json({ log }, { status: 201 })
@@ -277,18 +285,26 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         select: { user: { select: { fullName: true, schoolId: true } } },
       })
       if (student && parentLinks.length > 0) {
-        await prisma.notification.createMany({
-          data: parentLinks.map((link) => ({
-            schoolId: student.user.schoolId,
-            userId: link.parent.user.id,
-            type: "DAILY_LOG_UPDATED",
-            title: `Carnet mis à jour : ${student.user.fullName}`,
-            titleAr: `سجل محدث: ${student.user.fullName}`,
-            message: `Le carnet de suivi du ${data.date} a été mis à jour par l'enseignant.`,
-            messageAr: `تم تحديث سجل المتابعة بتاريخ ${data.date} من قبل المعلم.`,
-            data: { logId: log.id, studentId: id, date: data.date },
-          })),
+        const parentUserIds = parentLinks.map((link) => link.parent.user.id)
+        const parentUsers = await prisma.user.findMany({
+          where: { id: { in: parentUserIds } },
+          select: { id: true, evaluationNotifications: true },
         })
+        const enabledParents = parentUsers.filter(u => u.evaluationNotifications !== false)
+        if (enabledParents.length > 0) {
+          await prisma.notification.createMany({
+            data: enabledParents.map((u) => ({
+              schoolId: student.user.schoolId,
+              userId: u.id,
+              type: "DAILY_LOG_UPDATED",
+              title: `Carnet mis à jour : ${student.user.fullName}`,
+              titleAr: `سجل محدث: ${student.user.fullName}`,
+              message: `Le carnet de suivi du ${data.date} a été mis à jour par l'enseignant.`,
+              messageAr: `تم تحديث سجل المتابعة بتاريخ ${data.date} من قبل المعلم.`,
+              data: { logId: log.id, studentId: id, date: data.date, url: "/parent/dashboard" },
+            })),
+          })
+        }
       }
     }
 

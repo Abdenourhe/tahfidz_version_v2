@@ -32,6 +32,14 @@ export function StudentMessagesClient({ teacherUserId, teacherName }: Props) {
   const [sending, setSending] = useState(false)
   const [clearing, setClearing] = useState(false)
 
+  const markAsRead = useCallback(async (messageIds: string[]) => {
+    await Promise.all(
+      messageIds.map(id =>
+        fetch(`/api/messages/${id}/read`, { method: "POST" }).catch(() => {})
+      )
+    )
+  }, [])
+
   const fetchMessages = useCallback(async () => {
     try {
       const res = await fetch("/api/messages")
@@ -42,16 +50,29 @@ export function StudentMessagesClient({ teacherUserId, teacherName }: Props) {
           (m: Message) => m.fromUserId === teacherUserId || m.toUserId === teacherUserId
         )
         setMessages(filtered)
+
+        // Marquer automatiquement les messages de l'enseignant comme lus
+        const unreadFromTeacher = filtered
+          .filter((m: Message) => m.fromUserId === teacherUserId && !m.isRead)
+          .map((m: Message) => m.id)
+        if (unreadFromTeacher.length > 0) {
+          await markAsRead(unreadFromTeacher)
+          setMessages((prev) =>
+            prev.map((m) => (unreadFromTeacher.includes(m.id) ? { ...m, isRead: true } : m))
+          )
+        }
       }
     } catch (e) {
       console.error(e)
     } finally {
       setLoading(false)
     }
-  }, [teacherUserId])
+  }, [teacherUserId, markAsRead])
 
   useEffect(() => {
     fetchMessages()
+    const id = setInterval(fetchMessages, 5000)
+    return () => clearInterval(id)
   }, [fetchMessages])
 
   // Pré-remplir le sujet avec celui du dernier message (une seule fois au chargement)

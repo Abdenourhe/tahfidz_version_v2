@@ -74,18 +74,24 @@ export async function POST(req: Request) {
     })
 
     // Notify student
-    await prisma.notification.create({
-      data: {
-        schoolId: student.user.schoolId,
-        userId: student.userId,
-        type: "MEMORIZATION_ASSIGNED",
-        title: "Nouvelle sourah assignée",
-        titleAr: "سورة جديدة معينة",
-        message: `Vous devez mémoriser ${surah.nameFr} (versets ${versesFrom ?? 1}-${versesTo ?? surah.verseCount})`,
-        messageAr: `يجب عليك حفظ ${surah.nameAr} (آيات ${versesFrom ?? 1}-${versesTo ?? surah.verseCount})`,
-        data: { assignmentId: assignment.id, surahId },
-      },
+    const studentPrefs = await prisma.user.findUnique({
+      where: { id: student.userId },
+      select: { evaluationNotifications: true },
     })
+    if (studentPrefs?.evaluationNotifications !== false) {
+      await prisma.notification.create({
+        data: {
+          schoolId: student.user.schoolId,
+          userId: student.userId,
+          type: "MEMORIZATION_ASSIGNED",
+          title: "Nouvelle sourah assignée",
+          titleAr: "سورة جديدة معينة",
+          message: `Vous devez mémoriser ${surah.nameFr} (versets ${versesFrom ?? 1}-${versesTo ?? surah.verseCount})`,
+          messageAr: `يجب عليك حفظ ${surah.nameAr} (آيات ${versesFrom ?? 1}-${versesTo ?? surah.verseCount})`,
+          data: { assignmentId: assignment.id, surahId, url: "/student/progress" },
+        },
+      })
+    }
 
     // Notify linked parents
     const parentLinks = await prisma.parentStudentLink.findMany({
@@ -94,18 +100,26 @@ export async function POST(req: Request) {
     })
 
     if (parentLinks.length > 0) {
-      await prisma.notification.createMany({
-        data: parentLinks.map((link) => ({
-          schoolId: link.parent.user.schoolId,
-          userId: link.parent.userId,
-          type: "MEMORIZATION_ASSIGNED_PARENT",
-          title: `Nouvelle sourah pour ${student.user.fullName}`,
-          titleAr: `سورة جديدة لـ ${student.user.fullName}`,
-          message: `${student.user.fullName} doit mémoriser ${surah.nameFr}`,
-          messageAr: `يجب على ${student.user.fullName} حفظ ${surah.nameAr}`,
-          data: { assignmentId: assignment.id, surahId, studentId },
-        })),
+      const parentUserIds = parentLinks.map((link) => link.parent.userId)
+      const parentUsers = await prisma.user.findMany({
+        where: { id: { in: parentUserIds } },
+        select: { id: true, evaluationNotifications: true },
       })
+      const enabledParents = parentUsers.filter(u => u.evaluationNotifications !== false)
+      if (enabledParents.length > 0) {
+        await prisma.notification.createMany({
+          data: enabledParents.map((u) => ({
+            schoolId: student.user.schoolId,
+            userId: u.id,
+            type: "MEMORIZATION_ASSIGNED_PARENT",
+            title: `Nouvelle sourah pour ${student.user.fullName}`,
+            titleAr: `سورة جديدة لـ ${student.user.fullName}`,
+            message: `${student.user.fullName} doit mémoriser ${surah.nameFr}`,
+            messageAr: `يجب على ${student.user.fullName} حفظ ${surah.nameAr}`,
+            data: { assignmentId: assignment.id, surahId, studentId, url: "/parent/dashboard" },
+          })),
+        })
+      }
     }
 
     return NextResponse.json({ message: "Assignation créée", assignment }, { status: 201 })

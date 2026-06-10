@@ -40,19 +40,25 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       },
     })
 
-    // Notify parent
-    await prisma.notification.create({
-      data: {
-        schoolId: attendance.student.user.schoolId,
-        userId: attendance.parentId,
-        type: "ATTENDANCE_VALIDATED",
-        title: `Présence validée: ${attendance.student.user.fullName}`,
-        titleAr: `تم التحقق من الحضور: ${attendance.student.user.fullName}`,
-        message: `Le ${attendance.date.toLocaleDateString("fr-FR")} — statut ${attendance.status} ${validated ? "validé" : "rejeté"} par le professeur`,
-        messageAr: `بتاريخ ${attendance.date.toLocaleDateString("fr-FR")} — الحالة ${attendance.status} ${validated ? "تم التحقق" : "مرفوضة"} من قبل المعلم`,
-        data: { attendanceId: id, validated },
-      },
+    // Notify parent if they have attendance notifications enabled
+    const parentUser = await prisma.user.findUnique({
+      where: { id: attendance.parentId },
+      select: { attendanceNotifications: true },
     })
+    if (parentUser?.attendanceNotifications !== false) {
+      await prisma.notification.create({
+        data: {
+          schoolId: attendance.student.user.schoolId,
+          userId: attendance.parentId,
+          type: "ATTENDANCE_VALIDATED",
+          title: `Présence validée: ${attendance.student.user.fullName}`,
+          titleAr: `تم التحقق من الحضور: ${attendance.student.user.fullName}`,
+          message: `Le ${attendance.date.toLocaleDateString("fr-FR")} — statut ${attendance.status} ${validated ? "validé" : "rejeté"} par le professeur`,
+          messageAr: `بتاريخ ${attendance.date.toLocaleDateString("fr-FR")} — الحالة ${attendance.status} ${validated ? "تم التحقق" : "مرفوضة"} من قبل المعلم`,
+          data: { attendanceId: id, validated, url: "/parent/attendance" },
+        },
+      })
+    }
 
     return NextResponse.json({ message: "Validation mise à jour", attendance: updated })
   } catch (error: any) {

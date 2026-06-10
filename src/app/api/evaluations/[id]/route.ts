@@ -180,21 +180,27 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
 
     // Notify student
-    await prisma.notification.create({
-      data: {
-        schoolId: session.user.schoolId,
-        userId: existing.student.user.id,
-        type:   "evaluation",
-        title:  `Évaluation mise à jour — ${existing.progress.surah.nameFr}`,
-        titleAr:`تحديث التقييم — ${existing.progress.surah.nameAr}`,
-        message: newDecision === "APPROVED"
-          ? `✅ Approuvé ! Score : ${newScore}/100. Vous gagnez ${starsFromScore(newScore)} étoile(s) !`
-          : newDecision === "NEEDS_REVISION"
-          ? `↺ Révision requise. Score : ${newScore}/100. ${parsed.data.teacherNotes || "Continuez vos efforts !"}`
-          : `✗ À refaire. Score : ${newScore}/100. ${parsed.data.teacherNotes || ""}`,
-        data: { evaluationId: (await params).id, score: newScore, decision: newDecision },
-      },
+    const toUserWithPrefs = await prisma.user.findUnique({
+      where: { id: existing.student.user.id },
+      select: { evaluationNotifications: true }
     })
+    if (toUserWithPrefs?.evaluationNotifications !== false) {
+      await prisma.notification.create({
+        data: {
+          schoolId: session.user.schoolId,
+          userId: existing.student.user.id,
+          type:   "evaluation",
+          title:  `Évaluation mise à jour — ${existing.progress.surah.nameFr}`,
+          titleAr:`تحديث التقييم — ${existing.progress.surah.nameAr}`,
+          message: newDecision === "APPROVED"
+            ? `✅ Approuvé ! Score : ${newScore}/100. Vous gagnez ${starsFromScore(newScore)} étoile(s) !`
+            : newDecision === "NEEDS_REVISION"
+            ? `↺ Révision requise. Score : ${newScore}/100. ${parsed.data.teacherNotes || "Continuez vos efforts !"}`
+            : `✗ À refaire. Score : ${newScore}/100. ${parsed.data.teacherNotes || ""}`,
+          data: { evaluationId: (await params).id, score: newScore, decision: newDecision, url: "/student/evaluations" },
+        },
+      })
+    }
   }
 
   return NextResponse.json({ evaluation: updated })

@@ -97,18 +97,24 @@ export async function PATCH(req: Request) {
 
     // Notify teacher
     if (assignment.teacher?.user?.id) {
-      await prisma.notification.create({
-        data: {
-          schoolId: assignment.student.user.schoolId,
-          userId: assignment.teacher.user.id,
-          type: "MEMORIZATION_PROGRESS_UPDATED",
-          title: `Progression: ${assignment.student.user.fullName}`,
-          titleAr: `تقدم: ${assignment.student.user.fullName}`,
-          message: `${assignment.student.user.fullName} a mémorisé ${versesMemorized} versets de ${assignment.surah.nameFr}`,
-          messageAr: `حفظ ${assignment.student.user.fullName} ${versesMemorized} آيات من ${assignment.surah.nameAr}`,
-          data: { assignmentId, versesMemorized, percentage },
-        },
+      const teacherPrefs = await prisma.user.findUnique({
+        where: { id: assignment.teacher.user.id },
+        select: { evaluationNotifications: true },
       })
+      if (teacherPrefs?.evaluationNotifications !== false) {
+        await prisma.notification.create({
+          data: {
+            schoolId: assignment.student.user.schoolId,
+            userId: assignment.teacher.user.id,
+            type: "MEMORIZATION_PROGRESS_UPDATED",
+            title: `Progression: ${assignment.student.user.fullName}`,
+            titleAr: `تقدم: ${assignment.student.user.fullName}`,
+            message: `${assignment.student.user.fullName} a mémorisé ${versesMemorized} versets de ${assignment.surah.nameFr}`,
+            messageAr: `حفظ ${assignment.student.user.fullName} ${versesMemorized} آيات من ${assignment.surah.nameAr}`,
+            data: { assignmentId, versesMemorized, percentage, url: "/teacher/students" },
+          },
+        })
+      }
     }
 
     // Notify parents (if updated by student) or student (if updated by parent)
@@ -123,18 +129,27 @@ export async function PATCH(req: Request) {
       : [{ id: assignment.student.user.id, schoolId: assignment.student.user.schoolId }]
 
     if (targetUsers.length > 0) {
-      await prisma.notification.createMany({
-        data: targetUsers.map((u) => ({
-          schoolId: u.schoolId,
-          userId: u.id,
-          type: updaterRole === "STUDENT" ? "MEMORIZATION_PROGRESS_UPDATED" : "MEMORIZATION_PROGRESS_BY_PARENT",
-          title: `Progression ${assignment.surah.nameFr}: ${percentage}%`,
-          titleAr: `تقدم ${assignment.surah.nameAr}: ${percentage}%`,
-          message: `${versesMemorized}/${totalVerses} versets — Qualité: ${quality}`,
-          messageAr: `${versesMemorized}/${totalVerses} آيات — الجودة: ${quality}`,
-          data: { assignmentId, versesMemorized, percentage, quality },
-        })),
+      const targetUserIds = targetUsers.map((u) => u.id)
+      const prefs = await prisma.user.findMany({
+        where: { id: { in: targetUserIds } },
+        select: { id: true, evaluationNotifications: true },
       })
+      const allowedIds = new Set(prefs.filter(u => u.evaluationNotifications !== false).map(u => u.id))
+      const allowedTargets = targetUsers.filter(u => allowedIds.has(u.id))
+      if (allowedTargets.length > 0) {
+        await prisma.notification.createMany({
+          data: allowedTargets.map((u) => ({
+            schoolId: u.schoolId,
+            userId: u.id,
+            type: updaterRole === "STUDENT" ? "MEMORIZATION_PROGRESS_UPDATED" : "MEMORIZATION_PROGRESS_BY_PARENT",
+            title: `Progression ${assignment.surah.nameFr}: ${percentage}%`,
+            titleAr: `تقدم ${assignment.surah.nameAr}: ${percentage}%`,
+            message: `${versesMemorized}/${totalVerses} versets — Qualité: ${quality}`,
+            messageAr: `${versesMemorized}/${totalVerses} آيات — الجودة: ${quality}`,
+            data: { assignmentId, versesMemorized, percentage, quality, url: updaterRole === "STUDENT" ? "/parent/dashboard" : "/student/progress" },
+          })),
+        })
+      }
     }
 
     return NextResponse.json({ message: "Progression mise à jour", assignment: updated })

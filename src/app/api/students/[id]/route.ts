@@ -195,9 +195,25 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         targets.push(newGroup.teacher.user.id)
       }
 
-      await prisma.notification.createMany({
-        data: targets.map(userId => ({ userId, schoolId, ...notifBase })),
+      const targetUsers = await prisma.user.findMany({
+        where: { id: { in: targets } },
+        select: { id: true, role: true, messageNotifications: true },
       })
+      const enabledTargets = targetUsers.filter(u => u.messageNotifications !== false)
+
+      if (enabledTargets.length > 0) {
+        await prisma.notification.createMany({
+          data: enabledTargets.map(u => ({
+            userId: u.id,
+            schoolId,
+            ...notifBase,
+            data: {
+              ...notifBase.data,
+              url: u.role === "STUDENT" ? "/student/dashboard" : u.role === "PARENT" ? "/parent/dashboard" : "/teacher/dashboard",
+            },
+          })),
+        })
+      }
 
       return NextResponse.json({ success: true, message: "Transfert effectué" })
     }

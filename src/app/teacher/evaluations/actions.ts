@@ -76,19 +76,25 @@ export async function createEvaluation(formData: FormData) {
     })
   }
 
-  // Notifier l'élève
-  await prisma.notification.create({
-    data: {
-      schoolId: session.user.schoolId,
-      userId: progress.student.userId,
-      type: "EVALUATION_CREATED",
-      title: "Nouvelle évaluation",
-      titleAr: "تقييم جديد",
-      message: `Votre évaluation de ${progress.surah.nameFr} est disponible. Score : ${finalScore}/100`,
-      messageAr: `تقييمك لسورة ${progress.surah.nameAr} متاح. الدرجة : ${finalScore}/100`,
-      data: { evaluationId: evaluation.id, progressId, surahId: progress.surahId },
-    },
+  // Notifier l'élève (si prefs autorisent)
+  const studentPrefs = await prisma.user.findUnique({
+    where: { id: progress.student.userId },
+    select: { evaluationNotifications: true },
   })
+  if (studentPrefs?.evaluationNotifications !== false) {
+    await prisma.notification.create({
+      data: {
+        schoolId: session.user.schoolId,
+        userId: progress.student.userId,
+        type: "EVALUATION_CREATED",
+        title: "Nouvelle évaluation",
+        titleAr: "تقييم جديد",
+        message: `Votre évaluation de ${progress.surah.nameFr} est disponible. Score : ${finalScore}/100`,
+        messageAr: `تقييمك لسورة ${progress.surah.nameAr} متاح. الدرجة : ${finalScore}/100`,
+        data: { evaluationId: evaluation.id, progressId, surahId: progress.surahId, url: "/student/progress" },
+      },
+    })
+  }
 
   revalidatePath("/teacher/evaluations")
   return { success: true, evaluation }

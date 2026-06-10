@@ -161,18 +161,24 @@ export async function POST(req: Request) {
     })
 
     if (admin) {
-      await prisma.notification.create({
-        data: {
-          schoolId,
-          userId: admin.id,
-          type: "PARENT_REGISTERED",
-          title: "Nouveau parent inscrit",
-          titleAr: "ولي أمر جديد مسجل",
-          message: `${fullName} s'est inscrit et lié à l'élève via QR code.`,
-          messageAr: `سجل ${fullName} وارتبط بالطالب عبر رمز الاستجابة السريعة.`,
-          data: { parentId: result.id, studentId: invite.studentId },
-        },
+      const adminPrefs = await prisma.user.findUnique({
+        where: { id: admin.id },
+        select: { messageNotifications: true },
       })
+      if (adminPrefs?.messageNotifications !== false) {
+        await prisma.notification.create({
+          data: {
+            schoolId,
+            userId: admin.id,
+            type: "PARENT_REGISTERED",
+            title: "Nouveau parent inscrit",
+            titleAr: "ولي أمر جديد مسجل",
+            message: `${fullName} s'est inscrit et lié à l'élève via QR code.`,
+            messageAr: `سجل ${fullName} وارتبط بالطالب عبر رمز الاستجابة السريعة.`,
+            data: { parentId: result.id, studentId: invite.studentId, url: "/admin/parents" },
+          },
+        })
+      }
     }
 
     return NextResponse.json({

@@ -76,13 +76,18 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     } catch { /* ignore */ }
   }, [status, session, soundEnabled])
 
-  // Load sound preference once
+  // Load sound preference + re-sync periodically
   useEffect(() => {
     if (status !== "authenticated") return
-    fetch("/api/profile/notifications")
-      .then(r => r.ok ? r.json() : null)
-      .then(prefs => { if (prefs) setSoundEnabled(prefs.soundEnabled !== false) })
-      .catch(() => {})
+    const loadPrefs = () => {
+      fetch("/api/profile/notifications")
+        .then(r => r.ok ? r.json() : null)
+        .then(prefs => { if (prefs) setSoundEnabled(prefs.soundEnabled !== false) })
+        .catch(() => {})
+    }
+    loadPrefs()
+    const id = setInterval(loadPrefs, 30000)
+    return () => clearInterval(id)
   }, [status])
 
   // Poll only when authenticated

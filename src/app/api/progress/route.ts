@@ -137,18 +137,24 @@ export async function POST(req: Request) {
         include: { user: true },
       })
       if (student) {
-        await prisma.notification.create({
-          data: {
-            schoolId: session.user.schoolId,
-            userId: student.userId,
-            type: "progress_update",
-            title: "Mémorisation validée ! 🎉",
-            titleAr: "تم التحقق من الحفظ! 🎉",
-            message: `Félicitations ! Vous avez mémorisé ${surah.nameFr} (${surah.nameAr})`,
-            messageAr: `مبروك! لقد حفظتَ ${surah.nameAr}`,
-            data: { surahId, progressId: existing.id },
-          },
+        const studentPrefs = await prisma.user.findUnique({
+          where: { id: student.userId },
+          select: { evaluationNotifications: true },
         })
+        if (studentPrefs?.evaluationNotifications !== false) {
+          await prisma.notification.create({
+            data: {
+              schoolId: session.user.schoolId,
+              userId: student.userId,
+              type: "progress_update",
+              title: "Mémorisation validée ! 🎉",
+              titleAr: "تم التحقق من الحفظ! 🎉",
+              message: `Félicitations ! Vous avez mémorisé ${surah.nameFr} (${surah.nameAr})`,
+              messageAr: `مبروك! لقد حفظتَ ${surah.nameAr}`,
+              data: { url: "/student/progress", surahId, progressId: existing.id },
+            },
+          })
+        }
 
         // Ajouter des étoiles
         await prisma.starsLog.create({

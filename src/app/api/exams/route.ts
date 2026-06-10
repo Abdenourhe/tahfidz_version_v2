@@ -124,24 +124,35 @@ export async function POST(req: Request) {
     weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit",
   })
 
-  const notifRecipients = new Set<string>()
+  const recipientMap = new Map<string, "STUDENT" | "PARENT">()
   students.forEach(s => {
-    notifRecipients.add(s.user.id)
-    s.parentLinks.forEach(l => notifRecipients.add(l.parent.user.id))
+    recipientMap.set(s.user.id, "STUDENT")
+    s.parentLinks.forEach(l => recipientMap.set(l.parent.user.id, "PARENT"))
   })
+  const recipientIds = Array.from(recipientMap.keys())
 
-  if (notifRecipients.size > 0) {
-    await prisma.notification.createMany({
-      data: [...notifRecipients].map(userId => ({
+  if (recipientIds.length > 0) {
+    const users = await prisma.user.findMany({
+      where: { id: { in: recipientIds } },
+      select: { id: true, evaluationNotifications: true },
+    })
+    const allowedIds = new Set(users.filter(u => u.evaluationNotifications !== false).map(u => u.id))
+
+    const notifications = recipientIds
+      .filter(id => allowedIds.has(id))
+      .map(userId => ({
         userId,
         schoolId: session.user.schoolId,
-        type:    "exam",
+        type:    "exam" as const,
         title:   `📝 Examen prévu : ${title}`,
         titleAr: titleAr ? `📝 اختبار قادم : ${titleAr}` : undefined,
         message: `Un examen est prévu le ${examDateStr}. Durée : ${duration} minutes.${description ? "\n" + description : ""}`,
-        data: { examId: exam.id },
-      })),
-    })
+        data: { url: recipientMap.get(userId) === "STUDENT" ? "/student/dashboard" : "/parent/dashboard", examId: exam.id },
+      }))
+
+    if (notifications.length > 0) {
+      await prisma.notification.createMany({ data: notifications })
+    }
   }
 
   return NextResponse.json({ exam }, { status: 201 })
