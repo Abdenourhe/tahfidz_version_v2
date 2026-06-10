@@ -359,7 +359,7 @@ export default function TeacherAttendanceValidation() {
                     ref={isHighlighted ? alertRowRef : undefined}
                     className={`hover:bg-gray-50 dark:hover:bg-gray-800/50 transition ${isHighlighted ? "ring-2 ring-tahfidz-green bg-tahfidz-green-light/30" : ""}`}
                   >
-                    <td className="px-3 py-2">{formatDate(r.date, L)}</td>
+                    <td className="px-3 py-2">{formatDate((typeof r.date === "string" ? r.date.slice(0, 10) : r.date.toISOString().slice(0, 10)) + "T12:00:00", L)}</td>
                     <td className="px-3 py-2 font-medium text-gray-900 dark:text-gray-100">{r.student.user.fullName}</td>
                     <td className="px-3 py-2 text-gray-500">{r.parent.fullName}</td>
                     <td className="px-3 py-2">

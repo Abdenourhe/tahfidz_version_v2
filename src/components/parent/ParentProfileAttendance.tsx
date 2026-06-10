@@ -370,7 +370,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                   </div>
                   {cfg ? (
                     <span className={`text-[10px] font-bold px-2.5 py-1.5 rounded-lg ${cfg.light} ${cfg.text} ${cfg.border} border shrink-0`}>
-                      <cfg.icon size={11} className="inline mr-0.5" /> {cfg.label}
+                      {cfg.label}
                     </span>
                   ) : (
                     <span className="text-[10px] font-bold px-2.5 py-1.5 rounded-lg bg-gray-50 text-gray-400 border border-gray-100 shrink-0 flex items-center gap-1">
@@ -552,7 +552,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                         <cfg.icon size={12} className={cfg.text} />
                         <div>
                           <p className={`text-xs font-bold ${cfg.text}`}>{cfg.label}</p>
-                          <p className="text-[10px] text-gray-400">{new Date(r.date).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}</p>
+                          <p className="text-[10px] text-gray-400">{new Date((r.date.slice(0, 10) + "T12:00:00")).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}</p>
                           {r.reason && <p className="text-[10px] text-gray-500">{r.reason}</p>}
                         </div>
                       </div>
