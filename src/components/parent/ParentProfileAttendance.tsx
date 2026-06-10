@@ -131,7 +131,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const [touchStartX, setTouchStartX] = useState<number | null>(null)
 
   // List mode: recent status per child
-  const [childRecentStatus, setChildRecentStatus] = useState<Record<string, { status: string; date: string }>>({})
+  const [childRecentStatus, setChildRecentStatus] = useState<Record<string, { status: string; date: string; reason?: string }>>({})
 
   /* Load recent statuses for list mode */
   useEffect(() => {
@@ -140,11 +140,11 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
         const res = await fetch("/api/parent-attendance")
         const data = await res.json()
         const attendances = data.attendances || []
-        const map: Record<string, { status: string; date: string }> = {}
+        const map: Record<string, { status: string; date: string; reason?: string }> = {}
         attendances.forEach((a: any) => {
           const dateStr = new Date(a.date).toISOString().split("T")[0]
           if (!map[a.studentId] || dateStr > map[a.studentId].date) {
-            map[a.studentId] = { status: a.status, date: dateStr }
+            map[a.studentId] = { status: a.status, date: dateStr, reason: a.reason || undefined }
           }
         })
         setChildRecentStatus(map)
@@ -369,8 +369,14 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                     </p>
                   </div>
                   {cfg ? (
-                    <span className={`text-[10px] font-bold px-2.5 py-1.5 rounded-lg ${cfg.light} ${cfg.text} ${cfg.border} border shrink-0`}>
-                      {cfg.label}
+                    <span className={`flex flex-col items-end text-[10px] font-bold px-2.5 py-1.5 rounded-lg ${cfg.light} ${cfg.text} ${cfg.border} border shrink-0 leading-tight`}>
+                      <span>{cfg.label}</span>
+                      <span className="text-[9px] font-normal opacity-80">
+                        {new Date(recent.date + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                      </span>
+                      {recent.reason && (
+                        <span className="text-[9px] font-normal opacity-70 truncate max-w-[80px]" title={recent.reason}>{recent.reason}</span>
+                      )}
                     </span>
                   ) : (
                     <span className="text-[10px] font-bold px-2.5 py-1.5 rounded-lg bg-gray-50 text-gray-400 border border-gray-100 shrink-0 flex items-center gap-1">
