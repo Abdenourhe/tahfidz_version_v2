@@ -265,6 +265,7 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
               teacherName={student.teacher.user.fullName}
               parentUserId={parentUserId}
               childName={student.user.fullName}
+              studentId={studentId}
             />
           )}
         </div>

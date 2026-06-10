@@ -43,11 +43,12 @@ function useScrollBehavior(
   return { showJumpBtn, scrollToBottom, onScroll }
 }
 
-export function TeacherChat({ teacherUserId, teacherName, parentUserId, childName }: {
+export function TeacherChat({ teacherUserId, teacherName, parentUserId, childName, studentId }: {
   teacherUserId: string
   teacherName: string
   parentUserId: string
   childName: string
+  studentId: string
 }) {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
@@ -98,6 +99,7 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
           subject: `Parent de ${childName}`,
           body: text.trim(),
           replyToId: replyingTo?.id,
+          studentId,
         }),
       })
       if (res.ok) {

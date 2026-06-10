@@ -10,6 +10,7 @@ const sendSchema = z.object({
   subject:  z.string().min(1).max(200),
   body:     z.string().min(1).max(5000),
   replyToId: z.string().uuid().optional(),
+  studentId: z.string().uuid().optional(),
 })
 
 export async function GET(req: Request) {
@@ -75,7 +76,7 @@ export async function POST(req: Request) {
   const parsed = sendSchema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
 
-  const { toUserId, subject, body: msgBody, replyToId } = parsed.data
+  const { toUserId, subject, body: msgBody, replyToId, studentId } = parsed.data
   const toUser = await prisma.user.findUnique({ where: { id: toUserId }, select: { id:true, fullName:true, email:true } })
   if (!toUser) return NextResponse.json({ error: "Destinataire introuvable" }, { status: 404 })
 
@@ -110,7 +111,7 @@ export async function POST(req: Request) {
         title: `Nouveau message : ${subject}`,
         titleAr: `رسالة جديدة : ${subject}`,
         message: `De : ${fromUser?.fullName ?? "Inconnu"}\n${msgBody.slice(0,150)}${msgBody.length>150?"…":""}`,
-        data: { messageId: message.id, fromUserId: session.user.id, url: redirectUrl },
+        data: { messageId: message.id, fromUserId: session.user.id, url: redirectUrl, studentId },
       },
     })
   }
