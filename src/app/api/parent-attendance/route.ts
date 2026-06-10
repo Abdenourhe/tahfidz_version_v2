@@ -72,8 +72,9 @@ export async function POST(req: Request) {
       })
     }
 
-    // If ABSENT, notify admin AND teacher
-    if (status === "ABSENT") {
+    // If ABSENT, notify admin AND teacher (only on NEW absence, not update)
+    const isNewAbsent = status === "ABSENT" && (!existing || existing.status !== "ABSENT")
+    if (isNewAbsent) {
       const schoolId = link.student.user.schoolId
       const studentName = link.student.user.fullName
 
