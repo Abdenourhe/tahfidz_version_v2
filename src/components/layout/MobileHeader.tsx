@@ -105,6 +105,7 @@ export function MobileHeader({
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               className="fixed start-0 top-0 bottom-0 w-72 bg-white dark:bg-gray-900 z-50 shadow-2xl flex flex-col h-[100dvh] overflow-y-auto pb-24"
+              data-mobile-role={role}
             >
               {/* User section */}
               <div className="px-5 py-5 border-b border-gray-100 dark:border-gray-800">
