@@ -110,11 +110,7 @@ export function MobileHeader({
               <div className="px-5 py-5 border-b border-gray-100 dark:border-gray-800">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-xl bg-tahfidz-green flex items-center justify-center overflow-hidden flex-shrink-0">
-                    {session?.user?.avatar ? (
-                      <Image src={session.user.avatar} alt={session.user.name || ""} width={48} height={48} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-white font-bold text-lg">{(session?.user?.name || "?").charAt(0)}</span>
-                    )}
+                    <span className="text-white font-bold text-lg">{(session?.user?.name || "?").charAt(0)}</span>
                   </div>
                   <div className="min-w-0">
                     <p className="font-bold text-sm text-gray-900 dark:text-white truncate">{session?.user?.name || "Utilisateur"}</p>
@@ -128,14 +124,16 @@ export function MobileHeader({
                 <TopBarControls dropdownAlign="left" />
               </div>
 
-              {/* Secondary links */}
-              <nav className="p-4 space-y-1 flex-1">
-                <p className="text-[10px] font-bold text-gray-300 uppercase tracking-wider px-3 mb-2">{t("quickLinks") || "Liens rapides"}</p>
-                <Link href={`/${role}/link`} onClick={() => setMenuOpen(false)}
-                  className={cn("flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors", pathname === `/${role}/link` ? "bg-tahfidz-green-light text-tahfidz-green font-semibold" : "text-gray-600 hover:bg-gray-50")}>
-                  {t("linkChild") || "Lier un enfant"}
-                </Link>
-              </nav>
+              {/* Secondary links (parent only) */}
+              {role === "parent" && (
+                <nav className="p-4 space-y-1 flex-1">
+                  <p className="text-[10px] font-bold text-gray-300 uppercase tracking-wider px-3 mb-2">{t("quickLinks") || "Liens rapides"}</p>
+                  <Link href="/parent/link" onClick={() => setMenuOpen(false)}
+                    className={cn("flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors", pathname === "/parent/link" ? "bg-tahfidz-green-light text-tahfidz-green font-semibold" : "text-gray-600 hover:bg-gray-50")}>
+                    {t("linkChild") || "Lier un enfant"}
+                  </Link>
+                </nav>
+              )}
 
               {/* Logout */}
               <div className="p-4 border-t border-gray-100 dark:border-gray-800">
