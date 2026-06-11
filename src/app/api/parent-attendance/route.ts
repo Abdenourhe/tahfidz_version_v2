@@ -115,7 +115,7 @@ export async function POST(req: Request) {
         }
       }
 
-      // Notify teacher for ALL statuses
+      // Notify teacher for ALL statuses (respect presence/absence toggles)
       const studentWithTeacher = await prisma.student.findUnique({
         where: { id: studentId },
         select: { teacher: { select: { userId: true } } },
@@ -123,9 +123,10 @@ export async function POST(req: Request) {
       if (studentWithTeacher?.teacher?.userId) {
         const teacherPrefs = await prisma.user.findUnique({
           where: { id: studentWithTeacher.teacher.userId },
-          select: { attendanceNotifications: true },
+          select: { attendanceNotifications: true, presenceNotifications: true },
         })
-        if (teacherPrefs?.attendanceNotifications !== false) {
+        const notifKey = (status === "PRESENT" || status === "LATE") ? "presenceNotifications" : "attendanceNotifications"
+        if (teacherPrefs?.[notifKey] !== false) {
           await prisma.notification.create({
             data: {
               schoolId,

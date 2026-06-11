@@ -285,12 +285,16 @@ export async function POST(req: Request) {
       const recorder         = isParentRecorded ? " (signalé par parent)" : ""
       const futureLabel      = isFutureDate ? " — Jour à venir" : ""
 
-      // Respect attendance notification preferences
+      // Respect presence/absence notification preferences
       const recipients = await prisma.user.findMany({
         where: { id: { in: [...recipientIds] } },
-        select: { id: true, role: true, attendanceNotifications: true },
+        select: { id: true, role: true, attendanceNotifications: true, presenceNotifications: true },
       })
-      const enabledRecipients = recipients.filter(r => r.attendanceNotifications !== false)
+      const isPresence = record.status === "PRESENT" || record.status === "LATE"
+      const enabledRecipients = recipients.filter(r => {
+        const key = isPresence ? "presenceNotifications" : "attendanceNotifications"
+        return r[key] !== false
+      })
 
       const ROLE_URL: Record<string, string> = {
         STUDENT: "/student/attendance",

@@ -138,6 +138,7 @@ model User {
   messageNotifications    Boolean @default(true)
   evaluationNotifications Boolean @default(true)
   attendanceNotifications Boolean @default(true)
+  presenceNotifications   Boolean @default(true)
   soundEnabled            Boolean @default(true)
   notificationPrefs       Json    @default("{}")
 

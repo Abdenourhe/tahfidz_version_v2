@@ -108,12 +108,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       const statusVerbFr = lab.frValid
       const statusVerbAr = "تم التحقق منه"
 
-      // Notify parent
+      // Notify parent (respect presence/absence toggles)
+      const parentNotifKey = (attendance.status === "PRESENT" || attendance.status === "LATE") ? "presenceNotifications" : "attendanceNotifications"
       const parentUser = await prisma.user.findUnique({
         where: { id: attendance.parentId },
-        select: { attendanceNotifications: true },
+        select: { attendanceNotifications: true, presenceNotifications: true },
       })
-      if (parentUser?.attendanceNotifications !== false) {
+      if (parentUser?.[parentNotifKey] !== false) {
         await prisma.notification.create({
           data: {
             schoolId: attendance.student.user.schoolId,

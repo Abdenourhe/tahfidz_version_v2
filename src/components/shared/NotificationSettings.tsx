@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Bell, Volume2, MessageSquare, ClipboardCheck, CalendarCheck, Loader2 } from "lucide-react"
+import { Bell, Volume2, MessageSquare, ClipboardCheck, CalendarCheck, Loader2, CheckCircle2, XCircle } from "lucide-react"
 
 interface Prefs {
   messageNotifications: boolean
   evaluationNotifications: boolean
+  presenceNotifications: boolean
   attendanceNotifications: boolean
   soundEnabled: boolean
 }
@@ -20,7 +21,13 @@ export function NotificationSettings() {
     fetch("/api/profile/notifications")
       .then(r => r.json())
       .then(data => {
-        setPrefs(data)
+        setPrefs({
+          messageNotifications: data.messageNotifications ?? true,
+          evaluationNotifications: data.evaluationNotifications ?? true,
+          presenceNotifications: data.presenceNotifications ?? true,
+          attendanceNotifications: data.attendanceNotifications ?? true,
+          soundEnabled: data.soundEnabled ?? true,
+        })
         setLoading(false)
       })
       .catch(() => setLoading(false))
@@ -55,9 +62,10 @@ export function NotificationSettings() {
   if (!prefs) return null
 
   const items = [
-    { key: "messageNotifications" as const, icon: MessageSquare, label: "Messages", desc: "Nouveaux messages des enseignants" },
-    { key: "evaluationNotifications" as const, icon: ClipboardCheck, label: "Évaluations", desc: "Nouvelles évaluations de vos enfants" },
-    { key: "attendanceNotifications" as const, icon: CalendarCheck, label: "Présences", desc: "Alertes de présence et d'absence" },
+    { key: "messageNotifications" as const, icon: MessageSquare, label: "Messages", desc: "Nouveaux messages et annonces" },
+    { key: "evaluationNotifications" as const, icon: ClipboardCheck, label: "Évaluations", desc: "Nouvelles évaluations et progrès" },
+    { key: "presenceNotifications" as const, icon: CheckCircle2, label: "Présences", desc: "Présences et retards signalés" },
+    { key: "attendanceNotifications" as const, icon: XCircle, label: "Absences", desc: "Absences et absences excusées" },
     { key: "soundEnabled" as const, icon: Volume2, label: "Son", desc: "Jouer un son à la réception d'une notification" },
   ]
 
@@ -79,19 +87,19 @@ export function NotificationSettings() {
                 <item.icon size={16} className="text-gray-500" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{item.label}</p>
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{item.label}</p>
                 <p className="text-[11px] text-gray-400">{item.desc}</p>
               </div>
             </div>
             <button
               onClick={() => toggle(item.key)}
               disabled={saving}
-              className={`relative w-11 h-6 rounded-full transition-colors ${
+              className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
                 prefs[item.key] ? "bg-tahfidz-green" : "bg-gray-200 dark:bg-gray-700"
-              }`}
+              } disabled:opacity-50`}
             >
               <span
-                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
                   prefs[item.key] ? "translate-x-5" : "translate-x-0"
                 }`}
               />
