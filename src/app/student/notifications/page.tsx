@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { formatDate } from "@/lib/utils"
-import { Bell, CheckCheck, Star, Award, Megaphone, BookOpen, Trash2, Loader2, Mail } from "lucide-react"
+import { Bell, CheckCheck, Star, Award, Megaphone, BookOpen, Trash2, Loader2, Mail, XCircle } from "lucide-react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { useRouter } from "next/navigation"
 
@@ -32,6 +32,7 @@ export default function StudentNotificationsPage() {
     memorization_progress_updated: { icon: Star,    color: "text-tahfidz-gold",  bg: "bg-tahfidz-gold-light" },
     attendance_absent_reported:  { icon: Bell,     color: "text-red-500",       bg: "bg-red-50" },
     attendance_validated:        { icon: CheckCheck, color: "text-green-600",   bg: "bg-green-50" },
+    attendance_rejected:         { icon: XCircle,    color: "text-red-600",     bg: "bg-red-100" },
     direct_message:              { icon: Mail,       color: "text-blue-600",      bg: "bg-blue-50" },
   }
 
@@ -125,7 +126,7 @@ export default function StudentNotificationsPage() {
       ) : (
         <div className="space-y-2">
           {notifications.map((notif, i) => {
-            const tc = typeIcon[notif.type] ?? { icon: Bell, color: "text-gray-500", bg: "bg-gray-50" }
+            const tc = typeIcon[notif.type.toLowerCase()] ?? { icon: Bell, color: "text-gray-500", bg: "bg-gray-50" }
             return (
               <motion.div key={notif.id}
                 initial={{ opacity: 0, x: -12 }}

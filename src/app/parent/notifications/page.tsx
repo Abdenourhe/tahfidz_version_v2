@@ -126,7 +126,7 @@ export default function ParentNotificationsPage() {
       ) : (
         <div className="space-y-2">
           {notifications.map(notif => {
-            const tc = typeIcon[notif.type] ?? { icon: Bell, color: "text-gray-500", bg: "bg-gray-50" }
+            const tc = typeIcon[notif.type.toLowerCase()] ?? { icon: Bell, color: "text-gray-500", bg: "bg-gray-50" }
             return (
               <div key={notif.id}
                 onClick={() => handleClick(notif)}
