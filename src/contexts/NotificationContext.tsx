@@ -107,44 +107,65 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(id)
   }, [status, refresh])
 
-  const removeToast = (id: string) => setToasts(prev => prev.filter(t => t.id !== id))
+  const removeToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id))
+  }, [])
+
+  // Auto-dismiss toasts after 8 seconds
+  const toastTimersRef = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    toasts.forEach(t => {
+      if (toastTimersRef.current.has(t.id)) return
+      toastTimersRef.current.add(t.id)
+      const timer = setTimeout(() => {
+        removeToast(t.id)
+        toastTimersRef.current.delete(t.id)
+      }, 8000)
+    })
+  }, [toasts, removeToast])
 
   return (
     <NotificationContext.Provider value={{ unreadCount, refresh }}>
       {children}
 
       {/* Toast stack */}
-      <div className="fixed top-4 right-4 z-[100] space-y-2 max-w-sm w-full pointer-events-none">
-        {toasts.map(t => (
-          <div
-            key={t.id}
-            className="pointer-events-auto bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 p-3.5 flex items-start gap-3 hover:shadow-2xl transition"
-          >
+      {toasts.length > 0 && (
+        <div className="fixed top-4 right-4 z-[100] space-y-2 max-w-sm w-full">
+          {toasts.map(t => (
             <div
-              className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer"
-              onClick={() => {
-                removeToast(t.id)
-                if (t.url) router.push(t.url)
-              }}
+              key={t.id}
+              className="bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 p-3.5 flex items-start gap-3 hover:shadow-2xl transition"
             >
-              <div className="w-9 h-9 rounded-full bg-tahfidz-green-light flex items-center justify-center shrink-0">
-                <Bell size={16} className="text-tahfidz-green" />
+              <div
+                className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer"
+                onClick={() => {
+                  removeToast(t.id)
+                  if (t.url) router.push(t.url)
+                }}
+              >
+                <div className="w-9 h-9 rounded-full bg-tahfidz-green-light flex items-center justify-center shrink-0">
+                  <Bell size={16} className="text-tahfidz-green" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{t.title}</p>
+                  <p className="text-xs text-gray-500 truncate">{t.message}</p>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{t.title}</p>
-                <p className="text-xs text-gray-500 truncate">{t.message}</p>
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  // eslint-disable-next-line no-console
+                  console.log("[toast] closing:", t.id)
+                  removeToast(t.id)
+                }}
+                className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 shrink-0 transition cursor-pointer"
+              >
+                <X size={16} />
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => removeToast(t.id)}
-              className="p-1.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 shrink-0 transition"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </NotificationContext.Provider>
   )
 }
