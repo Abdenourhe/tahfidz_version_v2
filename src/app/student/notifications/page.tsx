@@ -132,7 +132,7 @@ export default function StudentNotificationsPage() {
                 initial={{ opacity: 0, x: -12 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3, delay: i * 0.03 }}
-                className={`bg-white dark:bg-gray-900 rounded-xl border p-4 flex gap-4 group transition cursor-pointer ${!notif.isRead ? "border-tahfidz-green/30 bg-tahfidz-green-light/20" : "border-gray-100 dark:border-gray-800 hover:border-gray-200"}`}
+                className={`relative rounded-2xl border p-4 flex gap-4 group transition cursor-pointer ${!notif.isRead ? "border-tahfidz-green/40 bg-tahfidz-green-light/20 dark:bg-emerald-900/20 dark:border-emerald-500/40 shadow-sm" : "border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-200 dark:hover:border-gray-600 hover:shadow-md"}`}
                 onClick={() => {
                   if (!notif.isRead) {
                     fetch("/api/notifications", {
@@ -143,30 +143,31 @@ export default function StudentNotificationsPage() {
                   }
                   if (notif.data?.url) router.push(notif.data.url)
                 }}>
-                <div className={`w-10 h-10 rounded-xl ${tc.bg} flex items-center justify-center flex-shrink-0`}>
-                  <tc.icon size={18} className={tc.color} />
+                {!notif.isRead && <div className="absolute left-0 top-4 bottom-4 w-1 rounded-r-full bg-tahfidz-green dark:bg-emerald-400" />}
+                <div className={`w-11 h-11 rounded-xl ${tc.bg} dark:bg-gray-700 flex items-center justify-center flex-shrink-0 shadow-sm`}>
+                  <tc.icon size={20} className={tc.color} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className={`text-sm font-semibold ${!notif.isRead ? "text-gray-900 dark:text-gray-100" : "text-gray-700 dark:text-gray-300"}`}>{notif.title}</p>
-                      {notif.titleAr && <p className="arabic text-xs text-gray-400 mt-0.5">{notif.titleAr}</p>}
+                      <p className={`text-sm font-bold leading-snug ${!notif.isRead ? "text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-200"}`}>{notif.title}</p>
+                      {notif.titleAr && <p className="arabic text-xs text-gray-400 dark:text-gray-500 mt-0.5">{notif.titleAr}</p>}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400 whitespace-nowrap">
-                        {formatDate(notif.createdAt, { day: "2-digit", month: "short" })}
-                      </span>
-                      <button
-                        onClick={() => deleteOne(notif.id)}
-                        disabled={deletingId === notif.id}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
-                        title={t("delete")}
-                      >
-                        {deletingId === notif.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                      </button>
-                    </div>
+                    <button onClick={(e) => { e.stopPropagation(); deleteOne(notif.id) }} disabled={deletingId === notif.id}
+                      className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition disabled:opacity-50 flex-shrink-0"
+                      title={t("delete")}>
+                      {deletingId === notif.id ? <Loader2 size={13} className="animate-spin text-gray-400" /> : <Trash2 size={13} />}
+                    </button>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1 truncate">{notif.message}</p>
+                  <p className={`text-sm mt-1.5 whitespace-pre-line leading-relaxed ${!notif.isRead ? "text-gray-700 dark:text-gray-200 font-medium" : "text-gray-600 dark:text-gray-300"}`}>{notif.message}</p>
+                  <div className="flex items-center gap-2 mt-3">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+                      {notif.type.replace(/_/g, " ")}
+                    </span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">
+                      {formatDate(notif.createdAt, { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  </div>
                 </div>
               </motion.div>
             )
