@@ -4,7 +4,6 @@ import {
   Loader2, Building2, Clock, Activity, Eye, Send,
   MessageCircleQuestion, CheckCircle2, X, Lock, EyeOff,
 } from "lucide-react"
-import { Toaster, toast } from "sonner"
 import { signOut } from "next-auth/react"
 
 import {
@@ -249,7 +248,6 @@ export default function SuperAdminPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Erreur")
-      toast.success("Mot de passe modifie ! Deconnexion...")
       setShowPwdModal(false)
       setCurPwd(""); setNewPwd(""); setConfPwd("")
       setTimeout(() => signOut({ callbackUrl: "/login" }), 1500)
@@ -288,7 +286,6 @@ export default function SuperAdminPage() {
     setProcessing(requestId)
     await fetch("/api/admin/schools", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "reject", requestId }) })
     await load()
-    toast.error("Demande rejetee.")
     setProcessing(null)
   }
 
@@ -338,7 +335,7 @@ export default function SuperAdminPage() {
         const logoRes = await fetch("/api/admin/school/logo", { method: "POST", body: fd })
         if (!logoRes.ok) {
           const logoErr = await logoRes.json().catch(() => ({ error: "Erreur upload logo" }))
-          toast.error(logoErr.error || "Erreur upload logo")
+          setError(logoErr.error || "Erreur upload logo")
         }
       }
       setShowEdit(false)
@@ -365,10 +362,9 @@ export default function SuperAdminPage() {
         const logoRes = await fetch("/api/admin/school/logo", { method: "POST", body: fd })
         if (!logoRes.ok) {
           const logoErr = await logoRes.json().catch(() => ({ error: "Erreur upload logo" }))
-          toast.error(logoErr.error || "Erreur upload logo")
+          setError(logoErr.error || "Erreur upload logo")
         }
       }
-      toast.success("Ecole creee avec succes !")
       setShowForm(false)
       setForm(EMPTY_FORM)
       setLogoFile(null)
@@ -483,8 +479,6 @@ export default function SuperAdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <Toaster position="top-right" richColors />
-
       <SuperAdminHeader dark={dark} onToggleDark={toggleDark} onChangePassword={() => setShowPwdModal(true)} />
 
       <main className="max-w-6xl mx-auto p-6 space-y-5">

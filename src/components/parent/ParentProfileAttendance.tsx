@@ -7,7 +7,6 @@ import {
   CalendarCheck, AlertCircle, ChevronLeft, ChevronRight,
   ArrowLeft, CalendarDays
 } from "lucide-react"
-import { toast } from "sonner"
 
 interface Child {
   id: string
@@ -306,7 +305,6 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
       setSaved(true)
       setMarkedDates(prev => new Set(prev).add(activeDate))
       setAttendanceMap(prev => ({ ...prev, [activeDate]: { status, reason: note } }))
-      toast.success("Présence enregistrée")
       if (selectedChild) loadChildData(selectedChild)
     } catch (e) {
       console.error(e)
