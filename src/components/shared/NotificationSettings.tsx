@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Bell, Volume2, MessageSquare, ClipboardCheck, CalendarCheck, Loader2, CheckCircle2, XCircle } from "lucide-react"
+import { Bell, Volume2, MessageSquare, ClipboardCheck, Loader2, CheckCircle2, XCircle } from "lucide-react"
 
 interface Prefs {
   messageNotifications: boolean

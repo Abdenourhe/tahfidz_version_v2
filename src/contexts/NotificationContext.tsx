@@ -36,7 +36,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession()
   const [unreadCount, setUnreadCount] = useState(0)
   const [soundEnabled, setSoundEnabled] = useState(true)
-  const prevCountRef = useRef(0)
   const seenIdsRef = useRef<Set<string>>(new Set())
   const isFirstLoadRef = useRef(true)
 
@@ -56,7 +55,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       }
       isFirstLoadRef.current = false
       newNotifs.forEach((n: any) => seenIdsRef.current.add(n.id))
-      prevCountRef.current = newCount
       setUnreadCount(newCount)
     } catch {
       // ignore
@@ -80,7 +78,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   // Poll only when authenticated
   useEffect(() => {
     if (status !== "authenticated") {
-      prevCountRef.current = 0
       setUnreadCount(0)
       return
     }
