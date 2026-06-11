@@ -1,15 +1,9 @@
 // src/app/api/profile/notifications/route.ts
+// GET / PATCH user notification preferences
+
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
-import { z } from "zod"
-
-const updateSchema = z.object({
-  messageNotifications:    z.boolean().optional(),
-  evaluationNotifications: z.boolean().optional(),
-  attendanceNotifications: z.boolean().optional(),
-  soundEnabled:            z.boolean().optional(),
-})
 
 export async function GET() {
   const session = await auth()
@@ -17,16 +11,16 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: {
-      messageNotifications: true,
-      evaluationNotifications: true,
-      attendanceNotifications: true,
-      soundEnabled: true,
-    },
+    select: { notificationPrefs: true },
   })
 
-  if (!user) return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 })
-  return NextResponse.json(user)
+  // Merge defaults with stored prefs
+  const defaults = {
+    studentAdded: true, absence: true, memorization: true, evaluation: true,
+    examReminder: true, parentLink: true, transfer: true, message: true, badge: false, weeklyReport: false,
+  }
+  const stored = (user?.notificationPrefs as Record<string, boolean>) || {}
+  return NextResponse.json({ prefs: { ...defaults, ...stored } })
 }
 
 export async function PATCH(req: Request) {
@@ -34,19 +28,12 @@ export async function PATCH(req: Request) {
   if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
 
   const body = await req.json()
-  const parsed = updateSchema.safeParse(body)
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+  const { prefs } = body as { prefs: Record<string, boolean> }
 
-  const updated = await prisma.user.update({
+  await prisma.user.update({
     where: { id: session.user.id },
-    data: parsed.data,
-    select: {
-      messageNotifications: true,
-      evaluationNotifications: true,
-      attendanceNotifications: true,
-      soundEnabled: true,
-    },
+    data: { notificationPrefs: prefs },
   })
 
-  return NextResponse.json(updated)
+  return NextResponse.json({ success: true })
 }

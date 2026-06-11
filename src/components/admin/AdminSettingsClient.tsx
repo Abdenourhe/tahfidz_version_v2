@@ -85,8 +85,17 @@ export function AdminSettingsClient({ user, school }: Props) {
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme")
     setDarkMode(savedTheme === "dark")
-    const saved = localStorage.getItem("notifPrefs")
-    if (saved) try { setNotifPrefs(JSON.parse(saved)) } catch {}
+    // Load notification prefs from API
+    fetch("/api/profile/notifications")
+      .then(r => r.json())
+      .then(d => {
+        if (d.prefs) setNotifPrefs(d.prefs)
+      })
+      .catch(() => {
+        // fallback to localStorage
+        const saved = localStorage.getItem("notifPrefs")
+        if (saved) try { setNotifPrefs(JSON.parse(saved)) } catch {}
+      })
   }, [])
 
   const toggleDark = (on: boolean) => {
@@ -153,10 +162,23 @@ export function AdminSettingsClient({ user, school }: Props) {
     } finally { setPwdSaving(false) }
   }
 
-  const saveNotifPrefs = () => {
-    localStorage.setItem("notifPrefs", JSON.stringify(notifPrefs))
-    setNotifSaved(true)
-    setTimeout(() => setNotifSaved(false), 3000)
+  const saveNotifPrefs = async () => {
+    try {
+      const r = await fetch("/api/profile/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prefs: notifPrefs }),
+      })
+      if (!r.ok) throw new Error()
+      localStorage.setItem("notifPrefs", JSON.stringify(notifPrefs))
+      setNotifSaved(true)
+      setTimeout(() => setNotifSaved(false), 3000)
+    } catch {
+      // still save to localStorage as fallback
+      localStorage.setItem("notifPrefs", JSON.stringify(notifPrefs))
+      setNotifSaved(true)
+      setTimeout(() => setNotifSaved(false), 3000)
+    }
   }
 
   const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -617,9 +639,42 @@ export function AdminSettingsClient({ user, school }: Props) {
 
           {/* ─── NOTIFICATIONS ─── */}
           {tab === "notifications" && (
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6">
-              <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-4">{tS("notifications")}</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{tS("notifDesc")}</p>
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6 space-y-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="font-semibold text-gray-800 dark:text-gray-100">{tS("notifications")}</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{tS("notifDesc")}</p>
+                </div>
+                <button onClick={saveNotifPrefs}
+                  className="flex items-center gap-2 px-4 py-2 gradient-tahfidz text-white text-sm font-semibold rounded-lg hover:opacity-90 transition">
+                  <Save size={14} />
+                  {tC("save")}
+                </button>
+              </div>
+              {notifSaved && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm flex items-center gap-2">
+                  <CheckCircle2 size={14} /> Préférences enregistrées
+                </div>
+              )}
+              <div className="space-y-1">
+                {notifItems.map(item => {
+                  const enabled = notifPrefs[item.key as keyof typeof notifPrefs] ?? true
+                  return (
+                    <div key={item.key}
+                      className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+                      <div>
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{item.label}</p>
+                        <p className="text-xs text-gray-400">{item.desc}</p>
+                      </div>
+                      <button
+                        onClick={() => setNotifPrefs(prev => ({ ...prev, [item.key]: !enabled }))}
+                        className={`relative w-11 h-6 rounded-full transition-colors ${enabled ? "bg-tahfidz-green" : "bg-gray-200 dark:bg-gray-700"}`}>
+                        <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${enabled ? "translate-x-5" : ""}`} />
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
         </div>
