@@ -96,6 +96,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     if (isStateChanging) {
       const safeDate = new Date(attendance.date.toISOString().slice(0, 10) + "T12:00:00").toLocaleDateString("fr-FR")
+      const isAbsence = attendance.status === "ABSENT"
+      const statusLabelFr = isAbsence ? "Absence" : "Présence"
+      const statusLabelAr = isAbsence ? "الغياب" : "الحضور"
+      const statusVerbFr = isAbsence ? "validée" : "validée"
+      const statusVerbAr = isAbsence ? "تم التحقق منه" : "تم التحقق منه"
 
       // Notify parent
       const parentUser = await prisma.user.findUnique({
@@ -108,10 +113,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             schoolId: attendance.student.user.schoolId,
             userId: attendance.parentId,
             type: "ATTENDANCE_VALIDATED",
-            title: `Présence validée: ${attendance.student.user.fullName}`,
-            titleAr: `تم التحقق من الحضور: ${attendance.student.user.fullName}`,
-            message: `Le ${safeDate} — statut ${attendance.status} validé par le professeur`,
-            messageAr: `بتاريخ ${safeDate} — الحالة ${attendance.status} تم التحقق منها من قبل المعلم`,
+            title: `${statusLabelFr} validée: ${attendance.student.user.fullName}`,
+            titleAr: `${statusVerbAr}: ${attendance.student.user.fullName}`,
+            message: `Le ${safeDate} — ${statusLabelFr.toLowerCase()} de ${attendance.student.user.fullName} a été validée par le professeur`,
+            messageAr: `بتاريخ ${safeDate} — ${statusLabelAr} لـ ${attendance.student.user.fullName} تم التحقق منها من قبل المعلم`,
             data: { attendanceId: id, validated: true, url: "/parent/attendance" },
           },
         })
@@ -129,10 +134,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             schoolId: attendance.student.user.schoolId,
             userId: a.id,
             type: "ATTENDANCE_VALIDATED",
-            title: `Présence validée: ${attendance.student.user.fullName}`,
-            titleAr: `تم التحقق من الحضور: ${attendance.student.user.fullName}`,
-            message: `Le ${safeDate} — le statut ${attendance.status} de ${attendance.student.user.fullName} a été validé par le professeur`,
-            messageAr: `بتاريخ ${safeDate} — الحالة ${attendance.status} لـ ${attendance.student.user.fullName} تم التحقق منها من قبل المعلم`,
+            title: `${statusLabelFr} validée: ${attendance.student.user.fullName}`,
+            titleAr: `${statusVerbAr}: ${attendance.student.user.fullName}`,
+            message: `Le ${safeDate} — ${statusLabelFr.toLowerCase()} de ${attendance.student.user.fullName} a été validée par le professeur`,
+            messageAr: `بتاريخ ${safeDate} — ${statusLabelAr} لـ ${attendance.student.user.fullName} تم التحقق منها من قبل المعلم`,
             data: { attendanceId: id, validated: true, url: `/admin/attendance?studentId=${attendance.studentId}&date=${attendance.date.toISOString().slice(0, 10)}` },
           })),
         })
