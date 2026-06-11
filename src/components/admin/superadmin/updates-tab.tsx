@@ -148,7 +148,7 @@ export function UpdatesTab({ requests, loading, onReload }: UpdatesTabProps) {
 
               <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 space-y-1">
                 <p className="text-xs font-medium text-gray-400 uppercase mb-1">Champs modifiés</p>
-                {Object.entries(req.newValues).map(([k, v]) => formatField(k, v))}
+                {Object.entries(req.newValues || {}).map(([k, v]) => formatField(k, v))}
               </div>
 
               <div className="flex items-center gap-2 pt-1">
