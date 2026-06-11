@@ -117,10 +117,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               initial={{ opacity: 0, x: 50, scale: 0.95 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: 50, scale: 0.95 }}
-              className="pointer-events-auto bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 p-3.5 flex items-start gap-3 hover:shadow-2xl transition"
+              className="pointer-events-auto bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 p-3.5 flex items-start gap-3 hover:shadow-2xl transition overflow-hidden"
             >
               <div
-                className="flex items-start gap-3 flex-1 cursor-pointer"
+                className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer"
                 onClick={() => {
                   removeToast(t.id)
                   if (t.url) router.push(t.url)
@@ -130,13 +130,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                   <Bell size={16} className="text-tahfidz-green" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{t.title}</p>
+                  <p className="text-sm font-bold text-gray-800 dark:text-gray-200 truncate">{t.title}</p>
                   <p className="text-xs text-gray-500 truncate">{t.message}</p>
                 </div>
               </div>
               <button
                 onClick={(e) => { e.stopPropagation(); e.preventDefault(); removeToast(t.id); }}
-                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 shrink-0"
+                className="p-1.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 shrink-0 transition"
               >
                 <X size={14} />
               </button>
