@@ -128,7 +128,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         })
       }
 
-      // Notify admin of validation
+      // Notify admin of validation (only for absences: EXCUSED & ABSENT)
+      if (attendance.status === "EXCUSED" || attendance.status === "ABSENT") {
       const admins = await prisma.user.findMany({
         where: { schoolId: attendance.student.user.schoolId, role: "ADMIN", isActive: true },
         select: { id: true, attendanceNotifications: true },
@@ -148,6 +149,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
           })),
         })
       }
+    }
     }
 
     return NextResponse.json({ message: "Validation enregistrée", attendance: updated })
