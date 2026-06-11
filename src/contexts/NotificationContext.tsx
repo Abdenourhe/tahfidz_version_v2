@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { X, Bell } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
@@ -129,12 +130,16 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       {children}
 
       {/* Toast stack */}
-      {toasts.length > 0 && (
-        <div className="fixed top-4 right-4 z-[100] space-y-2 max-w-sm w-full">
+      <div className="fixed top-4 right-4 z-[100] space-y-2 max-w-sm w-full pointer-events-none">
+        <AnimatePresence>
           {toasts.map(t => (
-            <div
+            <motion.div
               key={t.id}
-              className="bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 p-3.5 flex items-start gap-3 hover:shadow-2xl transition"
+              initial={{ opacity: 0, x: 50, scale: 0.95 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 50, scale: 0.95 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="pointer-events-auto bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 p-3.5 flex items-start gap-3 hover:shadow-2xl transition"
             >
               <div
                 className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer"
@@ -153,19 +158,15 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               </div>
               <button
                 type="button"
-                onClick={() => {
-                  // eslint-disable-next-line no-console
-                  console.log("[toast] closing:", t.id)
-                  removeToast(t.id)
-                }}
+                onClick={() => removeToast(t.id)}
                 className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 shrink-0 transition cursor-pointer"
               >
                 <X size={16} />
               </button>
-            </div>
+            </motion.div>
           ))}
-        </div>
-      )}
+        </AnimatePresence>
+      </div>
     </NotificationContext.Provider>
   )
 }
