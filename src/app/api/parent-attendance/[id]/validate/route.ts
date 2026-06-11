@@ -38,22 +38,31 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       /* ── REJECTION: delete the parent attendance record ── */
       await prisma.parentAttendance.delete({ where: { id } })
 
-      // Notify parent of rejection
+      const safeDate = new Date(attendance.date.toISOString().slice(0, 10) + "T12:00:00").toLocaleDateString("fr-FR")
+      const statusLabels: Record<string, { fr: string; ar: string; frRej: string; arRej: string }> = {
+        PRESENT: { fr: "Présence", ar: "الحضور", frRej: "rejetée", arRej: "مرفوض" },
+        LATE:    { fr: "Retard",    ar: "التأخر",  frRej: "rejeté",  arRej: "مرفوض" },
+        EXCUSED: { fr: "Absence excusée", ar: "الغياب المعذور", frRej: "rejetée", arRej: "مرفوض" },
+        ABSENT:  { fr: "Absence",   ar: "الغياب",  frRej: "rejetée", arRej: "مرفوض" },
+      }
+      const lab = statusLabels[attendance.status] || statusLabels.PRESENT
+
+      // Notify parent of rejection (respect presence/absence toggles)
+      const parentNotifKey = (attendance.status === "PRESENT" || attendance.status === "LATE") ? "presenceNotifications" : "attendanceNotifications"
       const parentUser = await prisma.user.findUnique({
         where: { id: attendance.parentId },
-        select: { attendanceNotifications: true },
+        select: { attendanceNotifications: true, presenceNotifications: true },
       })
-      const safeDate = new Date(attendance.date.toISOString().slice(0, 10) + "T12:00:00").toLocaleDateString("fr-FR")
-      if (parentUser?.attendanceNotifications !== false) {
+      if (parentUser?.[parentNotifKey] !== false) {
         await prisma.notification.create({
           data: {
             schoolId: attendance.student.user.schoolId,
             userId: attendance.parentId,
             type: "ATTENDANCE_REJECTED",
-            title: `Absence rejetée: ${attendance.student.user.fullName}`,
-            titleAr: `تم رفض الغياب: ${attendance.student.user.fullName}`,
-            message: `Le ${safeDate} — votre signalement d'absence pour ${attendance.student.user.fullName} a été rejeté par le professeur.${rejectionReason ? ` Motif: ${rejectionReason}` : ""}`,
-            messageAr: `بتاريخ ${safeDate} — تم رفض بلاغ الغياب لـ ${attendance.student.user.fullName} من قبل المعلم.${rejectionReason ? ` السبب: ${rejectionReason}` : ""}`,
+            title: `${lab.fr} ${lab.frRej}: ${attendance.student.user.fullName}`,
+            titleAr: `${lab.arRej}: ${attendance.student.user.fullName}`,
+            message: `Le ${safeDate} — votre signalement de ${lab.fr.toLowerCase()} pour ${attendance.student.user.fullName} a été ${lab.frRej} par le professeur.${rejectionReason ? ` Motif: ${rejectionReason}` : ""}`,
+            messageAr: `بتاريخ ${safeDate} — تم رفض بلاغ ${lab.ar} لـ ${attendance.student.user.fullName} من قبل المعلم.${rejectionReason ? ` السبب: ${rejectionReason}` : ""}`,
             data: { attendanceId: id, validated: false, rejectionReason: rejectionReason || null, url: "/parent/attendance" },
           },
         })
@@ -72,17 +81,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             schoolId: attendance.student.user.schoolId,
             userId: a.id,
             type: "ATTENDANCE_REJECTED",
-            title: `Absence rejetée: ${attendance.student.user.fullName}`,
-            titleAr: `تم رفض الغياب: ${attendance.student.user.fullName}`,
-            message: `Le ${safeDate} — le signalement d'absence de ${attendance.student.user.fullName} a été rejeté par le professeur.${rejectionReason ? ` Motif: ${rejectionReason}` : ""}`,
-            messageAr: `بتاريخ ${safeDate} — تم رفض بلاغ الغياب لـ ${attendance.student.user.fullName} من قبل المعلم.${rejectionReason ? ` السبب: ${rejectionReason}` : ""}`,
+            title: `${lab.fr} ${lab.frRej}: ${attendance.student.user.fullName}`,
+            titleAr: `${lab.arRej}: ${attendance.student.user.fullName}`,
+            message: `Le ${safeDate} — le signalement de ${lab.fr.toLowerCase()} de ${attendance.student.user.fullName} a été ${lab.frRej} par le professeur.${rejectionReason ? ` Motif: ${rejectionReason}` : ""}`,
+            messageAr: `بتاريخ ${safeDate} — تم رفض بلاغ ${lab.ar} لـ ${attendance.student.user.fullName} من قبل المعلم.${rejectionReason ? ` السبب: ${rejectionReason}` : ""}`,
             data: { attendanceId: id, validated: false, rejectionReason: rejectionReason || null, url: `/admin/attendance?studentId=${attendance.studentId}&date=${attendance.date.toISOString().slice(0, 10)}` },
           })),
         })
       }
       }
 
-      return NextResponse.json({ message: "Absence rejetée et supprimée" })
+      return NextResponse.json({ message: `${lab.fr} ${lab.frRej} et supprimée` })
     }
 
     /* ── VALIDATION: normal flow ── */
