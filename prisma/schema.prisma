@@ -878,6 +878,26 @@ model SchoolRequest {
   @@map("school_requests")
 }
 
+model SchoolUpdateRequest {
+  id              String        @id @default(uuid())
+  schoolId        String
+  requestedBy     String
+  name            String?
+  nameAr          String?
+  address         String?
+  city            String?
+  country         String?
+  phone           String?
+  status          RequestStatus @default(PENDING)
+  rejectionReason String?
+  createdAt       DateTime      @default(now())
+  processedAt     DateTime?
+
+  @@index([schoolId, status])
+  @@index([status])
+  @@map("school_update_requests")
+}
+
 // ==================== FEEDBACK / BUG REPORTS ====================
 // CORRIGÉ : ENUMs remplacés par String pour éviter les problèmes de types PostgreSQL
 

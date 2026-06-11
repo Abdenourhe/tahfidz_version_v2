@@ -37,6 +37,9 @@ export default function AdminNotificationsPage() {
     attendance_absent_reported:  { label: L === "ar" ? "غياب مسجل" : L === "en" ? "Absence reported" : "Absence signalée", color: "text-red-500", bg: "bg-red-50", icon: Bell },
     attendance_validated:        { label: L === "ar" ? "حضور محقق" : L === "en" ? "Attendance validated" : "Présence validée", color: "text-green-600", bg: "bg-green-50", icon: CheckCheck },
     attendance_rejected:         { label: L === "ar" ? "غياب مرفوض" : L === "en" ? "Absence rejected" : "Absence rejetée", color: "text-red-600", bg: "bg-red-100", icon: XCircle },
+    school_update_requested:     { label: L === "ar" ? "تعديل مدرسة" : L === "en" ? "School update" : "Mise à jour école", color: "text-orange-500", bg: "bg-orange-50", icon: Building2 },
+    school_update_approved:      { label: L === "ar" ? "تعديل مقبول" : L === "en" ? "Update approved" : "Modification approuvée", color: "text-green-600", bg: "bg-green-50", icon: CheckCheck },
+    school_update_rejected:      { label: L === "ar" ? "تعديل مرفوض" : L === "en" ? "Update rejected" : "Modification rejetée", color: "text-red-600", bg: "bg-red-50", icon: XCircle },
   }
 
   const [notifications, setNotifications] = useState<Notification[]>([])

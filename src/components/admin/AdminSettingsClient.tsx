@@ -76,6 +76,8 @@ export function AdminSettingsClient({ user, school }: Props) {
   const [schoolSaving, setSchoolSaving] = useState(false)
   const [schoolSaved, setSchoolSaved] = useState(false)
   const [schoolErr, setSchoolErr] = useState<string | null>(null)
+  const [pendingRequest, setPendingRequest] = useState<any | null>(null)
+  const [loadingPending, setLoadingPending] = useState(true)
 
   // School / Logo
   const [logoUrl, setLogoUrl] = useState<string | null>(school?.logo ?? null)
@@ -107,6 +109,14 @@ export function AdminSettingsClient({ user, school }: Props) {
         const saved = localStorage.getItem("notifPrefs")
         if (saved) try { setNotifPrefs(JSON.parse(saved)) } catch {}
       })
+    // Load pending school update request
+    fetch("/api/admin/school")
+      .then(r => r.json())
+      .then(d => {
+        setPendingRequest(d.pending || null)
+      })
+      .catch(() => setPendingRequest(null))
+      .finally(() => setLoadingPending(false))
   }, [])
 
   const toggleDark = (on: boolean) => {
@@ -439,8 +449,27 @@ export function AdminSettingsClient({ user, school }: Props) {
           {/* ─── ÉCOLE ─── */}
           {tab === "school" && (
             <div className="space-y-4">
+              {/* Pending request alert */}
+              {pendingRequest && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <span className="text-xl shrink-0">⏳</span>
+                  <div>
+                    <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                      {locale === "ar" ? "طلب قيد الانتظار" : locale === "en" ? "Request pending" : "Demande en attente de validation"}
+                    </p>
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+                      {locale === "ar"
+                        ? "تم إرسال طلب تعديل معلومات مدرستك إلى المشرف العام. سيتم إشعارك عند الموافقة أو الرفض."
+                        : locale === "en"
+                        ? "A request to update your school information has been sent to the superadmin. You will be notified when it is approved or rejected."
+                        : "Une demande de modification des informations de votre école a été envoyée au superadmin. Vous serez notifié lors de l'approbation ou du rejet."}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* School info form */}
-              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6 space-y-5">
+              <div className={`bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6 space-y-5 transition-opacity ${pendingRequest ? "opacity-60" : ""}`}>
                 <h2 className="font-semibold text-gray-800 dark:text-gray-100">
                   {locale === "ar" ? "معلومات المدرسة" : locale === "en" ? "School information" : "Informations de l'école"}
                 </h2>
@@ -491,10 +520,12 @@ export function AdminSettingsClient({ user, school }: Props) {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <button type="submit" disabled={schoolSaving}
+                    <button type="submit" disabled={schoolSaving || !!pendingRequest}
                       className="flex items-center gap-2 px-5 py-2.5 gradient-tahfidz text-white text-sm font-semibold rounded-lg hover:opacity-90 disabled:opacity-60 transition">
                       {schoolSaving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
-                      {tC("save")}
+                      {pendingRequest
+                        ? (locale === "ar" ? "قيد الانتظار" : locale === "en" ? "Pending" : "En attente")
+                        : tC("save")}
                     </button>
                     {schoolSaved && <span className="flex items-center gap-1.5 text-sm text-tahfidz-green font-medium"><CheckCircle2 size={16} />{tC("saved")}</span>}
                   </div>
