@@ -1,7 +1,6 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from "react"
-import { motion, AnimatePresence } from "framer-motion"
 import { X, Bell } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
@@ -59,11 +58,17 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       const data = await res.json()
       const newCount = data.unreadCount || 0
       const newNotifs = data.notifications || []
+      // eslint-disable-next-line no-console
+      console.log("[toast debug] count:", newCount, "notifs:", newNotifs.length, "seen:", seenIdsRef.current.size)
 
       // Détecte les vraies nouvelles notifications par ID (pas seulement le compteur)
       const unseenNotifs = newNotifs.filter((n: any) => !seenIdsRef.current.has(n.id))
+      // eslint-disable-next-line no-console
+      console.log("[toast debug] unseen:", unseenNotifs.length)
       if (unseenNotifs.length > 0 && seenIdsRef.current.size > 0) {
         const latest = unseenNotifs[0]
+        // eslint-disable-next-line no-console
+        console.log("[toast debug] showing toast:", latest.title)
         setToasts(prev => [...prev, {
           id: latest.id,
           title: latest.title,
@@ -75,7 +80,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       newNotifs.forEach((n: any) => seenIdsRef.current.add(n.id))
       prevCountRef.current = newCount
       setUnreadCount(newCount)
-    } catch { /* ignore */ }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("[toast debug] refresh error:", err)
+    }
   }, [status, session, soundEnabled])
 
   // Load sound preference + re-sync periodically
@@ -112,35 +120,31 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
       {/* Toast stack */}
       <div className="fixed top-4 right-4 z-[100] space-y-2 max-w-sm w-full pointer-events-none">
-        <AnimatePresence>
-          {toasts.map(t => (
-            <motion.div
-              key={t.id}
-              initial={{ opacity: 0, x: 50, scale: 0.95 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 50, scale: 0.95 }}
-              className="pointer-events-auto bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 p-3.5 flex items-start gap-3 cursor-pointer hover:shadow-2xl transition"
-              onClick={() => {
-                removeToast(t.id)
-                if (t.url) router.push(t.url)
-              }}
+        {toasts.map(t => (
+          <div
+            key={t.id}
+            className="pointer-events-auto bg-white dark:bg-gray-900 rounded-xl shadow-xl border-2 border-red-500 dark:border-red-400 p-3.5 flex items-start gap-3 cursor-pointer hover:shadow-2xl transition"
+            onClick={() => {
+              removeToast(t.id)
+              if (t.url) router.push(t.url)
+            }}
+          >
+            <div className="w-9 h-9 rounded-full bg-tahfidz-green-light flex items-center justify-center shrink-0">
+              <Bell size={16} className="text-tahfidz-green" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{t.title}</p>
+              <p className="text-xs text-gray-500 truncate">{t.message}</p>
+            </div>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); e.preventDefault(); removeToast(t.id); }}
+              className="p-1.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 shrink-0 transition"
             >
-              <div className="w-9 h-9 rounded-full bg-tahfidz-green-light flex items-center justify-center shrink-0">
-                <Bell size={16} className="text-tahfidz-green" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{t.title}</p>
-                <p className="text-xs text-gray-500 truncate">{t.message}</p>
-              </div>
-              <button
-                onClick={(e) => { e.stopPropagation(); e.preventDefault(); removeToast(t.id); }}
-                className="p-1.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 shrink-0 transition"
-              >
-                <X size={14} />
-              </button>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+              <X size={14} />
+            </button>
+          </div>
+        ))}
       </div>
     </NotificationContext.Provider>
   )
