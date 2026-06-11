@@ -80,7 +80,7 @@ export default function DisplayPage() {
       {slide==="verse"&&(<div className="animate-fade-in flex items-center justify-center min-h-[50vh]">
         <div className={`${card} border rounded-3xl p-12 max-w-3xl mx-auto text-center`}>
           <p className="arabic text-4xl text-tahfidz-green leading-loose mb-6">إِنَّ الَّذِينَ يَتْلُونَ كِتَابَ اللَّهِ وَأَقَامُوا الصَّلَاةَ</p>
-          <p className={`text-lg ${dark?"text-gray-300":"text-gray-600"} mb-2`}>« Ceux qui récitent le Livre d'Allah et accomplissent la Salat… »</p>
+          <p className={`text-lg ${dark?"text-gray-300":"text-gray-600"} mb-2`}>« Ceux qui récitent le Livre d&apos;Allah et accomplissent la Salat… »</p>
           <p className={`text-sm ${dark?"text-gray-500":"text-gray-400"}`}>Sourate Fatir 35:29</p>
           <div className="mt-8 text-6xl">📖</div>
         </div>

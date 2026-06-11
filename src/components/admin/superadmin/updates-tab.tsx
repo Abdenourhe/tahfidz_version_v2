@@ -111,7 +111,7 @@ export function UpdatesTab({ requests, loading, onReload }: UpdatesTabProps) {
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Demandes de mise à jour d'école</h3>
+        <h3 className="text-lg font-semibold">Demandes de mise à jour d&apos;école</h3>
         <button onClick={onReload} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500">
           <RefreshCw size={16} />
         </button>
@@ -179,7 +179,7 @@ export function UpdatesTab({ requests, loading, onReload }: UpdatesTabProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 w-full max-w-md space-y-4">
             <h4 className="text-lg font-semibold">Rejeter la demande</h4>
-            <p className="text-sm text-gray-500">Veuillez indiquer la raison du rejet. L'administrateur sera notifié.</p>
+            <p className="text-sm text-gray-500">Veuillez indiquer la raison du rejet. L&apos;administrateur sera notifié.</p>
             <textarea
               value={rejectReason}
               onChange={e => setRejectReason(e.target.value)}

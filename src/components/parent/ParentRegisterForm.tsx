@@ -2,7 +2,6 @@
 // src/components/parent/ParentRegisterForm.tsx
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { Loader2, Eye, EyeOff, CheckCircle2, AlertTriangle, School, User, Mail, Phone, Lock, Globe, Languages } from "lucide-react"
@@ -81,7 +80,6 @@ function err(key: string, locale: string = "fr"): string {
 export function ParentRegisterForm({ inviteCode, studentCode, inviteData }: Props) {
   const { locale } = useLanguage()
   const L = (locale || "fr") as "fr" | "en" | "ar"
-  const router = useRouter()
   const isRtl = L === "ar"
 
   const [form, setForm] = useState({

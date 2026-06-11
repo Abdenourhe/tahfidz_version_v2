@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Smile, Reply, Trash, X } from "lucide-react"
+import { Smile, Reply, Trash } from "lucide-react"
 
 interface Reaction { emoji: string; userId: string }
 interface ReplyTo { body: string; fromUser: { fullName: string } }

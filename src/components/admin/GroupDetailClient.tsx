@@ -2,13 +2,13 @@
 // src/components/admin/GroupDetailClient.tsx
 
 import Link from "next/link"
-import { useState, useCallback } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { ArrowLeft, CalendarCheck, Users, Pencil, Check, X, Loader2 } from "lucide-react"
 import { GroupStudentList } from "@/components/admin/GroupStudentList"
 import { GroupRename } from "@/components/admin/GroupRename"
-import { formatDate } from "@/lib/utils"
+
 
 interface Props {
   group: any
@@ -55,7 +55,7 @@ export function GroupDetailClient({ group }: Props) {
       : "bg-red-100 text-red-700",
   }
 
-  const schedule = (group.schedule as Record<string, string> | null) ?? {}
+  const schedule = useMemo(() => (group.schedule as Record<string, string> | null) ?? {}, [group.schedule])
   const capacityPct = Math.round((group._count.students / group.maxCapacity) * 100)
   const avgStars = group.students.length > 0
     ? Math.round(group.students.reduce((a: number, s: any) => a + s.totalStars, 0) / group.students.length)

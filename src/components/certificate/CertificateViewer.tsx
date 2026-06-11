@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, useEffect, useCallback } from "react"
+import { useRef, useState, useEffect } from "react"
 import Link from "next/link"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { Printer, Download, Loader2, ArrowLeft, ChevronDown } from "lucide-react"
@@ -71,7 +71,7 @@ export function CertificateViewer({ student, school, templates, defaultTemplateI
       : []),
   ]
 
-  const handleDownloadPDF = useCallback(async () => {
+  const handleDownloadPDF = async () => {
     if (!certRef.current) return
     setIsPdfLoading(true)
     await new Promise((r) => setTimeout(r, 300))
@@ -116,9 +116,9 @@ export function CertificateViewer({ student, school, templates, defaultTemplateI
       el.style.zIndex = original.zIndex
       setIsPdfLoading(false)
     }
-  }, [isLandscape, student.id, student.studentCode])
+  }
 
-  const handlePrint = useCallback(() => {
+  const handlePrint = () => {
     const style = document.createElement("style")
     style.id = "cert-print-style"
     style.innerHTML = `
@@ -139,7 +139,7 @@ export function CertificateViewer({ student, school, templates, defaultTemplateI
     setTimeout(() => {
       document.getElementById("cert-print-style")?.remove()
     }, 1000)
-  }, [isLandscape, pageWidth, pageHeight])
+  }
 
   return (
     <div className="space-y-6">

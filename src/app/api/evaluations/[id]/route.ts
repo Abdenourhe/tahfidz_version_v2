@@ -2,7 +2,7 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
-import { calculateFinalScore, starsFromScore } from "@/lib/utils"
+import { starsFromScore } from "@/lib/utils"
 import { z } from "zod"
 
 const patchSchema = z.object({

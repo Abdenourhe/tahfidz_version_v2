@@ -2,7 +2,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Link from "next/link"
 import { motion } from "framer-motion"
 import { FileVideo, Calendar, Loader2, User, BarChart3 } from "lucide-react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"

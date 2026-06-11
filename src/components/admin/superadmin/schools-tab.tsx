@@ -4,11 +4,11 @@ import Image from "next/image"
 import {
   Search, X, Download, Plus, RefreshCw, Check, Ban, Trash2,
   ChevronDown, ChevronRight, Pencil, ToggleLeft, ToggleRight,
-  Copy, CheckCircle2, TrendingUp, Zap,
+  Copy, TrendingUp, Zap,
   MapPin, Phone, Mail, Building2, Users, UserCog, BookOpen, GraduationCap, KeyRound,
 } from "lucide-react"
 import { School, TimeRange } from "./types"
-import { formatPhone, formatDate } from "./types"
+import { formatPhone } from "./types"
 
 export function SchoolsTab({
   schools,

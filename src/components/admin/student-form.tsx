@@ -2,7 +2,7 @@
 // src/components/admin/student-form.tsx
 // Formulaire unique create + edit
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -80,7 +80,7 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
     { key: "other", label: L === "ar" ? "أخرى" : L === "en" ? "Other" : "Autre" },
   ]
 
-  const nationalityOptions = [
+  const nationalityOptions = useMemo(() => [
     { value: "", label: L === "ar" ? "— اختر —" : L === "en" ? "— Select —" : "— Sélectionner —" },
     { value: "DZ", label: L === "ar" ? "جزائري(ة)" : L === "en" ? "Algerian" : "Algérien(ne)" },
     { value: "MA", label: L === "ar" ? "مغربي(ة)" : L === "en" ? "Moroccan" : "Marocain(e)" },
@@ -102,7 +102,7 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
     { value: "TR", label: L === "ar" ? "تركي(ة)" : L === "en" ? "Turkish" : "Turc/Turque" },
     { value: "CA", label: L === "ar" ? "كندي(ة)" : L === "en" ? "Canadian" : "Canadien(ne)" },
     { value: "OTHER", label: L === "ar" ? "أخرى" : L === "en" ? "Other" : "Autre" },
-  ]
+  ], [L])
 
   const { register, handleSubmit, watch, setValue, reset, formState: { errors, isSubmitting } } = useForm<FormInput>({
     resolver: zodResolver(formSchema),
@@ -130,7 +130,7 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
       }
     }
     loadData()
-  }, [])
+  }, [t])
 
   /* ── Load student in edit mode ── */
   useEffect(() => {
@@ -173,7 +173,7 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
       }
     }
     loadStudent()
-  }, [isEdit, studentId, reset])
+  }, [isEdit, studentId, reset, t, nationalityOptions, setValue])
 
   /* ── Auto-assign teacher from group ── */
   useEffect(() => {

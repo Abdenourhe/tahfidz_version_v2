@@ -9,7 +9,7 @@ import {
   Eye, Calendar, User, Server, AlertTriangle, Info,
   AlertCircle, Download, RefreshCw, X, Activity,
   ArrowLeft, ArrowRight, Clock, MapPin, FileJson,
-  CheckCircle2, XCircle, MessageSquare, School,
+  CheckCircle2, XCircle, School,
   Users, GraduationCap, Bell, Settings, Database
 } from "lucide-react"
 import { format } from "date-fns"
@@ -150,7 +150,7 @@ export function AuditLogClient({ logs, totalCount, currentPage, pageSize, stats,
                 <Shield className="w-6 h-6 text-indigo-400" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">Journal d'Audit</h1>
+                <h1 className="text-2xl font-bold text-white">Journal d&apos;Audit</h1>
                 <p className="text-sm text-gray-400 mt-0.5">
                   {totalCount.toLocaleString("fr-FR")} événement{totalCount > 1 ? "s" : ""} enregistré{totalCount > 1 ? "s" : ""}
                 </p>
@@ -504,7 +504,7 @@ export function AuditLogClient({ logs, totalCount, currentPage, pageSize, stats,
                           <div className="md:col-span-2 space-y-3">
                             <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
                               <FileJson className="w-3.5 h-3.5" />
-                              Détails de l'action
+                              Détails de l&apos;action
                             </h4>
                             <pre className="bg-gray-950 border border-gray-800 rounded-lg p-4 text-xs text-gray-300 overflow-x-auto font-mono">
                               {JSON.stringify(details, null, 2)}

@@ -2,13 +2,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import {
-  Video, Plus, Calendar, Clock, Users, BookOpen,
-  Play, StopCircle, FileVideo, BarChart3
+  Video, Plus, Calendar, Users, BookOpen,
+  Play, FileVideo, BarChart3
 } from "lucide-react"
 
 interface HalaqaSession {
@@ -26,7 +25,6 @@ interface HalaqaSession {
 }
 
 export default function TeacherHalaqaPage() {
-  const router = useRouter()
   const { locale } = useLanguage()
   const t = useT("halaqa")
   const isRTL = locale === "ar"

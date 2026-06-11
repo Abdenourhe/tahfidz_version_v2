@@ -40,7 +40,7 @@ interface TeacherSidebarProps {
 
 export function TeacherSidebar({ user, schoolName, schoolLogo }: TeacherSidebarProps) {
   const pathname = usePathname() ?? ""
-  const { locale } = useLanguage()
+  useLanguage()
   const { data: session } = useSession()
   const { collapsed } = useSidebarCollapsed()
   const t = useT("teacherSidebar")

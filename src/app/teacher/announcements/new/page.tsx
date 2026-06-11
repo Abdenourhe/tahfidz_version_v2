@@ -72,12 +72,12 @@ export default function TeacherNewAnnouncementPage() {
         <div className="bg-white rounded-xl border border-gray-100 p-6 space-y-3">
           <h2 className="font-semibold text-gray-800">Options</h2>
           <label className="flex items-center gap-3 cursor-pointer"><input type="checkbox" checked={isPinned} onChange={e=>setIsPinned(e.target.checked)} className="w-4 h-4 accent-tahfidz-green"/><div className="flex items-center gap-2"><Pin size={15} className="text-tahfidz-green"/><span className="text-sm font-medium text-gray-700">Épingler</span></div></label>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Date d'expiration</label><input type="datetime-local" value={expiresAt} onChange={e=>setExpiresAt(e.target.value)} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green"/></div>
+          <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Date d&apos;expiration</label><input type="datetime-local" value={expiresAt} onChange={e=>setExpiresAt(e.target.value)} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green"/></div>
         </div>
         <div className="flex gap-3">
           <button type="button" onClick={()=>router.back()} className="flex-1 py-3 border border-gray-200 text-gray-600 text-sm font-medium rounded-xl hover:bg-gray-50 transition">Annuler</button>
           <button type="submit" disabled={loading||!selectedRoles.length} className="flex-1 py-3 gradient-tahfidz text-white text-sm font-semibold rounded-xl hover:opacity-90 disabled:opacity-60 transition flex items-center justify-center gap-2">
-            {loading?<><Loader2 size={16} className="animate-spin"/>Publication…</>:"Publier l'annonce"}
+            {loading?<><Loader2 size={16} className="animate-spin"/>Publication…</>:"Publier l&apos;annonce"}
           </button>
         </div>
       </form>

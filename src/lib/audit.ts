@@ -175,7 +175,7 @@ export function setupAuditMiddleware(prismaClient: typeof prisma) {
 
 // ── Helpers pour les actions fréquentes ───────────────────────────
 
-export async function auditLogin(userId: string, email: string, role: string) {
+export async function auditLogin(userId: string, email: string, _role: string) {
   return createAuditLog({
     action: "LOGIN",
     targetType: "User",

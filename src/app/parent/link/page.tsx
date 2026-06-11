@@ -3,12 +3,10 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, Link2, CheckCircle2, ArrowLeft, User } from "lucide-react"
-import { useLanguage, useT } from "@/contexts/LanguageContext"
+import { Loader2, Link2, CheckCircle2, ArrowLeft } from "lucide-react"
+import { useT } from "@/contexts/LanguageContext"
 
 export default function ParentLinkPage() {
-  const { locale } = useLanguage()
-  const L = locale as "fr" | "en" | "ar"
   const router = useRouter()
 
     const t = useT("link")

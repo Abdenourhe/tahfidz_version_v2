@@ -22,7 +22,7 @@ interface Props {
   byMonth: Record<string, Attendance[]>
 }
 
-export function StudentAttendanceClient({ attendances, total, present, absent, excused, rate, byMonth }: Props) {
+export function StudentAttendanceClient({ attendances: _attendances, total, present, absent, excused, rate, byMonth }: Props) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
   const t = useT("studentAttendanceClient")

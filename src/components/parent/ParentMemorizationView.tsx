@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useCallback } from "react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
-import { BookOpen, Loader2, Save, Pencil, User, Users } from "lucide-react"
+import { BookOpen, Loader2, Save, Pencil, Users } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 
 interface Assignment {
@@ -17,9 +17,9 @@ interface Assignment {
 }
 
 export default function ParentMemorizationView({ childId, showTitle = true }: { childId: string; showTitle?: boolean }) {
-  const { locale } = useLanguage()
-  const L = locale as "fr" | "en" | "ar"
   const t = useT("parentMemorizationView")
+  const { locale } = useLanguage()
+  const L = (locale as "fr" | "en" | "ar") ?? "fr"
 
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [loading, setLoading] = useState(true)
@@ -100,7 +100,7 @@ function EditProgressForm({
   assignment: a,
   onUpdated,
   t,
-  L,
+  L: _L,
 }: {
   assignment: Assignment
   onUpdated: () => void

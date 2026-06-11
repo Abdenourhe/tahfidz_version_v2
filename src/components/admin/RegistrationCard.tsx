@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { Phone, Mail, MapPin, Calendar, User, GraduationCap, HeartPulse, Shield, Clock, Copy, CheckCircle2, Globe, Languages } from "lucide-react"
+import { Phone, Mail, MapPin, User, GraduationCap, HeartPulse, Shield, Clock, Copy, CheckCircle2, Globe, Languages } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 

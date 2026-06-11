@@ -36,7 +36,7 @@ interface Props {
   decisionFilter: string | undefined
 }
 
-export function EvaluationsListClient({ evaluations, teachers, stats, decisionFilter }: Props) {
+export function EvaluationsListClient({ evaluations, teachers: _teachers, stats, decisionFilter }: Props) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
 

@@ -79,8 +79,8 @@ export function TeacherEvaluationModal({ open, students, onClose }: Props) {
 
   if (!open) return null
 
-  const selectedStudentObj = students.find(s => s.id === selectedStudent)
-  const selectedAssignmentObj = assignments.find(a => a.id === selectedAssignment)
+  const _selectedStudentObj = students.find(s => s.id === selectedStudent)
+  const _selectedAssignmentObj = assignments.find(a => a.id === selectedAssignment)
 
   const avgScore = Math.round((scores.tajwid + scores.makhraj + scores.waqf + scores.tarteel) / 4)
 

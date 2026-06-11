@@ -5,8 +5,8 @@
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { Loader2, CheckCircle2, Save, Bell } from "lucide-react"
-import { useLanguage, useT } from "@/contexts/LanguageContext"
+import { Loader2, CheckCircle2, Bell } from "lucide-react"
+import { useT } from "@/contexts/LanguageContext"
 
 interface Props {
   progressId:  string
@@ -19,12 +19,10 @@ interface Props {
 }
 
 export function VerseProgressTracker({
-  progressId, studentId, surahId, totalVerses, currentVerse, status,
+  progressId, studentId: _studentId, surahId: _surahId, totalVerses, currentVerse, status,
 }: Props) {
   const router  = useRouter()
-  const { locale } = useLanguage()
   const t = useT("studentMemorizationTracker")
-  const L = locale as "fr" | "en" | "ar"
 
   const [verse,    setVerse]    = useState(currentVerse)
   const [draft,    setDraft]    = useState(String(currentVerse))

@@ -2,7 +2,7 @@
 // src/components/admin/AdminSettingsClient.tsx
 
 import { useState, useEffect, useRef } from "react"
-import { Loader2, Save, CheckCircle2, Eye, EyeOff, User, Lock, Globe, Bell, Database, Moon, Sun, ExternalLink, Building2, Upload, Trash2, Image, LogOut } from "lucide-react"
+import { Loader2, Save, CheckCircle2, Eye, EyeOff, User, Lock, Globe, Bell, Database, Moon, Sun, ExternalLink, Building2, Upload, Trash2, Image } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { useLanguage } from "@/contexts/LanguageContext"
 import type { Locale } from "@/lib/i18n/translations"
@@ -20,9 +20,9 @@ const LANGUAGES = [
 ]
 
 export function AdminSettingsClient({ user, school }: Props) {
-  const { locale, setLocale, useT } = useLanguage()
-  const tS  = (k: string) => useT("settings", k)
-  const tC  = (k: string) => useT("common", k)
+  const { locale, setLocale, useT: tFn } = useLanguage()
+  const tS  = (k: string) => tFn("settings", k)
+  const tC  = (k: string) => tFn("common", k)
 
   // Tabs traduits dynamiquement
   const TABS: { id: TabId; labelKey: string; icon: typeof User }[] = [
@@ -77,7 +77,7 @@ export function AdminSettingsClient({ user, school }: Props) {
   const [schoolSaved, setSchoolSaved] = useState(false)
   const [schoolErr, setSchoolErr] = useState<string | null>(null)
   const [pendingRequest, setPendingRequest] = useState<any | null>(null)
-  const [loadingPending, setLoadingPending] = useState(true)
+  const [_loadingPending, setLoadingPending] = useState(true)
 
   // School / Logo
   const [logoUrl, setLogoUrl] = useState<string | null>(school?.logo ?? null)

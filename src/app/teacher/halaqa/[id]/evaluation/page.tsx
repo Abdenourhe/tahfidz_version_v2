@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { useForm } from "react-hook-form"
@@ -37,7 +37,6 @@ interface StudentEval {
 
 export default function HalaqaEvaluationPage() {
   const params = useParams()
-  const router = useRouter()
   const { locale } = useLanguage()
   const t = useT("halaqa")
   const isRTL = locale === "ar"
@@ -48,13 +47,14 @@ export default function HalaqaEvaluationPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
   })
 
   useEffect(() => {
     if (!sessionId) return
     fetchSession()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId])
 
   useEffect(() => {

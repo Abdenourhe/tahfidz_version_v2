@@ -30,7 +30,7 @@ export default function MessageParentPage({ params }:{ params:{id:string} }) {
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
         <button onClick={()=>router.back()} className="p-2 hover:bg-gray-100 rounded-lg transition"><ArrowLeft size={18} className="text-gray-500"/></button>
-        <div><h1 className="text-2xl font-bold text-gray-900">Envoyer un message</h1><p className="text-sm text-gray-500">Email + notification dans l'application</p></div>
+        <div><h1 className="text-2xl font-bold text-gray-900">Envoyer un message</h1><p className="text-sm text-gray-500">Email + notification dans l&apos;application</p></div>
       </div>
       {parent&&(<div className="bg-white rounded-xl border border-gray-100 p-5">
         <h2 className="font-semibold text-gray-800 mb-3">Destinataire</h2>

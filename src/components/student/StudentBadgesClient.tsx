@@ -25,7 +25,7 @@ interface Props {
   totalStars: number
 }
 
-export function StudentBadgesClient({ earnedBadges, allBadges, totalStars }: Props) {
+export function StudentBadgesClient({ earnedBadges, allBadges, totalStars: _totalStars }: Props) {
   const t = useT("studentBadgesClient")
 
   const rarityConfig: Record<string, { labelKey: string; gradient: string; border: string }> = {

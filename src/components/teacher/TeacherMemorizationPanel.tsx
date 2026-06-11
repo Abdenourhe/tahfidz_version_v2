@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useCallback } from "react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
-import { Plus, BookOpen, Calendar, X, Loader2, Trash2, Edit3 } from "lucide-react"
+import { Plus, BookOpen, Calendar, X, Loader2, Trash2 } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 
 interface StudentOption {
@@ -79,7 +79,7 @@ export default function TeacherMemorizationPanel() {
     setSubmitting(true)
     setError(null)
     try {
-      const surah = surahs.find((s) => s.id === Number(form.surahId))
+      const _surah = surahs.find((s) => s.id === Number(form.surahId))
       const res = await fetch("/api/memorization/assign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -3,12 +3,12 @@
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { useLanguage } from "@/contexts/LanguageContext"
-import { ArrowLeft, Plus, Save, Trash2, Loader2, CheckCircle2, Palette, Type, LayoutTemplate, Award } from "lucide-react"
-import type { CertificateTemplate, CertConfig } from "./types"
-import { DEFAULT_CERT_CONFIG } from "./types"
+import { ArrowLeft, Plus, Save, Trash2, Loader2, CheckCircle2, Palette, LayoutTemplate, Award } from "lucide-react"
+import type { CertificateTemplate } from "./types"
+import { DEFAULT_CERT_CONFIG, CertConfig } from "./types"
 
 export function CertificateManager() {
-  const { locale, useT } = useLanguage()
+  const { locale } = useLanguage()
   const L = (locale as "fr" | "en" | "ar") ?? "fr"
   // Inline labels used directly below
 

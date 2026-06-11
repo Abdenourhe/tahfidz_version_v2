@@ -3,13 +3,12 @@
 
 import { Suspense } from "react"
 import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { ArrowLeft, KeyRound, Loader2, Lock, CheckCircle2, Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
 
 function ResetPasswordForm() {
-  const router = useRouter()
   const searchParams = useSearchParams() ?? new URLSearchParams()
   const token = searchParams.get("token") || ""
 

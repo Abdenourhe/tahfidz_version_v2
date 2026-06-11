@@ -49,8 +49,8 @@ const dayMap: Record<string, Record<string, string>> = {
 }
 
 export function RegistrationCardPrintTemplate({ student, inviteUrl, school }: Props) {
-  const { locale, useT, dir } = useLanguage()
-  const t = (key: string) => useT("printCard", key)
+  const { locale, useT: tFn, dir } = useLanguage()
+  const t = (key: string) => tFn("printCard", key)
   const isRTL = dir === "rtl"
 
   const s = student

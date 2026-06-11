@@ -1,11 +1,10 @@
 "use client"
 import { useRef, useState, Dispatch, SetStateAction } from "react"
-import Image from "next/image"
 import {
   X, Plus, Pencil, CheckCircle2, Check, Copy, KeyRound,
-  Loader2, RefreshCw, ImagePlus, Trash2, Ban,
+  Loader2, RefreshCw, ImagePlus, Trash2,
 } from "lucide-react"
-import { ApprovalResult, School, FeedbackItem, COUNTRIES } from "./types"
+import { ApprovalResult, FeedbackItem, COUNTRIES } from "./types"
 import { formatDate } from "./types"
 import { getFeedbackTypeColor, getFeedbackTypeLabel, getStatusColor, getStatusLabel, getPriorityColor, getPriorityLabel } from "./types"
 

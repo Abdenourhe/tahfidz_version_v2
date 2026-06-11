@@ -3,11 +3,10 @@
 
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import {
-  ArrowLeft, BookOpen, Star, Award, CalendarCheck, GraduationCap,
-  Phone, Mail, RefreshCw, Loader2, CheckCircle2, RotateCcw, X, Clock,
-  TrendingUp, Flame, ChevronRight, MessageCircle
+  ArrowLeft, BookOpen, Star, Award, CalendarCheck,
+  Phone, Mail, RefreshCw, CheckCircle2, RotateCcw, X, Clock,
+  TrendingUp, Flame, MessageCircle
 } from "lucide-react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { useSession } from "next-auth/react"
@@ -42,11 +41,11 @@ interface Student {
   _count: { memorizedSurahs: number; studentBadges: number }
 }
 
-function fmtDate(d: string, L: string, opts?: Intl.DateTimeFormatOptions) {
-  return new Date(d).toLocaleDateString(L === "ar" ? "ar-SA" : L === "en" ? "en-US" : "fr-FR", opts ?? { day: "2-digit", month: "short", year: "numeric" })
+function fmtDate(d: string, _L: string, opts?: Intl.DateTimeFormatOptions) {
+  return new Date(d).toLocaleDateString(_L === "ar" ? "ar-SA" : _L === "en" ? "en-US" : "fr-FR", opts ?? { day: "2-digit", month: "short", year: "numeric" })
 }
 
-function fmtAge(dob?: string | null, L: string = "fr"): string | null {
+function fmtAge(dob?: string | null, _L: string = "fr"): string | null {
   if (!dob) return null
   const birth = new Date(dob); const now = new Date()
   let y = now.getFullYear() - birth.getFullYear()
@@ -166,7 +165,7 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
   const [badges, setBadges] = useState<Badge[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [lastSync, setLastSync] = useState<Date>(new Date())
+  const [_lastSync, setLastSync] = useState<Date>(new Date())
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true)

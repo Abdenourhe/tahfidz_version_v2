@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { Loader2, Plus, Search, BookOpen } from "lucide-react"
 import { statusLabel } from "@/lib/utils"
-import { useLanguage, useT } from "@/contexts/LanguageContext"
+import { useT } from "@/contexts/LanguageContext"
 
 interface Surah { id: number; nameFr: string; nameAr: string; verseCount: number; juzNumber: number; difficultyLevel: number }
 interface Student { id: string; user: { fullName: string }; group: { name: string } | null }
@@ -20,8 +20,6 @@ interface Progress {
 }
 
 export default function TeacherProgressPage() {
-  const { locale } = useLanguage()
-  const L = locale as "fr" | "en" | "ar"
   const searchParams = useSearchParams() ?? new URLSearchParams()
   const urlStudentId = searchParams.get("studentId")
 

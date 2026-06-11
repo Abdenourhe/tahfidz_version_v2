@@ -44,7 +44,7 @@ interface Props {
 
 export function SuperadminProfileClient({ user, stats, recentRequests }: Props) {
   const t = useT("superadminProfileClient")
-  const tc = useT("profileCommon")
+  const _tc = useT("profileCommon")
 
   const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } }
 

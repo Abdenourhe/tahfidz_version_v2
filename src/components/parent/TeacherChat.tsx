@@ -44,7 +44,7 @@ function useScrollBehavior(
   return { showJumpBtn, scrollToBottom, onScroll }
 }
 
-export function TeacherChat({ teacherUserId, teacherName, parentUserId, childName, studentId, open, onOpenChange }: {
+export function TeacherChat({ teacherUserId, teacherName: _teacherName, parentUserId, childName, studentId, open, onOpenChange }: {
   teacherUserId: string
   teacherName: string
   parentUserId: string

@@ -26,7 +26,7 @@ interface Props {
   groupName: string
 }
 
-export function GroupStudentList({ students, groupId, groupName }: Props) {
+export function GroupStudentList({ students, groupId: _groupId, groupName: _groupName }: Props) {
   const [transferStudent, setTransferStudent] = useState<Student | null>(null)
 
   return (

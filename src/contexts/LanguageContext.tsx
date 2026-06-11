@@ -2,7 +2,7 @@
 // src/contexts/LanguageContext.tsx
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react"
-import { Locale, SectionKey, TranslationKey, translations } from "@/lib/i18n/translations"
+import { Locale, SectionKey, translations } from "@/lib/i18n/translations"
 
 interface LanguageContextValue {
   locale: Locale

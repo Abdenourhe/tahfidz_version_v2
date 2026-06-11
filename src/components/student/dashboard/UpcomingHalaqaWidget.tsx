@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Video, Clock, Radio } from "lucide-react"
+import { Video, Radio } from "lucide-react"
 import { useT } from "@/contexts/LanguageContext"
 
 interface Halaqa {

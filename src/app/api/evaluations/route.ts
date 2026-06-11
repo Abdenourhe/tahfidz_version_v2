@@ -3,7 +3,7 @@ import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
 import { evaluationSchema } from "@/lib/validations/auth"
-import { calculateFinalScore, starsFromScore } from "@/lib/utils"
+import { starsFromScore } from "@/lib/utils"
 
 export async function GET(req: Request) {
   const session = await auth()

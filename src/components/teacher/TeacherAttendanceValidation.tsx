@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { useSearchParams } from "next/navigation"
-import { CheckCircle2, XCircle, Loader2, Filter, CalendarDays, Users, AlertTriangle, Save, Clock, BookOpen, ChevronLeft, ChevronRight } from "lucide-react"
+import { CheckCircle2, XCircle, Loader2, Users, AlertTriangle, Save, Clock, BookOpen, ChevronLeft, ChevronRight } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 
 interface Group { id: string; name: string; schedule?: Record<string, string> | null }

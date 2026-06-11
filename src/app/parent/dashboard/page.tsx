@@ -64,9 +64,10 @@ export default async function ParentDashboard() {
     <div className="max-w-3xl mx-auto">
       <ParentDashboardClient
         todayDate={formatDate(new Date())}
-        children={children}
         missingTomorrowIds={missingIds}
-      />
+      >
+        {children}
+      </ParentDashboardClient>
     </div>
   )
 }

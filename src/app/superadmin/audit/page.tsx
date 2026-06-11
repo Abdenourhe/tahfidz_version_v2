@@ -5,7 +5,6 @@ import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { AuditLogClient } from "@/components/superadmin/AuditLogClient"
-import type { AuditAction } from "@/lib/audit"
 
 export const metadata = {
   title: "Audit & Logs — SuperAdmin",

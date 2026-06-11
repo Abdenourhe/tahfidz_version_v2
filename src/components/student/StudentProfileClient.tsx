@@ -8,7 +8,7 @@ import { StatCard } from "@/components/profile/StatCard"
 import { ProfileAccordion } from "@/components/profile/ProfileAccordion"
 import { AnimatedCounter } from "@/components/profile/AnimatedCounter"
 import {
-  Star, BookOpen, Award, Flame, TrendingUp, Mail, Phone, GraduationCap, UserCircle,
+  Star, BookOpen, Award, Flame, TrendingUp, Mail, Phone, GraduationCap,
   CalendarCheck
 } from "lucide-react"
 

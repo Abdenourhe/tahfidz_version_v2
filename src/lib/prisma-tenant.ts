@@ -4,7 +4,7 @@
  * pour garantir l'isolation stricte entre écoles.
  */
 import { prisma } from "@/lib/prisma"
-import type { Prisma } from "@prisma/client"
+
 
 // Tables soumises à l'isolation tenant
 const TENANT_TABLES = new Set([

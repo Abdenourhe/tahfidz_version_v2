@@ -7,11 +7,9 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { createUserSchema, type CreateUserInput } from "@/lib/validations/auth"
 import { Loader2, ArrowLeft, CheckCircle2, Eye, EyeOff } from "lucide-react"
-import { useLanguage, useT } from "@/contexts/LanguageContext"
+import { useT } from "@/contexts/LanguageContext"
 
 export default function NewTeacherPage() {
-  const { locale } = useLanguage()
-  const L = locale as "fr" | "en" | "ar"
   const router = useRouter()
 
     const t = useT("teachers_new")

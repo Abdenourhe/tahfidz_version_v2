@@ -4,7 +4,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Search, Users, NotebookPen } from "lucide-react"
-import { calculateAge, formatDate } from "@/lib/utils"
+import { calculateAge } from "@/lib/utils"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { AvatarLightbox } from "@/components/AvatarLightbox"
 import { TeacherDailyLogModal } from "@/components/teacher/TeacherDailyLogModal"

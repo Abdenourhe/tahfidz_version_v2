@@ -2,7 +2,6 @@
 // src/app/admin/announcements/page.tsx — with edit + delete
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Megaphone, Pin, Plus, Pencil, Trash2, Loader2 } from "lucide-react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
@@ -18,8 +17,6 @@ interface Announcement {
 export default function AdminAnnouncementsPage() {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
-  const router = useRouter()
-
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [loading, setLoading]   = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)

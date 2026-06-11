@@ -2,7 +2,6 @@
 // src/app/teacher/announcements/page.tsx — FIXED: loads correctly, edit + delete
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Megaphone, Plus, Pencil, Trash2, Loader2, Pin } from "lucide-react"
 
@@ -22,7 +21,6 @@ const TC: Record<string,{label:string;color:string}> = {
 function fmtDate(d:string){return new Date(d).toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric"})}
 
 export default function TeacherAnnouncementsPage() {
-  const router=useRouter()
   const [anns,setAnns]=useState<Ann[]>([])
   const [loading,setLoading]=useState(true)
   const [confirmId,setConfirmId]=useState<string|null>(null)

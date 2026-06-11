@@ -2,7 +2,6 @@
 export const dynamic = 'force-dynamic'
 
 import { auth } from "@/auth"
-import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { ParentNav } from "@/components/layout/ParentNav"
 import { ParentBottomNav } from "@/components/layout/ParentBottomNav"

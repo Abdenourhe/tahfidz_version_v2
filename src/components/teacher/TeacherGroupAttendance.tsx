@@ -2,7 +2,7 @@
 // src/components/teacher/TeacherGroupAttendance.tsx
 // Compact attendance for group detail page
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { Save, Loader2, Check, X, Clock, BookOpen } from "lucide-react"
 
 interface Student { id: string; user: { fullName: string } }
@@ -33,7 +33,7 @@ export function TeacherGroupAttendance({ groupId, students }: Props) {
         })
         setAtt(m)
       })
-  }, [groupId, students.length, today])
+  }, [groupId, students, today])
 
   const save = async () => {
     setSaving(true)

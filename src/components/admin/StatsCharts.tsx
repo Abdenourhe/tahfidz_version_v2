@@ -2,7 +2,7 @@
 // src/components/admin/StatsCharts.tsx
 
 import {
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+  LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from "recharts"
 import { useLanguage } from "@/contexts/LanguageContext"
@@ -89,7 +89,7 @@ export function StatsCharts({ data, locale }: StatsChartsProps) {
     color: STATUS_COLORS[p.status] ?? "#9CA3AF",
   }))
 
-  const topSurahsData = data.topSurahsWithNames.map(s => ({
+  const _topSurahsData = data.topSurahsWithNames.map(s => ({
     name: L === "ar" ? (s.surah?.nameAr ?? `${s.surahId}`) : (s.surah?.nameFr ?? `Sourate ${s.surahId}`),
     count: s._count.id,
   }))

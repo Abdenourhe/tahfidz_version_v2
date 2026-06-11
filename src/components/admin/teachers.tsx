@@ -11,7 +11,7 @@ import {
   Plus, Search, Users, ArrowLeft, BookOpen, Star,
   ClipboardList, Pencil, Trash2, AlertTriangle,
 } from "lucide-react"
-import { shortId, formatDate, scoreToGrade } from "@/lib/utils"
+import { formatDate, scoreToGrade } from "@/lib/utils"
 
 // ═══════════════════════════════════════════════════════════════════════════
 // LISTE ENSEIGNANTS
@@ -37,7 +37,7 @@ interface ListProps {
   search: string
 }
 
-export function TeachersListClient({ teachers: initialTeachers, total, search }: ListProps) {
+export function TeachersListClient({ teachers: initialTeachers, total: _total, search }: ListProps) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
   const router = useRouter()
@@ -213,7 +213,7 @@ export function TeacherDetailClient({ teacher: initialTeacher, school, avgScore 
   const router = useRouter()
   const t = useT("teachers_2")
 
-  const [teacher, setTeacher] = useState<any>(initialTeacher)
+  const [teacher, _setTeacher] = useState<any>(initialTeacher)
   const [showDelete, setShowDelete] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)

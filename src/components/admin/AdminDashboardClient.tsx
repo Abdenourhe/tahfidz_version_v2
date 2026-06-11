@@ -42,15 +42,15 @@ export function AdminDashboardClient({
   userName, userEmail, totalStudents, totalTeachers, totalParents, totalGroups,
   activeProgress, memorizedCount, recentEvaluations, recentAnnouncements, todayDate,
 }: Props) {
-  const { locale, useT } = useLanguage()
-  const tD  = (k: string) => useT("dashboard", k)
-  const tC  = (k: string) => useT("common", k)
-  const tS  = (k: string) => useT("students", k)
-  const tT  = (k: string) => useT("teachers", k)
-  const tG  = (k: string) => useT("groups", k)
-  const tM  = (k: string) => useT("memorization", k)
-  const tEv = (k: string) => useT("evaluations", k)
-  const tMs = (k: string) => useT("messaging", k)
+  const { locale, useT: tFn } = useLanguage()
+  const tD  = (k: string) => tFn("dashboard", k)
+  const _tC  = (k: string) => tFn("common", k)
+  const _tS  = (k: string) => tFn("students", k)
+  const tT  = (k: string) => tFn("teachers", k)
+  const _tG  = (k: string) => tFn("groups", k)
+  const _tM  = (k: string) => tFn("memorization", k)
+  const _tEv = (k: string) => tFn("evaluations", k)
+  const _tMs = (k: string) => tFn("messaging", k)
 
   const statCards = [
     { labelKey: "activeStudents",  value: totalStudents,  icon: GraduationCap, color: "text-tahfidz-green", bg: "bg-tahfidz-green-light",

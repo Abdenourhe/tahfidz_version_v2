@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { CheckCircle2, XCircle, Loader2, ArrowLeft, Building2, Clock, User, MapPin, Phone } from "lucide-react"
+import { CheckCircle2, XCircle, Loader2, ArrowLeft, Building2, Clock, User } from "lucide-react"
 
 interface UpdateRequest {
   id: string

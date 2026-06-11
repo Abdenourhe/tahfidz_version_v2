@@ -14,7 +14,7 @@ import {
   EyeOff,
   AlertCircle
 } from "lucide-react"
-import { useLanguage, useT } from "@/contexts/LanguageContext"
+import { useT } from "@/contexts/LanguageContext"
 
 const schema = z.object({
   email: z.string().email("Email invalide"),
@@ -29,8 +29,6 @@ const schema = z.object({
 type FormInput = z.infer<typeof schema>
 
 export default function NewParentPage() {
-  const { locale } = useLanguage()
-  const L = locale as "fr" | "en" | "ar"
   const router = useRouter()
 
     const t = useT("parents_new")

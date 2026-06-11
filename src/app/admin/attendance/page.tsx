@@ -75,7 +75,7 @@ export default function AdminAttendancePage() {
         if (g.length > 0) setSelGroup(g[0].id)
       })
       .catch(() => setError(t("errorGroups")))
-  }, [])
+  }, [t])
 
   useEffect(() => {
     if (preset !== "custom") {

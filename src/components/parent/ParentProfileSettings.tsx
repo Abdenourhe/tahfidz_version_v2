@@ -1,12 +1,10 @@
 "use client"
 import { useState } from "react"
-import { useLanguage, useT } from "@/contexts/LanguageContext"
+import { useT } from "@/contexts/LanguageContext"
 import { useSession } from "next-auth/react"
-import { Loader2, Save, Lock, User, Phone, Globe, CheckCircle2, AlertTriangle, Eye, EyeOff } from "lucide-react"
+import { Loader2, Save, Lock, User, Phone, CheckCircle2, AlertTriangle, Eye, EyeOff } from "lucide-react"
 
 export function ParentProfileSettings() {
-  const { locale } = useLanguage()
-  const L = locale as "fr" | "en" | "ar"
   const t = useT("parentProfileSettings")
   const { data: session, update } = useSession()
 

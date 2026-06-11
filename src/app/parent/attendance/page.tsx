@@ -33,7 +33,7 @@ export default async function ParentAttendancePage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <ParentProfileAttendance children={parent.childrenLinks as any} />
+      <ParentProfileAttendance>{parent.childrenLinks as any}</ParentProfileAttendance>
     </div>
   )
 }

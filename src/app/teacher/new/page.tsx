@@ -199,14 +199,14 @@ export default function NewTeacherPage() {
                 name="specialization"
                 value={formData.specialization}
                 onChange={handleChange}
-                placeholder="ex: Tajweed, Qira'at, Hifz..."
+                placeholder="ex: Tajweed, Qira&apos;at, Hifz..."
                 className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green focus:border-transparent"
               />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1.5 flex items-center gap-1">
                 <Users size={14} />
-                Capacité max d'élèves
+                Capacité max d&apos;élèves
               </label>
               <input
                 type="number"
@@ -287,7 +287,7 @@ export default function NewTeacherPage() {
             ) : (
               <>
                 <Save size={16} />
-                Créer l'enseignant
+                Créer l&apos;enseignant
               </>
             )}
           </button>

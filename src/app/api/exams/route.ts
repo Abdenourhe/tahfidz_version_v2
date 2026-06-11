@@ -13,7 +13,7 @@ const examSchema = z.object({
   duration:    z.number().int().min(10).max(240).default(60),
 })
 
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
   const session = await auth()
   if (!session?.user || !["ADMIN","TEACHER"].includes(session.user.role)) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 })

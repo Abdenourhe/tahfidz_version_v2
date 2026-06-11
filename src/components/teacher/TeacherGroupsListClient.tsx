@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { BookOpen, Users } from "lucide-react"
-import { useLanguage, useT } from "@/contexts/LanguageContext"
+import { useT } from "@/contexts/LanguageContext"
 
 interface Group {
   id: string
@@ -25,10 +25,7 @@ interface Props {
 }
 
 export function TeacherGroupsListClient({ groups }: Props) {
-  const { locale } = useLanguage()
-  const L = locale as "fr" | "en" | "ar"
-
-    const t = useT("teacherGroupsListClient")
+  const t = useT("teacherGroupsListClient")
 
   const levelMap: Record<string, { label: string; color: string }> = {
     beginner:     { label: t("beginner"),     color: "bg-green-100 text-green-700" },

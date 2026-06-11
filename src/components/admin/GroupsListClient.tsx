@@ -5,7 +5,7 @@ import { useState } from "react"
 
 import Link from "next/link"
 import { Plus, BookOpen, Users, Trash2 } from "lucide-react"
-import { useLanguage, useT } from "@/contexts/LanguageContext"
+import { useT } from "@/contexts/LanguageContext"
 import { shortId } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 
@@ -27,8 +27,6 @@ interface Props {
 }
 
 export function GroupsListClient({ groups: initialGroups }: Props) {
-  const { locale } = useLanguage()
-  const L = locale as "fr" | "en" | "ar"
   const router = useRouter()
   const t = useT("groupsListClient")
 

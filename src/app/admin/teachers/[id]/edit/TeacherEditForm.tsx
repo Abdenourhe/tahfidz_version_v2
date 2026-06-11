@@ -4,7 +4,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2, ArrowLeft, CheckCircle2, Eye, EyeOff } from "lucide-react"
-import { useLanguage, useT } from "@/contexts/LanguageContext"
+import { useT } from "@/contexts/LanguageContext"
 
 interface InitialData {
   fullName: string
@@ -19,8 +19,6 @@ interface InitialData {
 }
 
 export function TeacherEditForm({ teacherId, initialData }: { teacherId: string; initialData: InitialData }) {
-  const { locale } = useLanguage()
-  const L = locale as "fr" | "en" | "ar"
   const router = useRouter()
   const t = useT("teachers_2")
   const tNew = useT("teachers_new")

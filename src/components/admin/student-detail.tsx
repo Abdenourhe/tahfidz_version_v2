@@ -11,7 +11,7 @@ import { calculateAge } from "@/lib/utils"
 import {
   ArrowLeft, Pencil, Award, BookOpen, Star,
   User, Mail, Phone, AlertCircle, MapPin, Heart, Calendar,
-  GraduationCap, Users, Shield, Copy, CheckCircle, Clock,
+  GraduationCap, Users, Copy, CheckCircle, Clock,
   TrendingUp, BarChart3, KeyRound, ArrowRight, Loader2, CheckCircle2, X, Printer,
   Globe, Languages,
 } from "lucide-react"

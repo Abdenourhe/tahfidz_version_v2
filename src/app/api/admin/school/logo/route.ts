@@ -8,13 +8,6 @@ import { prisma } from "@/lib/prisma"
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"]
 const MAX_SIZE = 2 * 1024 * 1024 // 2 MB
 
-function mimeToExt(type: string): string {
-  if (type === "image/svg+xml") return "svg"
-  if (type === "image/webp") return "webp"
-  if (type === "image/png") return "png"
-  return "jpg"
-}
-
 export async function POST(req: NextRequest) {
   const session = await auth()
   if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "SUPERADMIN")) {

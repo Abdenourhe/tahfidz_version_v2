@@ -7,8 +7,8 @@ import { formatDate } from "@/lib/utils"
 import { TeacherEvaluationModal } from "./TeacherEvaluationModal"
 import {
   Award, Plus, Filter, Search, Calendar, User, BookOpen,
-  CheckCircle, AlertTriangle, XCircle, ChevronRight, Star,
-  TrendingUp, MessageSquare, Trash2, Edit3, Eye, Loader2, X
+  CheckCircle, AlertTriangle, XCircle, ChevronRight,
+  Trash2, Edit3, Eye, Loader2, X
 } from "lucide-react"
 
 interface Props {

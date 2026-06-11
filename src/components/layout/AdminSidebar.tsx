@@ -31,9 +31,9 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ user, schoolName, schoolLogo, schoolSlug, schoolCity }: AdminSidebarProps) {
   const pathname = usePathname() ?? ""
-  const { useT, locale } = useLanguage()
+  const { useT: tFn, locale } = useLanguage()
   const { collapsed } = useSidebarCollapsed()
-  const tNav = (k: string) => useT("nav", k)
+  const tNav = (k: string) => tFn("nav", k)
 
   const navSections = [
     {

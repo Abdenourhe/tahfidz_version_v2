@@ -1,7 +1,6 @@
 // src/app/api/halaqa/recordings/route.ts
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
-import { getRecordings } from "@/lib/bigbluebutton"
 import { NextResponse } from "next/server"
 
 export async function GET(req: Request) {
@@ -15,7 +14,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url)
     const sessionId = searchParams.get("sessionId")
 
-    let where: any = { schoolId }
+    const where: any = { schoolId }
 
     if (sessionId) {
       where.id = sessionId

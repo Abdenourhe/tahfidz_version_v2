@@ -2,7 +2,7 @@
 // src/app/admin/admins/page.tsx — Manage administrators
 
 import { useState, useEffect } from "react"
-import Link from "next/link"
+
 import { Shield, Plus, Mail, Phone, Calendar, Loader2, Trash2, AlertTriangle, X } from "lucide-react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 

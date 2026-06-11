@@ -7,7 +7,6 @@ import { useT } from "@/contexts/LanguageContext"
 import {
   LayoutDashboard, Users, BookMarked, Award, UserCircle,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
 
 const MOBILE_NAV = [
   { href: "/teacher/dashboard", icon: LayoutDashboard, key: "dashboard" },

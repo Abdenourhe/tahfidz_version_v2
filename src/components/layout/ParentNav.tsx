@@ -18,12 +18,12 @@ interface ParentNavProps {
   schoolLogo?: string
 }
 
-export function ParentNav({ user, schoolName, schoolLogo }: ParentNavProps) {
+export function ParentNav({ user: _user, schoolName, schoolLogo }: ParentNavProps) {
   const pathname = usePathname()
-  const { locale, useT } = useLanguage()
+  const { locale, useT: tFn } = useLanguage()
   const { data: session } = useSession()
-  const tN = (k: string) => useT("nav", k)
-  const tA = (k: string) => useT("auth", k)
+  const tN = (k: string) => tFn("nav", k)
+  const tA = (k: string) => tFn("auth", k)
 
   const displayName = schoolName || "TAHFIDZ"
   const logo = schoolLogo

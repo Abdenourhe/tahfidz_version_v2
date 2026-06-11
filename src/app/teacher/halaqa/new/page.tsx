@@ -49,7 +49,6 @@ type FormData = z.infer<typeof schema>
     },
   })
 
-  const selectedGroup = watch("groupId")
   const selectedStudents = watch("studentIds") || []
   const mode = watch("mode")
 

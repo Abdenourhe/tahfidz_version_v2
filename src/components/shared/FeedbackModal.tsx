@@ -96,7 +96,7 @@ export function FeedbackModal({ isOpen, onClose, userRole, userName, userEmail, 
       } else {
         setError(data.error || t("error"))
       }
-    } catch (err) {
+    } catch {
       setError(t("error"))
     } finally {
       setSending(false)

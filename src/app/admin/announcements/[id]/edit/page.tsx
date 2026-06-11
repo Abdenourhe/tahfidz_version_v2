@@ -4,13 +4,11 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2, ArrowLeft, CheckCircle2, Pin, XCircle } from "lucide-react"
-import { useLanguage, useT } from "@/contexts/LanguageContext"
+import { useT } from "@/contexts/LanguageContext"
 
 interface Group { id: string; name: string }
 
 export default function EditAnnouncementPage({ params }: { params: { id: string } }) {
-  const { locale } = useLanguage()
-  const L = locale as "fr" | "en" | "ar"
   const router = useRouter()
 
     const t = useT("announcements_id_edit")

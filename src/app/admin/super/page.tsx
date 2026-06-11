@@ -9,7 +9,7 @@ import { signOut } from "next-auth/react"
 
 import {
   School, SchoolRequest, AuditLog, FeedbackItem, SystemHealth,
-  TabKey, TimeRange, EMPTY_FORM, generateSlug, formatDate,
+  TabKey, TimeRange, EMPTY_FORM, generateSlug,
 } from "@/components/admin/superadmin/types"
 import { SuperAdminHeader } from "@/components/admin/superadmin/header"
 import { SuperAdminStats } from "@/components/admin/superadmin/stats"

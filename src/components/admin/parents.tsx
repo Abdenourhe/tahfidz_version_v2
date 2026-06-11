@@ -10,7 +10,7 @@ import { useLanguage, useT } from "@/contexts/LanguageContext"
 import {
   Plus, Search, Users, ArrowLeft, Phone, Mail, Link2, Pencil, Trash2, AlertTriangle,
 } from "lucide-react"
-import { formatDate, statusLabel, shortId } from "@/lib/utils"
+import { formatDate, statusLabel } from "@/lib/utils"
 
 // ═══════════════════════════════════════════════════════════════════════════
 // LISTE PARENTS
@@ -41,7 +41,7 @@ interface ListProps {
   search: string
 }
 
-export function ParentsListClient({ parents: initialParents, total, page, totalPages, search }: ListProps) {
+export function ParentsListClient({ parents: initialParents, total: _total, page, totalPages, search }: ListProps) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
   const router = useRouter()
@@ -253,7 +253,7 @@ export function ParentDetailClient({ parent: initialParent, school }: DetailProp
   const router = useRouter()
   const t = useT("parents_2")
 
-  const [parent, setParent] = useState<any>(initialParent)
+  const [parent, _setParent] = useState<any>(initialParent)
   const [showDelete, setShowDelete] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)

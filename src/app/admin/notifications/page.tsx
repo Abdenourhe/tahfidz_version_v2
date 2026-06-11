@@ -1,7 +1,7 @@
 "use client"
 // src/app/admin/notifications/page.tsx — with delete option
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { formatDate } from "@/lib/utils"
 import { Bell, CheckCheck, BookOpen, Star, Award, Megaphone, Link2, Trash2, Loader2, XCircle, Building2 } from "lucide-react"
@@ -49,7 +49,7 @@ export default function AdminNotificationsPage() {
   const [deleting, setDeleting]           = useState<string | null>(null)
   const [deletingAll, setDeletingAll]     = useState(false)
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     setLoading(true)
     try {
       const res = await fetch(`/api/notifications${filter === "unread" ? "?unread=true" : ""}`)
@@ -59,9 +59,9 @@ export default function AdminNotificationsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filter])
 
-  useEffect(() => { fetchNotifications() }, [filter])
+  useEffect(() => { fetchNotifications() }, [fetchNotifications])
 
   const markAllRead = async () => {
     await fetch("/api/notifications", {

@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect, useCallback } from "react"
-import { useLanguage, useT } from "@/contexts/LanguageContext"
+import { useT } from "@/contexts/LanguageContext"
 import { Loader2, BookOpen, RotateCcw, Headphones, GraduationCap, CalendarDays } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 
@@ -100,8 +100,6 @@ function AttendanceBadge({ status }: { status: string | null }) {
 }
 
 export default function StudentDailyLogView({ studentId }: { studentId: string }) {
-  const { locale } = useLanguage()
-  const L = locale as "fr" | "en" | "ar"
   const t = useT("studentDailyLog")
 
   const [logs, setLogs] = useState<Log[]>([])

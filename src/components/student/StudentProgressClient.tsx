@@ -2,7 +2,7 @@
 // src/components/student/StudentProgressClient.tsx
 
 import { motion } from "framer-motion"
-import { useLanguage, useT } from "@/contexts/LanguageContext"
+import { useT } from "@/contexts/LanguageContext"
 import { formatDate, getStatusStyle } from "@/lib/utils"
 import { VerseProgressTracker } from "@/components/student/VerseProgressTracker"
 
@@ -33,10 +33,7 @@ interface Props {
 }
 
 export function StudentProgressClient({ studentId, memorized, inProgress }: Props) {
-  const { locale } = useLanguage()
-  const L = locale as "fr" | "en" | "ar"
-
-    const t = useT("studentProgressClient")
+  const t = useT("studentProgressClient")
 
   const total = memorized.length + inProgress.length
   const ts = useT("memorizationStatus")

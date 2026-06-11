@@ -294,7 +294,6 @@ export async function DELETE(req: NextRequest) {
       await tx.$executeRaw`DELETE FROM "schools" WHERE "id" = ${id}`
     })
 
-    console.log(`[TAHFIDZ] 🗑️ École supprimée : ${school.name} (${school.slug})`)
     return NextResponse.json({ ok: true })
   }
 

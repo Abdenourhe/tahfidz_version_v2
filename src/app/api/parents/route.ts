@@ -72,7 +72,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Non autorisé — Admin requis" }, { status: 403 })
     }
 
-    const { schoolId, id: adminId } = session.user
+    const { schoolId } = session.user
 
     // Parse body avec gestion d'erreur
     let body

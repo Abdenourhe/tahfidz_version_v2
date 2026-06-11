@@ -327,17 +327,17 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const monthYear = new Date(`${activeDate}T12:00:00`)
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden shadow-sm" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
 
       {/* Header */}
-      <div className="px-5 py-4 bg-gray-50/60 border-b border-gray-100 flex items-center justify-between">
-        <h2 className="font-semibold text-gray-800 flex items-center gap-2">
+      <div className="px-5 py-4 bg-gray-50/60 dark:bg-gray-700/60 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+        <h2 className="font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
           <CalendarCheck size={18} className="text-tahfidz-green" />
           {mode === "list" ? "Présences" : selectedChild?.student.user.fullName}
         </h2>
         {mode === "child" && (
           <button onClick={() => { setMode("list"); setSelectedChild(null) }}
-            className="flex items-center gap-1 text-xs font-bold text-gray-500 hover:text-gray-800 transition">
+            className="flex items-center gap-1 text-xs font-bold text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition">
             <ArrowLeft size={14} /> Retour
           </button>
         )}
@@ -357,7 +357,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
               let badgeCls = ""
               if (!cfg) {
                 badgeText = "Marquer"
-                badgeCls = "bg-gray-50 text-gray-400 border-gray-100"
+                badgeCls = "bg-gray-50 dark:bg-gray-700 text-gray-400 dark:text-gray-400 border-gray-100 dark:border-gray-600"
               } else {
                 const isToday = recent.date === todayStr
                 const daysAgo = Math.floor((+new Date(`${todayStr}T12:00:00`) - +new Date(`${recent.date}T12:00:00`)) / (1000 * 60 * 60 * 24))
@@ -387,7 +387,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
               return (
                 <button key={child.id}
                   onClick={() => enterChildMode(child)}
-                  className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 bg-white hover:border-tahfidz-green/30 hover:shadow-sm transition text-left w-full">
+                  className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-tahfidz-green/30 hover:shadow-sm transition text-left w-full">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold text-lg shadow-sm overflow-hidden gradient-tahfidz">
                     {child.student.user.avatar ? (
                       <Image src={child.student.user.avatar} alt={child.student.user.fullName} width={48} height={48} className="w-full h-full object-cover" />
@@ -396,7 +396,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-gray-900 truncate">{child.student.user.fullName}</p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{child.student.user.fullName}</p>
                     <p className="text-[11px] text-gray-400 truncate">
                       <span className="bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded mr-1 font-semibold">{RELATION_LABELS[child.relation] ?? child.relation}</span>
                       {child.student.group?.name}
@@ -418,9 +418,9 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
           /* ═══════════════════ CHILD MODE ═══════════════════ */
           <>
             {/* Mini calendar */}
-            <div className="bg-gray-50 rounded-xl p-3">
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+                <p className="text-xs font-bold text-gray-500 dark:text-gray-300 uppercase tracking-wide">
                   {MONTH_NAMES[monthYear.getMonth()]} {monthYear.getFullYear()}
                 </p>
                 <div className="flex items-center gap-3">
@@ -440,12 +440,12 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                       cell.dateStr === activeDate
                         ? "bg-tahfidz-green text-white shadow-sm"
                         : cell.isToday
-                          ? "bg-orange-100 text-orange-600"
+                          ? "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400"
                           : cell.isFuture && cell.isCourseDay
                             ? markedDates.has(cell.dateStr!)
-                              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                              : "hover:bg-gray-200 text-gray-600"
-                            : "text-gray-200 cursor-default"
+                              ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-800/40"
+                              : "hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300"
+                            : "text-gray-200 dark:text-gray-600 cursor-default"
                     }`}>
                     {cell.dayNum}
                   </button>
@@ -456,18 +456,18 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
             {/* Active day bar */}
             <div className="flex items-center gap-2 sm:gap-3">
               <button onClick={goPrev} disabled={!canGoPrev}
-                className="p-2 rounded-xl border border-gray-200 text-gray-400 hover:text-gray-700 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition active:scale-95">
+                className="p-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition active:scale-95">
                 <ChevronLeft size={16} />
               </button>
 
-              <div className="flex-1 bg-gray-50 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 min-w-0">
+              <div className="flex-1 bg-gray-50 dark:bg-gray-700 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-gray-800 truncate">{activeLabel.full}</p>
+                    <p className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">{activeLabel.full}</p>
                     <p className="text-[11px] text-gray-400">{selectedChild.student.group?.name}</p>
                   </div>
                   {markedDates.has(activeDate) && (
-                    <span className="flex items-center gap-1 text-[10px] px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full font-bold shrink-0">
+                    <span className="flex items-center gap-1 text-[10px] px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full font-bold shrink-0">
                       <Check size={10} /> Marqué
                     </span>
                   )}
@@ -475,7 +475,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
               </div>
 
               <button onClick={goNext} disabled={!canGoNext}
-                className="p-2 rounded-xl border border-gray-200 text-gray-400 hover:text-gray-700 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition active:scale-95">
+                className="p-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition active:scale-95">
                 <ChevronRight size={16} />
               </button>
             </div>
@@ -494,16 +494,16 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
 
             {/* Status selector */}
             {!isFuture ? (
-              <div className="text-center py-8 bg-gray-50 rounded-xl">
-                <p className="text-sm text-gray-400">Sélectionnez un jour à venir.</p>
+              <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                <p className="text-sm text-gray-400 dark:text-gray-400">Sélectionnez un jour à venir.</p>
               </div>
             ) : loading ? (
               <div className="flex justify-center py-10">
                 <Loader2 size={28} className="animate-spin text-tahfidz-green" />
               </div>
             ) : !hasCourseOnDay(selectedChild, activeDate) ? (
-              <div className="text-center py-8 bg-gray-50 rounded-xl">
-                <p className="text-sm text-gray-400">Pas de cours ce jour.</p>
+              <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                <p className="text-sm text-gray-400 dark:text-gray-400">Pas de cours ce jour.</p>
               </div>
             ) : (
               <div key={animKey} className="rounded-xl border p-3 sm:p-4 transition-all duration-200 animate-in fade-in slide-in-from-bottom-4"
@@ -521,7 +521,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold text-gray-900 truncate">{selectedChild.student.user.fullName}</p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{selectedChild.student.user.fullName}</p>
                     <p className="text-[10px] text-gray-400 truncate">
                       <span className="bg-orange-50 text-orange-600 px-1 py-0.5 rounded mr-1 font-semibold">{RELATION_LABELS[selectedChild.relation] ?? selectedChild.relation}</span>
                       {selectedChild.student.group?.name}
@@ -544,7 +544,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                         className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 py-2.5 sm:py-2 rounded-xl text-xs font-bold border-2 transition-all duration-150 active:scale-95 ${
                           isSelected
                             ? `${opt.bg} text-white border-transparent shadow-sm`
-                            : "border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50 bg-white"
+                            : "border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 bg-white dark:bg-gray-800"
                         }`}>
                         <opt.icon size={15} className="sm:size-[13px]" />
                         <span className="hidden sm:inline">{opt.label}</span>
@@ -559,7 +559,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                     value={note}
                     onChange={e => setNote(e.target.value)}
                     placeholder="Motif (maladie, voyage…)"
-                    className="w-full mt-2.5 px-3 py-2 text-xs rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-tahfidz-green/20 focus:border-tahfidz-green transition" />
+                    className="w-full mt-2.5 px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/20 focus:border-tahfidz-green transition" />
                 )}
 
                 {/* Save button */}
@@ -590,9 +590,9 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                         </div>
                       </div>
                       {r.validatedBy ? (
-                        <span className="text-[9px] px-1.5 py-0.5 bg-white rounded-full text-gray-400 border border-gray-100">Validé</span>
+                        <span className="text-[9px] px-1.5 py-0.5 bg-white dark:bg-gray-800 rounded-full text-gray-400 dark:text-gray-400 border border-gray-100 dark:border-gray-600">Validé</span>
                       ) : (
-                        <span className="text-[9px] px-1.5 py-0.5 bg-white rounded-full text-amber-500 border border-amber-100">En attente</span>
+                        <span className="text-[9px] px-1.5 py-0.5 bg-white dark:bg-gray-800 rounded-full text-amber-500 dark:text-amber-400 border border-amber-100 dark:border-amber-800">En attente</span>
                       )}
                     </div>
                   )

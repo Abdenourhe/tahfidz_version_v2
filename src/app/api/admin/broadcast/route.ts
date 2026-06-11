@@ -89,7 +89,7 @@ export async function GET() {
     })
 
     return NextResponse.json({ broadcasts: logs })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Erreur" }, { status: 500 })
   }
 }

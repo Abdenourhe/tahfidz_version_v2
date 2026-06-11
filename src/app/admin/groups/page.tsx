@@ -34,7 +34,7 @@ export default async function AdminGroupsPage({
     ]
   }
 
-  const [groups, total, teachers] = await Promise.all([
+  const [groups, _total, _teachers] = await Promise.all([
     prisma.group.findMany({
       where,
       include: {
@@ -54,7 +54,7 @@ export default async function AdminGroupsPage({
     }),
   ])
 
-  const totalPages = Math.ceil(total / limit)
+  const _totalPages = Math.ceil(_total / limit)
 
   return (
     <GroupsListClient

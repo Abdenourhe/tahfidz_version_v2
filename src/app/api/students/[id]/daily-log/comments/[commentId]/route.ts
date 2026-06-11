@@ -15,7 +15,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
     }
 
-    const { id: studentId, commentId } = await params
+    const { commentId } = await params
 
     const comment = await prisma.dailyLogComment.findUnique({
       where: { id: commentId },

@@ -15,8 +15,8 @@ interface Props {
 }
 
 export function RegistrationCardWithActions({ student, inviteUrl, school }: Props) {
-  const { useT } = useLanguage()
-  const t = (key: string) => useT("printCard", key)
+  const { useT: tFn } = useLanguage()
+  const t = (key: string) => tFn("printCard", key)
   const templateRef = useRef<HTMLDivElement>(null)
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
   const [mounted, setMounted] = useState(false)

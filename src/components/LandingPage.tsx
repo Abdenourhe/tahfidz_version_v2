@@ -5,11 +5,11 @@ import Link from "next/link"
 import { useTheme } from "next-themes"
 import { motion, useScroll, useTransform, type Variants } from "framer-motion"
 import {
-  BookOpen, Users, GraduationCap, BarChart2, Bell, Megaphone,
-  Shield, Smartphone, RefreshCw, Database, Menu, X, Star,
-  ChevronRight, Play, Check, Globe, ArrowRight, Monitor,
-  UserCheck, BookMarked, FileText, Wifi, Award, Sun, Moon,
-  Sparkles, TrendingUp, Clock, Heart, Zap, Lock
+  BookOpen, Users, GraduationCap, BarChart2, Megaphone,
+  Shield, Menu, X, Star,
+  Play, Check, ArrowRight,
+  UserCheck, BookMarked, Wifi, Sun, Moon,
+  Sparkles, Heart, Zap
 } from "lucide-react"
 import { HeroImage } from "./landing/HeroImage"
 
@@ -290,16 +290,6 @@ type Lang = "fr" | "en" | "ar"
 const fadeInUp: Variants = {
   hidden: { opacity: 0, y: 40 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
-}
-
-const fadeInLeft: Variants = {
-  hidden: { opacity: 0, x: -40 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.6, ease: "easeOut" } },
-}
-
-const fadeInRight: Variants = {
-  hidden: { opacity: 0, x: 40 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.6, ease: "easeOut" } },
 }
 
 const staggerContainer: Variants = {

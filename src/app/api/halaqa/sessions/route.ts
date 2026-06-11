@@ -14,7 +14,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url)
     const statusFilter = searchParams.get("status")
 
-    let where: any = { schoolId }
+    const where: any = { schoolId }
 
     if (role === "TEACHER") {
       where.teacherId = userId

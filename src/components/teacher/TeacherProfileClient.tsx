@@ -48,7 +48,7 @@ export function TeacherProfileClient({ teacher, totalStudents, schoolName, schoo
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
   const t = useT("teacherProfileClient")
-  const tc = useT("profileCommon")
+  const _tc = useT("profileCommon")
 
   const genderLabel = (g: string | null) => {
     if (g === "MALE") return t("male")

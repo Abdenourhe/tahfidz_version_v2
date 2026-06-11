@@ -2,10 +2,10 @@
 // src/components/teacher/TeacherDashboardClient.tsx
 
 import Link from "next/link"
-import { useLanguage, useT } from "@/contexts/LanguageContext"
+import { useT } from "@/contexts/LanguageContext"
 import {
   Users, GraduationCap, BookMarked, ClipboardCheck,
-  ArrowRight, TrendingUp, AlertCircle,
+  ArrowRight, TrendingUp,
 } from "lucide-react"
 
 interface Props {
@@ -22,7 +22,6 @@ interface Props {
 }
 
 export function TeacherDashboardClient({ teacher, stats }: Props) {
-  const { locale } = useLanguage()
   const t = useT("teacherDashboard")
 
   const cards = [

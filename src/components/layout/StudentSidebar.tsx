@@ -23,10 +23,10 @@ interface StudentSidebarProps {
 
 export function StudentSidebar({ user, schoolName, schoolLogo }: StudentSidebarProps) {
   const pathname = usePathname()
-  const { locale, useT } = useLanguage()
+  const { locale, useT: tFn } = useLanguage()
   const { data: session } = useSession()
   const { collapsed } = useSidebarCollapsed()
-  const tN = (k: string) => useT("nav", k)
+  const tN = (k: string) => tFn("nav", k)
 
   const displayName = schoolName || "TAHFIDZ"
   const logo = schoolLogo

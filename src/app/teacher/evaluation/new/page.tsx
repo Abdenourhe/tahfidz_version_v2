@@ -40,9 +40,9 @@ export default function NewEvaluationPage() {
   const [et,setEt]=useState<"live"|"recorded"|"test">("live")
   const [memo,setMemo]=useState(75); const [taj,setTaj]=useState(75); const [flu,setFlu]=useState(75); const [mak,setMak]=useState(75)
   const [notes,setNotes]=useState(""); const [dec,setDec]=useState<"APPROVED"|"NEEDS_REVISION"|"REJECTED">("APPROVED")
-  const [grp,setGrp]=useState(""); const [gscores,setGscores]=useState<Record<string,{memo:number;taj:number;dec:string}>>({})
-  const [eTitle,setETitle]=useState(""); const [eTitleAr,setETitleAr]=useState(""); const [eDesc,setEDesc]=useState("")
-  const [eGrp,setEGrp]=useState(""); const [eDate,setEDate]=useState(""); const [eDur,setEDur]=useState(60)
+  const [grp,setGrp]=useState(""); const [gscores,_setGscores]=useState<Record<string,{memo:number;taj:number;dec:string}>>({})
+  const [eTitle,_setETitle]=useState(""); const [eTitleAr,_setETitleAr]=useState(""); const [eDesc,_setEDesc]=useState("")
+  const [eGrp,setEGrp]=useState(""); const [eDate,_setEDate]=useState(""); const [eDur,_setEDur]=useState(60)
   const [sub,setSub]=useState(false); const [ok,setOk]=useState(false); const [err,setErr]=useState<string|null>(null)
   const [editLoading,setEditLoading]=useState(false)
 
@@ -55,7 +55,7 @@ export default function NewEvaluationPage() {
     if(!sid)return
     fetch(`/api/progress?studentId=${sid}`).then(r=>r.json()).then(d=>{
       const p=(d.progress||[]).filter((x:Progress)=>["IN_PROGRESS","UNDER_REVIEW","READY_FOR_RECITATION","PENDING_TEACHER_APPROVAL"].includes(x.status))
-      setProgs(p); if(!pid&&p[0])setPid(p[0].id)
+      setProgs(p); setPid(prev => prev || p[0]?.id || "")
     })
   },[sid])
 
@@ -95,7 +95,7 @@ export default function NewEvaluationPage() {
     }catch(e){setErr(e instanceof Error?e.message:t("error"))}finally{setSub(false)}
   }
 
-  const doGroup=async()=>{
+  const _doGroup=async()=>{
     const g=groups.find(x=>x.id===grp); if(!g||!Object.keys(gscores).length){setErr(t("errorGrade"));return}
     setSub(true);setErr(null)
     let good=0,skip=0
@@ -106,13 +106,13 @@ export default function NewEvaluationPage() {
       if(!pp){skip++;continue}
       const xfs=Math.round(sc.memo*0.5+sc.taj*0.5)
       const r=await fetch("/api/evaluations",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({progressId:pp.id,studentId:st.id,evaluationType:"live",memorizationScore:sc.memo,tajweedScore:sc.taj,fluencyScore:xfs,makharijScore:xfs,revisionRequired:sc.dec!=="APPROVED",decision:sc.dec,strengths:[],improvements:[]})})
-      r.ok?good++:skip++
+      if(r.ok) good++; else skip++
     }
     setOk(true); if(skip)setErr(`${good} ${L === "ar" ? "مُقيَّم" : L === "en" ? "evaluated" : "évalués"}, ${skip} ${L === "ar" ? "متجاهل" : L === "en" ? "skipped" : "ignorés"}`)
     setTimeout(()=>router.push("/teacher/evaluations"),2500); setSub(false)
   }
 
-  const doExam=async()=>{
+  const _doExam=async()=>{
     if(!eTitle.trim()||!eGrp||!eDate){setErr(t("errorExam"));return}
     setSub(true);setErr(null)
     try{

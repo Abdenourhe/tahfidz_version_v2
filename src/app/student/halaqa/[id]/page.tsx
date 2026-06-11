@@ -2,8 +2,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
-import { motion } from "framer-motion"
+import { useParams } from "next/navigation"
 import Link from "next/link"
 import { Loader2, AlertCircle, ArrowLeft, Video } from "lucide-react"
 import { HalaqaRoom } from "@/components/halaqa/HalaqaRoom"
@@ -11,10 +10,9 @@ import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 export default function StudentHalaqaJoinPage() {
   const params = useParams()
-  const router = useRouter()
   const { locale } = useLanguage()
   const t = useT("halaqa")
-  const isRTL = locale === "ar"
+  const _isRTL = locale === "ar"
   const sessionId = params?.id as string
 
   const [joinUrl, setJoinUrl] = useState<string>("")
@@ -25,6 +23,7 @@ export default function StudentHalaqaJoinPage() {
   useEffect(() => {
     if (!sessionId) return
     joinSession()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId])
 
   const joinSession = async () => {

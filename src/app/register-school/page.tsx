@@ -2,7 +2,6 @@
 // src/app/register-school/page.tsx — Inscription professionnelle d'ecole
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Loader2, CheckCircle2, School, ArrowLeft, Building2, User, Mail,
@@ -38,7 +37,7 @@ const steps = [
 
 /* ─── Component ──────────────────────────────────────────── */
 export default function RegisterSchoolPage() {
-  const router  = useRouter()
+
   const [step, setStep]       = useState<Step>(1)
   const [error, setError]     = useState<string | null>(null)
   const [loading, setLoading] = useState(false)

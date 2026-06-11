@@ -4,7 +4,7 @@
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { AvatarLightbox } from "@/components/AvatarLightbox"
 import {
-  CalendarDays, GraduationCap, Star, User, ArrowRight,
+  CalendarDays, GraduationCap, User, ArrowRight,
   CalendarCheck, Link2, Video, Bell, ChevronRight,
 } from "lucide-react"
 import { useSession } from "next-auth/react"

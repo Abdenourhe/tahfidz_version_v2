@@ -187,7 +187,7 @@ function ActionMenu({ studentId, isActive, onToggle, onDelete, locale }: {
 }
 
 // ─── Composant principal ───────────────────────────────────────────────────
-export function StudentTableClient({ students, groups, teachers, statusFilter: initialStatus }: Props) {
+export function StudentTableClient({ students, groups, teachers: _teachers, statusFilter: initialStatus }: Props) {
   const { locale: ctxLocale } = useLanguage()
   const L = (ctxLocale || "fr") as "fr" | "en" | "ar"
   const router = useRouter()
@@ -236,7 +236,7 @@ export function StudentTableClient({ students, groups, teachers, statusFilter: i
   }
 
   // ── Appels API ─────────────────────────────────────────────────────────
-  const doToggle = async (id: string, current: boolean) => {
+  const doToggle = async (id: string, _current: boolean) => {
     try {
       const res = await fetch(`/api/students/${id}?action=toggle`, { method: "PATCH" })
       if (!res.ok) { alert((await res.json().catch(() => ({}))).error || u("errorServer", L)); return }

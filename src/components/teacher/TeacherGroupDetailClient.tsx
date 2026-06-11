@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
-import { ArrowLeft, Star, CalendarCheck, Users } from "lucide-react"
+import { ArrowLeft, Users } from "lucide-react"
 import { statusLabel } from "@/lib/utils"
 import { TeacherGroupAttendance } from "@/components/teacher/TeacherGroupAttendance"
 
