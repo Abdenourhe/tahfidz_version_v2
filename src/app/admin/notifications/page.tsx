@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { formatDate } from "@/lib/utils"
-import { Bell, CheckCheck, BookOpen, Star, Award, Megaphone, Link2, Trash2, Loader2 } from "lucide-react"
+import { Bell, CheckCheck, BookOpen, Star, Award, Megaphone, Link2, Trash2, Loader2, XCircle } from "lucide-react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 interface Notification {
@@ -36,6 +36,7 @@ export default function AdminNotificationsPage() {
     memorization_progress_updated: { label: L === "ar" ? "تحديث تقدم" : L === "en" ? "Progress update" : "Progression mise à jour", color: "text-tahfidz-gold", bg: "bg-tahfidz-gold-light", icon: Star },
     attendance_absent_reported:  { label: L === "ar" ? "غياب مسجل" : L === "en" ? "Absence reported" : "Absence signalée", color: "text-red-500", bg: "bg-red-50", icon: Bell },
     attendance_validated:        { label: L === "ar" ? "حضور محقق" : L === "en" ? "Attendance validated" : "Présence validée", color: "text-green-600", bg: "bg-green-50", icon: CheckCheck },
+    attendance_rejected:         { label: L === "ar" ? "غياب مرفوض" : L === "en" ? "Absence rejected" : "Absence rejetée", color: "text-red-600", bg: "bg-red-100", icon: XCircle },
   }
 
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -157,7 +158,7 @@ export default function AdminNotificationsPage() {
       ) : (
         <div className="space-y-2">
           {notifications.map(notif => {
-            const tc = TYPE_CONFIG[notif.type] ?? TYPE_CONFIG.reminder
+            const tc = TYPE_CONFIG[notif.type.toLowerCase()] ?? TYPE_CONFIG.reminder
             return (
               <div key={notif.id}
                 className={`bg-white dark:bg-gray-900 rounded-xl border p-4 flex gap-4 transition hover:shadow-sm ${!notif.isRead ? "border-tahfidz-green/30 bg-tahfidz-green-light/20" : "border-gray-100 dark:border-gray-800"}`}>

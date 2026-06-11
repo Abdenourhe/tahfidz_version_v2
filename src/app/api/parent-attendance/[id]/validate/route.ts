@@ -43,8 +43,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         where: { id: attendance.parentId },
         select: { attendanceNotifications: true },
       })
+      const safeDate = new Date(attendance.date.toISOString().slice(0, 10) + "T12:00:00").toLocaleDateString("fr-FR")
       if (parentUser?.attendanceNotifications !== false) {
-        const safeDate = new Date(attendance.date.toISOString().slice(0, 10) + "T12:00:00").toLocaleDateString("fr-FR")
         await prisma.notification.create({
           data: {
             schoolId: attendance.student.user.schoolId,
@@ -56,6 +56,27 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             messageAr: `بتاريخ ${safeDate} — تم رفض بلاغ الغياب لـ ${attendance.student.user.fullName} من قبل المعلم.${rejectionReason ? ` السبب: ${rejectionReason}` : ""}`,
             data: { attendanceId: id, validated: false, rejectionReason: rejectionReason || null, url: "/parent/attendance" },
           },
+        })
+      }
+
+      // Notify admin of rejection
+      const admins = await prisma.user.findMany({
+        where: { schoolId: attendance.student.user.schoolId, role: "ADMIN", isActive: true },
+        select: { id: true, attendanceNotifications: true },
+      })
+      const enabledAdmins = admins.filter(a => a.attendanceNotifications !== false)
+      if (enabledAdmins.length > 0) {
+        await prisma.notification.createMany({
+          data: enabledAdmins.map(a => ({
+            schoolId: attendance.student.user.schoolId,
+            userId: a.id,
+            type: "ATTENDANCE_REJECTED",
+            title: `Absence rejetée: ${attendance.student.user.fullName}`,
+            titleAr: `تم رفض الغياب: ${attendance.student.user.fullName}`,
+            message: `Le ${safeDate} — le signalement d'absence de ${attendance.student.user.fullName} a été rejeté par le professeur.${rejectionReason ? ` Motif: ${rejectionReason}` : ""}`,
+            messageAr: `بتاريخ ${safeDate} — تم رفض بلاغ الغياب لـ ${attendance.student.user.fullName} من قبل المعلم.${rejectionReason ? ` السبب: ${rejectionReason}` : ""}`,
+            data: { attendanceId: id, validated: false, rejectionReason: rejectionReason || null, url: `/admin/attendance?studentId=${attendance.studentId}&date=${attendance.date.toISOString().slice(0, 10)}` },
+          })),
         })
       }
 
@@ -74,12 +95,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     })
 
     if (isStateChanging) {
+      const safeDate = new Date(attendance.date.toISOString().slice(0, 10) + "T12:00:00").toLocaleDateString("fr-FR")
+
+      // Notify parent
       const parentUser = await prisma.user.findUnique({
         where: { id: attendance.parentId },
         select: { attendanceNotifications: true },
       })
       if (parentUser?.attendanceNotifications !== false) {
-        const safeDate = new Date(attendance.date.toISOString().slice(0, 10) + "T12:00:00").toLocaleDateString("fr-FR")
         await prisma.notification.create({
           data: {
             schoolId: attendance.student.user.schoolId,
@@ -91,6 +114,27 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             messageAr: `بتاريخ ${safeDate} — الحالة ${attendance.status} تم التحقق منها من قبل المعلم`,
             data: { attendanceId: id, validated: true, url: "/parent/attendance" },
           },
+        })
+      }
+
+      // Notify admin of validation
+      const admins = await prisma.user.findMany({
+        where: { schoolId: attendance.student.user.schoolId, role: "ADMIN", isActive: true },
+        select: { id: true, attendanceNotifications: true },
+      })
+      const enabledAdmins = admins.filter(a => a.attendanceNotifications !== false)
+      if (enabledAdmins.length > 0) {
+        await prisma.notification.createMany({
+          data: enabledAdmins.map(a => ({
+            schoolId: attendance.student.user.schoolId,
+            userId: a.id,
+            type: "ATTENDANCE_VALIDATED",
+            title: `Présence validée: ${attendance.student.user.fullName}`,
+            titleAr: `تم التحقق من الحضور: ${attendance.student.user.fullName}`,
+            message: `Le ${safeDate} — le statut ${attendance.status} de ${attendance.student.user.fullName} a été validé par le professeur`,
+            messageAr: `بتاريخ ${safeDate} — الحالة ${attendance.status} لـ ${attendance.student.user.fullName} تم التحقق منها من قبل المعلم`,
+            data: { attendanceId: id, validated: true, url: `/admin/attendance?studentId=${attendance.studentId}&date=${attendance.date.toISOString().slice(0, 10)}` },
+          })),
         })
       }
     }
