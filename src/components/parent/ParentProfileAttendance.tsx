@@ -350,6 +350,40 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
             {children.map(child => {
               const recent = childRecentStatus[child.student.id]
               const cfg = recent ? statusConfig[recent.status] : null
+
+              /* ── Context badge builder ── */
+              let badgeText = ""
+              let badgeSub = ""
+              let badgeCls = ""
+              if (!cfg) {
+                badgeText = "Marquer"
+                badgeCls = "bg-gray-50 text-gray-400 border-gray-100"
+              } else {
+                const isToday = recent.date === todayStr
+                const daysAgo = Math.floor((+new Date(`${todayStr}T12:00:00`) - +new Date(`${recent.date}T12:00:00`)) / (1000 * 60 * 60 * 24))
+                if (recent.status === "PRESENT" && isToday) {
+                  badgeText = "Aujourd'hui"
+                  badgeSub = ""
+                  badgeCls = "bg-emerald-100 text-emerald-700 border-emerald-200"
+                } else if (isToday) {
+                  badgeText = cfg.label
+                  badgeSub = "auj."
+                  badgeCls = `${cfg.light} ${cfg.text} ${cfg.border}`
+                } else if (daysAgo === 1) {
+                  badgeText = cfg.label
+                  badgeSub = "hier"
+                  badgeCls = `${cfg.light} ${cfg.text} ${cfg.border}`
+                } else if (daysAgo > 1 && daysAgo <= 30) {
+                  badgeText = `${cfg.label} (${daysAgo}j)`
+                  badgeSub = ""
+                  badgeCls = `${cfg.light} ${cfg.text} ${cfg.border}`
+                } else {
+                  badgeText = cfg.label
+                  badgeSub = new Date(recent.date + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short" })
+                  badgeCls = `${cfg.light} ${cfg.text} ${cfg.border}`
+                }
+              }
+
               return (
                 <button key={child.id}
                   onClick={() => enterChildMode(child)}
@@ -368,21 +402,14 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                       {child.student.group?.name}
                     </p>
                   </div>
-                  {cfg ? (
-                    <span className={`flex flex-col items-end text-[10px] font-bold px-2.5 py-1.5 rounded-lg ${cfg.light} ${cfg.text} ${cfg.border} border shrink-0 leading-tight`}>
-                      <span>{cfg.label}</span>
-                      <span className="text-[9px] font-normal opacity-80">
-                        {new Date(recent.date + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
-                      </span>
-                      {recent.reason && (
-                        <span className="text-[9px] font-normal opacity-70 truncate max-w-[80px]" title={recent.reason}>{recent.reason}</span>
-                      )}
+                  <span className={`flex flex-col items-end text-[10px] font-bold px-3 py-2 rounded-xl border shrink-0 leading-tight ${badgeCls}`}>
+                    <span className="flex items-center gap-1">
+                      {recent?.status === "PRESENT" && recent?.date === todayStr && <Check size={10} />}
+                      {!recent && <CalendarDays size={10} />}
+                      {badgeText}
                     </span>
-                  ) : (
-                    <span className="text-[10px] font-bold px-2.5 py-1.5 rounded-lg bg-gray-50 text-gray-400 border border-gray-100 shrink-0 flex items-center gap-1">
-                      <CalendarDays size={11} /> Marquer
-                    </span>
-                  )}
+                    {badgeSub && <span className="text-[9px] font-normal opacity-80">{badgeSub}</span>}
+                  </span>
                 </button>
               )
             })}
