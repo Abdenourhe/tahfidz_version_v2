@@ -130,31 +130,34 @@ export default function ParentNotificationsPage() {
             return (
               <div key={notif.id}
                 onClick={() => handleClick(notif)}
-                className={`bg-white rounded-xl border p-4 flex gap-4 group transition cursor-pointer ${!notif.isRead ? "border-tahfidz-green/30 bg-tahfidz-green-light/20" : "border-gray-100 hover:border-gray-200"}`}>
-                <div className={`w-10 h-10 rounded-xl ${tc.bg} flex items-center justify-center flex-shrink-0`}>
-                  <tc.icon size={18} className={tc.color} />
+                className={`relative rounded-2xl border p-4 flex gap-4 group transition cursor-pointer shadow-sm ${!notif.isRead ? "border-tahfidz-green/40 bg-gradient-to-r from-tahfidz-green-light/30 to-white" : "border-gray-100 bg-white hover:border-gray-200 hover:shadow-md"}`}>
+                {!notif.isRead && <div className="absolute left-0 top-4 bottom-4 w-1 rounded-r-full bg-tahfidz-green" />}
+                <div className={`w-11 h-11 rounded-xl ${tc.bg} flex items-center justify-center flex-shrink-0 shadow-sm`}>
+                  <tc.icon size={20} className={tc.color} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className={`text-sm font-semibold ${!notif.isRead ? "text-gray-900" : "text-gray-700"}`}>{notif.title}</p>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {!notif.isRead && <div className="w-2 h-2 rounded-full bg-tahfidz-green" />}
-                      <button
-                        onClick={(e) => { e.stopPropagation(); deleteOne(notif.id) }}
-                        disabled={deletingId === notif.id}
-                        className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition disabled:opacity-50"
-                        title="Supprimer cette notification"
-                      >
-                        {deletingId === notif.id
-                          ? <Loader2 size={13} className="animate-spin text-gray-400" />
-                          : <Trash2 size={13} />}
-                      </button>
-                    </div>
+                  <div className="flex items-start justify-between gap-3">
+                    <p className={`text-sm font-bold leading-snug ${!notif.isRead ? "text-gray-900" : "text-gray-700"}`}>{notif.title}</p>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deleteOne(notif.id) }}
+                      disabled={deletingId === notif.id}
+                      className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition disabled:opacity-50 flex-shrink-0"
+                      title="Supprimer cette notification"
+                    >
+                      {deletingId === notif.id
+                        ? <Loader2 size={13} className="animate-spin text-gray-400" />
+                        : <Trash2 size={13} />}
+                    </button>
                   </div>
-                  <p className="text-sm text-gray-500 mt-1">{notif.message}</p>
-                  <p className="text-xs text-gray-400 mt-2">
-                    {formatDate(notif.createdAt, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
-                  </p>
+                  <p className={`text-sm text-gray-600 mt-1.5 whitespace-pre-line leading-relaxed ${!notif.isRead ? "font-medium" : ""}`}>{notif.message}</p>
+                  <div className="flex items-center gap-2 mt-3">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide bg-gray-100 text-gray-500">
+                      {notif.type.replace(/_/g, " ")}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {formatDate(notif.createdAt, { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  </div>
                 </div>
               </div>
             )

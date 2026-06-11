@@ -15,6 +15,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const { id } = await params
     const body = await req.json()
     const { validated, rejectionReason } = body as { validated: boolean; rejectionReason?: string }
+    const teacherName = session.user.name || "l'enseignant"
 
     const attendance = await prisma.parentAttendance.findUnique({
       where: { id },
@@ -46,6 +47,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         ABSENT:  { fr: "Absence",   ar: "الغياب",  frRej: "rejetée", arRej: "مرفوض" },
       }
       const lab = statusLabels[attendance.status] || statusLabels.PRESENT
+      const parentRejectionMessage = `Le ${safeDate} — votre signalement de ${lab.fr.toLowerCase()} pour ${attendance.student.user.fullName} a été ${lab.frRej} par ${teacherName}.${rejectionReason ? `\nMotif : ${rejectionReason}` : ""}`
+      const adminRejectionMessage = `Le ${safeDate} — le signalement de ${lab.fr.toLowerCase()} de ${attendance.student.user.fullName} a été ${lab.frRej} par ${teacherName}.${rejectionReason ? `\nMotif : ${rejectionReason}` : ""}`
 
       // Notify parent of rejection (respect presence/absence toggles)
       const parentNotifKey = (attendance.status === "PRESENT" || attendance.status === "LATE") ? "presenceNotifications" : "attendanceNotifications"
@@ -61,8 +64,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             type: "ATTENDANCE_REJECTED",
             title: `${lab.fr} ${lab.frRej}: ${attendance.student.user.fullName}`,
             titleAr: `${lab.arRej}: ${attendance.student.user.fullName}`,
-            message: `Le ${safeDate} — votre signalement de ${lab.fr.toLowerCase()} pour ${attendance.student.user.fullName} a été ${lab.frRej} par le professeur.${rejectionReason ? ` Motif: ${rejectionReason}` : ""}`,
-            messageAr: `بتاريخ ${safeDate} — تم رفض بلاغ ${lab.ar} لـ ${attendance.student.user.fullName} من قبل المعلم.${rejectionReason ? ` السبب: ${rejectionReason}` : ""}`,
+            message: parentRejectionMessage,
+            messageAr: `بتاريخ ${safeDate} — تم رفض بلاغ ${lab.ar} لـ ${attendance.student.user.fullName} من قبل المعلم ${teacherName}.${rejectionReason ? `\nالسبب: ${rejectionReason}` : ""}`,
             data: { attendanceId: id, validated: false, rejectionReason: rejectionReason || null, url: "/parent/attendance" },
           },
         })
@@ -83,8 +86,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             type: "ATTENDANCE_REJECTED",
             title: `${lab.fr} ${lab.frRej}: ${attendance.student.user.fullName}`,
             titleAr: `${lab.arRej}: ${attendance.student.user.fullName}`,
-            message: `Le ${safeDate} — le signalement de ${lab.fr.toLowerCase()} de ${attendance.student.user.fullName} a été ${lab.frRej} par le professeur.${rejectionReason ? ` Motif: ${rejectionReason}` : ""}`,
-            messageAr: `بتاريخ ${safeDate} — تم رفض بلاغ ${lab.ar} لـ ${attendance.student.user.fullName} من قبل المعلم.${rejectionReason ? ` السبب: ${rejectionReason}` : ""}`,
+            message: adminRejectionMessage,
+            messageAr: `بتاريخ ${safeDate} — تم رفض بلاغ ${lab.ar} لـ ${attendance.student.user.fullName} من قبل المعلم ${teacherName}.${rejectionReason ? `\nالسبب: ${rejectionReason}` : ""}`,
             data: { attendanceId: id, validated: false, rejectionReason: rejectionReason || null, url: `/admin/attendance?studentId=${attendance.studentId}&date=${attendance.date.toISOString().slice(0, 10)}` },
           })),
         })
@@ -118,6 +121,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       const statusLabelAr = lab.ar
       const statusVerbFr = lab.frValid
       const statusVerbAr = "تم التحقق منه"
+      const parentValidationMessage = `Le ${safeDate} — ${statusLabelFr.toLowerCase()} de ${attendance.student.user.fullName} a été ${statusVerbFr} par ${teacherName}.`
+      const adminValidationMessage = `Le ${safeDate} — ${statusLabelFr.toLowerCase()} de ${attendance.student.user.fullName} a été ${statusVerbFr} par ${teacherName}.`
 
       // Notify parent (respect presence/absence toggles)
       const parentNotifKey = (attendance.status === "PRESENT" || attendance.status === "LATE") ? "presenceNotifications" : "attendanceNotifications"
@@ -133,8 +138,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             type: "ATTENDANCE_VALIDATED",
             title: `${statusLabelFr} ${statusVerbFr}: ${attendance.student.user.fullName}`,
             titleAr: `${statusVerbAr}: ${attendance.student.user.fullName}`,
-            message: `Le ${safeDate} — ${statusLabelFr.toLowerCase()} de ${attendance.student.user.fullName} a été ${statusVerbFr} par le professeur`,
-            messageAr: `بتاريخ ${safeDate} — ${statusLabelAr} لـ ${attendance.student.user.fullName} تم التحقق منه من قبل المعلم`,
+            message: parentValidationMessage,
+            messageAr: `بتاريخ ${safeDate} — ${statusLabelAr} لـ ${attendance.student.user.fullName} تم التحقق منه من قبل المعلم ${teacherName}.`,
             data: { attendanceId: id, validated: true, url: "/parent/attendance" },
           },
         })
@@ -155,8 +160,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             type: "ATTENDANCE_VALIDATED",
             title: `${statusLabelFr} ${statusVerbFr}: ${attendance.student.user.fullName}`,
             titleAr: `${statusVerbAr}: ${attendance.student.user.fullName}`,
-            message: `Le ${safeDate} — ${statusLabelFr.toLowerCase()} de ${attendance.student.user.fullName} a été ${statusVerbFr} par le professeur`,
-            messageAr: `بتاريخ ${safeDate} — ${statusLabelAr} لـ ${attendance.student.user.fullName} تم التحقق منه من قبل المعلم`,
+            message: adminValidationMessage,
+            messageAr: `بتاريخ ${safeDate} — ${statusLabelAr} لـ ${attendance.student.user.fullName} تم التحقق منه من قبل المعلم ${teacherName}.`,
             data: { attendanceId: id, validated: true, url: `/admin/attendance?studentId=${attendance.studentId}&date=${attendance.date.toISOString().slice(0, 10)}` },
           })),
         })
