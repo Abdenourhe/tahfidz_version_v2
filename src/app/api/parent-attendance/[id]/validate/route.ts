@@ -59,7 +59,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         })
       }
 
-      // Notify admin of rejection
+      // Notify admin of rejection (only for EXCUSED & ABSENT)
+      if (attendance.status === "EXCUSED" || attendance.status === "ABSENT") {
       const admins = await prisma.user.findMany({
         where: { schoolId: attendance.student.user.schoolId, role: "ADMIN", isActive: true },
         select: { id: true, attendanceNotifications: true },
@@ -78,6 +79,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             data: { attendanceId: id, validated: false, rejectionReason: rejectionReason || null, url: `/admin/attendance?studentId=${attendance.studentId}&date=${attendance.date.toISOString().slice(0, 10)}` },
           })),
         })
+      }
       }
 
       return NextResponse.json({ message: "Absence rejetée et supprimée" })

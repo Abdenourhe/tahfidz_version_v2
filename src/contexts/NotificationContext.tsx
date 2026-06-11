@@ -117,22 +117,26 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               initial={{ opacity: 0, x: 50, scale: 0.95 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: 50, scale: 0.95 }}
-              className="pointer-events-auto bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 p-3.5 flex items-start gap-3 cursor-pointer hover:shadow-2xl transition"
-              onClick={() => {
-                removeToast(t.id)
-                if (t.url) router.push(t.url)
-              }}
+              className="pointer-events-auto bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 p-3.5 flex items-start gap-3 hover:shadow-2xl transition"
             >
-              <div className="w-9 h-9 rounded-full bg-tahfidz-green-light flex items-center justify-center shrink-0">
-                <Bell size={16} className="text-tahfidz-green" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{t.title}</p>
-                <p className="text-xs text-gray-500 truncate">{t.message}</p>
+              <div
+                className="flex items-start gap-3 flex-1 cursor-pointer"
+                onClick={() => {
+                  removeToast(t.id)
+                  if (t.url) router.push(t.url)
+                }}
+              >
+                <div className="w-9 h-9 rounded-full bg-tahfidz-green-light flex items-center justify-center shrink-0">
+                  <Bell size={16} className="text-tahfidz-green" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{t.title}</p>
+                  <p className="text-xs text-gray-500 truncate">{t.message}</p>
+                </div>
               </div>
               <button
-                onClick={(e) => { e.stopPropagation(); removeToast(t.id) }}
-                className="p-1 rounded hover:bg-gray-100 text-gray-400"
+                onClick={(e) => { e.stopPropagation(); e.preventDefault(); removeToast(t.id); }}
+                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 shrink-0"
               >
                 <X size={14} />
               </button>
