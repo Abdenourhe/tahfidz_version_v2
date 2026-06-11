@@ -9,7 +9,7 @@ import type { Locale } from "@/lib/i18n/translations"
 
 interface Props {
   user: { name: string; email: string }
-  school?: { name: string; logo?: string | null; directorSignature?: string | null; teacherSignature?: string | null }
+  school?: { name: string; nameAr?: string | null; logo?: string | null; directorSignature?: string | null; teacherSignature?: string | null; address?: string | null; city?: string | null; country?: string | null; phone?: string | null }
 }
 type TabId = "profile" | "security" | "school" | "appearance" | "notifications" | "system"
 
@@ -65,6 +65,17 @@ export function AdminSettingsClient({ user, school }: Props) {
     examReminder: true, parentLink: true, transfer: true, message: true, badge: false, weeklyReport: false,
   })
   const [notifSaved, setNotifSaved] = useState(false)
+
+  // School info
+  const [schoolName, setSchoolName] = useState(school?.name || "")
+  const [schoolNameAr, setSchoolNameAr] = useState(school?.nameAr || "")
+  const [schoolAddress, setSchoolAddress] = useState(school?.address || "")
+  const [schoolCity, setSchoolCity] = useState(school?.city || "")
+  const [schoolCountry, setSchoolCountry] = useState(school?.country || "DZ")
+  const [schoolPhone, setSchoolPhone] = useState(school?.phone || "")
+  const [schoolSaving, setSchoolSaving] = useState(false)
+  const [schoolSaved, setSchoolSaved] = useState(false)
+  const [schoolErr, setSchoolErr] = useState<string | null>(null)
 
   // School / Logo
   const [logoUrl, setLogoUrl] = useState<string | null>(school?.logo ?? null)
@@ -160,6 +171,29 @@ export function AdminSettingsClient({ user, school }: Props) {
     } catch (e) {
       setPwdErr(e instanceof Error ? e.message : tC("error"))
     } finally { setPwdSaving(false) }
+  }
+
+  const saveSchoolInfo = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSchoolSaving(true); setSchoolErr(null)
+    try {
+      const r = await fetch("/api/admin/school", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: schoolName,
+          nameAr: schoolNameAr,
+          address: schoolAddress,
+          city: schoolCity,
+          country: schoolCountry,
+          phone: schoolPhone,
+        }),
+      })
+      if (!r.ok) throw new Error("Erreur lors de la sauvegarde")
+      setSchoolSaved(true); setTimeout(() => setSchoolSaved(false), 3000)
+    } catch (e) {
+      setSchoolErr(e instanceof Error ? e.message : "Erreur")
+    } finally { setSchoolSaving(false) }
   }
 
   const saveNotifPrefs = async () => {
@@ -402,9 +436,72 @@ export function AdminSettingsClient({ user, school }: Props) {
             </div>
           )}
 
-          {/* ─── ÉCOLE (LOGO) ─── */}
+          {/* ─── ÉCOLE ─── */}
           {tab === "school" && (
             <div className="space-y-4">
+              {/* School info form */}
+              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6 space-y-5">
+                <h2 className="font-semibold text-gray-800 dark:text-gray-100">
+                  {locale === "ar" ? "معلومات المدرسة" : locale === "en" ? "School information" : "Informations de l'école"}
+                </h2>
+                {schoolErr && <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{schoolErr}</div>}
+                <form onSubmit={saveSchoolInfo} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{tC("name")}</label>
+                      <input value={schoolName} onChange={e => setSchoolName(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        {locale === "ar" ? "الاسم بالعربية" : locale === "en" ? "Name (Arabic)" : "Nom (arabe)"}
+                      </label>
+                      <input value={schoolNameAr} onChange={e => setSchoolNameAr(e.target.value)} dir="rtl"
+                        className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm arabic focus:outline-none focus:ring-2 focus:ring-tahfidz-green" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        {locale === "ar" ? "العنوان" : locale === "en" ? "Address" : "Adresse"}
+                      </label>
+                      <input value={schoolAddress} onChange={e => setSchoolAddress(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        {locale === "ar" ? "المدينة" : locale === "en" ? "City" : "Ville"}
+                      </label>
+                      <input value={schoolCity} onChange={e => setSchoolCity(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        {locale === "ar" ? "البلد" : locale === "en" ? "Country" : "Pays"}
+                      </label>
+                      <input value={schoolCountry} onChange={e => setSchoolCountry(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{tC("phone")}</label>
+                      <input value={schoolPhone} onChange={e => setSchoolPhone(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green" />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button type="submit" disabled={schoolSaving}
+                      className="flex items-center gap-2 px-5 py-2.5 gradient-tahfidz text-white text-sm font-semibold rounded-lg hover:opacity-90 disabled:opacity-60 transition">
+                      {schoolSaving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+                      {tC("save")}
+                    </button>
+                    {schoolSaved && <span className="flex items-center gap-1.5 text-sm text-tahfidz-green font-medium"><CheckCircle2 size={16} />{tC("saved")}</span>}
+                  </div>
+                </form>
+              </div>
+
+              {/* Logo */}
               <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6 space-y-5">
                 <div>
                   <h2 className="font-semibold text-gray-800 dark:text-gray-100">{tS("schoolLogo")}</h2>
