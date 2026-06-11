@@ -230,7 +230,7 @@ export default function ParentAttendanceMarker({
                   {cfg.icon}
                   <div>
                     {showName && <p className="text-sm font-medium">{r.student.user.fullName}</p>}
-                    <p className={`opacity-80 ${showName ? "text-xs" : "text-sm"}`}>{formatDate((typeof r.date === "string" ? r.date.slice(0, 10) : r.date.toISOString().slice(0, 10)) + "T12:00:00", L)}</p>
+                    <p className={`opacity-80 ${showName ? "text-xs" : "text-sm"}`}>{formatDate(r.date.slice(0, 10) + "T12:00:00", L)}</p>
                     {r.reason && <p className="text-xs opacity-70">{r.reason}</p>}
                   </div>
                 </div>
