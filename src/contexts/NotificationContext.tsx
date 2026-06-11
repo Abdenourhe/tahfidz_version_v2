@@ -130,16 +130,17 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       {children}
 
       {/* Toast stack */}
-      <div className="fixed top-4 right-4 z-[100] space-y-2 max-w-sm w-full pointer-events-none">
+      <div className="fixed top-4 right-4 z-[999] space-y-2 max-w-sm w-full">
         <AnimatePresence>
           {toasts.map(t => (
             <motion.div
               key={t.id}
-              initial={{ opacity: 0, x: 50, scale: 0.95 }}
+              layout
+              initial={{ opacity: 0, x: 80, scale: 0.9 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 50, scale: 0.95 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className="pointer-events-auto bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 p-3.5 flex items-start gap-3 hover:shadow-2xl transition"
+              exit={{ opacity: 0, x: 80, scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 120, damping: 15 }}
+              className="bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 p-3.5 flex items-start gap-3 hover:shadow-2xl"
             >
               <div
                 className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer"
