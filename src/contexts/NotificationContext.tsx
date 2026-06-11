@@ -118,22 +118,26 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         {toasts.map(t => (
           <div
             key={t.id}
-            className="pointer-events-auto bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 p-3.5 flex items-start gap-3 cursor-pointer hover:shadow-2xl transition"
-            onClick={() => {
-              removeToast(t.id)
-              if (t.url) router.push(t.url)
-            }}
+            className="pointer-events-auto bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 p-3.5 flex items-start gap-3 hover:shadow-2xl transition"
           >
-            <div className="w-9 h-9 rounded-full bg-tahfidz-green-light flex items-center justify-center shrink-0">
-              <Bell size={16} className="text-tahfidz-green" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{t.title}</p>
-              <p className="text-xs text-gray-500 truncate">{t.message}</p>
+            <div
+              className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer"
+              onClick={() => {
+                removeToast(t.id)
+                if (t.url) router.push(t.url)
+              }}
+            >
+              <div className="w-9 h-9 rounded-full bg-tahfidz-green-light flex items-center justify-center shrink-0">
+                <Bell size={16} className="text-tahfidz-green" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{t.title}</p>
+                <p className="text-xs text-gray-500 truncate">{t.message}</p>
+              </div>
             </div>
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); e.preventDefault(); removeToast(t.id); }}
+              onClick={() => removeToast(t.id)}
               className="p-1.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 shrink-0 transition"
             >
               <X size={14} />
