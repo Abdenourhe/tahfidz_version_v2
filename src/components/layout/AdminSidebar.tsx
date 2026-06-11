@@ -8,7 +8,7 @@ import { signOut } from "next-auth/react"
 import {
   LayoutDashboard, Users, GraduationCap, BookOpen,
   CalendarCheck, Megaphone, BarChart2, Settings, LogOut,
-  Bell, Shield, Monitor, Award, Video,
+  Bell, Shield, Monitor, Award, Video, Building2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { NotificationNavItem } from "@/components/layout/NotificationNavItem"
@@ -66,6 +66,13 @@ export function AdminSidebar({ user, schoolName, schoolLogo, schoolSlug, schoolC
         { labelKey: "tvMode",       href: "/display",                     icon: Monitor,  color: "text-gray-600" },
       ],
     },
+    ...(user.role === "SUPERADMIN" ? [{
+      section: "Superadmin",
+      items: [
+        { labelKey: "superDashboard", href: "/admin/super", icon: Shield, color: "text-red-600" },
+        { labelKey: "schoolUpdates",  href: "/admin/super/school-updates", icon: Building2, color: "text-orange-500" },
+      ],
+    }] : []),
   ]
 
   const initials = user.name
