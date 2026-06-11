@@ -5,8 +5,41 @@ import { useSearchParams } from "next/navigation"
 import { CheckCircle2, XCircle, Loader2, Filter, CalendarDays, Users, AlertTriangle, Save, Clock, BookOpen } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 
-interface Group { id: string; name: string }
+interface Group { id: string; name: string; schedule?: Record<string, string> | null }
 interface Student { id: string; user: { fullName: string } }
+
+const DAY_KEYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const
+const MONTH_NAMES = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
+
+function getCourseDayIndices(schedule: Record<string, string> | null | undefined): number[] {
+  if (!schedule) return []
+  const indices = new Set<number>()
+  Object.keys(schedule).forEach(day => {
+    const idx = DAY_KEYS.indexOf(day.toLowerCase() as typeof DAY_KEYS[number])
+    if (idx >= 0) indices.add(idx)
+  })
+  return Array.from(indices).sort((a, b) => a - b)
+}
+
+function buildMonthGrid(activeDate: string, courseDayIndices: number[]) {
+  const d = new Date(`${activeDate}T12:00:00`)
+  const year = d.getFullYear()
+  const month = d.getMonth()
+  const firstDay = new Date(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0)
+  const startOffset = firstDay.getDay()
+  const daysInMonth = lastDay.getDate()
+  const todayStr = new Date().toISOString().split("T")[0]
+
+  const cells: { dateStr?: string; dayNum?: number; isCourseDay: boolean; isToday: boolean; isPast: boolean }[] = []
+  for (let i = 0; i < startOffset; i++) cells.push({ isCourseDay: false, isToday: false, isPast: true })
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = new Date(year, month, day).toISOString().split("T")[0]
+    const weekday = new Date(year, month, day).getDay()
+    cells.push({ dateStr, dayNum: day, isCourseDay: courseDayIndices.includes(weekday), isToday: dateStr === todayStr, isPast: dateStr < todayStr })
+  }
+  return cells
+}
 
 interface ParentAlert {
   id: string
@@ -38,6 +71,7 @@ export default function TeacherAttendanceValidation() {
   /* ── Group + Date ── */
   const [groups, setGroups] = useState<Group[]>([])
   const [selectedGroup, setSelectedGroup] = useState<string>("")
+  const [groupSchedule, setGroupSchedule] = useState<Record<string, string> | null>(null)
   const [date, setDate] = useState<string>(highlightDate || new Date().toISOString().split("T")[0])
 
   /* ── Students + Attendance ── */
@@ -93,6 +127,7 @@ export default function TeacherAttendanceValidation() {
 
       const studs: Student[] = groupData.group?.students || []
       setStudents(studs)
+      setGroupSchedule(groupData.group?.schedule || null)
 
       // Default all PRESENT
       const attMap: Record<string, string> = {}
@@ -230,14 +265,38 @@ export default function TeacherAttendanceValidation() {
               {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
             </select>
           </div>
-          <div className="flex items-center gap-2">
-            <CalendarDays size={16} className="text-gray-400" />
-            <input
-              type="date"
-              value={date}
-              onChange={e => setDate(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green"
-            />
+          {/* Mini calendar */}
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-2.5">
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">
+                {MONTH_NAMES[new Date(`${date}T12:00:00`).getMonth()]} {new Date(`${date}T12:00:00`).getFullYear()}
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1 text-[9px] text-gray-400"><span className="w-1.5 h-1.5 rounded-full bg-tahfidz-green" /> Cours</span>
+                <span className="flex items-center gap-1 text-[9px] text-gray-400"><span className="w-1.5 h-1.5 rounded-full bg-gray-300" /> Repos</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-7 gap-0.5">
+              {["D", "L", "M", "M", "J", "V", "S"].map((h, i) => (
+                <div key={i} className="text-center text-[8px] font-bold text-gray-300 py-0.5">{h}</div>
+              ))}
+              {buildMonthGrid(date, getCourseDayIndices(groupSchedule)).map((cell, i) => (
+                <button key={i}
+                  disabled={!cell.isCourseDay}
+                  onClick={() => cell.dateStr && cell.isCourseDay && setDate(cell.dateStr)}
+                  className={`h-7 rounded-md text-[10px] font-bold flex items-center justify-center transition active:scale-90 ${
+                    cell.dateStr === date
+                      ? "bg-tahfidz-green text-white shadow-sm"
+                      : cell.isToday
+                        ? "bg-orange-100 text-orange-600"
+                        : cell.isCourseDay
+                          ? "hover:bg-gray-200 text-gray-700 dark:text-gray-200"
+                          : "text-gray-300 dark:text-gray-600 cursor-default"
+                  }`}>
+                  {cell.dayNum}
+                </button>
+              ))}
+            </div>
           </div>
           <button
             onClick={handleSaveAttendance}

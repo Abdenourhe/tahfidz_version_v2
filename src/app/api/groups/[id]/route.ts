@@ -26,6 +26,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       _count: { select: { students: true } },
     },
   })
+  if (group && group.schedule) {
+    // Ensure schedule is returned as a plain object
+    (group as any).schedule = group.schedule
+  }
   if (!group) return NextResponse.json({ error: "Introuvable" }, { status: 404 })
   return NextResponse.json({ group })
 }
