@@ -26,11 +26,21 @@ export async function GET() {
       prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, fullName: true, email: true } }),
     ])
 
-    const enriched = requests.map(r => ({
-      ...r,
-      school: schools.find(s => s.id === r.schoolId) || { name: "Inconnue", slug: "" },
-      requester: users.find(u => u.id === r.requestedBy) || { fullName: null, email: "Inconnu" },
-    }))
+    const enriched = requests.map(r => {
+      const newValues: Record<string, any> = {}
+      if (r.name != null) newValues.name = r.name
+      if (r.nameAr != null) newValues.nameAr = r.nameAr
+      if (r.address != null) newValues.address = r.address
+      if (r.city != null) newValues.city = r.city
+      if (r.country != null) newValues.country = r.country
+      if (r.phone != null) newValues.phone = r.phone
+      return {
+        ...r,
+        newValues,
+        school: schools.find(s => s.id === r.schoolId) || { name: "Inconnue", slug: "" },
+        requester: users.find(u => u.id === r.requestedBy) || { fullName: null, email: "Inconnu" },
+      }
+    })
 
     return NextResponse.json({ requests: enriched })
   } catch (error: any) {
