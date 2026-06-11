@@ -48,6 +48,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [soundEnabled, setSoundEnabled] = useState(true)
   const prevCountRef = useRef(0)
   const seenIdsRef = useRef<Set<string>>(new Set())
+  const isFirstLoadRef = useRef(true)
   const router = useRouter()
 
   const refresh = useCallback(async () => {
@@ -58,17 +59,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       const data = await res.json()
       const newCount = data.unreadCount || 0
       const newNotifs = data.notifications || []
-      // eslint-disable-next-line no-console
-      console.log("[toast debug] count:", newCount, "notifs:", newNotifs.length, "seen:", seenIdsRef.current.size)
 
       // Détecte les vraies nouvelles notifications par ID (pas seulement le compteur)
       const unseenNotifs = newNotifs.filter((n: any) => !seenIdsRef.current.has(n.id))
-      // eslint-disable-next-line no-console
-      console.log("[toast debug] unseen:", unseenNotifs.length)
-      if (unseenNotifs.length > 0 && seenIdsRef.current.size > 0) {
+      if (unseenNotifs.length > 0 && !isFirstLoadRef.current) {
         const latest = unseenNotifs[0]
-        // eslint-disable-next-line no-console
-        console.log("[toast debug] showing toast:", latest.title)
         setToasts(prev => [...prev, {
           id: latest.id,
           title: latest.title,
@@ -77,12 +72,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         }])
         if (soundEnabled) playBeep()
       }
+      isFirstLoadRef.current = false
       newNotifs.forEach((n: any) => seenIdsRef.current.add(n.id))
       prevCountRef.current = newCount
       setUnreadCount(newCount)
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error("[toast debug] refresh error:", err)
+    } catch {
+      // ignore
     }
   }, [status, session, soundEnabled])
 
@@ -123,7 +118,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         {toasts.map(t => (
           <div
             key={t.id}
-            className="pointer-events-auto bg-white dark:bg-gray-900 rounded-xl shadow-xl border-2 border-red-500 dark:border-red-400 p-3.5 flex items-start gap-3 cursor-pointer hover:shadow-2xl transition"
+            className="pointer-events-auto bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 p-3.5 flex items-start gap-3 cursor-pointer hover:shadow-2xl transition"
             onClick={() => {
               removeToast(t.id)
               if (t.url) router.push(t.url)
