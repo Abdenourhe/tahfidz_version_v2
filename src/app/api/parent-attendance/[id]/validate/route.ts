@@ -44,6 +44,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         select: { attendanceNotifications: true },
       })
       if (parentUser?.attendanceNotifications !== false) {
+        const safeDate = new Date(attendance.date.toISOString().slice(0, 10) + "T12:00:00").toLocaleDateString("fr-FR")
         await prisma.notification.create({
           data: {
             schoolId: attendance.student.user.schoolId,
@@ -51,8 +52,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             type: "ATTENDANCE_REJECTED",
             title: `Absence rejetée: ${attendance.student.user.fullName}`,
             titleAr: `تم رفض الغياب: ${attendance.student.user.fullName}`,
-            message: `Le ${attendance.date.toLocaleDateString("fr-FR")} — votre signalement d'absence pour ${attendance.student.user.fullName} a été rejeté par le professeur.${rejectionReason ? ` Motif: ${rejectionReason}` : ""}`,
-            messageAr: `بتاريخ ${attendance.date.toLocaleDateString("fr-FR")} — تم رفض بلاغ الغياب لـ ${attendance.student.user.fullName} من قبل المعلم.${rejectionReason ? ` السبب: ${rejectionReason}` : ""}`,
+            message: `Le ${safeDate} — votre signalement d'absence pour ${attendance.student.user.fullName} a été rejeté par le professeur.${rejectionReason ? ` Motif: ${rejectionReason}` : ""}`,
+            messageAr: `بتاريخ ${safeDate} — تم رفض بلاغ الغياب لـ ${attendance.student.user.fullName} من قبل المعلم.${rejectionReason ? ` السبب: ${rejectionReason}` : ""}`,
             data: { attendanceId: id, validated: false, rejectionReason: rejectionReason || null, url: "/parent/attendance" },
           },
         })
@@ -78,6 +79,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         select: { attendanceNotifications: true },
       })
       if (parentUser?.attendanceNotifications !== false) {
+        const safeDate = new Date(attendance.date.toISOString().slice(0, 10) + "T12:00:00").toLocaleDateString("fr-FR")
         await prisma.notification.create({
           data: {
             schoolId: attendance.student.user.schoolId,
@@ -85,8 +87,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             type: "ATTENDANCE_VALIDATED",
             title: `Présence validée: ${attendance.student.user.fullName}`,
             titleAr: `تم التحقق من الحضور: ${attendance.student.user.fullName}`,
-            message: `Le ${attendance.date.toLocaleDateString("fr-FR")} — statut ${attendance.status} validé par le professeur`,
-            messageAr: `بتاريخ ${attendance.date.toLocaleDateString("fr-FR")} — الحالة ${attendance.status} تم التحقق منها من قبل المعلم`,
+            message: `Le ${safeDate} — statut ${attendance.status} validé par le professeur`,
+            messageAr: `بتاريخ ${safeDate} — الحالة ${attendance.status} تم التحقق منها من قبل المعلم`,
             data: { attendanceId: id, validated: true, url: "/parent/attendance" },
           },
         })

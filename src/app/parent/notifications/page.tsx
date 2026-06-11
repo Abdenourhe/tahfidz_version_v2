@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { formatDate } from "@/lib/utils"
-import { Bell, CheckCheck, BookOpen, Star, Award, Trash2, Loader2, Mail } from "lucide-react"
+import { Bell, CheckCheck, BookOpen, Star, Award, Trash2, Loader2, Mail, XCircle } from "lucide-react"
 
 interface Notification {
   id: string; type: string; title: string; message: string; isRead: boolean; createdAt: string;
@@ -21,6 +21,7 @@ const typeIcon: Record<string, { icon: typeof Bell; color: string; bg: string }>
   memorization_progress_updated: { icon: Star,    color: "text-tahfidz-gold",  bg: "bg-tahfidz-gold-light" },
   attendance_absent_reported:  { icon: Bell,     color: "text-red-500",       bg: "bg-red-50" },
   attendance_validated:        { icon: CheckCheck, color: "text-green-600",   bg: "bg-green-50" },
+  attendance_rejected:         { icon: XCircle,    color: "text-red-600",     bg: "bg-red-100" },
   direct_message:              { icon: Mail,     color: "text-blue-600",      bg: "bg-blue-50" },
 }
 
