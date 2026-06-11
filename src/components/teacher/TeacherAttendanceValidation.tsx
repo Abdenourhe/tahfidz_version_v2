@@ -88,6 +88,11 @@ export default function TeacherAttendanceValidation() {
   const [validating, setValidating] = useState<string | null>(null)
   const [loadingAlerts, setLoadingAlerts] = useState(true)
 
+  /* ── Reject modal ── */
+  const [rejectModalOpen, setRejectModalOpen] = useState(false)
+  const [rejectingAlertId, setRejectingAlertId] = useState<string | null>(null)
+  const [rejectReason, setRejectReason] = useState("")
+
   /* ── Load groups ── */
   useEffect(() => {
     fetch("/api/groups?mine=true")
@@ -212,18 +217,24 @@ export default function TeacherAttendanceValidation() {
   }
 
   /* ── Validate / Reject alert ── */
-  const handleValidateAlert = async (id: string, validated: boolean) => {
+  const handleValidateAlert = async (id: string, validated: boolean, reason?: string) => {
     setValidating(id)
     try {
-      await fetch(`/api/parent-attendance/${id}/validate`, {
+      const res = await fetch(`/api/parent-attendance/${id}/validate`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ validated }),
+        body: JSON.stringify({ validated, rejectionReason: reason || undefined }),
       })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        alert(err.error || "Erreur lors du traitement")
+        return
+      }
       loadAlerts()
       loadSheet()
     } catch (e) {
       console.error(e)
+      alert("Erreur réseau")
     } finally {
       setValidating(null)
     }
@@ -468,7 +479,7 @@ export default function TeacherAttendanceValidation() {
                             {validating === r.id ? <Loader2 className="animate-spin" size={14} /> : <CheckCircle2 size={14} />}
                           </button>
                           <button
-                            onClick={() => handleValidateAlert(r.id, false)}
+                            onClick={() => { setRejectingAlertId(r.id); setRejectModalOpen(true); setRejectReason("") }}
                             disabled={validating === r.id}
                             className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition"
                             title={t("reject")}
@@ -494,6 +505,51 @@ export default function TeacherAttendanceValidation() {
           </div>
         )}
       </div>
+
+      {/* Reject modal */}
+      {rejectModalOpen && rejectingAlertId && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
+            <h4 className="font-bold text-lg text-gray-900 dark:text-white">Rejeter l&apos;absence</h4>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Vous êtes sur le point de rejeter le signalement d&apos;absence. Le parent sera notifié. Veuillez indiquer pourquoi l&apos;élève doit être présent.
+            </p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Motif du rejet <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={rejectReason}
+                onChange={e => setRejectReason(e.target.value)}
+                placeholder="Ex: Examen obligatoire, sortie scolaire..."
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
+                rows={3}
+              />
+            </div>
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => { setRejectModalOpen(false); setRejectingAlertId(null); setRejectReason("") }}
+                className="flex-1 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => {
+                  if (!rejectReason.trim()) return
+                  handleValidateAlert(rejectingAlertId, false, rejectReason.trim())
+                  setRejectModalOpen(false)
+                  setRejectingAlertId(null)
+                  setRejectReason("")
+                }}
+                disabled={!rejectReason.trim() || validating === rejectingAlertId}
+                className="flex-1 py-2.5 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition"
+              >
+                {validating === rejectingAlertId ? <Loader2 size={14} className="animate-spin mx-auto" /> : "Confirmer le rejet"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
