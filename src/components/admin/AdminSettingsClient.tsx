@@ -61,7 +61,7 @@ export function AdminSettingsClient({ user, school }: Props) {
 
   // Notifications prefs
   const [notifPrefs, setNotifPrefs] = useState({
-    studentAdded: true, presence: true, absence: true, memorization: true, evaluation: true,
+    studentAdded: true, absence: true, memorization: true, evaluation: true,
     examReminder: true, parentLink: true, transfer: true, message: true, badge: false, weeklyReport: false,
   })
   const [notifSaved, setNotifSaved] = useState(false)
@@ -302,9 +302,6 @@ export function AdminSettingsClient({ user, school }: Props) {
     { key: "memorization", label:
         locale === "ar" ? "حفظ مُصادَق عليه" : locale === "en" ? "Memorization validated" : "Mémorisation validée",
       desc: locale === "ar" ? "عند مصادقة المعلم" : locale === "en" ? "When a teacher approves memorization" : "Quand un enseignant approuve une mémorisation" },
-    { key: "presence", label:
-        locale === "ar" ? "حضور مُسجَّل" : locale === "en" ? "Presence reported" : "Présence signalée",
-      desc: locale === "ar" ? "عند تسجيل حضور طالب" : locale === "en" ? "When a student is marked present" : "Quand un élève est marqué présent" },
     { key: "absence", label:
         locale === "ar" ? "غياب مُسجَّل" : locale === "en" ? "Absence reported" : "Absence signalée",
       desc: locale === "ar" ? "عند تسجيل غياب طالب" : locale === "en" ? "When a student is marked absent" : "Quand un élève est marqué absent" },
