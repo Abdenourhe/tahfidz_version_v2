@@ -48,6 +48,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
   const [soundEnabled, setSoundEnabled] = useState(true)
   const prevCountRef = useRef(0)
+  const seenIdsRef = useRef<Set<string>>(new Set())
   const router = useRouter()
 
   const refresh = useCallback(async () => {
@@ -59,18 +60,19 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       const newCount = data.unreadCount || 0
       const newNotifs = data.notifications || []
 
-      if (newCount > prevCountRef.current && prevCountRef.current > 0) {
-        const latest = newNotifs[0]
-        if (latest) {
-          setToasts(prev => [...prev, {
-            id: latest.id,
-            title: latest.title,
-            message: latest.message,
-            url: latest.data?.url,
-          }])
-          if (soundEnabled) playBeep()
-        }
+      // Détecte les vraies nouvelles notifications par ID (pas seulement le compteur)
+      const unseenNotifs = newNotifs.filter((n: any) => !seenIdsRef.current.has(n.id))
+      if (unseenNotifs.length > 0 && seenIdsRef.current.size > 0) {
+        const latest = unseenNotifs[0]
+        setToasts(prev => [...prev, {
+          id: latest.id,
+          title: latest.title,
+          message: latest.message,
+          url: latest.data?.url,
+        }])
+        if (soundEnabled) playBeep()
       }
+      newNotifs.forEach((n: any) => seenIdsRef.current.add(n.id))
       prevCountRef.current = newCount
       setUnreadCount(newCount)
     } catch { /* ignore */ }
