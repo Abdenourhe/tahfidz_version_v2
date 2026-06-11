@@ -1,7 +1,6 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from "react"
-import { motion, AnimatePresence } from "framer-motion"
 import { X, Bell } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
@@ -130,18 +129,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       {children}
 
       {/* Toast stack */}
-      <div className="fixed top-4 right-4 z-[999] space-y-2 max-w-sm w-full">
-        <AnimatePresence>
-          {toasts.map(t => (
-            <motion.div
-              key={t.id}
-              layout
-              initial={{ opacity: 0, x: 80, scale: 0.9 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 80, scale: 0.9 }}
-              transition={{ type: "spring", stiffness: 120, damping: 15 }}
-              className="bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 p-3.5 flex items-start gap-3 hover:shadow-2xl"
-            >
+      <div className="fixed top-4 right-4 z-[100] space-y-2 max-w-sm w-full">
+        {toasts.map(t => (
+          <div
+            key={t.id}
+            className="bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 p-3.5 flex items-start gap-3 hover:shadow-2xl animate-in fade-in slide-in-from-right duration-500"
+          >
               <div
                 className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer"
                 onClick={() => {
@@ -164,9 +157,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               >
                 <X size={16} />
               </button>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+          </div>
+        ))}
       </div>
     </NotificationContext.Provider>
   )
