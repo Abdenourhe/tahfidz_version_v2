@@ -1,16 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from "react"
-import { X, Bell } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-
-interface Toast {
-  id: string
-  title: string
-  message: string
-  url?: string
-}
 
 interface NotificationContextType {
   unreadCount: number
@@ -44,12 +35,10 @@ function playBeep() {
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession()
   const [unreadCount, setUnreadCount] = useState(0)
-  const [toasts, setToasts] = useState<Toast[]>([])
   const [soundEnabled, setSoundEnabled] = useState(true)
   const prevCountRef = useRef(0)
   const seenIdsRef = useRef<Set<string>>(new Set())
   const isFirstLoadRef = useRef(true)
-  const router = useRouter()
 
   const refresh = useCallback(async () => {
     if (status !== "authenticated" || !session?.user?.id) return
@@ -63,13 +52,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       // Détecte les vraies nouvelles notifications par ID (pas seulement le compteur)
       const unseenNotifs = newNotifs.filter((n: any) => !seenIdsRef.current.has(n.id))
       if (unseenNotifs.length > 0 && !isFirstLoadRef.current) {
-        const latest = unseenNotifs[0]
-        setToasts(prev => [...prev, {
-          id: latest.id,
-          title: latest.title,
-          message: latest.message,
-          url: latest.data?.url,
-        }])
         if (soundEnabled) playBeep()
       }
       isFirstLoadRef.current = false
@@ -107,59 +89,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(id)
   }, [status, refresh])
 
-  const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id))
-  }, [])
-
-  // Auto-dismiss toasts after 8 seconds
-  const toastTimersRef = useRef<Set<string>>(new Set())
-  useEffect(() => {
-    toasts.forEach(t => {
-      if (toastTimersRef.current.has(t.id)) return
-      toastTimersRef.current.add(t.id)
-      const timer = setTimeout(() => {
-        removeToast(t.id)
-        toastTimersRef.current.delete(t.id)
-      }, 8000)
-    })
-  }, [toasts, removeToast])
-
   return (
     <NotificationContext.Provider value={{ unreadCount, refresh }}>
       {children}
-
-      {/* Toast stack */}
-      <div className="fixed top-4 right-4 z-[100] space-y-2 max-w-sm w-full">
-        {toasts.map(t => (
-          <div
-            key={t.id}
-            className="bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 p-3.5 flex items-start gap-3 hover:shadow-2xl animate-in fade-in slide-in-from-right duration-500"
-          >
-              <div
-                className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer"
-                onClick={() => {
-                  removeToast(t.id)
-                  if (t.url) router.push(t.url)
-                }}
-              >
-                <div className="w-9 h-9 rounded-full bg-tahfidz-green-light flex items-center justify-center shrink-0">
-                  <Bell size={16} className="text-tahfidz-green" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{t.title}</p>
-                  <p className="text-xs text-gray-500 truncate">{t.message}</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => removeToast(t.id)}
-                className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 shrink-0 transition cursor-pointer"
-              >
-                <X size={16} />
-              </button>
-          </div>
-        ))}
-      </div>
     </NotificationContext.Provider>
   )
 }
