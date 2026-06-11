@@ -17,6 +17,7 @@ import { SchoolsTab } from "@/components/admin/superadmin/schools-tab"
 import { RequestsTab } from "@/components/admin/superadmin/requests-tab"
 import { HealthTab, AuditTab, FeedbackTab } from "@/components/admin/superadmin/system-tabs"
 import { BroadcastTab } from "@/components/admin/superadmin/broadcast-tab"
+import { UpdatesTab } from "@/components/admin/superadmin/updates-tab"
 import {
   CreateSchoolModal, EditSchoolModal, ApprovalResultModal,
   FeedbackDetailModal,
@@ -101,6 +102,10 @@ export default function SuperAdminPage() {
 
   /* ── Broadcast ── */
   const [broadcastSending, setBroadcastSending] = useState(false)
+
+  /* ── School Updates ── */
+  const [updateRequests, setUpdateRequests] = useState<any[]>([])
+  const [updatesLoading, setUpdatesLoading] = useState(false)
 
   /* ── Dark mode ── */
   useEffect(() => {
@@ -199,6 +204,23 @@ export default function SuperAdminPage() {
   }, [])
 
   useEffect(() => { if (tab === "feedback") loadFeedback() }, [tab, loadFeedback])
+
+  const loadUpdates = useCallback(async () => {
+    setUpdatesLoading(true)
+    try {
+      const res = await fetch("/api/admin/school-updates")
+      if (res.ok) {
+        const data = await res.json()
+        setUpdateRequests(data.requests || [])
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setUpdatesLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { if (tab === "updates") loadUpdates() }, [tab, loadUpdates])
 
   /* ── Auto-refresh ── */
   useEffect(() => {
@@ -482,6 +504,7 @@ export default function SuperAdminPage() {
               { id: "audit" as TabKey, label: "Audit", icon: <Eye size={15} />, color: "text-tahfidz-purple", border: "border-tahfidz-purple" },
               { id: "broadcast" as TabKey, label: "Broadcast", icon: <Send size={15} />, color: "text-blue-500", border: "border-blue-500" },
               { id: "feedback" as TabKey, label: "Feedback", icon: <MessageCircleQuestion size={15} />, count: feedbackList.filter(f => f.status === "PENDING").length, color: "text-pink-500", border: "border-pink-500", badge: feedbackList.filter(f => f.status === "PENDING").length > 0 },
+              { id: "updates" as TabKey, label: "Mises à jour", icon: <Building2 size={15} />, count: updateRequests.length, color: "text-orange-500", border: "border-orange-500", badge: updateRequests.length > 0 },
             ].map(t => (
               <button key={t.id} onClick={() => setTab(t.id)}
                 className={`flex-1 py-3.5 text-sm font-medium transition whitespace-nowrap ${tab === t.id ? `${t.color} border-b-2 ${t.border}` : "text-gray-500 dark:text-gray-400 hover:text-gray-700"}`}>
@@ -554,6 +577,14 @@ export default function SuperAdminPage() {
               error={feedbackError}
               onReload={loadFeedback}
               onSelect={fb => { setSelectedFeedback(fb); setAdminNote(fb.adminNote || ""); setShowFeedbackDetail(true) }}
+            />
+          )}
+
+          {tab === "updates" && (
+            <UpdatesTab
+              requests={updateRequests}
+              loading={updatesLoading}
+              onReload={loadUpdates}
             />
           )}
         </div>

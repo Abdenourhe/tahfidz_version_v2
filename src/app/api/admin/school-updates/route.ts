@@ -15,14 +15,24 @@ export async function GET() {
 
     const requests = await prisma.schoolUpdateRequest.findMany({
       where: { status: "PENDING" },
-      include: {
-        school: { select: { name: true, slug: true } },
-        requester: { select: { fullName: true, email: true } },
-      },
       orderBy: { createdAt: "desc" },
     })
 
-    return NextResponse.json({ requests })
+    const schoolIds = [...new Set(requests.map(r => r.schoolId))]
+    const userIds = [...new Set(requests.map(r => r.requestedBy))]
+
+    const [schools, users] = await Promise.all([
+      prisma.school.findMany({ where: { id: { in: schoolIds } }, select: { id: true, name: true, slug: true } }),
+      prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, fullName: true, email: true } }),
+    ])
+
+    const enriched = requests.map(r => ({
+      ...r,
+      school: schools.find(s => s.id === r.schoolId) || { name: "Inconnue", slug: "" },
+      requester: users.find(u => u.id === r.requestedBy) || { fullName: null, email: "Inconnu" },
+    }))
+
+    return NextResponse.json({ requests: enriched })
   } catch (error: any) {
     console.error("[SCHOOL UPDATES GET]", error)
     return NextResponse.json({ error: error.message || "Erreur serveur" }, { status: 500 })
@@ -41,7 +51,6 @@ export async function PATCH(req: Request) {
 
     const request = await prisma.schoolUpdateRequest.findUnique({
       where: { id: requestId },
-      include: { school: { select: { name: true } } },
     })
     if (!request) {
       return NextResponse.json({ error: "Demande introuvable" }, { status: 404 })
@@ -73,23 +82,26 @@ export async function PATCH(req: Request) {
       },
     })
 
+    const school = await prisma.school.findUnique({ where: { id: request.schoolId }, select: { name: true } })
+    const schoolName = school?.name || "École"
+
     await prisma.notification.create({
       data: {
         schoolId: request.schoolId,
         userId: request.requestedBy,
         type: approved ? "SCHOOL_UPDATE_APPROVED" : "SCHOOL_UPDATE_REJECTED",
         title: approved
-          ? `Modification approuvée: ${request.school.name}`
-          : `Modification rejetée: ${request.school.name}`,
+          ? `Modification approuvée: ${schoolName}`
+          : `Modification rejetée: ${schoolName}`,
         titleAr: approved
-          ? `تمت الموافقة على التعديل: ${request.school.name}`
-          : `تم رفض التعديل: ${request.school.name}`,
+          ? `تمت الموافقة على التعديل: ${schoolName}`
+          : `تم رفض التعديل: ${schoolName}`,
         message: approved
-          ? `Votre demande de modification des informations de ${request.school.name} a été approuvée.`
-          : `Votre demande de modification des informations de ${request.school.name} a été rejetée.${rejectionReason ? ` Motif: ${rejectionReason}` : ""}`,
+          ? `Votre demande de modification des informations de ${schoolName} a été approuvée.`
+          : `Votre demande de modification des informations de ${schoolName} a été rejetée.${rejectionReason ? ` Motif: ${rejectionReason}` : ""}`,
         messageAr: approved
-          ? `تمت الموافقة على طلب تعديل معلومات ${request.school.name}.`
-          : `تم رفض طلب تعديل معلومات ${request.school.name}.${rejectionReason ? ` السبب: ${rejectionReason}` : ""}`,
+          ? `تمت الموافقة على طلب تعديل معلومات ${schoolName}.`
+          : `تم رفض طلب تعديل معلومات ${schoolName}.${rejectionReason ? ` السبب: ${rejectionReason}` : ""}`,
         data: { requestId, approved, url: "/admin/settings" },
       },
     })

@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { formatDate } from "@/lib/utils"
-import { Bell, CheckCheck, BookOpen, Star, Award, Megaphone, Link2, Trash2, Loader2, XCircle } from "lucide-react"
+import { Bell, CheckCheck, BookOpen, Star, Award, Megaphone, Link2, Trash2, Loader2, XCircle, Building2 } from "lucide-react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 
 interface Notification {

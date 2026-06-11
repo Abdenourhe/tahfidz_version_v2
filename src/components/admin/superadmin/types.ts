@@ -91,7 +91,7 @@ export interface SystemHealth {
 }
 
 export type TimeRange = "7d" | "30d" | "90d" | "1y"
-export type TabKey = "schools" | "requests" | "health" | "audit" | "broadcast" | "feedback"
+export type TabKey = "schools" | "requests" | "health" | "audit" | "broadcast" | "feedback" | "updates"
 
 // ─── Constantes ───────────────────────────────────────────────────
 export const EMPTY_FORM = {
