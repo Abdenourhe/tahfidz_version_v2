@@ -7,6 +7,7 @@ import {
   CalendarCheck, AlertCircle, ChevronLeft, ChevronRight,
   ArrowLeft, CalendarDays
 } from "lucide-react"
+import { toast } from "sonner"
 
 interface Child {
   id: string
@@ -280,6 +281,10 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   /* Save */
   async function saveAttendance() {
     if (!selectedChild || !activeDate || !status) return
+    if ((status === "ABSENT" || status === "EXCUSED") && !note.trim()) {
+      setError("Le motif est obligatoire pour ce statut.")
+      return
+    }
     setSaving(true)
     setError(null)
     try {
@@ -301,6 +306,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
       setSaved(true)
       setMarkedDates(prev => new Set(prev).add(activeDate))
       setAttendanceMap(prev => ({ ...prev, [activeDate]: { status, reason: note } }))
+      toast.success("Présence enregistrée")
       if (selectedChild) loadChildData(selectedChild)
     } catch (e) {
       console.error(e)
@@ -565,7 +571,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                 {/* Save button */}
                 <button
                   onClick={saveAttendance}
-                  disabled={saving || !status || !isFuture}
+                  disabled={saving || !status || !isFuture || ((status === "ABSENT" || status === "EXCUSED") && !note.trim())}
                   className="w-full mt-3 flex items-center justify-center gap-2 py-3 gradient-tahfidz text-white text-sm font-bold rounded-xl hover:opacity-90 disabled:opacity-40 transition shadow-lg active:scale-[0.98]">
                   {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                   {saving ? "Enregistrement…" : "Enregistrer"}
