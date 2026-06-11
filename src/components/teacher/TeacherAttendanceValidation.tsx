@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { useSearchParams } from "next/navigation"
-import { CheckCircle2, XCircle, Loader2, Filter, CalendarDays, Users, AlertTriangle, Save, Clock, BookOpen } from "lucide-react"
+import { CheckCircle2, XCircle, Loader2, Filter, CalendarDays, Users, AlertTriangle, Save, Clock, BookOpen, ChevronLeft, ChevronRight } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 
 interface Group { id: string; name: string; schedule?: Record<string, string> | null }
@@ -254,7 +254,7 @@ export default function TeacherAttendanceValidation() {
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">{t("attendanceSheet")}</h2>
 
         {/* Controls */}
-        <div className="flex flex-wrap items-center gap-3 mb-4">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Users size={16} className="text-gray-400" />
             <select
@@ -265,48 +265,77 @@ export default function TeacherAttendanceValidation() {
               {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
             </select>
           </div>
-          {/* Mini calendar */}
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-2.5">
-            <div className="flex items-center justify-between mb-1.5">
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">
-                {MONTH_NAMES[new Date(`${date}T12:00:00`).getMonth()]} {new Date(`${date}T12:00:00`).getFullYear()}
-              </p>
+          <button
+            onClick={handleSaveAttendance}
+            disabled={saving || students.length === 0}
+            className="flex items-center gap-2 px-4 py-2 bg-tahfidz-green text-white text-sm font-medium rounded-lg hover:bg-tahfidz-green-dark transition disabled:opacity-50"
+          >
+            {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <CheckCircle2 size={14} /> : <Save size={14} />}
+            {saved ? t("saved") : saving ? t("saving") : t("validateAll")}
+          </button>
+        </div>
+
+        {/* Calendar card */}
+        {selectedGroup && (
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-5 mb-6">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <span className="flex items-center gap-1 text-[9px] text-gray-400"><span className="w-1.5 h-1.5 rounded-full bg-tahfidz-green" /> Cours</span>
-                <span className="flex items-center gap-1 text-[9px] text-gray-400"><span className="w-1.5 h-1.5 rounded-full bg-gray-300" /> Repos</span>
+                <button
+                  onClick={() => {
+                    const d = new Date(`${date}T12:00:00`)
+                    d.setMonth(d.getMonth() - 1)
+                    setDate(d.toISOString().split("T")[0])
+                  }}
+                  className="p-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <p className="text-sm font-bold text-gray-800 dark:text-gray-100 min-w-[120px] text-center">
+                  {MONTH_NAMES[new Date(`${date}T12:00:00`).getMonth()]} {new Date(`${date}T12:00:00`).getFullYear()}
+                </p>
+                <button
+                  onClick={() => {
+                    const d = new Date(`${date}T12:00:00`)
+                    d.setMonth(d.getMonth() + 1)
+                    setDate(d.toISOString().split("T")[0])
+                  }}
+                  className="p-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
+                  <span className="w-2.5 h-2.5 rounded-full bg-tahfidz-green" /> Jour de cours
+                </span>
+                <span className="flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
+                  <span className="w-2.5 h-2.5 rounded-full bg-gray-200 dark:bg-gray-700" /> Repos
+                </span>
               </div>
             </div>
-            <div className="grid grid-cols-7 gap-0.5">
-              {["D", "L", "M", "M", "J", "V", "S"].map((h, i) => (
-                <div key={i} className="text-center text-[8px] font-bold text-gray-300 py-0.5">{h}</div>
+            <div className="grid grid-cols-7 gap-1">
+              {["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"].map((h, i) => (
+                <div key={i} className="text-center text-[10px] font-bold text-gray-400 dark:text-gray-500 py-1">{h}</div>
               ))}
               {buildMonthGrid(date, getCourseDayIndices(groupSchedule)).map((cell, i) => (
                 <button key={i}
                   disabled={!cell.isCourseDay}
                   onClick={() => cell.dateStr && cell.isCourseDay && setDate(cell.dateStr)}
-                  className={`h-7 rounded-md text-[10px] font-bold flex items-center justify-center transition active:scale-90 ${
+                  className={`h-10 rounded-lg text-sm font-bold flex items-center justify-center transition active:scale-90 ${
                     cell.dateStr === date
-                      ? "bg-tahfidz-green text-white shadow-sm"
+                      ? "bg-tahfidz-green text-white shadow-sm ring-2 ring-tahfidz-green/30"
                       : cell.isToday
-                        ? "bg-orange-100 text-orange-600"
+                        ? "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400"
                         : cell.isCourseDay
-                          ? "hover:bg-gray-200 text-gray-700 dark:text-gray-200"
-                          : "text-gray-300 dark:text-gray-600 cursor-default"
+                          ? "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200"
+                          : "text-gray-200 dark:text-gray-700 cursor-default"
                   }`}>
                   {cell.dayNum}
                 </button>
               ))}
             </div>
           </div>
-          <button
-            onClick={handleSaveAttendance}
-            disabled={saving || students.length === 0}
-            className="ml-auto flex items-center gap-2 px-4 py-2 bg-tahfidz-green text-white text-sm font-medium rounded-lg hover:bg-tahfidz-green-dark transition disabled:opacity-50"
-          >
-            {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <CheckCircle2 size={14} /> : <Save size={14} />}
-            {saved ? t("saved") : saving ? t("saving") : t("validateAll")}
-          </button>
-        </div>
+        )}
 
         {/* Students table */}
         {loadingStudents ? (
