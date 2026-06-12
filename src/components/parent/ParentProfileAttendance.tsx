@@ -686,9 +686,6 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                     const isSelected = selectedDay === dateStr
                     const dayChildren = getChildrenForDay(children, dateStr)
                     const hasCourses = dayChildren.length > 0
-                    const remaining = dayChildren.filter(c => !weekAttendanceMap[dateStr]?.[c.student.id]).length
-                    const allMarked = hasCourses && remaining === 0
-                    const anyMarked = hasCourses && remaining < dayChildren.length
 
                     return (
                       <button
@@ -704,12 +701,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                             ? "bg-orange-50 dark:bg-orange-900/20"
                             : hasCourses
                               ? "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
-                              : "opacity-50 cursor-default bg-gray-100/50 dark:bg-gray-800/50",
-                          allMarked
-                            ? "border border-emerald-200 dark:border-emerald-800"
-                            : anyMarked
-                              ? "border border-amber-200 dark:border-amber-800"
-                              : ""
+                              : "opacity-50 cursor-default bg-gray-100/50 dark:bg-gray-800/50"
                         )}
                       >
                         <span className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500">{label}</span>
@@ -739,13 +731,6 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                                 </div>
                               )}
                             </div>
-                            {remaining > 0 ? (
-                              <span className="text-[9px] font-bold text-orange-500">{remaining} restant(s)</span>
-                            ) : allMarked ? (
-                              <span className="text-[9px] font-bold text-emerald-600 flex items-center gap-0.5">
-                                <Check size={9} /> OK
-                              </span>
-                            ) : null}
                           </div>
                         )}
                       </button>
@@ -765,8 +750,6 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                         const dayChildren = getChildrenForDay(children, dateStr)
                         const hasCourses = dayChildren.length > 0
                         const isSelected = selectedDay === dateStr
-                        const remaining = dayChildren.filter(c => !weekAttendanceMap[dateStr]?.[c.student.id]).length
-                        const allMarked = hasCourses && remaining === 0
 
                         return (
                           <button
@@ -793,29 +776,25 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                             </span>
 
                             {hasCourses && (
-                              <div className="mt-auto w-full space-y-1">
-                                <div className="flex flex-wrap gap-0.5">
-                                  {dayChildren.slice(0, 5).map(child => {
-                                    const status = weekAttendanceMap[dateStr]?.[child.student.id]?.status
-                                    const cfg = status ? statusConfig[status] : null
-                                    return (
-                                      <div key={child.student.id}
-                                        className={cn("w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full", cfg ? cfg.bg : "bg-gray-300 dark:bg-gray-600")}
-                                        title={child.student.user.fullName}
-                                      />
-                                    )
-                                  })}
-                                  {dayChildren.length > 5 && (
-                                    <span className="text-[8px] text-gray-400">+{dayChildren.length - 5}</span>
+                              <div className="mt-auto w-full">
+                                <div className="flex -space-x-1.5">
+                                  {dayChildren.slice(0, 4).map(child => (
+                                    <div key={child.student.id}
+                                      className="w-5 h-5 sm:w-6 sm:h-6 rounded-full gradient-tahfidz text-white text-[8px] sm:text-[9px] font-bold flex items-center justify-center border border-white dark:border-gray-700 overflow-hidden"
+                                      title={child.student.user.fullName}>
+                                      {child.student.user.avatar ? (
+                                        <Image src={child.student.user.avatar} alt={child.student.user.fullName} width={24} height={24} className="w-full h-full object-cover" />
+                                      ) : (
+                                        child.student.user.fullName.charAt(0)
+                                      )}
+                                    </div>
+                                  ))}
+                                  {dayChildren.length > 4 && (
+                                    <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 text-[8px] sm:text-[9px] font-bold flex items-center justify-center border border-white dark:border-gray-700">
+                                      +{dayChildren.length - 4}
+                                    </div>
                                   )}
                                 </div>
-                                {remaining > 0 ? (
-                                  <span className="text-[9px] font-bold text-orange-500">{remaining} restant(s)</span>
-                                ) : allMarked ? (
-                                  <span className="text-[9px] font-bold text-emerald-600 flex items-center gap-0.5">
-                                    <Check size={9} /> OK
-                                  </span>
-                                ) : null}
                               </div>
                             )}
                           </button>
@@ -886,7 +865,9 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                                     className={cn(
                                       "w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center transition active:scale-95",
                                       isSelected
-                                        ? `${opt.bg} text-white shadow-sm`
+                                        ? opt.value === "PRESENT"
+                                          ? "bg-gray-300 dark:bg-gray-500 text-white shadow-sm"
+                                          : `${opt.bg} text-white shadow-sm`
                                         : "bg-white dark:bg-gray-600 text-gray-400 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-500"
                                     )}>
                                     <opt.icon size={14} />
