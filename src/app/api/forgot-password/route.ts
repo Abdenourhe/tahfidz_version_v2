@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       .sign(secret)
 
     // Construire le lien de reinitialisation
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://votre-app.vercel.app"
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
     const resetUrl = `${baseUrl}/reset-password?token=${encodeURIComponent(token)}`
 
     let mailResult: { success: boolean; error?: string } | undefined

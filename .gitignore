@@ -44,3 +44,8 @@ prisma/migrations/
 # Kimi internal
 .kilo/
 .vscode/
+
+# Private docs & generated/user data
+private-docs/
+mnt/user-data/outputs/
+public/uploads/

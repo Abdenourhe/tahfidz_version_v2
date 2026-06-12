@@ -125,7 +125,7 @@ export async function createMeeting(params: CreateMeetingParams): Promise<Create
 export function joinMeetingUrl(params: JoinMeetingParams): string {
   if (!isConfigured()) {
     // Mode mock — URL placeholder
-    const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://votre-app.vercel.app"
+    const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
     return `${base}/halaqa/room?meetingID=${encodeURIComponent(params.meetingID)}&name=${encodeURIComponent(params.fullName)}`
   }
 

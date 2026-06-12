@@ -320,3 +320,4 @@ Le SUPERADMIN peut se connecter avec n'importe quel email de super-admin sans `s
 - **Couleurs custom** : `tahfidz-green`, `tahfidz-gold`, `tahfidz-purple` et leurs variantes `-light`.
 - **Dark mode** : Géré par `next-themes` avec `attribute="class"`. Les composants doivent supporter `dark:`.
 - **RTL** : La langue arabe bascule automatiquement la direction. Le script d'initialisation dans `layout.tsx` s'exécute avant hydration.
+- **README.md** : Le fichier racine est intentionnellement minimal (titre + mention "Projet privé"). Ne pas y réintroduire de détails techniques, comptes de démo ou architecture. La documentation utilisateur détaillée reste dans [`PRESENTATION_UTILISATEUR_TAHFIDZ.md`](./PRESENTATION_UTILISATEUR_TAHFIDZ.md) et la documentation technique interne dans [`docs/`](./docs/).
