@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import {
   Save, Loader2, Check, Clock, BookOpen, X,
   CalendarCheck, AlertCircle, ChevronLeft, ChevronRight,
-  ArrowLeft
+  ArrowLeft, Info
 } from "lucide-react"
 
 interface Child {
@@ -292,7 +292,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const selectedDayChildren = selectedDay ? getChildrenForDay(children, selectedDay) : []
   const dayHasChanges = selectedDayChildren.some(child => {
     const loaded = selectedDay ? weekAttendanceMap[selectedDay]?.[child.student.id]?.status : undefined
-    return draftStatuses[child.student.id] !== loaded
+    return draftStatuses[child.student.id] !== (loaded || "PRESENT")
   })
 
   useEffect(() => {
@@ -451,7 +451,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
     const dayChildren = getChildrenForDay(children, selectedDay)
     const records = dayChildren
       .filter(child => {
-        const loaded = weekAttendanceMap[selectedDay]?.[child.student.id]?.status
+        const loaded = weekAttendanceMap[selectedDay]?.[child.student.id]?.status || "PRESENT"
         return draftStatuses[child.student.id] !== loaded
       })
       .map(child => {
@@ -655,6 +655,14 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                   Mois
                 </button>
               </div>
+            </div>
+
+            {/* Info label */}
+            <div className="flex items-start gap-2 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs">
+              <Info size={16} className="shrink-0 mt-0.5" />
+              <p>
+                Par défaut, vos enfants sont considérés <strong>présents</strong>. L’administration et l’enseignant ne seront informés qu’en cas de retard, d’absence ou d’absence excusée enregistrée.
+              </p>
             </div>
 
             {/* Messages */}
