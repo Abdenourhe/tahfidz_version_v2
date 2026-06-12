@@ -115,30 +115,32 @@ export async function POST(req: Request) {
         }
       }
 
-      // Notify teacher for ALL statuses (respect presence/absence toggles)
-      const studentWithTeacher = await prisma.student.findUnique({
-        where: { id: studentId },
-        select: { teacher: { select: { userId: true } } },
-      })
-      if (studentWithTeacher?.teacher?.userId) {
-        const teacherPrefs = await prisma.user.findUnique({
-          where: { id: studentWithTeacher.teacher.userId },
-          select: { attendanceNotifications: true, presenceNotifications: true },
+      // Notify teacher for LATE / ABSENT / EXCUSED only
+      if (status !== "PRESENT") {
+        const studentWithTeacher = await prisma.student.findUnique({
+          where: { id: studentId },
+          select: { teacher: { select: { userId: true } } },
         })
-        const notifKey = (status === "PRESENT" || status === "LATE") ? "presenceNotifications" : "attendanceNotifications"
-        if (teacherPrefs?.[notifKey] !== false) {
-          await prisma.notification.create({
-            data: {
-              schoolId,
-              userId: studentWithTeacher.teacher.userId,
-              type: "ATTENDANCE_ABSENT_REPORTED",
-              title: `${st.fr}: ${studentName}`,
-              titleAr: `${st.ar}: ${studentName}`,
-              message: `${studentName} marqué ${st.frLabel} le ${date}${reason ? ` — Raison: ${reason}` : ""}`,
-              messageAr: `${studentName} مسجل ${st.arLabel} بتاريخ ${date}${reason ? ` — السبب: ${reason}` : ""}`,
-              data: { attendanceId: attendance.id, studentId, date, reason, url: `/teacher/attendance?studentId=${studentId}&date=${date}` },
-            },
+        if (studentWithTeacher?.teacher?.userId) {
+          const teacherPrefs = await prisma.user.findUnique({
+            where: { id: studentWithTeacher.teacher.userId },
+            select: { attendanceNotifications: true, presenceNotifications: true },
           })
+          const notifKey = status === "LATE" ? "presenceNotifications" : "attendanceNotifications"
+          if (teacherPrefs?.[notifKey] !== false) {
+            await prisma.notification.create({
+              data: {
+                schoolId,
+                userId: studentWithTeacher.teacher.userId,
+                type: "ATTENDANCE_ABSENT_REPORTED",
+                title: `${st.fr}: ${studentName}`,
+                titleAr: `${st.ar}: ${studentName}`,
+                message: `${studentName} marqué ${st.frLabel} le ${date}${reason ? ` — Raison: ${reason}` : ""}`,
+                messageAr: `${studentName} مسجل ${st.arLabel} بتاريخ ${date}${reason ? ` — السبب: ${reason}` : ""}`,
+                data: { attendanceId: attendance.id, studentId, date, reason, url: `/teacher/attendance?studentId=${studentId}&date=${date}` },
+              },
+            })
+          }
         }
       }
     }

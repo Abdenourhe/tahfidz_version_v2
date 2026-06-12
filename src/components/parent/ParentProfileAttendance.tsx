@@ -289,6 +289,11 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   }, [calendarView, weekStart, monthDate, children])
 
   const weekDays = getWeekDays(weekStart)
+  const selectedDayChildren = selectedDay ? getChildrenForDay(children, selectedDay) : []
+  const dayHasChanges = selectedDayChildren.some(child => {
+    const loaded = selectedDay ? weekAttendanceMap[selectedDay]?.[child.student.id]?.status : undefined
+    return draftStatuses[child.student.id] !== loaded
+  })
 
   useEffect(() => {
     if (mode === "week") {
@@ -368,7 +373,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
     const initial: Record<string, string> = {}
     dayChildren.forEach(child => {
       const record = weekAttendanceMap[selectedDay]?.[child.student.id]
-      if (record) initial[child.student.id] = record.status
+      initial[child.student.id] = record?.status || "PRESENT"
     })
     setDraftStatuses(initial)
     setDraftReason("")
@@ -445,10 +450,13 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
     if (!selectedDay) return
     const dayChildren = getChildrenForDay(children, selectedDay)
     const records = dayChildren
-      .filter(child => draftStatuses[child.student.id])
+      .filter(child => {
+        const loaded = weekAttendanceMap[selectedDay]?.[child.student.id]?.status
+        return draftStatuses[child.student.id] !== loaded
+      })
       .map(child => {
         const status = draftStatuses[child.student.id]
-        const reason = (status === "ABSENT" || status === "EXCUSED") ? draftReason : undefined
+        const reason = (status === "ABSENT" || status === "EXCUSED" || status === "LATE") ? draftReason : undefined
         return {
           studentId: child.student.id,
           date: selectedDay,
@@ -459,9 +467,9 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
 
     if (records.length === 0) return
 
-    const missingReason = records.find(r => (r.status === "ABSENT" || r.status === "EXCUSED") && !r.reason?.trim())
+    const missingReason = records.find(r => (r.status === "ABSENT" || r.status === "EXCUSED" || r.status === "LATE") && !r.reason?.trim())
     if (missingReason) {
-      setError("Le motif est obligatoire pour Absent / Excusé.")
+      setError("Le motif est obligatoire pour Retard / Absent / Excusé.")
       return
     }
 
@@ -892,7 +900,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                     </div>
 
                     {/* Reason input */}
-                    {Object.values(draftStatuses).some(s => s === "ABSENT" || s === "EXCUSED") && (
+                    {Object.values(draftStatuses).some(s => s === "ABSENT" || s === "EXCUSED" || s === "LATE") && (
                       <input
                         type="text"
                         value={draftReason}
@@ -903,13 +911,15 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                     )}
 
                     {/* Save */}
-                    <button
-                      onClick={saveBulkAttendance}
-                      disabled={weekSaving || Object.keys(draftStatuses).length === 0}
-                      className="w-full flex items-center justify-center gap-2 py-3 gradient-tahfidz text-white text-sm font-bold rounded-xl hover:opacity-90 disabled:opacity-40 transition shadow-lg active:scale-[0.98]">
-                      {weekSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                      {weekSaving ? "Enregistrement…" : "Enregistrer"}
-                    </button>
+                    {dayHasChanges && (
+                      <button
+                        onClick={saveBulkAttendance}
+                        disabled={weekSaving}
+                        className="w-full flex items-center justify-center gap-2 py-3 gradient-tahfidz text-white text-sm font-bold rounded-xl hover:opacity-90 disabled:opacity-40 transition shadow-lg active:scale-[0.98]">
+                        {weekSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                        {weekSaving ? "Enregistrement…" : "Enregistrer"}
+                      </button>
+                    )}
                   </div>
                 )}
               </>
