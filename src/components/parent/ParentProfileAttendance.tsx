@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 import {
   Save, Loader2, Check, Clock, BookOpen, X,
   CalendarCheck, AlertCircle, ChevronLeft, ChevronRight,
@@ -21,19 +22,13 @@ interface Child {
 }
 
 const STATUS_OPTIONS = [
-  { value: "PRESENT", label: "Présent", short: "Prés", icon: Check,    color: "emerald", bg: "bg-emerald-500",  light: "bg-emerald-50",  text: "text-emerald-700",  border: "border-emerald-200" },
-  { value: "LATE",    label: "Retard",  short: "Ret",  icon: Clock,    color: "amber",   bg: "bg-amber-500",    light: "bg-amber-50",    text: "text-amber-700",    border: "border-amber-200" },
-  { value: "EXCUSED", label: "Excusé",  short: "Exc",  icon: BookOpen, color: "blue",    bg: "bg-blue-500",     light: "bg-blue-50",     text: "text-blue-700",     border: "border-blue-200" },
-  { value: "ABSENT",  label: "Absent",  short: "Abs",  icon: X,        color: "red",     bg: "bg-red-500",      light: "bg-red-50",      text: "text-red-700",      border: "border-red-200" },
+  { value: "PRESENT", icon: Check,    color: "emerald", bg: "bg-emerald-500",  light: "bg-emerald-50",  text: "text-emerald-700",  border: "border-emerald-200" },
+  { value: "LATE",    icon: Clock,    color: "amber",   bg: "bg-amber-500",    light: "bg-amber-50",    text: "text-amber-700",    border: "border-amber-200" },
+  { value: "EXCUSED", icon: BookOpen, color: "blue",    bg: "bg-blue-500",     light: "bg-blue-50",     text: "text-blue-700",     border: "border-blue-200" },
+  { value: "ABSENT",  icon: X,        color: "red",     bg: "bg-red-500",      light: "bg-red-50",      text: "text-red-700",      border: "border-red-200" },
 ]
-
-const RELATION_LABELS: Record<string, string> = { father: "Père", mother: "Mère", guardian: "Tuteur" }
 
 const DAY_KEYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const
-const MONTH_NAMES = [
-  "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
-]
 
 function getCourseDayIndicesForChild(child: Child): number[] {
   const indices = new Set<number>()
@@ -82,20 +77,20 @@ function getWeekDays(weekStart: string): string[] {
   })
 }
 
-function formatWeekRange(weekStart: string): string {
+function formatWeekRange(weekStart: string, locale: string = "fr-FR"): string {
   const start = new Date(`${weekStart}T12:00:00`)
   const end = new Date(start)
   end.setDate(start.getDate() + 6)
-  const startStr = start.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })
-  const endStr = end.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })
+  const startStr = start.toLocaleDateString(locale, { day: "numeric", month: "short" })
+  const endStr = end.toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })
   return `${startStr} – ${endStr}`
 }
 
-function dateLabel(dateStr: string) {
+function dateLabel(dateStr: string, locale: string = "fr-FR") {
   const d = new Date(`${dateStr}T12:00:00`)
   return {
-    full: d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }),
-    short: d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }),
+    full: d.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long", year: "numeric" }),
+    short: d.toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short" }),
   }
 }
 
@@ -192,13 +187,18 @@ function CalendarDayTooltip({ children, content }: { children: React.ReactNode; 
   )
 }
 
-const statusConfig: Record<string, { label: string; light: string; text: string; border: string; bg: string; icon: any }> = Object.fromEntries(
-  STATUS_OPTIONS.map(o => [o.value, { label: o.label, light: o.light, text: o.text, border: o.border, bg: o.bg, icon: o.icon }])
+const statusConfig: Record<string, { light: string; text: string; border: string; bg: string; icon: any }> = Object.fromEntries(
+  STATUS_OPTIONS.map(o => [o.value, { light: o.light, text: o.text, border: o.border, bg: o.bg, icon: o.icon }])
 )
 
 /* ------------------------------------------------------------------ */
 
 export function ParentProfileAttendance({ children }: { children: Child[] }) {
+  const { dir, locale } = useLanguage()
+  const t = useT("attendance")
+  const tCommon = useT("common")
+  const dateLocale = locale === "ar" ? "ar-SA" : locale === "en" ? "en-US" : "fr-FR"
+
   const todayStr = offsetDate(0)
   const tomorrow = offsetDate(1)
 
@@ -210,7 +210,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const [status, setStatus] = useState<string>("")
   const [note, setNote] = useState<string>("")
   const [markedDates, setMarkedDates] = useState<Set<string>>(new Set())
-  const [attendanceMap, setAttendanceMap] = useState<Record<string, { status: string; reason?: string }>>({})
+  const [attendanceMap, setMap] = useState<Record<string, { status: string; reason?: string }>>({})
 
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -282,11 +282,11 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
       setWeekAttendanceMap(map)
     } catch (e) {
       console.error(e)
-      setError("Erreur de chargement")
+      setError(t("loadingError"))
     } finally {
       setLoading(false)
     }
-  }, [calendarView, weekStart, monthDate, children])
+  }, [calendarView, weekStart, monthDate, children, t])
 
   const weekDays = getWeekDays(weekStart)
   const selectedDayChildren = selectedDay ? getChildrenForDay(children, selectedDay) : []
@@ -332,7 +332,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
         marked.add(dateStr)
       })
 
-      setAttendanceMap(map)
+      setMap(map)
       setMarkedDates(marked)
 
       const current = map[activeDate]
@@ -345,11 +345,11 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
       }
     } catch (e) {
       console.error(e)
-      setError("Erreur de chargement")
+      setError(t("loadingError"))
     } finally {
       setLoading(false)
     }
-  }, [activeDate])
+  }, [activeDate, t])
 
   const enterChildMode = (child: Child) => {
     setSelectedChild(child)
@@ -469,7 +469,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
 
     const missingReason = records.find(r => (r.status === "ABSENT" || r.status === "EXCUSED" || r.status === "LATE") && !r.reason?.trim())
     if (missingReason) {
-      setError("Le motif est obligatoire pour Retard / Absent / Excusé.")
+      setError(t("reasonRequired"))
       return
     }
 
@@ -483,14 +483,14 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        setError(err.error || "Erreur lors de l'enregistrement")
+        setError(err.error || t("saveError"))
         return
       }
       setWeekSaved(true)
       loadCalendarData()
     } catch (e) {
       console.error(e)
-      setError("Erreur réseau")
+      setError(t("networkError"))
     } finally {
       setWeekSaving(false)
     }
@@ -539,7 +539,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   async function saveAttendance() {
     if (!selectedChild || !activeDate || !status) return
     if ((status === "ABSENT" || status === "EXCUSED") && !note.trim()) {
-      setError("Le motif est obligatoire pour ce statut.")
+      setError(t("reasonRequired"))
       return
     }
     setSaving(true)
@@ -557,16 +557,16 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        setError(err.error || "Erreur lors de l'enregistrement")
+        setError(err.error || t("saveError"))
         return
       }
       setSaved(true)
       setMarkedDates(prev => new Set(prev).add(activeDate))
-      setAttendanceMap(prev => ({ ...prev, [activeDate]: { status, reason: note } }))
+      setMap(prev => ({ ...prev, [activeDate]: { status, reason: note } }))
       if (selectedChild) loadChildData(selectedChild)
     } catch (e) {
       console.error(e)
-      setError("Erreur réseau")
+      setError(t("networkError"))
     } finally {
       setSaving(false)
     }
@@ -584,7 +584,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
 
   const selectedOpt = STATUS_OPTIONS.find(o => o.value === status)
   const isFuture = activeDate > todayStr
-  const activeLabel = dateLabel(activeDate)
+  const activeLabel = dateLabel(activeDate, dateLocale)
   const monthCells = buildMonthGrid(activeDate, childCourseDayIndices, attendanceMap)
   const monthYear = new Date(`${activeDate}T12:00:00`)
 
@@ -595,12 +595,12 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
       <div className="px-5 py-4 bg-gray-50/60 dark:bg-gray-700/60 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
         <h2 className="font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
           <CalendarCheck size={18} className="text-tahfidz-green" />
-          {mode === "week" ? `Présences — ${calendarView === "week" ? "Semaine" : "Mois"}` : selectedChild?.student.user.fullName}
+          {mode === "week" ? `${t("title")} — ${calendarView === "week" ? t("week") : t("month")}` : selectedChild?.student.user.fullName}
         </h2>
         {mode === "child" && (
           <button onClick={() => { setMode("week"); setSelectedChild(null) }}
             className="flex items-center gap-1 text-xs font-bold text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition">
-            <ArrowLeft size={14} /> Retour
+            <ArrowLeft size={14} /> {tCommon("back")}
           </button>
         )}
       </div>
@@ -618,11 +618,11 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
               <div className="text-center">
                 <p className="text-sm font-bold text-gray-800 dark:text-gray-100">
                   {calendarView === "week"
-                    ? formatWeekRange(weekStart)
-                    : new Date(`${monthDate}T12:00:00`).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
+                    ? formatWeekRange(weekStart, dateLocale)
+                    : new Date(`${monthDate}T12:00:00`).toLocaleDateString(dateLocale, { month: "long", year: "numeric" })}
                 </p>
                 <button onClick={calendarView === "week" ? goToCurrentWeek : goToCurrentMonth} className="text-[10px] text-tahfidz-green hover:underline">
-                  {calendarView === "week" ? "Semaine actuelle" : "Mois actuel"}
+                  {calendarView === "week" ? t("currentWeek") : t("currentMonth")}
                 </button>
               </div>
               <button onClick={calendarView === "week" ? goToNextWeek : goToNextMonth}
@@ -642,7 +642,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                       ? "bg-tahfidz-green text-white shadow-sm"
                       : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
                   )}>
-                  Semaine
+                  {t("week")}
                 </button>
                 <button
                   onClick={() => setCalendarView("month")}
@@ -652,17 +652,18 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                       ? "bg-tahfidz-green text-white shadow-sm"
                       : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
                   )}>
-                  Mois
+                  {t("month")}
                 </button>
               </div>
             </div>
 
             {/* Info label */}
-            <div className="flex items-start gap-2 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs">
+            <div className={cn(
+              "flex items-start gap-2 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs",
+              dir === "rtl" ? "text-right" : "text-left"
+            )}>
               <Info size={16} className="shrink-0 mt-0.5" />
-              <p>
-                Par défaut, vos enfants sont considérés <strong>présents</strong>. L’administration et l’enseignant ne seront informés qu’en cas de retard, d’absence ou d’absence excusée enregistrée.
-              </p>
+              <p>{t("presentDefaultInfo")}</p>
             </div>
 
             {/* Messages */}
@@ -673,7 +674,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
             )}
             {weekSaved && (
               <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-sm font-semibold animate-in fade-in slide-in-from-top-1 duration-300">
-                <CalendarCheck size={14} /> Présences enregistrées
+                <CalendarCheck size={14} /> {t("savedSuccess")}
               </div>
             )}
 
@@ -688,7 +689,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                   <div className="grid grid-cols-7 gap-1">
                     {weekDays.map(dateStr => {
                     const d = new Date(`${dateStr}T12:00:00`)
-                    const label = d.toLocaleDateString("fr-FR", { weekday: "narrow" })
+                    const label = d.toLocaleDateString(dateLocale, { weekday: "narrow" })
                     const dayNum = d.getDate()
                     const isToday = dateStr === todayStr
                     const isSelected = selectedDay === dateStr
@@ -818,10 +819,10 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                     <div className="flex items-center justify-between gap-2">
                       <div>
                         <p className="text-sm font-bold text-gray-800 dark:text-gray-100">
-                          {new Date(`${selectedDay}T12:00:00`).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
+                          {new Date(`${selectedDay}T12:00:00`).toLocaleDateString(dateLocale, { weekday: "long", day: "numeric", month: "long" })}
                         </p>
                         <p className="text-[11px] text-gray-400">
-                          {getChildrenForDay(children, selectedDay).length} enfant(s) avec cours
+                          {getChildrenForDay(children, selectedDay).length} {t("childrenWithCourses")}
                         </p>
                       </div>
                       <button onClick={() => setSelectedDay(null)}
@@ -832,16 +833,16 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
 
                     {/* Apply to all */}
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs text-gray-500 dark:text-gray-400">Appliquer à tous :</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">{t("applyToAll")} :</span>
                       {STATUS_OPTIONS.map(opt => (
                         <button key={opt.value}
                           onClick={() => applyStatusToAll(opt.value)}
-                          title={opt.label}
+                          title={t(opt.value.toLowerCase())}
                           className={cn(
                             "flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold border transition",
                             "border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                           )}>
-                          <opt.icon size={10} /> {opt.label}
+                          <opt.icon size={10} /> {t(opt.value.toLowerCase())}
                         </button>
                       ))}
                     </div>
@@ -871,7 +872,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                                 return (
                                   <button key={opt.value}
                                     onClick={() => setDraftStatus(child.student.id, opt.value)}
-                                    title={opt.label}
+                                    title={t(opt.value.toLowerCase())}
                                     className={cn(
                                       "w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center transition active:scale-95",
                                       isSelected
@@ -896,7 +897,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                         type="text"
                         value={draftReason}
                         onChange={e => setDraftReason(e.target.value)}
-                        placeholder="Motif commun (maladie, voyage…)"
+                        placeholder={t("reasonPlaceholder")}
                         className="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/20 focus:border-tahfidz-green transition"
                       />
                     )}
@@ -908,7 +909,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                         disabled={weekSaving}
                         className="w-full flex items-center justify-center gap-2 py-3 gradient-tahfidz text-white text-sm font-bold rounded-xl hover:opacity-90 disabled:opacity-40 transition shadow-lg active:scale-[0.98]">
                         {weekSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                        {weekSaving ? "Enregistrement…" : "Enregistrer"}
+                        {weekSaving ? t("saving") : tCommon("save")}
                       </button>
                     )}
                   </div>
@@ -923,21 +924,22 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
             <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3">
               <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                 <p className="text-xs font-bold text-gray-500 dark:text-gray-300 uppercase tracking-wide">
-                  {MONTH_NAMES[monthYear.getMonth()]} {monthYear.getFullYear()}
+                  {monthYear.toLocaleDateString(dateLocale, { month: "long", year: "numeric" })}
                 </p>
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                   {STATUS_OPTIONS.map(opt => (
                     <span key={opt.value} className="flex items-center gap-1 text-[9px] text-gray-500 dark:text-gray-400">
                       <span className={cn("w-2 h-2 rounded-full", opt.bg)} />
-                      {opt.label}
+                      {t(opt.value.toLowerCase())}
                     </span>
                   ))}
                 </div>
               </div>
               <div className="grid grid-cols-7 gap-1">
-                {["D", "L", "M", "M", "J", "V", "S"].map((h, i) => (
-                  <div key={i} className="text-center text-[9px] font-bold text-gray-400 dark:text-gray-500 py-1">{h}</div>
-                ))}
+                {Array.from({ length: 7 }).map((_, i) => {
+                  const d = new Date(2024, 0, 7 + i) // dimanche = 7 jan 2024
+                  return <div key={i} className="text-center text-[9px] font-bold text-gray-400 dark:text-gray-500 py-1">{d.toLocaleDateString(dateLocale, { weekday: "narrow" })}</div>
+                })}
                 {monthCells.map((cell, i) => {
                   const cfg = cell.status ? statusConfig[cell.status] : null
                   const isSelected = cell.dateStr === activeDate
@@ -959,9 +961,9 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
 
                   const tooltipContent = cfg && (
                     <div className="space-y-0.5">
-                      <p className="font-bold">{cfg.label}</p>
-                      <p>{new Date((cell.dateStr || "") + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</p>
-                      {cell.reason && <p className="italic opacity-90">Motif : {cell.reason}</p>}
+                      <p className="font-bold">{t(cell.status!.toLowerCase())}</p>
+                      <p>{new Date((cell.dateStr || "") + "T12:00:00").toLocaleDateString(dateLocale, { weekday: "long", day: "numeric", month: "long" })}</p>
+                      {cell.reason && <p className="italic opacity-90">{t("reason")} : {cell.reason}</p>}
                     </div>
                   )
 
@@ -986,7 +988,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                         )}>
                           <div className="flex items-center gap-1">
                             <cfg.icon size={10} className="shrink-0" />
-                            <span className="truncate">{cfg.label}</span>
+                            <span className="truncate">{t(cell.status!.toLowerCase())}</span>
                           </div>
                           {cell.reason && (
                             <div className="truncate opacity-80 text-[9px] mt-0.5">{cell.reason}</div>
@@ -1022,7 +1024,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                   </div>
                   {markedDates.has(activeDate) && (
                     <span className="flex items-center gap-1 text-[10px] px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full font-bold shrink-0">
-                      <Check size={10} /> Marqué
+                      <Check size={10} /> {t("marked")}
                     </span>
                   )}
                 </div>
@@ -1042,14 +1044,14 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
             )}
             {saved && (
               <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-sm font-semibold animate-in fade-in slide-in-from-top-1 duration-300">
-                <CalendarCheck size={14} /> Présence enregistrée
+                <CalendarCheck size={14} /> {t("savedSuccess")}
               </div>
             )}
 
             {/* Status selector */}
             {!isFuture ? (
               <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                <p className="text-sm text-gray-400 dark:text-gray-400">Sélectionnez un jour à venir.</p>
+                <p className="text-sm text-gray-400 dark:text-gray-400">{t("selectFutureDay")}</p>
               </div>
             ) : loading ? (
               <div className="flex justify-center py-10">
@@ -1057,7 +1059,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
               </div>
             ) : !hasCourseOnDay(selectedChild, activeDate) ? (
               <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                <p className="text-sm text-gray-400 dark:text-gray-400">Pas de cours ce jour.</p>
+                <p className="text-sm text-gray-400 dark:text-gray-400">{t("noCourseToday")}</p>
               </div>
             ) : (
               <div key={animKey} className="rounded-xl border p-3 sm:p-4 transition-all duration-200 animate-in fade-in slide-in-from-bottom-4"
@@ -1077,13 +1079,13 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{selectedChild.student.user.fullName}</p>
                     <p className="text-[10px] text-gray-400 truncate">
-                      <span className="bg-orange-50 text-orange-600 px-1 py-0.5 rounded mr-1 font-semibold">{RELATION_LABELS[selectedChild.relation] ?? selectedChild.relation}</span>
+                      <span className="bg-orange-50 text-orange-600 px-1 py-0.5 rounded mr-1 font-semibold">{tCommon(selectedChild.relation.toLowerCase())}</span>
                       {selectedChild.student.group?.name}
                     </p>
                   </div>
                   {status && selectedOpt && (
                     <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${selectedOpt.light} ${selectedOpt.text} shrink-0`}>
-                      <selectedOpt.icon size={10} className="inline mr-0.5" /> {selectedOpt.label}
+                      <selectedOpt.icon size={10} className="inline mr-0.5" /> {t(status.toLowerCase())}
                     </span>
                   )}
                 </div>
@@ -1101,8 +1103,8 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                             : "border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 bg-white dark:bg-gray-800"
                         }`}>
                         <opt.icon size={15} className="sm:size-[13px]" />
-                        <span className="hidden sm:inline">{opt.label}</span>
-                        <span className="sm:hidden text-[9px]">{opt.short}</span>
+                        <span className="hidden sm:inline">{t(opt.value.toLowerCase())}</span>
+                        <span className="sm:hidden text-[9px]">{t(opt.value.toLowerCase())}</span>
                       </button>
                     )
                   })}
@@ -1112,7 +1114,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                   <input type="text"
                     value={note}
                     onChange={e => setNote(e.target.value)}
-                    placeholder="Motif (maladie, voyage…)"
+                    placeholder={t("reasonPlaceholder")}
                     className="w-full mt-2.5 px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/20 focus:border-tahfidz-green transition" />
                 )}
 
@@ -1122,7 +1124,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                   disabled={saving || !status || !isFuture || ((status === "ABSENT" || status === "EXCUSED") && !note.trim())}
                   className="w-full mt-3 flex items-center justify-center gap-2 py-3 gradient-tahfidz text-white text-sm font-bold rounded-xl hover:opacity-90 disabled:opacity-40 transition shadow-lg active:scale-[0.98]">
                   {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                  {saving ? "Enregistrement…" : "Enregistrer"}
+                  {saving ? t("saving") : tCommon("save")}
                 </button>
               </div>
             )}
