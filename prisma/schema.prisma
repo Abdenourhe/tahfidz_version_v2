@@ -111,6 +111,9 @@ model School {
   feedbacks            Feedback[]            @relation("SchoolFeedbacks")
   parentInvites        ParentInvite[]
   certificateTemplates CertificateTemplate[]
+  libraryCategories    LibraryCategory[]
+  libraryCollections   LibraryCollection[]
+  libraryContents      LibraryContent[]
 
   @@index([slug])
   @@map("schools")
@@ -163,6 +166,8 @@ model User {
   parentAttendances ParentAttendance[]
   dailyLogsCreated  DailyProgressLog[]
   dailyLogComments  DailyLogComment[]
+  contentProgress   UserContentProgress[]
+  bookmarks         UserBookmark[]
 
   @@unique([schoolId, email])
   @@index([schoolId, role])
@@ -262,6 +267,7 @@ model Student {
   evaluations          Evaluation[]
   dailyLogs            DailyProgressLog[]
   stats                StudentStats?
+  libraryEnrollments   LibraryCollectionEnrollment[]
 
   @@index([groupId])
   @@index([teacherId])
@@ -325,6 +331,7 @@ model Group {
   announcements  GroupAnnouncement[]
   attendances    Attendance[]
   halaqaSessions HalaqaSession[]     @relation("GroupHalaqa")
+  libraryCollections LibraryCollection[]
 
   @@index([schoolId])
   @@index([teacherId])
@@ -1030,4 +1037,216 @@ model CertificateTemplate {
   @@unique([schoolId, name])
   @@index([schoolId])
   @@map("certificate_templates")
+}
+
+// ============================================
+// BIBLIOTHÈQUE
+// ============================================
+
+enum ContentType {
+  PDF
+  VIDEO_SERIES
+  VIDEO_SINGLE
+  AUDIO
+}
+
+enum ContentVisibility {
+  GLOBAL
+  SCHOOL
+  CLASS
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum CollectionEnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
+}
+
+model LibraryCategory {
+  id          String   @id @default(cuid())
+  schoolId    String?  // NULL = catégorie globale (superadmin)
+  name        String
+  nameAr      String?
+  nameEn      String?
+  description String?
+  icon        String?
+  color       String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contents LibraryContent[]
+  school   School?  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([schoolId])
+  @@index([sortOrder])
+  @@map("library_categories")
+}
+
+model LibraryCollection {
+  id          String   @id @default(cuid())
+  schoolId    String
+  name        String
+  nameAr      String?
+  nameEn      String?
+  description String?
+  coverImage  String?
+  color       String?
+  isActive    Boolean  @default(true)
+  createdBy   String
+
+  // Lien optionnel au Group existant
+  groupId     String?
+  group       Group?   @relation(fields: [groupId], references: [id])
+
+  // Collections autonomes (groupId = null)
+  enrollments LibraryCollectionEnrollment[]
+  contents    LibraryContent[]
+
+  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([schoolId])
+  @@index([groupId])
+  @@map("library_collections")
+}
+
+model LibraryCollectionEnrollment {
+  id            String                     @id @default(cuid())
+  collectionId  String
+  studentId     String
+  enrolledAt    DateTime                   @default(now())
+  status        CollectionEnrollmentStatus @default(ACTIVE)
+
+  collection    LibraryCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  student       Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, studentId])
+  @@index([collectionId])
+  @@index([studentId])
+  @@map("library_collection_enrollments")
+}
+
+model LibraryContent {
+  id            String   @id @default(cuid())
+  schoolId      String?  // NULL = contenu GLOBAL
+
+  // Hiérarchie
+  visibility    ContentVisibility
+  collectionId  String?  // NULL si GLOBAL ou contenu SCHOOL sans collection
+
+  // Métadonnées
+  type          ContentType
+  status        ContentStatus @default(DRAFT)
+  title         String
+  titleAr       String?
+  titleEn       String?
+  description   String?  @db.Text
+  descriptionAr String?  @db.Text
+  descriptionEn String?  @db.Text
+
+  // Média
+  thumbnail     String?
+  coverImage    String?
+
+  // PDF
+  pdfUrl        String?
+  pdfPages      Int?
+
+  // Vidéo / audio
+  videoUrl      String?
+  videoSource   String?  // youtube, vimeo, local
+  duration      Int?
+
+  // Meta
+  categoryId    String
+  author        String?
+  language      String?
+  level         String?
+  tags          String[]
+
+  // Audit
+  createdBy     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  school        School?            @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  category      LibraryCategory    @relation(fields: [categoryId], references: [id])
+  collection    LibraryCollection? @relation(fields: [collectionId], references: [id])
+  episodes      LibraryEpisode[]
+  progress      UserContentProgress[]
+  bookmarks     UserBookmark[]
+
+  @@index([schoolId])
+  @@index([visibility, collectionId])
+  @@index([categoryId])
+  @@index([type, status])
+  @@map("library_contents")
+}
+
+model LibraryEpisode {
+  id            String   @id @default(cuid())
+  contentId     String
+  title         String
+  titleAr       String?
+  titleEn       String?
+  description   String?  @db.Text
+  videoUrl      String
+  duration      Int?
+  episodeOrder  Int      @default(0)
+  thumbnail     String?
+
+  content       LibraryContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([contentId])
+  @@index([episodeOrder])
+  @@map("library_episodes")
+}
+
+model UserContentProgress {
+  id            String   @id @default(cuid())
+  userId        String
+  contentId     String
+  progress      Float    @default(0)
+  lastPosition  Int?
+  isCompleted   Boolean  @default(false)
+  completedAt   DateTime?
+  updatedAt     DateTime @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content       LibraryContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, contentId])
+  @@index([userId])
+  @@index([contentId])
+  @@map("user_content_progress")
+}
+
+model UserBookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  contentId String
+  note      String?
+  createdAt DateTime @default(now())
+
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   LibraryContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, contentId])
+  @@index([userId])
+  @@map("user_bookmarks")
 }

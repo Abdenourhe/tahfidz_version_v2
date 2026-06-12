@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
 import { useSession } from "next-auth/react"
 import {
-  LayoutDashboard, BookOpen, Star, CalendarCheck, Bell, LogOut, ChevronRight, UserCircle, Video, BookMarked, MessageSquare,
+  LayoutDashboard, BookOpen, Star, CalendarCheck, Bell, LogOut, ChevronRight, UserCircle, Video, BookMarked, MessageSquare, Library,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/contexts/LanguageContext"
@@ -46,6 +46,7 @@ export function StudentSidebar({ user, schoolName, schoolLogo }: StudentSidebarP
     { label: locale === "ar" ? "تقدمي" : locale === "en" ? "My progress" : "Ma progression", href: "/student/progress",  icon: BookOpen },
     { label: tN("halaqa"), href: "/student/halaqa", icon: Video },
     { label: locale === "ar" ? "شاراتي" : locale === "en" ? "My badges" : "Mes badges",     href: "/student/badges",    icon: Star },
+    { label: tN("library"), href: "/student/library", icon: Library },
     { label: locale === "ar" ? "حضوري" : locale === "en" ? "My attendance" : "Mes présences", href: "/student/attendance", icon: CalendarCheck },
     { label: tN("notifications"), href: "/student/notifications", icon: Bell },
     { label: tN("messages"), href: "/student/messages", icon: MessageSquare },

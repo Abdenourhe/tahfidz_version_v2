@@ -5,13 +5,14 @@ import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
 import { useT } from "@/contexts/LanguageContext"
 import {
-  LayoutDashboard, Bell, UserCircle, CalendarDays, Video,
+  LayoutDashboard, Bell, UserCircle, CalendarDays, Video, Library,
 } from "lucide-react"
 
 const MOBILE_NAV = [
   { href: "/parent/dashboard", icon: LayoutDashboard, key: "dashboard" },
   { href: "/parent/attendance", icon: CalendarDays, key: "attendance" },
   { href: "/parent/halaqa", icon: Video, key: "halaqa" },
+  { href: "/parent/library", icon: Library, key: "library" },
   { href: "/parent/notifications", icon: Bell, key: "notifications" },
   { href: "/parent/profile", icon: UserCircle, key: "profile" },
 ]

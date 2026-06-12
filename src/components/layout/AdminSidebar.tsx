@@ -6,7 +6,7 @@ import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
 import {
-  LayoutDashboard, Users, GraduationCap, BookOpen,
+  LayoutDashboard, Users, GraduationCap, BookOpen, Library,
   CalendarCheck, Megaphone, BarChart2, Settings, LogOut,
   Bell, Shield, Monitor, Award, Video, Building2,
 } from "lucide-react"
@@ -54,6 +54,7 @@ export function AdminSidebar({ user, schoolName, schoolLogo, schoolSlug, schoolC
         { labelKey: "parents",    href: "/admin/parents",       icon: Users,           color: "text-orange-600" },
         { labelKey: "admins",     href: "/admin/admins",        icon: Shield,          color: "text-red-600" },
         { labelKey: "groups",     href: "/admin/groups",        icon: BookOpen,        color: "text-indigo-600" },
+        { labelKey: "library",    href: "/admin/library",       icon: Library,         color: "text-indigo-600" },
         { labelKey: "attendance", href: "/admin/attendance",    icon: CalendarCheck,   color: "text-teal-600" },
         { labelKey: "halaqa",      href: "/admin/halaqa",         icon: Video,           color: "text-red-600" },
       ],
