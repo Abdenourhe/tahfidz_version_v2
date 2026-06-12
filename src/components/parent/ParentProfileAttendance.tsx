@@ -836,6 +836,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                       {STATUS_OPTIONS.map(opt => (
                         <button key={opt.value}
                           onClick={() => applyStatusToAll(opt.value)}
+                          title={opt.label}
                           className={cn(
                             "flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold border transition",
                             "border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -870,6 +871,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                                 return (
                                   <button key={opt.value}
                                     onClick={() => setDraftStatus(child.student.id, opt.value)}
+                                    title={opt.label}
                                     className={cn(
                                       "w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center transition active:scale-95",
                                       isSelected
