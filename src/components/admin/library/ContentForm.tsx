@@ -79,6 +79,7 @@ export function ContentForm({ categories, collections, content }: Props) {
   const t = (k: string) => useT("library", k)
   const isEdit = !!content
   const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
 
   const {
     register,
@@ -121,17 +122,39 @@ export function ContentForm({ categories, collections, content }: Props) {
   const visibility = watch("visibility")
   const tags = watch("tags")
 
+  const MAX_UPLOAD_SIZE = 2 * 1024 * 1024
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: "pdfUrl") => {
     const file = e.target.files?.[0]
     if (!file) return
+    setUploadError(null)
+    if (file.size > MAX_UPLOAD_SIZE) {
+      setUploadError(t("maxSize"))
+      return
+    }
     setUploading(true)
-    const formData = new FormData()
-    formData.append("file", file)
-    formData.append("type", "pdf")
-    const res = await fetch("/api/library/upload", { method: "POST", body: formData })
-    const data = await res.json()
-    setUploading(false)
-    if (res.ok) setValue(field, data.url)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      const res = await fetch("/api/library/upload", { method: "POST", body: formData })
+      let data: any = {}
+      const contentType = res.headers.get("content-type")
+      if (contentType?.includes("application/json")) {
+        data = await res.json()
+      } else {
+        const text = await res.text()
+        data = { error: text || t("error") }
+      }
+      if (res.ok) {
+        setValue(field, data.url)
+      } else {
+        setUploadError(data.error || t("error"))
+      }
+    } catch (err: any) {
+      setUploadError(err.message || t("error"))
+    } finally {
+      setUploading(false)
+    }
   }
 
   const onSubmit = async (data: FormData) => {
@@ -253,9 +276,12 @@ export function ContentForm({ categories, collections, content }: Props) {
               <input {...register("pdfUrl")} placeholder="URL du PDF" className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green text-sm" />
               <div>
                 <label className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer w-fit">
-                  <Upload size={14} /> {t("uploadFile")}
+                  {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                  {uploading ? t("loading") : t("uploadFile")}
                   <input type="file" accept="application/pdf" className="hidden" onChange={(e) => handleFileUpload(e, "pdfUrl")} />
                 </label>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">{t("maxSize")}</p>
+                {uploadError && <p className="text-xs text-red-500 mt-1.5">{uploadError}</p>}
               </div>
               <input {...register("pdfPages")} type="number" placeholder="Nombre de pages" className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green text-sm" />
             </div>

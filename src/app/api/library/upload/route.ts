@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { canManageLibrary } from "@/lib/library/permissions"
 
+export const runtime = "nodejs"
+
 const ALLOWED_TYPES = [
   "image/png",
   "image/jpeg",
