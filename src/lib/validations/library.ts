@@ -10,7 +10,7 @@ export const libraryCategorySchema = z.object({
   description: z.string().max(2000, "Description trop longue").optional(),
   icon: z.string().optional(),
   color: z.string().optional(),
-  sortOrder: z.number().int().min(0).default(0),
+  sortOrder: z.coerce.number().int().min(0).default(0),
   isActive: z.boolean().default(true),
 })
 
@@ -39,10 +39,10 @@ export const libraryContentSchema = z.object({
   thumbnail: z.string().optional(),
   coverImage: z.string().optional(),
   pdfUrl: z.string().optional(),
-  pdfPages: z.number().int().min(1).optional(),
+  pdfPages: z.coerce.number().int().min(1).optional(),
   videoUrl: z.string().optional(),
   videoSource: z.enum(["youtube", "vimeo", "local"]).optional(),
-  duration: z.number().int().min(0).optional(),
+  duration: z.coerce.number().int().min(0).optional(),
   categoryId: z.string().cuid({ message: "La catégorie est obligatoire" }),
   author: z.string().max(200).optional(),
   language: z.string().max(10).optional(),
@@ -57,7 +57,7 @@ export const libraryEpisodeSchema = z.object({
   description: z.string().max(5000).optional(),
   videoUrl: z.string().min(1, "L'URL vidéo est obligatoire"),
   duration: z.number().int().min(0).optional(),
-  episodeOrder: z.number().int().min(0).default(0),
+  episodeOrder: z.coerce.number().int().min(0).default(0),
   thumbnail: z.string().optional(),
 })
 

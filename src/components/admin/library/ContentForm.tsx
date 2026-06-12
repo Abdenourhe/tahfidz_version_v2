@@ -80,6 +80,7 @@ export function ContentForm({ categories, collections, content }: Props) {
   const isEdit = !!content
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const {
     register,
@@ -158,6 +159,7 @@ export function ContentForm({ categories, collections, content }: Props) {
   }
 
   const onSubmit = async (data: FormData) => {
+    setSubmitError(null)
     const url = isEdit ? `/api/library/contents/${content!.id}` : "/api/library/contents"
     const method = isEdit ? "PATCH" : "POST"
 
@@ -166,18 +168,33 @@ export function ContentForm({ categories, collections, content }: Props) {
       collectionId: data.collectionId || null,
     }
 
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    })
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
 
-    if (res.ok) {
-      router.push("/admin/library/contents")
-      router.refresh()
-    } else {
-      const err = await res.json()
-      alert(err.error || "Erreur")
+      if (res.ok) {
+        router.push("/admin/library/contents")
+        router.refresh()
+      } else {
+        const contentType = res.headers.get("content-type")
+        let err: any = {}
+        if (contentType?.includes("application/json")) {
+          err = await res.json()
+        } else {
+          err = { error: await res.text() || t("error") }
+        }
+        if (err.error && typeof err.error === "object" && err.error.fieldErrors) {
+          const messages = Object.values(err.error.fieldErrors).flat().filter(Boolean)
+          setSubmitError(messages.join("\n") || t("error"))
+        } else {
+          setSubmitError(err.error || t("error"))
+        }
+      }
+    } catch (err: any) {
+      setSubmitError(err.message || t("error"))
     }
   }
 
@@ -330,6 +347,11 @@ export function ContentForm({ categories, collections, content }: Props) {
           </div>
         </div>
 
+        {submitError && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-sm text-red-700 dark:text-red-300 whitespace-pre-line">
+            {submitError}
+          </div>
+        )}
         <div className="flex gap-3 justify-end">
           <Link href="/admin/library/contents" className="px-5 py-2.5 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition">{t("cancel") || "Annuler"}</Link>
           <button type="submit" disabled={isSubmitting || uploading} className="px-5 py-2.5 bg-tahfidz-green text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition flex items-center gap-2">
