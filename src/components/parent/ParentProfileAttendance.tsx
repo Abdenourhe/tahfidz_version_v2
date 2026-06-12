@@ -145,6 +145,38 @@ function buildMonthGrid(
   return cells
 }
 
+function buildMonthGridForChildren(
+  activeDate: string,
+  children: Child[]
+): CalendarCell[] {
+  const d = new Date(`${activeDate}T12:00:00`)
+  const year = d.getFullYear()
+  const month = d.getMonth()
+  const firstDay = new Date(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0)
+  const startOffset = firstDay.getDay()
+  const daysInMonth = lastDay.getDate()
+  const todayStr = new Date().toISOString().split("T")[0]
+
+  const cells: CalendarCell[] = []
+
+  for (let i = 0; i < startOffset; i++) cells.push({ isCourseDay: false, isToday: false, isFuture: false })
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = new Date(year, month, day).toISOString().split("T")[0]
+    const hasCourse = getChildrenForDay(children, dateStr).length > 0
+    cells.push({
+      dateStr,
+      dayNum: day,
+      isCourseDay: hasCourse,
+      isToday: dateStr === todayStr,
+      isFuture: dateStr > todayStr,
+    })
+  }
+
+  return cells
+}
+
 function CalendarDayTooltip({ children, content }: { children: React.ReactNode; content: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   return (
@@ -190,7 +222,9 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const [touchStartX, setTouchStartX] = useState<number | null>(null)
 
   // Week mode states
+  const [calendarView, setCalendarView] = useState<"week" | "month">("week")
   const [weekStart, setWeekStart] = useState<string>(getWeekStart(todayStr))
+  const [monthDate, setMonthDate] = useState<string>(todayStr)
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const [weekAttendanceMap, setWeekAttendanceMap] = useState<Record<string, Record<string, { status: string; reason?: string }>>>({})
   const [draftStatuses, setDraftStatuses] = useState<Record<string, string>>({})
@@ -198,22 +232,40 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const [weekSaving, setWeekSaving] = useState(false)
   const [weekSaved, setWeekSaved] = useState(false)
 
-  /* Load week attendance data */
-  const loadWeekData = useCallback(async () => {
+  /* Load attendance data for current calendar range */
+  const loadCalendarData = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const days = getWeekDays(weekStart)
-      const end = days[6]
+      let dateFrom: string
+      let dateTo: string
+      let datesToInit: string[]
+
+      if (calendarView === "week") {
+        const days = getWeekDays(weekStart)
+        dateFrom = weekStart
+        dateTo = days[6]
+        datesToInit = days
+      } else {
+        const d = new Date(`${monthDate}T12:00:00`)
+        const year = d.getFullYear()
+        const month = d.getMonth()
+        dateFrom = new Date(year, month, 1).toISOString().split("T")[0]
+        dateTo = new Date(year, month + 1, 0).toISOString().split("T")[0]
+        datesToInit = buildMonthGridForChildren(monthDate, children)
+          .filter(c => c.dateStr)
+          .map(c => c.dateStr as string)
+      }
+
       const [paRes, attRes] = await Promise.all([
         fetch("/api/parent-attendance"),
-        fetch(`/api/attendance?dateFrom=${weekStart}&dateTo=${end}`),
+        fetch(`/api/attendance?dateFrom=${dateFrom}&dateTo=${dateTo}`),
       ])
       const paData = await paRes.json()
       const attData = await attRes.json()
 
       const map: Record<string, Record<string, { status: string; reason?: string }>> = {}
-      days.forEach(dateStr => { map[dateStr] = {} })
+      datesToInit.forEach(dateStr => { map[dateStr] = {} })
 
       ;(attData.attendances || []).forEach((a: any) => {
         const dateStr = new Date(a.date).toISOString().split("T")[0]
@@ -234,15 +286,15 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
     } finally {
       setLoading(false)
     }
-  }, [weekStart])
+  }, [calendarView, weekStart, monthDate, children])
 
   const weekDays = getWeekDays(weekStart)
 
   useEffect(() => {
     if (mode === "week") {
-      loadWeekData()
+      loadCalendarData()
     }
-  }, [mode, loadWeekData])
+  }, [mode, loadCalendarData])
 
   /* Load full data when entering child mode */
   const loadChildData = useCallback(async (child: Child) => {
@@ -327,18 +379,48 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const goToPrevWeek = () => {
     const d = new Date(`${weekStart}T12:00:00`)
     d.setDate(d.getDate() - 7)
-    setWeekStart(d.toISOString().split("T")[0])
+    const newStart = d.toISOString().split("T")[0]
+    setWeekStart(newStart)
+    setMonthDate(newStart)
     setSelectedDay(null)
   }
 
   const goToNextWeek = () => {
     const d = new Date(`${weekStart}T12:00:00`)
     d.setDate(d.getDate() + 7)
-    setWeekStart(d.toISOString().split("T")[0])
+    const newStart = d.toISOString().split("T")[0]
+    setWeekStart(newStart)
+    setMonthDate(newStart)
     setSelectedDay(null)
   }
 
   const goToCurrentWeek = () => {
+    const start = getWeekStart(todayStr)
+    setWeekStart(start)
+    setMonthDate(start)
+    setSelectedDay(null)
+  }
+
+  const goToPrevMonth = () => {
+    const d = new Date(`${monthDate}T12:00:00`)
+    d.setMonth(d.getMonth() - 1)
+    const newDate = d.toISOString().split("T")[0]
+    setMonthDate(newDate)
+    setWeekStart(getWeekStart(newDate))
+    setSelectedDay(null)
+  }
+
+  const goToNextMonth = () => {
+    const d = new Date(`${monthDate}T12:00:00`)
+    d.setMonth(d.getMonth() + 1)
+    const newDate = d.toISOString().split("T")[0]
+    setMonthDate(newDate)
+    setWeekStart(getWeekStart(newDate))
+    setSelectedDay(null)
+  }
+
+  const goToCurrentMonth = () => {
+    setMonthDate(todayStr)
     setWeekStart(getWeekStart(todayStr))
     setSelectedDay(null)
   }
@@ -397,7 +479,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
         return
       }
       setWeekSaved(true)
-      loadWeekData()
+      loadCalendarData()
     } catch (e) {
       console.error(e)
       setError("Erreur réseau")
@@ -505,7 +587,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
       <div className="px-5 py-4 bg-gray-50/60 dark:bg-gray-700/60 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
         <h2 className="font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
           <CalendarCheck size={18} className="text-tahfidz-green" />
-          {mode === "week" ? "Présences — Semaine" : selectedChild?.student.user.fullName}
+          {mode === "week" ? `Présences — ${calendarView === "week" ? "Semaine" : "Mois"}` : selectedChild?.student.user.fullName}
         </h2>
         {mode === "child" && (
           <button onClick={() => { setMode("week"); setSelectedChild(null) }}
@@ -519,22 +601,52 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
         {mode === "week" ? (
           /* ═══════════════════ WEEK MODE ═══════════════════ */
           <div className="space-y-4">
-            {/* Week navigation */}
+            {/* Calendar navigation */}
             <div className="flex items-center justify-between gap-2">
-              <button onClick={goToPrevWeek}
+              <button onClick={calendarView === "week" ? goToPrevWeek : goToPrevMonth}
                 className="p-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition active:scale-95">
                 <ChevronLeft size={18} />
               </button>
               <div className="text-center">
-                <p className="text-sm font-bold text-gray-800 dark:text-gray-100">{formatWeekRange(weekStart)}</p>
-                <button onClick={goToCurrentWeek} className="text-[10px] text-tahfidz-green hover:underline">
-                  Semaine actuelle
+                <p className="text-sm font-bold text-gray-800 dark:text-gray-100">
+                  {calendarView === "week"
+                    ? formatWeekRange(weekStart)
+                    : new Date(`${monthDate}T12:00:00`).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
+                </p>
+                <button onClick={calendarView === "week" ? goToCurrentWeek : goToCurrentMonth} className="text-[10px] text-tahfidz-green hover:underline">
+                  {calendarView === "week" ? "Semaine actuelle" : "Mois actuel"}
                 </button>
               </div>
-              <button onClick={goToNextWeek}
+              <button onClick={calendarView === "week" ? goToNextWeek : goToNextMonth}
                 className="p-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition active:scale-95">
                 <ChevronRight size={18} />
               </button>
+            </div>
+
+            {/* View toggle */}
+            <div className="flex items-center justify-center">
+              <div className="inline-flex rounded-lg border border-gray-200 dark:border-gray-600 p-0.5 bg-gray-50 dark:bg-gray-700/50">
+                <button
+                  onClick={() => setCalendarView("week")}
+                  className={cn(
+                    "px-3 py-1.5 rounded-md text-xs font-bold transition",
+                    calendarView === "week"
+                      ? "bg-tahfidz-green text-white shadow-sm"
+                      : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                  )}>
+                  Semaine
+                </button>
+                <button
+                  onClick={() => setCalendarView("month")}
+                  className={cn(
+                    "px-3 py-1.5 rounded-md text-xs font-bold transition",
+                    calendarView === "month"
+                      ? "bg-tahfidz-green text-white shadow-sm"
+                      : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                  )}>
+                  Mois
+                </button>
+              </div>
             </div>
 
             {/* Messages */}
@@ -555,9 +667,10 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
               </div>
             ) : (
               <>
-                {/* 7-day grid */}
-                <div className="grid grid-cols-7 gap-1">
-                  {weekDays.map(dateStr => {
+                {calendarView === "week" ? (
+                  /* ═══════════════════ WEEK GRID ═══════════════════ */
+                  <div className="grid grid-cols-7 gap-1">
+                    {weekDays.map(dateStr => {
                     const d = new Date(`${dateStr}T12:00:00`)
                     const label = d.toLocaleDateString("fr-FR", { weekday: "narrow" })
                     const dayNum = d.getDate()
@@ -631,6 +744,78 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
                     )
                   })}
                 </div>
+                ) : (
+                  /* ═══════════════════ MONTH GRID ═══════════════════ */
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3">
+                    <div className="grid grid-cols-7 gap-1">
+                      {["D", "L", "M", "M", "J", "V", "S"].map((h, i) => (
+                        <div key={i} className="text-center text-[9px] font-bold text-gray-400 dark:text-gray-500 py-1">{h}</div>
+                      ))}
+                      {buildMonthGridForChildren(monthDate, children).map((cell, i) => {
+                        const dateStr = cell.dateStr
+                        if (!dateStr) return <div key={i} className="min-h-[72px] sm:min-h-[88px]" />
+                        const dayChildren = getChildrenForDay(children, dateStr)
+                        const hasCourses = dayChildren.length > 0
+                        const isSelected = selectedDay === dateStr
+                        const remaining = dayChildren.filter(c => !weekAttendanceMap[dateStr]?.[c.student.id]).length
+                        const allMarked = hasCourses && remaining === 0
+
+                        return (
+                          <button
+                            key={i}
+                            onClick={() => hasCourses && setSelectedDay(dateStr)}
+                            disabled={!hasCourses}
+                            className={cn(
+                              "relative w-full h-full min-h-[72px] sm:min-h-[88px] rounded-lg text-xs flex flex-col items-start p-1.5 transition active:scale-95 overflow-hidden text-left",
+                              isSelected
+                                ? "ring-2 ring-tahfidz-green ring-offset-1 dark:ring-offset-gray-700 z-10"
+                                : "",
+                              cell.isToday
+                                ? "bg-orange-50 dark:bg-orange-900/20"
+                                : hasCourses
+                                  ? "bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                  : "bg-gray-100/50 dark:bg-gray-800/50 opacity-50 cursor-default"
+                            )}
+                          >
+                            <span className={cn(
+                              "w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full text-[10px] font-bold shrink-0",
+                              isSelected ? "bg-tahfidz-green text-white" : cell.isToday ? "bg-orange-500 text-white" : "text-gray-700 dark:text-gray-300"
+                            )}>
+                              {cell.dayNum}
+                            </span>
+
+                            {hasCourses && (
+                              <div className="mt-auto w-full space-y-1">
+                                <div className="flex flex-wrap gap-0.5">
+                                  {dayChildren.slice(0, 5).map(child => {
+                                    const status = weekAttendanceMap[dateStr]?.[child.student.id]?.status
+                                    const cfg = status ? statusConfig[status] : null
+                                    return (
+                                      <div key={child.student.id}
+                                        className={cn("w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full", cfg ? cfg.bg : "bg-gray-300 dark:bg-gray-600")}
+                                        title={child.student.user.fullName}
+                                      />
+                                    )
+                                  })}
+                                  {dayChildren.length > 5 && (
+                                    <span className="text-[8px] text-gray-400">+{dayChildren.length - 5}</span>
+                                  )}
+                                </div>
+                                {remaining > 0 ? (
+                                  <span className="text-[9px] font-bold text-orange-500">{remaining} restant(s)</span>
+                                ) : allMarked ? (
+                                  <span className="text-[9px] font-bold text-emerald-600 flex items-center gap-0.5">
+                                    <Check size={9} /> OK
+                                  </span>
+                                ) : null}
+                              </div>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {/* Selected day sheet */}
                 {selectedDay && (
