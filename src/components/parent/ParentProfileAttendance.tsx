@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import {
   Save, Loader2, Check, Clock, BookOpen, X,
   CalendarCheck, AlertCircle, ChevronLeft, ChevronRight,
-  ArrowLeft, CalendarDays
+  ArrowLeft
 } from "lucide-react"
 
 interface Child {
@@ -55,10 +55,40 @@ function hasCourseOnDay(child: Child, dateStr: string): boolean {
   return !!schedule[dayKey] || !!schedule[dayKey.toUpperCase()]
 }
 
+function getChildrenForDay(children: Child[], dateStr: string): Child[] {
+  return children.filter(child => hasCourseOnDay(child, dateStr))
+}
+
 function offsetDate(days: number): string {
   const d = new Date()
   d.setDate(d.getDate() + days)
   return d.toISOString().split("T")[0]
+}
+
+function getWeekStart(dateStr: string): string {
+  const d = new Date(`${dateStr}T12:00:00`)
+  const day = d.getDay() // 0 = dimanche, 1 = lundi...
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
+  const monday = new Date(d.setDate(diff))
+  return monday.toISOString().split("T")[0]
+}
+
+function getWeekDays(weekStart: string): string[] {
+  const start = new Date(`${weekStart}T12:00:00`)
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(start)
+    d.setDate(start.getDate() + i)
+    return d.toISOString().split("T")[0]
+  })
+}
+
+function formatWeekRange(weekStart: string): string {
+  const start = new Date(`${weekStart}T12:00:00`)
+  const end = new Date(start)
+  end.setDate(start.getDate() + 6)
+  const startStr = start.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })
+  const endStr = end.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })
+  return `${startStr} – ${endStr}`
 }
 
 function dateLabel(dateStr: string) {
@@ -140,7 +170,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const todayStr = offsetDate(0)
   const tomorrow = offsetDate(1)
 
-  const [mode, setMode] = useState<"list" | "child">("list")
+  const [mode, setMode] = useState<"week" | "child">("week")
   const [selectedChild, setSelectedChild] = useState<Child | null>(null)
 
   // Child mode states
@@ -159,30 +189,59 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   // Touch swipe
   const [touchStartX, setTouchStartX] = useState<number | null>(null)
 
-  // List mode: recent status per child
-  const [childRecentStatus, setChildRecentStatus] = useState<Record<string, { status: string; date: string; reason?: string }>>({})
+  // Week mode states
+  const [weekStart, setWeekStart] = useState<string>(getWeekStart(todayStr))
+  const [selectedDay, setSelectedDay] = useState<string | null>(null)
+  const [weekAttendanceMap, setWeekAttendanceMap] = useState<Record<string, Record<string, { status: string; reason?: string }>>>({})
+  const [draftStatuses, setDraftStatuses] = useState<Record<string, string>>({})
+  const [draftReason, setDraftReason] = useState<string>("")
+  const [weekSaving, setWeekSaving] = useState(false)
+  const [weekSaved, setWeekSaved] = useState(false)
 
-  /* Load recent statuses for list mode */
-  useEffect(() => {
-    async function loadRecent() {
-      try {
-        const res = await fetch("/api/parent-attendance")
-        const data = await res.json()
-        const attendances = data.attendances || []
-        const map: Record<string, { status: string; date: string; reason?: string }> = {}
-        attendances.forEach((a: any) => {
-          const dateStr = new Date(a.date).toISOString().split("T")[0]
-          if (!map[a.studentId] || dateStr > map[a.studentId].date) {
-            map[a.studentId] = { status: a.status, date: dateStr, reason: a.reason || undefined }
-          }
-        })
-        setChildRecentStatus(map)
-      } catch (e) {
-        console.error(e)
-      }
+  const weekDays = getWeekDays(weekStart)
+  const weekEnd = weekDays[6]
+
+  /* Load week attendance data */
+  const loadWeekData = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const [paRes, attRes] = await Promise.all([
+        fetch("/api/parent-attendance"),
+        fetch(`/api/attendance?dateFrom=${weekStart}&dateTo=${weekEnd}`),
+      ])
+      const paData = await paRes.json()
+      const attData = await attRes.json()
+
+      const map: Record<string, Record<string, { status: string; reason?: string }>> = {}
+      weekDays.forEach(dateStr => { map[dateStr] = {} })
+
+      ;(attData.attendances || []).forEach((a: any) => {
+        const dateStr = new Date(a.date).toISOString().split("T")[0]
+        if (!map[dateStr]) map[dateStr] = {}
+        map[dateStr][a.studentId] = { status: a.status, reason: a.notes || undefined }
+      })
+
+      ;(paData.attendances || []).forEach((a: any) => {
+        const dateStr = new Date(a.date).toISOString().split("T")[0]
+        if (!map[dateStr]) map[dateStr] = {}
+        map[dateStr][a.studentId] = { status: a.status, reason: a.reason || undefined }
+      })
+
+      setWeekAttendanceMap(map)
+    } catch (e) {
+      console.error(e)
+      setError("Erreur de chargement")
+    } finally {
+      setLoading(false)
     }
-    loadRecent()
-  }, [mode])
+  }, [weekStart, weekEnd, weekDays])
+
+  useEffect(() => {
+    if (mode === "week") {
+      loadWeekData()
+    }
+  }, [mode, loadWeekData])
 
   /* Load full data when entering child mode */
   const loadChildData = useCallback(async (child: Child) => {
@@ -247,6 +306,103 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
     setSaved(false)
     setError(null)
     setAnimKey(k => k + 1)
+  }
+
+  /* Week mode helpers */
+  useEffect(() => {
+    if (!selectedDay) return
+    const dayChildren = getChildrenForDay(children, selectedDay)
+    const initial: Record<string, string> = {}
+    dayChildren.forEach(child => {
+      const record = weekAttendanceMap[selectedDay]?.[child.student.id]
+      if (record) initial[child.student.id] = record.status
+    })
+    setDraftStatuses(initial)
+    setDraftReason("")
+    setWeekSaved(false)
+    setError(null)
+  }, [selectedDay, weekAttendanceMap, children])
+
+  const goToPrevWeek = () => {
+    const d = new Date(`${weekStart}T12:00:00`)
+    d.setDate(d.getDate() - 7)
+    setWeekStart(d.toISOString().split("T")[0])
+    setSelectedDay(null)
+  }
+
+  const goToNextWeek = () => {
+    const d = new Date(`${weekStart}T12:00:00`)
+    d.setDate(d.getDate() + 7)
+    setWeekStart(d.toISOString().split("T")[0])
+    setSelectedDay(null)
+  }
+
+  const goToCurrentWeek = () => {
+    setWeekStart(getWeekStart(todayStr))
+    setSelectedDay(null)
+  }
+
+  const applyStatusToAll = (statusValue: string) => {
+    if (!selectedDay) return
+    const dayChildren = getChildrenForDay(children, selectedDay)
+    const updated: Record<string, string> = {}
+    dayChildren.forEach(child => {
+      updated[child.student.id] = statusValue
+    })
+    setDraftStatuses(updated)
+    setWeekSaved(false)
+  }
+
+  const setDraftStatus = (studentId: string, statusValue: string) => {
+    setDraftStatuses(prev => ({ ...prev, [studentId]: statusValue }))
+    setWeekSaved(false)
+  }
+
+  async function saveBulkAttendance() {
+    if (!selectedDay) return
+    const dayChildren = getChildrenForDay(children, selectedDay)
+    const records = dayChildren
+      .filter(child => draftStatuses[child.student.id])
+      .map(child => {
+        const status = draftStatuses[child.student.id]
+        const reason = (status === "ABSENT" || status === "EXCUSED") ? draftReason : undefined
+        return {
+          studentId: child.student.id,
+          date: selectedDay,
+          status,
+          reason,
+        }
+      })
+
+    if (records.length === 0) return
+
+    const missingReason = records.find(r => (r.status === "ABSENT" || r.status === "EXCUSED") && !r.reason?.trim())
+    if (missingReason) {
+      setError("Le motif est obligatoire pour Absent / Excusé.")
+      return
+    }
+
+    setWeekSaving(true)
+    setError(null)
+    try {
+      const res = await fetch("/api/parent-attendance/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ records }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        setError(err.error || "Erreur lors de l'enregistrement")
+        return
+      }
+      setWeekSaved(true)
+      loadWeekData()
+    } catch (e) {
+      console.error(e)
+      setError("Erreur réseau")
+    } finally {
+      setWeekSaving(false)
+    }
   }
 
   useEffect(() => {
@@ -348,10 +504,10 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
       <div className="px-5 py-4 bg-gray-50/60 dark:bg-gray-700/60 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
         <h2 className="font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
           <CalendarCheck size={18} className="text-tahfidz-green" />
-          {mode === "list" ? "Présences" : selectedChild?.student.user.fullName}
+          {mode === "week" ? "Présences — Semaine" : selectedChild?.student.user.fullName}
         </h2>
         {mode === "child" && (
-          <button onClick={() => { setMode("list"); setSelectedChild(null) }}
+          <button onClick={() => { setMode("week"); setSelectedChild(null) }}
             className="flex items-center gap-1 text-xs font-bold text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition">
             <ArrowLeft size={14} /> Retour
           </button>
@@ -359,75 +515,219 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
       </div>
 
       <div className="p-4 sm:p-5 space-y-4">
-        {mode === "list" ? (
-          /* ═══════════════════ LIST MODE ═══════════════════ */
-          <div className="grid gap-3">
-            {children.map(child => {
-              const recent = childRecentStatus[child.student.id]
-              const cfg = recent ? statusConfig[recent.status] : null
-
-              /* ── Context badge builder ── */
-              let badgeText = ""
-              let badgeSub = ""
-              let badgeCls = ""
-              if (!cfg) {
-                badgeText = "Marquer"
-                badgeCls = "bg-gray-50 dark:bg-gray-700 text-gray-400 dark:text-gray-400 border-gray-100 dark:border-gray-600"
-              } else {
-                const isToday = recent.date === todayStr
-                const daysAgo = Math.floor((+new Date(`${todayStr}T12:00:00`) - +new Date(`${recent.date}T12:00:00`)) / (1000 * 60 * 60 * 24))
-                if (recent.status === "PRESENT" && isToday) {
-                  badgeText = "Aujourd'hui"
-                  badgeSub = ""
-                  badgeCls = "bg-emerald-100 text-emerald-700 border-emerald-200"
-                } else if (isToday) {
-                  badgeText = cfg.label
-                  badgeSub = "auj."
-                  badgeCls = `${cfg.light} ${cfg.text} ${cfg.border}`
-                } else if (daysAgo === 1) {
-                  badgeText = cfg.label
-                  badgeSub = "hier"
-                  badgeCls = `${cfg.light} ${cfg.text} ${cfg.border}`
-                } else if (daysAgo > 1 && daysAgo <= 30) {
-                  badgeText = `${cfg.label} (${daysAgo}j)`
-                  badgeSub = ""
-                  badgeCls = `${cfg.light} ${cfg.text} ${cfg.border}`
-                } else {
-                  badgeText = cfg.label
-                  badgeSub = new Date(recent.date + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short" })
-                  badgeCls = `${cfg.light} ${cfg.text} ${cfg.border}`
-                }
-              }
-
-              return (
-                <button key={child.id}
-                  onClick={() => enterChildMode(child)}
-                  className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-tahfidz-green/30 hover:shadow-sm transition text-left w-full">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold text-lg shadow-sm overflow-hidden gradient-tahfidz">
-                    {child.student.user.avatar ? (
-                      <Image src={child.student.user.avatar} alt={child.student.user.fullName} width={48} height={48} className="w-full h-full object-cover" />
-                    ) : (
-                      child.student.user.fullName.charAt(0)
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{child.student.user.fullName}</p>
-                    <p className="text-[11px] text-gray-400 truncate">
-                      <span className="bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded mr-1 font-semibold">{RELATION_LABELS[child.relation] ?? child.relation}</span>
-                      {child.student.group?.name}
-                    </p>
-                  </div>
-                  <span className={`flex flex-col items-end text-[10px] font-bold px-3 py-2 rounded-xl border shrink-0 leading-tight ${badgeCls}`}>
-                    <span className="flex items-center gap-1">
-                      {recent?.status === "PRESENT" && recent?.date === todayStr && <Check size={10} />}
-                      {!recent && <CalendarDays size={10} />}
-                      {badgeText}
-                    </span>
-                    {badgeSub && <span className="text-[9px] font-normal opacity-80">{badgeSub}</span>}
-                  </span>
+        {mode === "week" ? (
+          /* ═══════════════════ WEEK MODE ═══════════════════ */
+          <div className="space-y-4">
+            {/* Week navigation */}
+            <div className="flex items-center justify-between gap-2">
+              <button onClick={goToPrevWeek}
+                className="p-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition active:scale-95">
+                <ChevronLeft size={18} />
+              </button>
+              <div className="text-center">
+                <p className="text-sm font-bold text-gray-800 dark:text-gray-100">{formatWeekRange(weekStart)}</p>
+                <button onClick={goToCurrentWeek} className="text-[10px] text-tahfidz-green hover:underline">
+                  Semaine actuelle
                 </button>
-              )
-            })}
+              </div>
+              <button onClick={goToNextWeek}
+                className="p-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition active:scale-95">
+                <ChevronRight size={18} />
+              </button>
+            </div>
+
+            {/* Messages */}
+            {error && mode === "week" && (
+              <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm animate-in fade-in slide-in-from-top-1 duration-200">
+                <AlertCircle size={14} /> {error}
+              </div>
+            )}
+            {weekSaved && (
+              <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-sm font-semibold animate-in fade-in slide-in-from-top-1 duration-300">
+                <CalendarCheck size={14} /> Présences enregistrées
+              </div>
+            )}
+
+            {loading ? (
+              <div className="flex justify-center py-10">
+                <Loader2 size={28} className="animate-spin text-tahfidz-green" />
+              </div>
+            ) : (
+              <>
+                {/* 7-day grid */}
+                <div className="grid grid-cols-7 gap-1">
+                  {weekDays.map(dateStr => {
+                    const d = new Date(`${dateStr}T12:00:00`)
+                    const label = d.toLocaleDateString("fr-FR", { weekday: "narrow" })
+                    const dayNum = d.getDate()
+                    const isToday = dateStr === todayStr
+                    const isSelected = selectedDay === dateStr
+                    const dayChildren = getChildrenForDay(children, dateStr)
+                    const hasCourses = dayChildren.length > 0
+                    const remaining = dayChildren.filter(c => !weekAttendanceMap[dateStr]?.[c.student.id]).length
+                    const allMarked = hasCourses && remaining === 0
+                    const anyMarked = hasCourses && remaining < dayChildren.length
+
+                    return (
+                      <button
+                        key={dateStr}
+                        onClick={() => hasCourses && setSelectedDay(dateStr)}
+                        disabled={!hasCourses}
+                        className={cn(
+                          "relative flex flex-col items-center rounded-xl p-1.5 min-h-[76px] sm:min-h-[90px] transition text-left",
+                          isSelected
+                            ? "ring-2 ring-tahfidz-green ring-offset-1 dark:ring-offset-gray-800 z-10"
+                            : "",
+                          isToday
+                            ? "bg-orange-50 dark:bg-orange-900/20"
+                            : hasCourses
+                              ? "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                              : "opacity-50 cursor-default bg-gray-100/50 dark:bg-gray-800/50",
+                          allMarked
+                            ? "border border-emerald-200 dark:border-emerald-800"
+                            : anyMarked
+                              ? "border border-amber-200 dark:border-amber-800"
+                              : ""
+                        )}
+                      >
+                        <span className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500">{label}</span>
+                        <span className={cn(
+                          "w-6 h-6 flex items-center justify-center rounded-full text-sm font-bold mt-0.5",
+                          isToday ? "bg-orange-500 text-white" : "text-gray-800 dark:text-gray-100"
+                        )}>
+                          {dayNum}
+                        </span>
+
+                        {hasCourses && (
+                          <div className="mt-auto flex flex-col items-center gap-1 w-full">
+                            <div className="flex -space-x-1.5">
+                              {dayChildren.slice(0, 3).map(child => (
+                                <div key={child.student.id}
+                                  className="w-5 h-5 sm:w-6 sm:h-6 rounded-full gradient-tahfidz text-white text-[8px] sm:text-[9px] font-bold flex items-center justify-center border border-white dark:border-gray-700 overflow-hidden">
+                                  {child.student.user.avatar ? (
+                                    <Image src={child.student.user.avatar} alt={child.student.user.fullName} width={24} height={24} className="w-full h-full object-cover" />
+                                  ) : (
+                                    child.student.user.fullName.charAt(0)
+                                  )}
+                                </div>
+                              ))}
+                              {dayChildren.length > 3 && (
+                                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 text-[8px] sm:text-[9px] font-bold flex items-center justify-center border border-white dark:border-gray-700">
+                                  +{dayChildren.length - 3}
+                                </div>
+                              )}
+                            </div>
+                            {remaining > 0 ? (
+                              <span className="text-[9px] font-bold text-orange-500">{remaining} restant(s)</span>
+                            ) : allMarked ? (
+                              <span className="text-[9px] font-bold text-emerald-600 flex items-center gap-0.5">
+                                <Check size={9} /> OK
+                              </span>
+                            ) : null}
+                          </div>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {/* Selected day sheet */}
+                {selectedDay && (
+                  <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-3 sm:p-4 space-y-3 animate-in fade-in slide-in-from-bottom-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-bold text-gray-800 dark:text-gray-100">
+                          {new Date(`${selectedDay}T12:00:00`).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
+                        </p>
+                        <p className="text-[11px] text-gray-400">
+                          {getChildrenForDay(children, selectedDay).length} enfant(s) avec cours
+                        </p>
+                      </div>
+                      <button onClick={() => setSelectedDay(null)}
+                        className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 transition">
+                        <X size={16} />
+                      </button>
+                    </div>
+
+                    {/* Apply to all */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">Appliquer à tous :</span>
+                      {STATUS_OPTIONS.map(opt => (
+                        <button key={opt.value}
+                          onClick={() => applyStatusToAll(opt.value)}
+                          className={cn(
+                            "flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold border transition",
+                            "border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                          )}>
+                          <opt.icon size={10} /> {opt.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Children list */}
+                    <div className="space-y-2">
+                      {getChildrenForDay(children, selectedDay).map(child => {
+                        const status = draftStatuses[child.student.id]
+                        return (
+                          <div key={child.student.id}
+                            className="flex items-center gap-3 p-2 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+                            <button onClick={() => enterChildMode(child)}
+                              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full gradient-tahfidz text-white font-bold text-sm flex items-center justify-center overflow-hidden shrink-0">
+                              {child.student.user.avatar ? (
+                                <Image src={child.student.user.avatar} alt={child.student.user.fullName} width={40} height={40} className="w-full h-full object-cover" />
+                              ) : (
+                                child.student.user.fullName.charAt(0)
+                              )}
+                            </button>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{child.student.user.fullName}</p>
+                              <p className="text-[10px] text-gray-400 truncate">{child.student.group?.name}</p>
+                            </div>
+                            <div className="flex gap-1">
+                              {STATUS_OPTIONS.map(opt => {
+                                const isSelected = status === opt.value
+                                return (
+                                  <button key={opt.value}
+                                    onClick={() => setDraftStatus(child.student.id, opt.value)}
+                                    className={cn(
+                                      "w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center transition active:scale-95",
+                                      isSelected
+                                        ? `${opt.bg} text-white shadow-sm`
+                                        : "bg-white dark:bg-gray-600 text-gray-400 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-500"
+                                    )}>
+                                    <opt.icon size={14} />
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    {/* Reason input */}
+                    {Object.values(draftStatuses).some(s => s === "ABSENT" || s === "EXCUSED") && (
+                      <input
+                        type="text"
+                        value={draftReason}
+                        onChange={e => setDraftReason(e.target.value)}
+                        placeholder="Motif commun (maladie, voyage…)"
+                        className="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/20 focus:border-tahfidz-green transition"
+                      />
+                    )}
+
+                    {/* Save */}
+                    <button
+                      onClick={saveBulkAttendance}
+                      disabled={weekSaving || Object.keys(draftStatuses).length === 0}
+                      className="w-full flex items-center justify-center gap-2 py-3 gradient-tahfidz text-white text-sm font-bold rounded-xl hover:opacity-90 disabled:opacity-40 transition shadow-lg active:scale-[0.98]">
+                      {weekSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                      {weekSaving ? "Enregistrement…" : "Enregistrer"}
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         ) : selectedChild ? (
           /* ═══════════════════ CHILD MODE ═══════════════════ */
