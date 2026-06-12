@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import Image from "next/image"
+import { cn } from "@/lib/utils"
 import {
   Save, Loader2, Check, Clock, BookOpen, X,
   CalendarCheck, AlertCircle, ChevronLeft, ChevronRight,
@@ -17,15 +18,6 @@ interface Child {
     group: { id: string; name: string; schedule?: Record<string, string> | null } | null
     teacher: { user: { fullName: string } } | null
   }
-}
-
-interface AttendanceRecord {
-  id: string
-  date: string
-  status: string
-  reason: string | null
-  validatedBy: string | null
-  validatedAt: string | null
 }
 
 const STATUS_OPTIONS = [
@@ -77,7 +69,21 @@ function dateLabel(dateStr: string) {
   }
 }
 
-function buildMonthGrid(activeDate: string, courseDayIndices: number[]) {
+interface CalendarCell {
+  dateStr?: string
+  dayNum?: number
+  isCourseDay: boolean
+  isToday: boolean
+  isFuture: boolean
+  status?: string
+  reason?: string
+}
+
+function buildMonthGrid(
+  activeDate: string,
+  courseDayIndices: number[],
+  attendanceMap: Record<string, { status: string; reason?: string }>
+): CalendarCell[] {
   const d = new Date(`${activeDate}T12:00:00`)
   const year = d.getFullYear()
   const month = d.getMonth()
@@ -87,17 +93,41 @@ function buildMonthGrid(activeDate: string, courseDayIndices: number[]) {
   const daysInMonth = lastDay.getDate()
   const todayStr = new Date().toISOString().split("T")[0]
 
-  const cells: { dateStr?: string; dayNum?: number; isCourseDay: boolean; isToday: boolean; isFuture: boolean }[] = []
+  const cells: CalendarCell[] = []
 
   for (let i = 0; i < startOffset; i++) cells.push({ isCourseDay: false, isToday: false, isFuture: false })
 
   for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = new Date(year, month, day).toISOString().split("T")[0]
     const weekday = new Date(year, month, day).getDay()
-    cells.push({ dateStr, dayNum: day, isCourseDay: courseDayIndices.includes(weekday), isToday: dateStr === todayStr, isFuture: dateStr > todayStr })
+    const record = attendanceMap[dateStr]
+    cells.push({
+      dateStr,
+      dayNum: day,
+      isCourseDay: courseDayIndices.includes(weekday),
+      isToday: dateStr === todayStr,
+      isFuture: dateStr > todayStr,
+      status: record?.status,
+      reason: record?.reason,
+    })
   }
 
   return cells
+}
+
+function CalendarDayTooltip({ children, content }: { children: React.ReactNode; content: React.ReactNode }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="relative flex h-full" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)} onFocus={() => setOpen(true)} onBlur={() => setOpen(false)}>
+      {children}
+      {open && content && (
+        <div className="absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-max max-w-[180px] px-2 py-1.5 rounded-lg bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-[10px] font-medium shadow-lg pointer-events-none">
+          {content}
+          <span className="absolute top-full left-1/2 -translate-x-1/2 -mt-0.5 border-4 border-transparent border-t-gray-900 dark:border-t-gray-100" />
+        </div>
+      )}
+    </div>
+  )
 }
 
 const statusConfig: Record<string, { label: string; light: string; text: string; border: string; bg: string; icon: any }> = Object.fromEntries(
@@ -119,7 +149,6 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const [note, setNote] = useState<string>("")
   const [markedDates, setMarkedDates] = useState<Set<string>>(new Set())
   const [attendanceMap, setAttendanceMap] = useState<Record<string, { status: string; reason?: string }>>({})
-  const [history, setHistory] = useState<AttendanceRecord[]>([])
 
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -173,39 +202,21 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
 
       const map: Record<string, { status: string; reason?: string }> = {}
       const marked = new Set<string>()
-      const historyList: AttendanceRecord[] = []
 
       attRecords.forEach((a: any) => {
         const dateStr = new Date(a.date).toISOString().split("T")[0]
         map[dateStr] = { status: a.status, reason: a.notes }
         marked.add(dateStr)
-        historyList.push({
-          id: `att-${a.id}`,
-          date: dateStr,
-          status: a.status,
-          reason: a.notes,
-          validatedBy: a.recordedBy ? "system" : null,
-          validatedAt: a.createdAt,
-        })
       })
 
       paRecords.forEach((a: any) => {
         const dateStr = new Date(a.date).toISOString().split("T")[0]
         map[dateStr] = { status: a.status, reason: a.reason || undefined }
         marked.add(dateStr)
-        historyList.push({
-          id: a.id,
-          date: dateStr,
-          status: a.status,
-          reason: a.reason,
-          validatedBy: a.validatedBy,
-          validatedAt: a.validatedAt,
-        })
       })
 
       setAttendanceMap(map)
       setMarkedDates(marked)
-      setHistory(historyList.sort((a, b) => +new Date(b.date) - +new Date(a.date)))
 
       const current = map[activeDate]
       if (current) {
@@ -327,7 +338,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const selectedOpt = STATUS_OPTIONS.find(o => o.value === status)
   const isFuture = activeDate > todayStr
   const activeLabel = dateLabel(activeDate)
-  const monthCells = buildMonthGrid(activeDate, childCourseDayIndices)
+  const monthCells = buildMonthGrid(activeDate, childCourseDayIndices, attendanceMap)
   const monthYear = new Date(`${activeDate}T12:00:00`)
 
   return (
@@ -421,39 +432,91 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
         ) : selectedChild ? (
           /* ═══════════════════ CHILD MODE ═══════════════════ */
           <>
-            {/* Mini calendar */}
+            {/* Month calendar with status bars */}
             <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3">
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                 <p className="text-xs font-bold text-gray-500 dark:text-gray-300 uppercase tracking-wide">
                   {MONTH_NAMES[monthYear.getMonth()]} {monthYear.getFullYear()}
                 </p>
-                <div className="flex items-center gap-3">
-                  <span className="flex items-center gap-1 text-[9px] text-gray-400"><span className="w-2 h-2 rounded-full bg-emerald-400" /> Marqué</span>
-                  <span className="flex items-center gap-1 text-[9px] text-gray-400"><span className="w-2 h-2 rounded-full bg-tahfidz-green" /> Actif</span>
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  {STATUS_OPTIONS.map(opt => (
+                    <span key={opt.value} className="flex items-center gap-1 text-[9px] text-gray-500 dark:text-gray-400">
+                      <span className={cn("w-2 h-2 rounded-full", opt.bg)} />
+                      {opt.label}
+                    </span>
+                  ))}
                 </div>
               </div>
               <div className="grid grid-cols-7 gap-1">
                 {["D", "L", "M", "M", "J", "V", "S"].map((h, i) => (
-                  <div key={i} className="text-center text-[9px] font-bold text-gray-300 py-1">{h}</div>
+                  <div key={i} className="text-center text-[9px] font-bold text-gray-400 dark:text-gray-500 py-1">{h}</div>
                 ))}
-                {monthCells.map((cell, i) => (
-                  <button key={i}
-                    disabled={!cell.isCourseDay || !cell.isFuture}
-                    onClick={() => cell.dateStr && cell.isCourseDay && cell.isFuture && changeDay(cell.dateStr)}
-                    className={`h-9 sm:h-8 rounded-lg text-xs sm:text-[10px] font-bold flex items-center justify-center transition active:scale-90 ${
-                      cell.dateStr === activeDate
-                        ? "bg-tahfidz-green text-white shadow-sm"
-                        : cell.isToday
-                          ? "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400"
-                          : cell.isFuture && cell.isCourseDay
-                            ? markedDates.has(cell.dateStr!)
-                              ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-800/40"
-                              : "hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300"
-                            : "text-gray-200 dark:text-gray-600 cursor-default"
-                    }`}>
-                    {cell.dayNum}
-                  </button>
-                ))}
+                {monthCells.map((cell, i) => {
+                  const cfg = cell.status ? statusConfig[cell.status] : null
+                  const isSelected = cell.dateStr === activeDate
+                  const clickable = cell.isCourseDay && cell.isFuture
+
+                  const cellBase = cn(
+                    "relative w-full h-full min-h-[64px] sm:min-h-[84px] rounded-lg text-xs flex flex-col items-start p-1.5 transition active:scale-95 overflow-hidden text-left",
+                    isSelected
+                      ? "ring-2 ring-tahfidz-green ring-offset-1 dark:ring-offset-gray-700 z-10"
+                      : "",
+                    !cell.dateStr
+                      ? "bg-transparent"
+                      : cell.isToday
+                        ? "bg-orange-50 dark:bg-orange-900/20"
+                        : clickable
+                          ? "bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          : "bg-gray-100/50 dark:bg-gray-800/50"
+                  )
+
+                  const tooltipContent = cfg && (
+                    <div className="space-y-0.5">
+                      <p className="font-bold">{cfg.label}</p>
+                      <p>{new Date((cell.dateStr || "") + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</p>
+                      {cell.reason && <p className="italic opacity-90">Motif : {cell.reason}</p>}
+                    </div>
+                  )
+
+                  const dayContent = (
+                    <button
+                      key={i}
+                      disabled={!clickable}
+                      onClick={() => cell.dateStr && clickable && changeDay(cell.dateStr)}
+                      className={cellBase}
+                    >
+                      <span className={cn(
+                        "w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full text-[10px] font-bold shrink-0",
+                        isSelected ? "bg-tahfidz-green text-white" : "text-gray-700 dark:text-gray-300"
+                      )}>
+                        {cell.dayNum}
+                      </span>
+
+                      {cfg && (
+                        <div className={cn(
+                          "mt-auto w-full rounded-md px-1.5 py-1 text-[10px] font-semibold leading-tight border",
+                          cfg.light, cfg.text, cfg.border
+                        )}>
+                          <div className="flex items-center gap-1">
+                            <cfg.icon size={10} className="shrink-0" />
+                            <span className="truncate">{cfg.label}</span>
+                          </div>
+                          {cell.reason && (
+                            <div className="truncate opacity-80 text-[9px] mt-0.5">{cell.reason}</div>
+                          )}
+                        </div>
+                      )}
+                    </button>
+                  )
+
+                  return cfg ? (
+                    <CalendarDayTooltip key={i} content={tooltipContent}>
+                      {dayContent}
+                    </CalendarDayTooltip>
+                  ) : (
+                    <div key={i} className="h-full">{dayContent}</div>
+                  )
+                })}
               </div>
             </div>
 
@@ -577,32 +640,7 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
               </div>
             )}
 
-            {/* History */}
-            {history.length > 0 && (
-              <div className="space-y-2 pt-2">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide">Historique</h3>
-                {history.slice(0, 10).map(r => {
-                  const cfg = statusConfig[r.status] || statusConfig.PRESENT
-                  return (
-                    <div key={r.id} className={`flex items-center justify-between p-2.5 rounded-lg border ${cfg.light} ${cfg.border}`}>
-                      <div className="flex items-center gap-2">
-                        <cfg.icon size={12} className={cfg.text} />
-                        <div>
-                          <p className={`text-xs font-bold ${cfg.text}`}>{cfg.label}</p>
-                          <p className="text-[10px] text-gray-400">{new Date((r.date.slice(0, 10) + "T12:00:00")).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}</p>
-                          {r.reason && <p className="text-[10px] text-gray-500">{r.reason}</p>}
-                        </div>
-                      </div>
-                      {r.validatedBy ? (
-                        <span className="text-[9px] px-1.5 py-0.5 bg-white dark:bg-gray-800 rounded-full text-gray-400 dark:text-gray-400 border border-gray-100 dark:border-gray-600">Validé</span>
-                      ) : (
-                        <span className="text-[9px] px-1.5 py-0.5 bg-white dark:bg-gray-800 rounded-full text-amber-500 dark:text-amber-400 border border-amber-100 dark:border-amber-800">En attente</span>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
+
           </>
         ) : null}
       </div>
