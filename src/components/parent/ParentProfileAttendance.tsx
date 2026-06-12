@@ -198,23 +198,22 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
   const [weekSaving, setWeekSaving] = useState(false)
   const [weekSaved, setWeekSaved] = useState(false)
 
-  const weekDays = getWeekDays(weekStart)
-  const weekEnd = weekDays[6]
-
   /* Load week attendance data */
   const loadWeekData = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
+      const days = getWeekDays(weekStart)
+      const end = days[6]
       const [paRes, attRes] = await Promise.all([
         fetch("/api/parent-attendance"),
-        fetch(`/api/attendance?dateFrom=${weekStart}&dateTo=${weekEnd}`),
+        fetch(`/api/attendance?dateFrom=${weekStart}&dateTo=${end}`),
       ])
       const paData = await paRes.json()
       const attData = await attRes.json()
 
       const map: Record<string, Record<string, { status: string; reason?: string }>> = {}
-      weekDays.forEach(dateStr => { map[dateStr] = {} })
+      days.forEach(dateStr => { map[dateStr] = {} })
 
       ;(attData.attendances || []).forEach((a: any) => {
         const dateStr = new Date(a.date).toISOString().split("T")[0]
@@ -235,7 +234,9 @@ export function ParentProfileAttendance({ children }: { children: Child[] }) {
     } finally {
       setLoading(false)
     }
-  }, [weekStart, weekEnd, weekDays])
+  }, [weekStart])
+
+  const weekDays = getWeekDays(weekStart)
 
   useEffect(() => {
     if (mode === "week") {
