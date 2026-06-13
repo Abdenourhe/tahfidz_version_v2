@@ -16,7 +16,7 @@ export default async function NewContentPage() {
 
   const [categories, collections] = await Promise.all([
     prisma.libraryCategory.findMany({
-      where: { OR: [{ schoolId }, { schoolId: null }], isActive: true },
+      where: { schoolId, isActive: true },
       select: { id: true, name: true, color: true },
       orderBy: { sortOrder: "asc" },
     }),

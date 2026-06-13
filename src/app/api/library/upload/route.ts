@@ -36,7 +36,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Corps invalide" }, { status: 400 })
     }
 
-    const { filename, contentType, size } = body as { filename?: string; contentType?: string; size?: number }
+    const { filename, contentType, size, prefix } = body as {
+      filename?: string
+      contentType?: string
+      size?: number
+      prefix?: string
+    }
 
     if (!filename || !contentType) {
       return NextResponse.json({ error: "filename et contentType sont requis" }, { status: 400 })
@@ -50,7 +55,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Fichier trop grand" }, { status: 400 })
     }
 
-    const key = buildR2Key(session.user.schoolId ?? null, filename)
+    const safePrefix = typeof prefix === "string" && /^[a-zA-Z0-9_-]+$/.test(prefix) ? prefix : "contents"
+    const key = buildR2Key(session.user.schoolId ?? null, filename, safePrefix)
     const uploadUrl = await getUploadUrl(key, contentType, 300)
 
     return NextResponse.json({ uploadUrl, key })

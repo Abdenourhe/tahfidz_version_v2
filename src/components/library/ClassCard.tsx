@@ -17,7 +17,17 @@ interface Props {
   onClick?: () => void
 }
 
+function getCoverImageSrc(coverImage?: string | null): string | undefined {
+  if (!coverImage) return undefined
+  if (coverImage.startsWith("r2://")) {
+    return `/api/library/images/${encodeURIComponent(coverImage.slice(5))}`
+  }
+  return coverImage
+}
+
 export function ClassCard({ name, nameAr, description, coverImage, color, contentCount, studentCount, progress, onClick }: Props) {
+  const coverImageSrc = getCoverImageSrc(coverImage)
+
   return (
     <motion.div
       whileHover={{ scale: 1.02, y: -2 }}
@@ -26,7 +36,7 @@ export function ClassCard({ name, nameAr, description, coverImage, color, conten
     >
       <div
         className="h-32 bg-cover bg-center relative"
-        style={{ backgroundColor: color || "#1D9E75", backgroundImage: coverImage ? `url(${coverImage})` : undefined }}
+        style={{ backgroundColor: color || "#1D9E75", backgroundImage: coverImageSrc ? `url(${coverImageSrc})` : undefined }}
       >
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
         <div className="absolute bottom-3 left-4 right-4">

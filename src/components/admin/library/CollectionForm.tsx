@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { motion } from "framer-motion"
-import { ArrowLeft, Loader2, Save } from "lucide-react"
+import { ArrowLeft, Loader2, Save, Upload } from "lucide-react"
+import { useState } from "react"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { libraryCollectionSchema, type LibraryCollectionInput } from "@/lib/validations/library"
 import { cn } from "@/lib/utils"
@@ -36,11 +37,24 @@ const COLORS = [
   "#EF4444", "#14B8A6", "#6366F1", "#84CC16", "#F97316",
 ]
 
+const MAX_IMAGE_SIZE = 2 * 1024 * 1024 // 2 Mo
+
+function getCoverImageSrc(coverImage?: string | null): string | null {
+  if (!coverImage) return null
+  if (coverImage.startsWith("r2://")) {
+    return `/api/library/images/${encodeURIComponent(coverImage.slice(5))}`
+  }
+  return coverImage
+}
+
 export function CollectionForm({ groups, collection }: Props) {
   const router = useRouter()
   const { useT } = useLanguage()
   const t = (k: string) => useT("library", k)
   const isEdit = !!collection
+
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
 
   const {
     register,
@@ -64,15 +78,72 @@ export function CollectionForm({ groups, collection }: Props) {
 
   const selectedColor = watch("color")
   const coverImage = watch("coverImage")
+  const coverImageSrc = getCoverImageSrc(coverImage)
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadError(null)
+
+    if (!file.type.startsWith("image/")) {
+      setUploadError("Format non accepté. Veuillez choisir une image.")
+      return
+    }
+
+    if (file.size > MAX_IMAGE_SIZE) {
+      setUploadError(t("maxSize"))
+      return
+    }
+
+    setUploading(true)
+    try {
+      const metaRes = await fetch("/api/library/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type,
+          size: file.size,
+          prefix: "collections",
+        }),
+      })
+      const meta: any = metaRes.ok ? await metaRes.json() : { error: await metaRes.text() || t("error") }
+      if (!metaRes.ok) {
+        setUploadError(meta.error || t("error"))
+        return
+      }
+
+      const uploadRes = await fetch(meta.uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      })
+      if (!uploadRes.ok) {
+        setUploadError("Échec de l'upload sur le stockage")
+        return
+      }
+
+      setValue("coverImage", `r2://${meta.key}`)
+    } catch (err: any) {
+      setUploadError(err.message || t("error"))
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const onSubmit = async (data: LibraryCollectionInput) => {
     const url = isEdit ? `/api/library/collections/${collection.id}` : "/api/library/collections"
     const method = isEdit ? "PATCH" : "POST"
 
+    const payload = {
+      ...data,
+      groupId: data.groupId || null,
+    }
+
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     })
 
     if (res.ok) {
@@ -155,9 +226,22 @@ export function CollectionForm({ groups, collection }: Props) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("coverImage")}</label>
-            <input {...register("coverImage")} placeholder="URL de l'image" className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green text-sm" />
-            {coverImage && (
-              <div className="mt-2 h-32 rounded-lg bg-cover bg-center" style={{ backgroundImage: `url(${coverImage})` }} />
+            <input type="hidden" {...register("coverImage")} />
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer w-fit">
+                {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                {uploading ? t("loading") || "Chargement..." : t("uploadFile") || "Uploader une image"}
+                <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+              </label>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Image jusqu&apos;à 2 Mo</p>
+              {uploadError && <p className="text-xs text-red-500">{uploadError}</p>}
+            </div>
+            {coverImageSrc && (
+              <div
+                className="mt-3 h-32 rounded-lg border border-gray-200 dark:border-gray-700 bg-cover bg-center"
+                style={{ backgroundImage: `url(${coverImageSrc})` }}
+                aria-label={t("coverImage") || "Image de couverture"}
+              />
             )}
           </div>
         </div>
@@ -166,7 +250,7 @@ export function CollectionForm({ groups, collection }: Props) {
           <Link href="/admin/library/collections" className="px-5 py-2.5 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition">
             {t("cancel") || "Annuler"}
           </Link>
-          <button type="submit" disabled={isSubmitting} className="px-5 py-2.5 bg-tahfidz-green text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition flex items-center gap-2">
+          <button type="submit" disabled={isSubmitting || uploading} className="px-5 py-2.5 bg-tahfidz-green text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition flex items-center gap-2">
             {isSubmitting ? <><Loader2 size={15} className="animate-spin" /> {t("loading")}</> : <><Save size={15} /> {t("save") || "Enregistrer"}</>}
           </button>
         </div>
