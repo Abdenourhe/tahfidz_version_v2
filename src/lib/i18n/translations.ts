@@ -2172,6 +2172,7 @@ export const translations = {
   // ─── Bibliothèque / Library ───────────────────────────────────────
   library: {
     title:          { fr: "Bibliothèque",             en: "Library",                 ar: "المكتبة" },
+    contentTitle:   { fr: "Titre",                    en: "Title",                   ar: "العنوان" },
     dashboard:      { fr: "Tableau de bord",          en: "Dashboard",               ar: "لوحة التحكم" },
     categories:     { fr: "Catégories",               en: "Categories",              ar: "التصنيفات" },
     collection:     { fr: "Collection",               en: "Collection",              ar: "المجموعة" },

@@ -80,6 +80,7 @@ export function ContentForm({ categories, collections, content, isSuperAdmin = f
   const { useT } = useLanguage()
   const t = (k: string) => useT("library", k)
   const isEdit = !!content
+  const backHref = isSuperAdmin ? "/admin/super/library" : "/admin/library/contents"
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(content?.pdfUrl ? "Fichier stocké" : null)
@@ -234,14 +235,14 @@ export function ContentForm({ categories, collections, content, isSuperAdmin = f
   return (
     <motion.div className="max-w-3xl mx-auto space-y-6" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
       <div className="flex items-center gap-3">
-        <Link href="/admin/library/contents" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"><ArrowLeft size={18} className="text-gray-500" /></Link>
+        <Link href={backHref} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"><ArrowLeft size={18} className="text-gray-500" /></Link>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{isEdit ? t("editContent") : t("newContent")}</h1>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("title")} *</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("contentTitle")} *</label>
             <input {...register("title")} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green text-sm" />
             {errors.title && <p className="mt-1 text-xs text-red-500">{errors.title.message}</p>}
           </div>
@@ -292,22 +293,33 @@ export function ContentForm({ categories, collections, content, isSuperAdmin = f
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {!isSuperAdmin && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("category")}</label>
+                <select {...register("categoryId")} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green text-sm">
+                  {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("collection")}</label>
+                <select {...register("collectionId")} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green text-sm">
+                  <option value="">{t("noGroup")}</option>
+                  {collections.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+                {visibility === "CLASS" && !watch("collectionId") && <p className="mt-1 text-xs text-amber-600">{t("visibilityClass")}</p>}
+              </div>
+            </div>
+          )}
+
+          {isSuperAdmin && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("category")}</label>
               <select {...register("categoryId")} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green text-sm">
                 {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("collection")}</label>
-              <select {...register("collectionId")} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green text-sm">
-                <option value="">{t("noGroup")}</option>
-                {collections.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-              {visibility === "CLASS" && !watch("collectionId") && <p className="mt-1 text-xs text-amber-600">{t("visibilityClass")}</p>}
-            </div>
-          </div>
+          )}
 
           {type === "PDF" && (
             <div className="space-y-3">
@@ -321,7 +333,7 @@ export function ContentForm({ categories, collections, content, isSuperAdmin = f
                 )}
               </div>
               <div>
-                <label className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer w-fit">
+                <label className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer w-fit">
                   {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
                   {uploading ? t("loading") : t("uploadFile")}
                   <input type="file" accept="application/pdf" className="hidden" onChange={(e) => handleFileUpload(e, "pdfUrl")} />
