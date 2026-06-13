@@ -3,6 +3,7 @@
 import { motion } from "framer-motion"
 import { FileText, Video, Headphones, PlayCircle, Bookmark } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { PdfThumbnail } from "./PdfThumbnail"
 
 interface Props {
   id: string
@@ -16,7 +17,15 @@ interface Props {
   onClick?: () => void
 }
 
-export function ContentCard({ title, type, thumbnail, categoryName, categoryColor, progress, isBookmarked, onClick }: Props) {
+function getThumbnailSrc(thumbnail?: string | null): string | undefined {
+  if (!thumbnail) return undefined
+  if (thumbnail.startsWith("r2://")) {
+    return `/api/library/images/${encodeURIComponent(thumbnail.slice(5))}`
+  }
+  return thumbnail
+}
+
+export function ContentCard({ id, title, type, thumbnail, categoryName, categoryColor, progress, isBookmarked, onClick }: Props) {
   const iconMap: Record<string, React.ReactNode> = {
     PDF: <FileText size={18} />,
     VIDEO_SINGLE: <PlayCircle size={18} />,
@@ -31,7 +40,13 @@ export function ContentCard({ title, type, thumbnail, categoryName, categoryColo
       className={cn("cursor-pointer bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 card-hover flex gap-4")}
     >
       <div className="w-16 h-16 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 flex-shrink-0 overflow-hidden">
-        {thumbnail ? <img src={thumbnail} alt="" className="w-full h-full object-cover" /> : iconMap[type] || <FileText size={18} />}
+        {thumbnail ? (
+          <img src={getThumbnailSrc(thumbnail)} alt="" className="w-full h-full object-cover" />
+        ) : type === "PDF" ? (
+          <PdfThumbnail contentId={id} />
+        ) : (
+          iconMap[type] || null
+        )}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">

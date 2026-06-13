@@ -9,6 +9,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { libraryContentSchema, libraryEpisodeSchema } from "@/lib/validations/library"
+import { generatePdfThumbnail } from "@/lib/pdf-thumbnail-client"
 import { z } from "zod"
 
 interface Category {
@@ -172,6 +173,38 @@ export function ContentForm({ categories, collections, content, isSuperAdmin = f
       // 3. Stocker la clé R2 dans le formulaire
       setValue(field, `r2://${meta.key}`)
       setUploadedFileName(file.name)
+
+      // 4. Générer et uploader une vignette de la première page (PDF uniquement)
+      if (field === "pdfUrl" && file.type === "application/pdf") {
+        try {
+          const thumbDataUrl = await generatePdfThumbnail(file, { width: 512, quality: 0.9 })
+          const thumbBlob = await (await fetch(thumbDataUrl)).blob()
+          const thumbMetaRes = await fetch("/api/library/upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              filename: `thumbnail-${file.name.replace(/\.pdf$/i, ".jpg")}`,
+              contentType: "image/jpeg",
+              size: thumbBlob.size,
+              prefix: "thumbnails",
+            }),
+          })
+          const thumbMeta: any = thumbMetaRes.ok ? await thumbMetaRes.json() : { error: await thumbMetaRes.text() || t("error") }
+          if (thumbMetaRes.ok && thumbMeta.uploadUrl) {
+            const thumbUploadRes = await fetch(thumbMeta.uploadUrl, {
+              method: "PUT",
+              body: thumbBlob,
+              headers: { "Content-Type": "image/jpeg" },
+            })
+            if (thumbUploadRes.ok) {
+              setValue("thumbnail", `r2://${thumbMeta.key}`)
+            }
+          }
+        } catch (thumbErr: any) {
+          console.error("[PDF THUMBNAIL UPLOAD]", thumbErr)
+          // Ne pas bloquer l'upload principal si la vignette échoue.
+        }
+      }
     } catch (err: any) {
       setUploadError(err.message || t("error"))
     } finally {
