@@ -12,14 +12,16 @@ interface Category {
   name: string
   color?: string | null
   icon?: string | null
+  schoolId?: string | null
   _count?: { contents: number }
 }
 
 interface Props {
   categories: Category[]
+  currentSchoolId: string
 }
 
-export function CategoryListClient({ categories }: Props) {
+export function CategoryListClient({ categories, currentSchoolId }: Props) {
   const router = useRouter()
   const { useT } = useLanguage()
   const t = (k: string) => useT("library", k)
@@ -71,10 +73,17 @@ export function CategoryListClient({ categories }: Props) {
                   </div>
                   <h3 className="font-semibold text-gray-900 dark:text-gray-100">{category.name}</h3>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Link href={`/admin/library/categories/${category.id}/edit`} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"><Pencil size={14} /></Link>
-                  <button onClick={() => setDeleteId(category.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"><Trash2 size={14} /></button>
-                </div>
+                {category.schoolId === currentSchoolId && (
+                  <div className="flex items-center gap-1">
+                    <Link href={`/admin/library/categories/${category.id}/edit`} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"><Pencil size={14} /></Link>
+                    <button onClick={() => setDeleteId(category.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"><Trash2 size={14} /></button>
+                  </div>
+                )}
+                {category.schoolId === null && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-tahfidz-purple/10 text-tahfidz-purple font-medium">
+                    Global
+                  </span>
+                )}
               </div>
             </motion.div>
           ))}

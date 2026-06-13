@@ -20,5 +20,5 @@ export default async function CategoriesPage() {
     include: { _count: { select: { contents: true } } },
   })
 
-  return <CategoryListClient categories={categories} />
+  return <CategoryListClient categories={categories} currentSchoolId={schoolId} />
 }
