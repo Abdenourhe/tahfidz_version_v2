@@ -80,6 +80,7 @@ export function ContentForm({ categories, collections, content }: Props) {
   const isEdit = !!content
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(content?.pdfUrl ? "Fichier stocké" : null)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   const {
@@ -123,7 +124,7 @@ export function ContentForm({ categories, collections, content }: Props) {
   const visibility = watch("visibility")
   const tags = watch("tags")
 
-  const MAX_UPLOAD_SIZE = 2 * 1024 * 1024
+  const MAX_UPLOAD_SIZE = 5 * 1024 * 1024 * 1024 // 5 Go
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: "pdfUrl") => {
     const file = e.target.files?.[0]
@@ -135,22 +136,32 @@ export function ContentForm({ categories, collections, content }: Props) {
     }
     setUploading(true)
     try {
-      const formData = new FormData()
-      formData.append("file", file)
-      const res = await fetch("/api/library/upload", { method: "POST", body: formData })
-      let data: any = {}
-      const contentType = res.headers.get("content-type")
-      if (contentType?.includes("application/json")) {
-        data = await res.json()
-      } else {
-        const text = await res.text()
-        data = { error: text || t("error") }
+      // 1. Demander une URL d'upload signée
+      const metaRes = await fetch("/api/library/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: file.name, contentType: file.type, size: file.size }),
+      })
+      const meta: any = metaRes.ok ? await metaRes.json() : { error: await metaRes.text() || t("error") }
+      if (!metaRes.ok) {
+        setUploadError(meta.error || t("error"))
+        return
       }
-      if (res.ok) {
-        setValue(field, data.url)
-      } else {
-        setUploadError(data.error || t("error"))
+
+      // 2. Uploader directement sur R2
+      const uploadRes = await fetch(meta.uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      })
+      if (!uploadRes.ok) {
+        setUploadError("Échec de l'upload sur le stockage")
+        return
       }
+
+      // 3. Stocker la clé R2 dans le formulaire
+      setValue(field, `r2://${meta.key}`)
+      setUploadedFileName(file.name)
     } catch (err: any) {
       setUploadError(err.message || t("error"))
     } finally {
@@ -290,14 +301,21 @@ export function ContentForm({ categories, collections, content }: Props) {
           {type === "PDF" && (
             <div className="space-y-3">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t("pdfUrl")}</label>
-              <input {...register("pdfUrl")} placeholder="URL du PDF" className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green text-sm" />
+              <input {...register("pdfUrl")} type="hidden" />
+              <div className="px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 text-sm min-h-[2.5rem] flex items-center">
+                {uploadedFileName ? (
+                  <span className="text-gray-700 dark:text-gray-200">{uploadedFileName}</span>
+                ) : (
+                  <span className="text-gray-400">{t("pdfUrl") || "Aucun fichier"}</span>
+                )}
+              </div>
               <div>
                 <label className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer w-fit">
                   {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
                   {uploading ? t("loading") : t("uploadFile")}
                   <input type="file" accept="application/pdf" className="hidden" onChange={(e) => handleFileUpload(e, "pdfUrl")} />
                 </label>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">{t("maxSize")}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">PDF jusqu&apos;à 5 Go</p>
                 {uploadError && <p className="text-xs text-red-500 mt-1.5">{uploadError}</p>}
               </div>
               <input {...register("pdfPages")} type="number" placeholder="Nombre de pages" className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green text-sm" />

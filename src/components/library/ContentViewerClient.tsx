@@ -87,7 +87,7 @@ export function ContentViewerClient({ contentId, basePath }: Props) {
   const renderMedia = () => {
     switch (content.type) {
       case "PDF":
-        return <PdfViewer url={content.pdfUrl || ""} contentId={content.id} initialPage={progress?.lastPosition || 1} totalPages={content.pdfPages || 1} />
+        return <PdfViewer url={`/api/library/contents/${content.id}/pdf`} contentId={content.id} initialPage={progress?.lastPosition || 1} totalPages={content.pdfPages || 1} />
       case "AUDIO":
         return (
           <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-8 text-center space-y-4">

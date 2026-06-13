@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 import { libraryContentSchema, libraryEpisodeSchema } from "@/lib/validations/library"
 import { canAccessContent, canEditLibraryResource, canManageLibrary } from "@/lib/library/permissions"
+import { deleteObject, getR2KeyFromUrl } from "@/lib/r2"
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -121,6 +122,17 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
 
     if (!canEditLibraryResource(session.user as any, existing.schoolId ?? "", existing.createdBy)) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
+    }
+
+    // Suppression du fichier R2 associé si présent
+    const r2Key = getR2KeyFromUrl(existing.pdfUrl)
+    if (r2Key) {
+      try {
+        await deleteObject(r2Key)
+      } catch (r2Error) {
+        console.error("[LIBRARY DELETE] Erreur suppression R2:", r2Error)
+        // On continue la suppression en base même si R2 échoue
+      }
     }
 
     await prisma.libraryContent.delete({ where: { id } })
