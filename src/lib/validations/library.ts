@@ -21,7 +21,10 @@ export const libraryCollectionSchema = z.object({
   description: z.string().max(5000, "Description trop longue").optional(),
   coverImage: z.string().optional(),
   color: z.string().optional(),
-  groupId: z.string().cuid().optional().nullable(),
+  groupId: z.preprocess(
+    (val) => (val === "" ? null : val),
+    z.string().uuid().optional().nullable()
+  ),
   isActive: z.boolean().default(true),
 })
 
