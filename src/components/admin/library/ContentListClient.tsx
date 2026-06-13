@@ -172,7 +172,15 @@ export function ContentListClient({ contents, categories, collections }: Props) 
                 className="p-4 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition"
               >
                 <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 flex-shrink-0">
-                  {content.thumbnail ? <img src={content.thumbnail} alt="" className="w-full h-full object-cover rounded-lg" /> : typeIcon[content.type] || <BookOpen size={18} />}
+                  {content.thumbnail ? (
+                    <img
+                      src={content.thumbnail.startsWith("r2://") ? `/api/library/images/${encodeURIComponent(content.thumbnail.slice(5))}` : content.thumbnail}
+                      alt=""
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                  ) : (
+                    typeIcon[content.type] || <BookOpen size={18} />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">{content.title}</h3>

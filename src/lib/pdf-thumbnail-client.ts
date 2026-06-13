@@ -7,9 +7,7 @@ async function getPdfjs() {
   if (pdfjsModule) return pdfjsModule
   const mod = await import("pdfjs-dist")
   if (typeof window !== "undefined") {
-    // Utilisation du worker hébergé sur CDN pour simplifier le bundling Next.js.
-    // En cas d'indisponibilité, la fonction de génération retombera sur l'icône par défaut.
-    mod.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${mod.version}/pdf.worker.min.mjs`
+    mod.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs"
   }
   pdfjsModule = mod
   return mod

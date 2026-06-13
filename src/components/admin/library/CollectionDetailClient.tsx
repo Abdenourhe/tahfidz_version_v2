@@ -203,7 +203,11 @@ export function CollectionDetailClient({ collection, availableStudents }: Props)
             >
               <div className="w-16 h-16 rounded-lg bg-gray-100 dark:bg-gray-800 flex-shrink-0 overflow-hidden">
                 {content.thumbnail ? (
-                  <img src={content.thumbnail} alt="" className="w-full h-full object-cover" />
+                  <img
+                    src={content.thumbnail.startsWith("r2://") ? `/api/library/images/${encodeURIComponent(content.thumbnail.slice(5))}` : content.thumbnail}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-400"><BookOpen size={20} /></div>
                 )}

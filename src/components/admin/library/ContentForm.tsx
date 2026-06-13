@@ -83,6 +83,7 @@ export function ContentForm({ categories, collections, content, isSuperAdmin = f
   const isEdit = !!content
   const backHref = isSuperAdmin ? "/admin/super/library" : "/admin/library/contents"
   const [uploading, setUploading] = useState(false)
+  const [coverUploading, setCoverUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(content?.pdfUrl ? "Fichier stocké" : null)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -213,7 +214,7 @@ export function ContentForm({ categories, collections, content, isSuperAdmin = f
       setUploadError("Image trop volumineuse (max 2 Mo).")
       return
     }
-    setUploading(true)
+    setCoverUploading(true)
     try {
       const result = await uploadFileToR2(file, "thumbnails")
       if ("error" in result) {
@@ -224,7 +225,7 @@ export function ContentForm({ categories, collections, content, isSuperAdmin = f
     } catch (err: any) {
       setUploadError(err.message || t("error"))
     } finally {
-      setUploading(false)
+      setCoverUploading(false)
     }
   }
 
@@ -412,8 +413,8 @@ export function ContentForm({ categories, collections, content, isSuperAdmin = f
                 )}
                 <div>
                   <label className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer w-fit">
-                    {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
-                    {uploading ? t("loading") : "Uploader une couverture"}
+                    {coverUploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                    {coverUploading ? t("loading") : "Uploader une couverture"}
                     <input type="file" accept="image/*" className="hidden" onChange={handleCoverImageUpload} />
                   </label>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">Image jusqu&apos;à 2 Mo. Laissez vide pour utiliser la première page du PDF.</p>
