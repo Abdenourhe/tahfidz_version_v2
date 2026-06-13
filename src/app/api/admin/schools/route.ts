@@ -171,7 +171,16 @@ export async function PATCH(req: NextRequest) {
 
   // Mettre à jour les infos d'une école + son admin
   if (body.type === "update-school") {
-    const { schoolId, schoolName, plan, address, city, country, phone, adminId, adminName, adminEmail, adminPassword } = body
+    const { schoolId, schoolName, slug, plan, isActive, address, city, country, phone, adminId, adminName, adminEmail, adminPassword } = body
+
+    const existing = await prisma.school.findUnique({ where: { id: schoolId } })
+    if (!existing) return NextResponse.json({ error: "École introuvable" }, { status: 404 })
+
+    // Vérifier unicité du slug si changé
+    if (slug && slug !== existing.slug) {
+      const slugConflict = await prisma.school.findUnique({ where: { slug } })
+      if (slugConflict) return NextResponse.json({ error: `Slug "${slug}" déjà utilisé` }, { status: 409 })
+    }
 
     // Vérifier unicité email si changé
     if (adminEmail && adminId) {
@@ -185,8 +194,10 @@ export async function PATCH(req: NextRequest) {
     await prisma.school.update({
       where: { id: schoolId },
       data: {
-        ...(schoolName          ? { name: schoolName }         : {}),
-        ...(plan                ? { plan }                     : {}),
+        ...(schoolName ? { name: schoolName } : {}),
+        ...(slug ? { slug } : {}),
+        ...(plan ? { plan } : {}),
+        ...(typeof isActive === "boolean" ? { isActive } : {}),
         address: address || null,
         city:    city    || null,
         country: country || "DZ",
