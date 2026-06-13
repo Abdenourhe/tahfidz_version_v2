@@ -2359,6 +2359,14 @@ export const translations = {
     back:           { fr: "Retour",                   en: "Back",                  ar: "رجوع" },
     filterByType:   { fr: "Filtrer par type",         en: "Filter by type",          ar: "تصفية حسب النوع" },
     allTypes:       { fr: "Tous les types",           en: "All types",               ar: "جميع الأنواع" },
+    all:            { fr: "Tous",                     en: "All",                     ar: "الكل" },
+    videos:         { fr: "Vidéos",                   en: "Videos",                  ar: "فيديوهات" },
+    audios:         { fr: "Audio",                    en: "Audio",                   ar: "صوتيات" },
+    bookmarks:      { fr: "Favoris",                  en: "Bookmarks",               ar: "المفضلة" },
+    viewAll:        { fr: "Voir tout",                en: "View all",                ar: "عرض الكل" },
+    seeLess:        { fr: "Voir moins",               en: "See less",                ar: "عرض أقل" },
+    searchResults:  { fr: "Résultats",                en: "Results",                 ar: "النتائج" },
+    noResultsForFilter: { fr: "Aucun contenu ne correspond à votre filtre.", en: "No content matches your filter.", ar: "لا يوجد محتوى يطابق الفلتر الخاص بك." },
   },
 
 } as const
