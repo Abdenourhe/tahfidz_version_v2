@@ -27,5 +27,5 @@ export default async function NewContentPage() {
     }),
   ])
 
-  return <ContentForm categories={categories} collections={collections} />
+  return <ContentForm categories={categories} collections={collections} isSuperAdmin={session.user.role === "SUPERADMIN"} />
 }

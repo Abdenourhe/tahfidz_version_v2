@@ -61,6 +61,7 @@ interface Props {
   categories: Category[]
   collections: Collection[]
   content?: Content
+  isSuperAdmin?: boolean
 }
 
 const contentFormSchema = libraryContentSchema.extend({
@@ -71,7 +72,7 @@ const contentFormSchema = libraryContentSchema.extend({
 
 type FormData = z.infer<typeof contentFormSchema>
 
-export function ContentForm({ categories, collections, content }: Props) {
+export function ContentForm({ categories, collections, content, isSuperAdmin = false }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const defaultCollectionId = searchParams.get("collectionId") || content?.collectionId || ""
@@ -266,7 +267,7 @@ export function ContentForm({ categories, collections, content }: Props) {
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("visibility")}</label>
               <select {...register("visibility")} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green text-sm">
-                <option value="GLOBAL">{t("visibilityGlobal")}</option>
+                {isSuperAdmin && <option value="GLOBAL">{t("visibilityGlobal")}</option>}
                 <option value="SCHOOL">{t("visibilitySchool")}</option>
                 <option value="CLASS">{t("visibilityClass")}</option>
               </select>

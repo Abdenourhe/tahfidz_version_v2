@@ -92,6 +92,11 @@ export async function POST(req: NextRequest) {
 
     const { episodes, ...contentData } = parsed.data
 
+    // Seul le SUPERADMIN peut créer du contenu GLOBAL
+    if (contentData.visibility === "GLOBAL" && session.user.role !== "SUPERADMIN") {
+      return NextResponse.json({ error: "Non autorisé à créer un contenu global" }, { status: 403 })
+    }
+
     // Validation cohérence visibility / collection
     if (contentData.visibility === "CLASS" && !contentData.collectionId) {
       return NextResponse.json({ error: "Une collection est requise pour la visibilité CLASS" }, { status: 400 })

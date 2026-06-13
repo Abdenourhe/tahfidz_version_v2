@@ -21,7 +21,7 @@ export default async function EditContentPage({ params }: Params) {
     where: { id },
     include: { episodes: { orderBy: { episodeOrder: "asc" } } },
   })
-  if (!content || content.schoolId !== schoolId) redirect("/admin/library/contents")
+  if (!content || (content.schoolId !== schoolId && session.user.role !== "SUPERADMIN")) redirect("/admin/library/contents")
 
   const [categories, collections] = await Promise.all([
     prisma.libraryCategory.findMany({
@@ -36,5 +36,5 @@ export default async function EditContentPage({ params }: Params) {
     }),
   ])
 
-  return <ContentForm categories={categories} collections={collections} content={content as any} />
+  return <ContentForm categories={categories} collections={collections} content={content as any} isSuperAdmin={session.user.role === "SUPERADMIN"} />
 }

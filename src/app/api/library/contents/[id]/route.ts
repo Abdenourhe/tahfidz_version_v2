@@ -83,6 +83,11 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
     const { episodes, ...contentData } = parsed.data
 
+    // Seul le SUPERADMIN peut rendre un contenu global
+    if (contentData.visibility === "GLOBAL" && session.user.role !== "SUPERADMIN") {
+      return NextResponse.json({ error: "Non autorisé à rendre un contenu global" }, { status: 403 })
+    }
+
     if (contentData.collectionId) {
       const collection = await prisma.libraryCollection.findFirst({
         where: { id: contentData.collectionId, schoolId: session.user.schoolId },
