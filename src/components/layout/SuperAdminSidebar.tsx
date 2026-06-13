@@ -31,16 +31,16 @@ export function SuperAdminSidebar({ user }: SuperAdminSidebarProps) {
   const tNav = (k: string) => tFn("nav", k)
 
   const navItems = [
-    { label: tNav("superDashboard") || "Dashboard", href: "/admin/super/dashboard", icon: LayoutDashboard },
-    { label: "Écoles", href: "/admin/super/schools", icon: Building2 },
-    { label: "Demandes", href: "/admin/super/requests", icon: Clock },
-    { label: "Bibliothèque globale", href: "/admin/super/library", icon: Library },
-    { label: "Catégories globales", href: "/admin/super/library/categories", icon: Layers },
-    { label: "Broadcast", href: "/admin/super/broadcast", icon: Send },
-    { label: "Audit", href: "/admin/super/audit", icon: Eye },
-    { label: "Feedbacks", href: "/admin/super/feedbacks", icon: MessageCircleQuestion },
-    { label: "Mises à jour", href: "/admin/super/school-updates", icon: Building2 },
-    { label: "Santé", href: "/admin/super/health", icon: Activity },
+    { label: tNav("superDashboard"), href: "/admin/super/dashboard", icon: LayoutDashboard },
+    { label: tNav("schools"), href: "/admin/super/schools", icon: Building2 },
+    { label: tNav("requests"), href: "/admin/super/requests", icon: Clock },
+    { label: tNav("globalLibrary"), href: "/admin/super/library", icon: Library },
+    { label: tNav("globalCategories"), href: "/admin/super/library/categories", icon: Layers },
+    { label: tNav("broadcast"), href: "/admin/super/broadcast", icon: Send },
+    { label: tNav("audit"), href: "/admin/super/audit", icon: Eye },
+    { label: tNav("feedbacks"), href: "/admin/super/feedbacks", icon: MessageCircleQuestion },
+    { label: tNav("systemUpdates"), href: "/admin/super/school-updates", icon: Building2 },
+    { label: tNav("health"), href: "/admin/super/health", icon: Activity },
   ]
 
   const initials = user.name

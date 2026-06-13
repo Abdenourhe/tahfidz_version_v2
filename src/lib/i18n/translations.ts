@@ -36,6 +36,15 @@ export const translations = {
     admins:         { fr: "Administrateurs",   en: "Administrators",   ar: "المدراء" },
     dailyLog:       { fr: "Carnet de suivi",   en: "Daily log",        ar: "سجل المتابعة" },
     library:        { fr: "Bibliothèque",      en: "Library",          ar: "المكتبة" },
+    superDashboard: { fr: "Dashboard",         en: "Dashboard",        ar: "لوحة التحكم" },
+    schools:        { fr: "Écoles",            en: "Schools",          ar: "المدارس" },
+    requests:       { fr: "Demandes",          en: "Requests",         ar: "الطلبات" },
+    globalLibrary:  { fr: "Bibliothèque globale", en: "Global library", ar: "المكتبة العالمية" },
+    globalCategories: { fr: "Catégories globales", en: "Global categories", ar: "التصنيفات العالمية" },
+    broadcast:      { fr: "Broadcast",         en: "Broadcast",        ar: "البث" },
+    feedbacks:      { fr: "Feedbacks",         en: "Feedbacks",        ar: "الملاحظات" },
+    systemUpdates:  { fr: "Mises à jour",      en: "Updates",          ar: "التحديثات" },
+    health:         { fr: "Santé",             en: "Health",           ar: "الصحة" },
   },
 
   // ─── Actions communes ─────────────────────────────────────────────
@@ -1731,6 +1740,32 @@ export const translations = {
     errorSend:       { fr: "Erreur lors de l'envoi", en: "Error sending", ar: "خطأ أثناء الإرسال" },
     clearConversation:{ fr: "Vider la discussion", en: "Clear conversation", ar: "مسح المحادثة" },
     confirmClear:    { fr: "Supprimer tous les messages de cette conversation ?", en: "Delete all messages in this conversation?", ar: "حذف جميع رسائل هذه المحادثة؟" },
+  },
+
+  // ─── Superadmin Dashboard ─────────────────────────────────────────
+  superadmin: {
+    welcome:           { fr: "Bonjour", en: "Hello", ar: "مرحباً" },
+    subtitle:          { fr: "Gérez les écoles, les demandes d'inscription et les ressources globales de la plateforme TAHFIDZ.", en: "Manage schools, registration requests and global resources of the TAHFIDZ platform.", ar: "أدر المدارس وطلبات التسجيل والموارد العالمية لمنصة تحفيظ." },
+    totalSchools:      { fr: "Écoles totales", en: "Total schools", ar: "إجمالي المدارس" },
+    activeSchools:     { fr: "Écoles actives", en: "Active schools", ar: "المدارس النشطة" },
+    inactiveSchools:   { fr: "Écoles inactives", en: "Inactive schools", ar: "المدارس غير النشطة" },
+    students:          { fr: "Élèves", en: "Students", ar: "الطلاب" },
+    teachers:          { fr: "Enseignants", en: "Teachers", ar: "المعلمون" },
+    parents:           { fr: "Parents", en: "Parents", ar: "أولياء الأمور" },
+    pendingRequests:   { fr: "Demandes en attente", en: "Pending requests", ar: "الطلبات المعلقة" },
+    quickAccess:       { fr: "Accès rapides", en: "Quick access", ar: "وصول سريع" },
+    manageSchools:     { fr: "Gérer les écoles", en: "Manage schools", ar: "إدارة المدارس" },
+    globalLibrary:     { fr: "Bibliothèque globale", en: "Global library", ar: "المكتبة العالمية" },
+    broadcast:         { fr: "Broadcast", en: "Broadcast", ar: "البث" },
+    systemHealth:      { fr: "Santé système", en: "System health", ar: "صحة النظام" },
+    recentSchools:     { fr: "Dernières écoles", en: "Recent schools", ar: "أحدث المدارس" },
+    pendingRequestsTitle: { fr: "Demandes en attente", en: "Pending requests", ar: "الطلبات المعلقة" },
+    viewAll:           { fr: "Voir tout", en: "View all", ar: "عرض الكل" },
+    noSchools:         { fr: "Aucune école pour le moment.", en: "No schools yet.", ar: "لا توجد مدارس حالياً." },
+    noRequests:        { fr: "Aucune demande en attente.", en: "No pending requests.", ar: "لا توجد طلبات معلقة." },
+    active:            { fr: "Active", en: "Active", ar: "نشطة" },
+    inactive:          { fr: "Inactive", en: "Inactive", ar: "غير نشطة" },
+    pending:           { fr: "En attente", en: "Pending", ar: "معلقة" },
   },
 
   // ─── Teacher Dashboard ────────────────────────────────────────────

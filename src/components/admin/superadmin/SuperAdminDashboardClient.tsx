@@ -45,22 +45,22 @@ interface Props {
 
 export function SuperAdminDashboardClient({ userName, stats, recentSchools, pendingRequests }: Props) {
   const { useT } = useLanguage()
-  const t = (k: string) => useT("library", k)
+  const t = (k: string) => useT("superadmin", k)
 
   const statCards = [
-    { label: "Écoles totales", value: stats.totalSchools, icon: Building2, color: "bg-blue-100 text-blue-600", href: "/admin/super/schools" },
-    { label: "Écoles actives", value: stats.activeSchools, icon: Shield, color: "bg-emerald-100 text-emerald-600", href: "/admin/super/schools" },
-    { label: "Élèves", value: stats.totalStudents, icon: GraduationCap, color: "bg-indigo-100 text-indigo-600", href: "/admin/super/schools" },
-    { label: "Enseignants", value: stats.totalTeachers, icon: UserCheck, color: "bg-amber-100 text-amber-600", href: "/admin/super/schools" },
-    { label: "Parents", value: stats.totalParents, icon: Users, color: "bg-rose-100 text-rose-600", href: "/admin/super/schools" },
-    { label: "Demandes en attente", value: stats.pendingRequests, icon: Clock, color: "bg-orange-100 text-orange-600", href: "/admin/super/requests" },
+    { label: t("totalSchools"), value: stats.totalSchools, icon: Building2, color: "bg-blue-100 text-blue-600", href: "/admin/super/schools" },
+    { label: t("activeSchools"), value: stats.activeSchools, icon: Shield, color: "bg-emerald-100 text-emerald-600", href: "/admin/super/schools" },
+    { label: t("students"), value: stats.totalStudents, icon: GraduationCap, color: "bg-indigo-100 text-indigo-600", href: "/admin/super/schools" },
+    { label: t("teachers"), value: stats.totalTeachers, icon: UserCheck, color: "bg-amber-100 text-amber-600", href: "/admin/super/schools" },
+    { label: t("parents"), value: stats.totalParents, icon: Users, color: "bg-rose-100 text-rose-600", href: "/admin/super/schools" },
+    { label: t("pendingRequests"), value: stats.pendingRequests, icon: Clock, color: "bg-orange-100 text-orange-600", href: "/admin/super/requests" },
   ]
 
   const quickLinks = [
-    { label: "Gérer les écoles", href: "/admin/super/schools", icon: Building2, color: "bg-blue-50 text-blue-600" },
-    { label: "Bibliothèque globale", href: "/admin/super/library", icon: BookOpen, color: "bg-purple-50 text-purple-600" },
-    { label: "Broadcast", href: "/admin/super/broadcast", icon: Send, color: "bg-emerald-50 text-emerald-600" },
-    { label: "Santé système", href: "/admin/super/health", icon: Activity, color: "bg-red-50 text-red-600" },
+    { label: t("manageSchools"), href: "/admin/super/schools", icon: Building2, color: "bg-blue-50 text-blue-600" },
+    { label: t("globalLibrary"), href: "/admin/super/library", icon: BookOpen, color: "bg-purple-50 text-purple-600" },
+    { label: t("broadcast"), href: "/admin/super/broadcast", icon: Send, color: "bg-emerald-50 text-emerald-600" },
+    { label: t("systemHealth"), href: "/admin/super/health", icon: Activity, color: "bg-red-50 text-red-600" },
   ]
 
   return (
@@ -74,10 +74,10 @@ export function SuperAdminDashboardClient({ userName, stats, recentSchools, pend
             <Shield size={14} /> Superadmin
           </div>
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100">
-            Bonjour, {userName}
+            {t("welcome")}, {userName}
           </h1>
           <p className="mt-3 text-gray-600 dark:text-gray-300 max-w-xl">
-            Gérez les écoles, les demandes d&apos;inscription et les ressources globales de la plateforme TAHFIDZ.
+            {t("subtitle")}
           </p>
         </div>
       </section>
@@ -107,7 +107,7 @@ export function SuperAdminDashboardClient({ userName, stats, recentSchools, pend
 
       {/* Quick links */}
       <section className="space-y-4">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Accès rapides</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t("quickAccess")}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {quickLinks.map((link, i) => (
             <motion.div
@@ -137,13 +137,13 @@ export function SuperAdminDashboardClient({ userName, stats, recentSchools, pend
         {/* Recent schools */}
         <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Dernières écoles</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t("recentSchools")}</h2>
             <Link href="/admin/super/schools" className="text-sm text-red-600 hover:underline flex items-center gap-1">
-              Voir tout <ArrowRight size={14} />
+              {t("viewAll")} <ArrowRight size={14} />
             </Link>
           </div>
           {recentSchools.length === 0 ? (
-            <p className="text-gray-400 text-sm">Aucune école pour le moment.</p>
+            <p className="text-gray-400 text-sm">{t("noSchools")}</p>
           ) : (
             <div className="space-y-3">
               {recentSchools.map((school) => (
@@ -156,7 +156,7 @@ export function SuperAdminDashboardClient({ userName, stats, recentSchools, pend
                     "text-xs px-2 py-0.5 rounded-full",
                     school.isActive ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"
                   )}>
-                    {school.isActive ? "Active" : "Inactive"}
+                    {school.isActive ? t("active") : t("inactive")}
                   </span>
                 </div>
               ))}
@@ -167,13 +167,13 @@ export function SuperAdminDashboardClient({ userName, stats, recentSchools, pend
         {/* Pending requests */}
         <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Demandes en attente</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t("pendingRequestsTitle")}</h2>
             <Link href="/admin/super/requests" className="text-sm text-red-600 hover:underline flex items-center gap-1">
-              Voir tout <ArrowRight size={14} />
+              {t("viewAll")} <ArrowRight size={14} />
             </Link>
           </div>
           {pendingRequests.length === 0 ? (
-            <p className="text-gray-400 text-sm">Aucune demande en attente.</p>
+            <p className="text-gray-400 text-sm">{t("noRequests")}</p>
           ) : (
             <div className="space-y-3">
               {pendingRequests.map((req) => (
@@ -183,7 +183,7 @@ export function SuperAdminDashboardClient({ userName, stats, recentSchools, pend
                     <p className="text-xs text-gray-500">{req.adminName} · {req.adminEmail}</p>
                   </div>
                   <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">
-                    En attente
+                    {t("pending")}
                   </span>
                 </div>
               ))}

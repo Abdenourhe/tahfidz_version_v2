@@ -18,24 +18,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const role = session.user.role
 
-  // SUPERADMIN : layout minimaliste avec TopBar + LanguageProvider
+  // SUPERADMIN : le layout spécifique /admin/super/layout.tsx gère l'UI
   if (role === "SUPERADMIN") {
-    return (
-      <Providers session={session}>
-        <LanguageProvider>
-          <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden">
-            <div className="admin-no-print hidden md:block"><TopBar /></div>
-            <div className="admin-no-print md:hidden"><MobileHeader role="admin" /></div>
-            <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
-              <div className="max-w-7xl mx-auto w-full px-4 md:px-6 py-4 md:py-8">
-                {children}
-              </div>
-            </main>
-            <div className="admin-no-print md:hidden"><AdminBottomNav /></div>
-          </div>
-        </LanguageProvider>
-      </Providers>
-    )
+    return <Providers session={session}>{children}</Providers>
   }
 
   // ADMIN normal : sidebar + contenu

@@ -197,7 +197,7 @@ export function ContentForm({ categories, collections, content, isSuperAdmin = f
       })
 
       if (res.ok) {
-        router.push("/admin/library/contents")
+        router.push(backHref)
         router.refresh()
       } else {
         const contentType = res.headers.get("content-type")

@@ -10,7 +10,6 @@ import { TopBar } from "@/components/layout/TopBar"
 import { AdminBottomNav } from "@/components/layout/AdminBottomNav"
 import { MobileHeader } from "@/components/layout/MobileHeader"
 import { Providers } from "@/components/Providers"
-import { LanguageProvider } from "@/contexts/LanguageContext"
 
 export default async function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
@@ -21,8 +20,7 @@ export default async function SuperAdminLayout({ children }: { children: React.R
 
   return (
     <Providers session={session}>
-      <LanguageProvider>
-        <div className="flex h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden">
+      <div className="flex h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden">
           {/* Desktop sidebar */}
           <div className="admin-no-print hidden md:block">
             <SuperAdminSidebar
@@ -41,8 +39,7 @@ export default async function SuperAdminLayout({ children }: { children: React.R
 
           {/* Mobile bottom nav */}
           <div className="admin-no-print md:hidden"><AdminBottomNav /></div>
-        </div>
-      </LanguageProvider>
+      </div>
     </Providers>
   )
 }
