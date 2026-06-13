@@ -270,7 +270,7 @@ export function LibraryPageClient({ collections, contents, globalContents, categ
                   color={collection.color}
                   contentCount={collection._count.contents}
                   studentCount={collection._count.enrollments}
-                  onClick={() => router.push(`${basePath}/collections/${collection.id}`)}
+                  onClick={() => router.push(`${basePath}/collections/${collection.id}/contents`)}
                 />
               </motion.div>
             ))}
