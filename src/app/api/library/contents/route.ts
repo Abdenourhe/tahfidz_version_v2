@@ -10,9 +10,11 @@ import { canManageLibrary } from "@/lib/library/permissions"
 export async function GET(req: NextRequest) {
   try {
     const session = await auth()
-    if (!session?.user?.schoolId) {
+    if (!session?.user || (session.user.role !== "SUPERADMIN" && !session.user.schoolId)) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
     }
+
+    const isSuperAdmin = session.user.role === "SUPERADMIN"
 
     const { searchParams } = new URL(req.url)
     const page = parseInt(searchParams.get("page") || "1")
@@ -31,6 +33,9 @@ export async function GET(req: NextRequest) {
     // Visibilité et tenant
     if (visibility === "GLOBAL") {
       where.visibility = "GLOBAL"
+      if (!isSuperAdmin) {
+        return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
+      }
     } else {
       where.schoolId = session.user.schoolId
       if (!isAdmin) where.status = "PUBLISHED"

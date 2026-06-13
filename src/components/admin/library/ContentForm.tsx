@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { motion } from "framer-motion"
 import { ArrowLeft, Loader2, Plus, Save, Trash2, Upload } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { libraryContentSchema, libraryEpisodeSchema } from "@/lib/validations/library"
 import { z } from "zod"
@@ -62,6 +62,7 @@ interface Props {
   collections: Collection[]
   content?: Content
   isSuperAdmin?: boolean
+  defaultVisibility?: "GLOBAL" | "SCHOOL" | "CLASS"
 }
 
 const contentFormSchema = libraryContentSchema.extend({
@@ -72,7 +73,7 @@ const contentFormSchema = libraryContentSchema.extend({
 
 type FormData = z.infer<typeof contentFormSchema>
 
-export function ContentForm({ categories, collections, content, isSuperAdmin = false }: Props) {
+export function ContentForm({ categories, collections, content, isSuperAdmin = false, defaultVisibility }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const defaultCollectionId = searchParams.get("collectionId") || content?.collectionId || ""
@@ -94,7 +95,7 @@ export function ContentForm({ categories, collections, content, isSuperAdmin = f
   } = useForm<FormData>({
     resolver: zodResolver(contentFormSchema) as any,
     defaultValues: {
-      visibility: (content?.visibility as any) || "SCHOOL",
+      visibility: (content?.visibility as any) || defaultVisibility || "SCHOOL",
       collectionId: defaultCollectionId || null,
       type: (content?.type as any) || "PDF",
       status: (content?.status as any) || "DRAFT",
@@ -124,6 +125,13 @@ export function ContentForm({ categories, collections, content, isSuperAdmin = f
   const type = watch("type")
   const visibility = watch("visibility")
   const tags = watch("tags")
+
+  // Forcer la visibilité quand elle est imposée par le contexte (ex: superadmin global)
+  useEffect(() => {
+    if (defaultVisibility) {
+      setValue("visibility", defaultVisibility)
+    }
+  }, [defaultVisibility, setValue])
 
   const MAX_UPLOAD_SIZE = 5 * 1024 * 1024 * 1024 // 5 Go
 
@@ -264,14 +272,16 @@ export function ContentForm({ categories, collections, content, isSuperAdmin = f
                 <option value="AUDIO">{t("typeAudio")}</option>
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("visibility")}</label>
-              <select {...register("visibility")} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green text-sm">
-                {isSuperAdmin && <option value="GLOBAL">{t("visibilityGlobal")}</option>}
-                <option value="SCHOOL">{t("visibilitySchool")}</option>
-                <option value="CLASS">{t("visibilityClass")}</option>
-              </select>
-            </div>
+            {!defaultVisibility && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("visibility")}</label>
+                <select {...register("visibility")} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green text-sm">
+                  {isSuperAdmin && <option value="GLOBAL">{t("visibilityGlobal")}</option>}
+                  <option value="SCHOOL">{t("visibilitySchool")}</option>
+                  <option value="CLASS">{t("visibilityClass")}</option>
+                </select>
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("status")}</label>
               <select {...register("status")} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green text-sm">
