@@ -136,8 +136,32 @@ export function ContentForm({ categories, collections, content, isSuperAdmin = f
   }, [defaultVisibility, setValue])
 
   const MAX_UPLOAD_SIZE = 5 * 1024 * 1024 * 1024 // 5 Go
+  const MAX_IMAGE_SIZE = 2 * 1024 * 1024 // 2 Mo
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: "pdfUrl") => {
+  async function uploadFileToR2(file: File, prefix: string): Promise<{ key: string } | { error: string }> {
+    const metaRes = await fetch("/api/library/upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ filename: file.name, contentType: file.type, size: file.size, prefix }),
+    })
+    const meta: any = metaRes.ok ? await metaRes.json() : { error: await metaRes.text() || t("error") }
+    if (!metaRes.ok || meta.error) {
+      return { error: meta.error || t("error") }
+    }
+
+    const uploadRes = await fetch(meta.uploadUrl, {
+      method: "PUT",
+      body: file,
+      headers: { "Content-Type": file.type },
+    })
+    if (!uploadRes.ok) {
+      return { error: "Échec de l'upload sur le stockage" }
+    }
+
+    return { key: meta.key }
+  }
+
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     setUploadError(null)
@@ -147,69 +171,69 @@ export function ContentForm({ categories, collections, content, isSuperAdmin = f
     }
     setUploading(true)
     try {
-      // 1. Demander une URL d'upload signée
-      const metaRes = await fetch("/api/library/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ filename: file.name, contentType: file.type, size: file.size }),
-      })
-      const meta: any = metaRes.ok ? await metaRes.json() : { error: await metaRes.text() || t("error") }
-      if (!metaRes.ok) {
-        setUploadError(meta.error || t("error"))
+      const result = await uploadFileToR2(file, "contents")
+      if ("error" in result) {
+        setUploadError(result.error)
         return
       }
-
-      // 2. Uploader directement sur R2
-      const uploadRes = await fetch(meta.uploadUrl, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": file.type },
-      })
-      if (!uploadRes.ok) {
-        setUploadError("Échec de l'upload sur le stockage")
-        return
-      }
-
-      // 3. Stocker la clé R2 dans le formulaire
-      setValue(field, `r2://${meta.key}`)
+      setValue("pdfUrl", `r2://${result.key}`)
       setUploadedFileName(file.name)
 
-      // 4. Générer et uploader une vignette de la première page (PDF uniquement)
-      if (field === "pdfUrl" && file.type === "application/pdf") {
-        try {
-          const thumbDataUrl = await generatePdfThumbnail(file, { width: 512, quality: 0.9 })
-          const thumbBlob = await (await fetch(thumbDataUrl)).blob()
-          const thumbMetaRes = await fetch("/api/library/upload", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              filename: `thumbnail-${file.name.replace(/\.pdf$/i, ".jpg")}`,
-              contentType: "image/jpeg",
-              size: thumbBlob.size,
-              prefix: "thumbnails",
-            }),
-          })
-          const thumbMeta: any = thumbMetaRes.ok ? await thumbMetaRes.json() : { error: await thumbMetaRes.text() || t("error") }
-          if (thumbMetaRes.ok && thumbMeta.uploadUrl) {
-            const thumbUploadRes = await fetch(thumbMeta.uploadUrl, {
-              method: "PUT",
-              body: thumbBlob,
-              headers: { "Content-Type": "image/jpeg" },
-            })
-            if (thumbUploadRes.ok) {
-              setValue("thumbnail", `r2://${thumbMeta.key}`)
-            }
-          }
-        } catch (thumbErr: any) {
-          console.error("[PDF THUMBNAIL UPLOAD]", thumbErr)
-          // Ne pas bloquer l'upload principal si la vignette échoue.
+      // Extraction du nombre de pages et génération de la vignette de la première page.
+      try {
+        const { dataUrl, numPages } = await generatePdfThumbnail(file, { width: 512, quality: 0.9 })
+        setValue("pdfPages", numPages)
+
+        const thumbBlob = await (await fetch(dataUrl)).blob()
+        const thumbFile = new File([thumbBlob], `thumbnail-${file.name.replace(/\.pdf$/i, ".jpg")}`, { type: "image/jpeg" })
+        const thumbResult = await uploadFileToR2(thumbFile, "thumbnails")
+        if ("key" in thumbResult) {
+          setValue("thumbnail", `r2://${thumbResult.key}`)
         }
+      } catch (thumbErr: any) {
+        console.error("[PDF METADATA/THUMBNAIL]", thumbErr)
+        // Ne pas bloquer l'upload principal si la vignette échoue.
       }
     } catch (err: any) {
       setUploadError(err.message || t("error"))
     } finally {
       setUploading(false)
     }
+  }
+
+  const handleCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadError(null)
+    if (!file.type.startsWith("image/")) {
+      setUploadError("Format non accepté. Veuillez choisir une image.")
+      return
+    }
+    if (file.size > MAX_IMAGE_SIZE) {
+      setUploadError("Image trop volumineuse (max 2 Mo).")
+      return
+    }
+    setUploading(true)
+    try {
+      const result = await uploadFileToR2(file, "thumbnails")
+      if ("error" in result) {
+        setUploadError(result.error)
+        return
+      }
+      setValue("thumbnail", `r2://${result.key}`)
+    } catch (err: any) {
+      setUploadError(err.message || t("error"))
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  function getCoverImageSrc(url?: string | null): string | undefined {
+    if (!url) return undefined
+    if (url.startsWith("r2://")) {
+      return `/api/library/images/${encodeURIComponent(url.slice(5))}`
+    }
+    return url
   }
 
   const onSubmit = async (data: FormData) => {
@@ -355,26 +379,46 @@ export function ContentForm({ categories, collections, content, isSuperAdmin = f
           )}
 
           {type === "PDF" && (
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t("pdfUrl")}</label>
-              <input {...register("pdfUrl")} type="hidden" />
-              <div className="px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 text-sm min-h-[2.5rem] flex items-center">
-                {uploadedFileName ? (
-                  <span className="text-gray-700 dark:text-gray-200">{uploadedFileName}</span>
-                ) : (
-                  <span className="text-gray-400">{t("pdfUrl") || "Aucun fichier"}</span>
+            <div className="space-y-4">
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t("pdfUrl")}</label>
+                <input {...register("pdfUrl")} type="hidden" />
+                <div className="px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 text-sm min-h-[2.5rem] flex items-center">
+                  {uploadedFileName ? (
+                    <span className="text-gray-700 dark:text-gray-200">{uploadedFileName}</span>
+                  ) : (
+                    <span className="text-gray-400">{t("pdfUrl") || "Aucun fichier"}</span>
+                  )}
+                </div>
+                <div>
+                  <label className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer w-fit">
+                    {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                    {uploading ? t("loading") : t("uploadFile")}
+                    <input type="file" accept="application/pdf" className="hidden" onChange={handlePdfUpload} />
+                  </label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">PDF jusqu&apos;à 5 Go. La première page sera utilisée comme couverture si aucune image n&apos;est fournie.</p>
+                  {uploadError && <p className="text-xs text-red-500 mt-1.5">{uploadError}</p>}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Couverture (optionnel)</label>
+                <input {...register("thumbnail")} type="hidden" />
+                {watch("thumbnail") && (
+                  <div
+                    className="w-24 h-24 rounded-lg border border-gray-200 dark:border-gray-700 bg-cover bg-center"
+                    style={{ backgroundImage: `url(${getCoverImageSrc(watch("thumbnail"))})` }}
+                  />
                 )}
+                <div>
+                  <label className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer w-fit">
+                    {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                    {uploading ? t("loading") : "Uploader une couverture"}
+                    <input type="file" accept="image/*" className="hidden" onChange={handleCoverImageUpload} />
+                  </label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">Image jusqu&apos;à 2 Mo. Laissez vide pour utiliser la première page du PDF.</p>
+                </div>
               </div>
-              <div>
-                <label className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer w-fit">
-                  {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
-                  {uploading ? t("loading") : t("uploadFile")}
-                  <input type="file" accept="application/pdf" className="hidden" onChange={(e) => handleFileUpload(e, "pdfUrl")} />
-                </label>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">PDF jusqu&apos;à 5 Go</p>
-                {uploadError && <p className="text-xs text-red-500 mt-1.5">{uploadError}</p>}
-              </div>
-              <input {...register("pdfPages")} type="number" placeholder="Nombre de pages" className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green text-sm" />
             </div>
           )}
 

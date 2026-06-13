@@ -22,14 +22,19 @@ interface GenerateOptions {
   quality?: number
 }
 
+export interface PdfThumbnailResult {
+  dataUrl: string
+  numPages: number
+}
+
 /**
- * Génère une data URL JPEG de la première page d'un PDF.
+ * Génère une data URL JPEG de la première page d'un PDF et retourne le nombre total de pages.
  * Accepte une URL, un ArrayBuffer ou un File.
  */
 export async function generatePdfThumbnail(
   source: string | ArrayBuffer | File,
   options: GenerateOptions = {}
-): Promise<string> {
+): Promise<PdfThumbnailResult> {
   const { width = 256, quality = 0.85 } = options
   const pdfjs = await getPdfjs()
 
@@ -49,5 +54,8 @@ export async function generatePdfThumbnail(
   canvas.height = Math.max(1, Math.floor(viewport.height))
 
   await page.render({ canvas: null, canvasContext: ctx, viewport }).promise
-  return canvas.toDataURL("image/jpeg", quality)
+  return {
+    dataUrl: canvas.toDataURL("image/jpeg", quality),
+    numPages: pdf.numPages,
+  }
 }

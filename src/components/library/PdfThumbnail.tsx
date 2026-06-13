@@ -32,12 +32,12 @@ export function PdfThumbnail({ contentId, pdfUrl, width = 256 }: Props) {
         }
 
         const source = pdfUrl || `/api/library/contents/${contentId}/pdf`
-        const dataUrl = await generatePdfThumbnail(source, { width })
+        const result = await generatePdfThumbnail(source, { width })
 
         if (!cancelled) {
-          setThumbnail(dataUrl)
+          setThumbnail(result.dataUrl)
           try {
-            localStorage.setItem(cacheKey, dataUrl)
+            localStorage.setItem(cacheKey, result.dataUrl)
           } catch {
             // Ignorer les erreurs de quota localStorage.
           }
