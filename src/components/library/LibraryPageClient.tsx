@@ -6,6 +6,7 @@ import { BookOpen, Library, Search } from "lucide-react"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { ClassCard } from "./ClassCard"
 import { ContentCard } from "./ContentCard"
+import { GlobalLibrarySection } from "./GlobalLibrarySection"
 import { useState } from "react"
 
 interface Collection {
@@ -38,12 +39,13 @@ interface Category {
 interface Props {
   collections: Collection[]
   contents: Content[]
+  globalContents: Content[]
   categories: Category[]
   bookmarks: string[]
   basePath: string
 }
 
-export function LibraryPageClient({ collections, contents, categories, bookmarks, basePath }: Props) {
+export function LibraryPageClient({ collections, contents, globalContents, categories, bookmarks, basePath }: Props) {
   const router = useRouter()
   const { useT } = useLanguage()
   const t = (k: string) => useT("library", k)
@@ -69,6 +71,8 @@ export function LibraryPageClient({ collections, contents, categories, bookmarks
           <p className="mt-3 text-gray-600 dark:text-gray-300 max-w-xl">{t("description") || "Explorez les ressources pédagogiques mises à votre disposition."}</p>
         </div>
       </section>
+
+      <GlobalLibrarySection contents={globalContents} basePath={basePath} />
 
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row gap-3">
@@ -105,7 +109,7 @@ export function LibraryPageClient({ collections, contents, categories, bookmarks
           </>
         )}
 
-        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 pt-4">{t("contents")}</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 pt-4">Bibliothèque de l&apos;école</h2>
         {filteredContents.length === 0 ? (
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-12 text-center">
             <BookOpen size={32} className="mx-auto mb-3 text-gray-300" />

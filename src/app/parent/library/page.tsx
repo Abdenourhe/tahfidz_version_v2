@@ -4,16 +4,17 @@ import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { LibraryPageClient } from "@/components/library/LibraryPageClient"
-import { getAccessibleCollections, getAccessibleContents } from "@/lib/library/access"
+import { getAccessibleCollections, getAccessibleContents, getGlobalContents } from "@/lib/library/access"
 
 export default async function ParentLibraryPage() {
   const session = await auth()
   if (!session?.user || session.user.role !== "PARENT") redirect("/login")
 
   const user = { id: session.user.id, role: session.user.role as any, schoolId: session.user.schoolId }
-  const [collections, contents] = await Promise.all([
+  const [collections, contents, globalContents] = await Promise.all([
     getAccessibleCollections(user),
     getAccessibleContents(user),
+    getGlobalContents(user),
   ])
 
   const categories = await prisma.libraryCategory.findMany({
@@ -33,10 +34,22 @@ export default async function ParentLibraryPage() {
       progress: 0,
     }))
 
+  const globalPublishedContents = globalContents
+    .filter((c) => c.status === "PUBLISHED")
+    .map((c) => ({
+      id: c.id,
+      title: c.title,
+      type: c.type,
+      thumbnail: c.thumbnail,
+      category: c.category,
+      progress: 0,
+    }))
+
   return (
     <LibraryPageClient
       collections={collections.map((c) => ({ ...c, _count: c._count as any }))}
       contents={publishedContents}
+      globalContents={globalPublishedContents}
       categories={categories}
       bookmarks={[]}
       basePath="/parent/library"

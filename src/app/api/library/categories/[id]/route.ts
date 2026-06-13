@@ -11,7 +11,7 @@ type Params = { params: Promise<{ id: string }> }
 export async function GET(_req: NextRequest, { params }: Params) {
   try {
     const session = await auth()
-    if (!session?.user?.schoolId) {
+    if (!session?.user || (session.user.role !== "SUPERADMIN" && !session.user.schoolId)) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
     }
 
@@ -20,7 +20,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     if (!category) return NextResponse.json({ error: "Catégorie introuvable" }, { status: 404 })
 
     // Accès : globale ou de son école
-    if (category.schoolId && category.schoolId !== session.user.schoolId) {
+    if (session.user.role !== "SUPERADMIN" && category.schoolId && category.schoolId !== session.user.schoolId) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
     }
 

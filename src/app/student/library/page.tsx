@@ -4,16 +4,17 @@ import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { LibraryPageClient } from "@/components/library/LibraryPageClient"
-import { getAccessibleCollections, getAccessibleContents, getUserBookmarks, getUserProgressMap } from "@/lib/library/access"
+import { getAccessibleCollections, getAccessibleContents, getGlobalContents, getUserBookmarks, getUserProgressMap } from "@/lib/library/access"
 
 export default async function StudentLibraryPage() {
   const session = await auth()
   if (!session?.user || session.user.role !== "STUDENT") redirect("/login")
 
   const user = { id: session.user.id, role: session.user.role as any, schoolId: session.user.schoolId }
-  const [collections, contents, bookmarks, progressMap] = await Promise.all([
+  const [collections, contents, globalContents, bookmarks, progressMap] = await Promise.all([
     getAccessibleCollections(user),
     getAccessibleContents(user),
+    getGlobalContents(user),
     getUserBookmarks(session.user.id),
     getUserProgressMap(session.user.id),
   ])
@@ -35,10 +36,22 @@ export default async function StudentLibraryPage() {
       progress: progressMap.get(c.id) ?? 0,
     }))
 
+  const globalContentsWithProgress = globalContents
+    .filter((c) => c.status === "PUBLISHED")
+    .map((c) => ({
+      id: c.id,
+      title: c.title,
+      type: c.type,
+      thumbnail: c.thumbnail,
+      category: c.category,
+      progress: progressMap.get(c.id) ?? 0,
+    }))
+
   return (
     <LibraryPageClient
       collections={collections.map((c) => ({ ...c, _count: c._count as any }))}
       contents={contentsWithProgress}
+      globalContents={globalContentsWithProgress}
       categories={categories}
       bookmarks={bookmarks}
       basePath="/student/library"

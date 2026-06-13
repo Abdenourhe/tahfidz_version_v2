@@ -2,8 +2,17 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { BookOpen, FolderOpen, Layers, Plus, Library, Film, Bookmark, PlayCircle } from "lucide-react"
+import { BookOpen, FolderOpen, Layers, Plus, Library, Film, Bookmark, PlayCircle, Globe } from "lucide-react"
+import { ContentCard } from "@/components/library/ContentCard"
 import { useLanguage } from "@/contexts/LanguageContext"
+
+interface GlobalContent {
+  id: string
+  title: string
+  type: string
+  thumbnail?: string | null
+  category: { id: string; name: string; color?: string | null }
+}
 
 interface Props {
   collectionsCount: number
@@ -12,6 +21,7 @@ interface Props {
   episodesCount: number
   bookmarksCount: number
   inProgressCount: number
+  globalContents?: GlobalContent[]
 }
 
 export function LibraryDashboardClient({
@@ -21,6 +31,7 @@ export function LibraryDashboardClient({
   episodesCount,
   bookmarksCount,
   inProgressCount,
+  globalContents = [],
 }: Props) {
   const { useT } = useLanguage()
   const t = (k: string) => useT("library", k)
@@ -68,6 +79,36 @@ export function LibraryDashboardClient({
           </div>
         </div>
       </section>
+
+      {/* Ressources globales */}
+      {globalContents.length > 0 && (
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Globe size={18} className="text-tahfidz-purple" />
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Ressources de la plateforme</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {globalContents.map((content, i) => (
+              <motion.div
+                key={content.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: i * 0.05 }}
+              >
+                <ContentCard
+                  id={content.id}
+                  title={content.title}
+                  type={content.type}
+                  thumbnail={content.thumbnail}
+                  categoryName={content.category.name}
+                  categoryColor={content.category.color}
+                  onClick={() => window.location.href = `/admin/library/contents/${content.id}`}
+                />
+              </motion.div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Stats cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

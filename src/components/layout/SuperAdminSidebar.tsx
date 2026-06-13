@@ -8,7 +8,7 @@ import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
 import {
   LayoutDashboard, Building2, Clock, Library, Send,
-  Eye, MessageCircleQuestion, Activity, LogOut, Shield,
+  Eye, MessageCircleQuestion, Activity, LogOut, Shield, Layers,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { SidebarToggle } from "@/components/layout/SidebarToggle"
@@ -35,6 +35,7 @@ export function SuperAdminSidebar({ user }: SuperAdminSidebarProps) {
     { label: "Écoles", href: "/admin/super/schools", icon: Building2 },
     { label: "Demandes", href: "/admin/super/requests", icon: Clock },
     { label: "Bibliothèque globale", href: "/admin/super/library", icon: Library },
+    { label: "Catégories globales", href: "/admin/super/library/categories", icon: Layers },
     { label: "Broadcast", href: "/admin/super/broadcast", icon: Send },
     { label: "Audit", href: "/admin/super/audit", icon: Eye },
     { label: "Feedbacks", href: "/admin/super/feedbacks", icon: MessageCircleQuestion },
@@ -77,9 +78,11 @@ export function SuperAdminSidebar({ user }: SuperAdminSidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-4 space-y-0.5">
         {navItems.map((item) => {
-          const isActive =
-            pathname === item.href ||
-            (item.href !== "/admin/super/dashboard" && pathname.startsWith(item.href + "/"))
+          // Détermine l'élément le plus spécifique correspondant au pathname
+          const matchingItem = navItems
+            .filter((i) => pathname === i.href || pathname.startsWith(i.href + "/"))
+            .sort((a, b) => b.href.length - a.href.length)[0]
+          const isActive = matchingItem?.href === item.href
 
           return (
             <Link

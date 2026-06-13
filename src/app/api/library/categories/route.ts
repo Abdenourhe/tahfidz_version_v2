@@ -15,21 +15,27 @@ const categoryCreateSchema = libraryCategorySchema.extend({
 export async function GET(req: NextRequest) {
   try {
     const session = await auth()
-    if (!session?.user?.schoolId) {
+    if (!session?.user || (session.user.role !== "SUPERADMIN" && !session.user.schoolId)) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
     }
 
     const { searchParams } = new URL(req.url)
     const includeGlobal = searchParams.get("includeGlobal") !== "false"
+    const globalOnly = searchParams.get("globalOnly") === "true"
+
+    const where: any = { isActive: true }
+
+    if (globalOnly) {
+      where.schoolId = null
+    } else {
+      where.OR = [
+        { schoolId: session.user.schoolId },
+        ...(includeGlobal ? [{ schoolId: null }] : []),
+      ]
+    }
 
     const categories = await prisma.libraryCategory.findMany({
-      where: {
-        isActive: true,
-        OR: [
-          { schoolId: session.user.schoolId },
-          ...(includeGlobal ? [{ schoolId: null }] : []),
-        ],
-      },
+      where,
       orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
     })
 

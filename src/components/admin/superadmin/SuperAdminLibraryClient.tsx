@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useMemo, useState } from "react"
 import { motion } from "framer-motion"
-import { Plus, BookOpen, Pencil, Trash2, AlertTriangle, Loader2, FileText, Video, Headphones, Search } from "lucide-react"
+import { Plus, BookOpen, Pencil, Trash2, AlertTriangle, Loader2, FileText, Video, Headphones, Search, Layers } from "lucide-react"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { cn } from "@/lib/utils"
 
@@ -87,9 +87,14 @@ export function SuperAdminLibraryClient({ contents }: Props) {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Bibliothèque globale</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{filteredContents.length} contenu(s) global(aux)</p>
         </div>
-        <Link href="/admin/super/library/new" className="flex items-center gap-2 px-4 py-2.5 bg-tahfidz-green text-white text-sm font-medium rounded-lg hover:opacity-90 transition">
-          <Plus size={16} /> Nouveau contenu global
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/admin/super/library/categories" className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+            <Layers size={16} /> Catégories
+          </Link>
+          <Link href="/admin/super/library/new" className="flex items-center gap-2 px-4 py-2.5 bg-tahfidz-green text-white text-sm font-medium rounded-lg hover:opacity-90 transition">
+            <Plus size={16} /> Nouveau contenu global
+          </Link>
+        </div>
       </div>
 
       {/* Filters */}

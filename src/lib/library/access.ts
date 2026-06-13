@@ -74,6 +74,31 @@ export async function getAccessibleContents(user: UserCtx) {
   return results
 }
 
+/**
+ * Retourne les contenus globaux accessibles à l'utilisateur.
+ * Pour les rôles non SUPERADMIN, seuls les contenus PUBLISHED sont visibles.
+ */
+export async function getGlobalContents(user: UserCtx) {
+  const where: Prisma.LibraryContentWhereInput =
+    user.role === "SUPERADMIN"
+      ? { visibility: "GLOBAL" }
+      : { visibility: "GLOBAL", status: "PUBLISHED" }
+
+  const contents = await prisma.libraryContent.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    include: contentInclude,
+  })
+
+  const results = []
+  for (const content of contents) {
+    if (await canAccessContent(user, content as any)) {
+      results.push(content)
+    }
+  }
+  return results
+}
+
 export async function getUserBookmarks(userId: string) {
   const bookmarks = await prisma.userBookmark.findMany({
     where: { userId },
