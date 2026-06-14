@@ -1,7 +1,7 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
-import { X, BookOpen, RotateCcw, Headphones, GraduationCap, CalendarDays, Save, Loader2, CheckCircle2 } from "lucide-react"
+import { X, BookOpen, RotateCcw, Headphones, GraduationCap, CalendarDays, Save, Loader2, CheckCircle2, Copy } from "lucide-react"
 import DailyLogSectionThread from "@/components/DailyLogSectionThread"
 
 interface Surah {
@@ -11,10 +11,13 @@ interface Surah {
   verseCount: number
 }
 
+type LogSection = "HIFZ" | "MURAJA" | "TALQIN" | "COURSE" | "ATTENDANCE" | "GLOBAL"
+
 interface Props {
   studentId: string
   studentName: string
   date?: string
+  defaultSection?: LogSection
   onClose: () => void
   onSaved?: () => void
 }
@@ -57,15 +60,16 @@ function VerseInput({ value, onChange, label }: { value: string; onChange: (v: s
 }
 
 function Section({
-  icon: Icon, title, color, children,
+  icon: Icon, title, color, children, divRef,
 }: {
   icon: React.ElementType
   title: string
   color: string
   children: React.ReactNode
+  divRef?: React.RefObject<HTMLDivElement>
 }) {
   return (
-    <div className="bg-gray-50 dark:bg-gray-800/40 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+    <div ref={divRef} className="bg-gray-50 dark:bg-gray-800/40 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
       <div className={`px-4 py-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${color} bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700`}>
         <Icon size={14} />
         {title}
@@ -75,7 +79,7 @@ function Section({
   )
 }
 
-export function TeacherDailyLogModal({ studentId, studentName, date: initialDate, onClose, onSaved }: Props) {
+export function TeacherDailyLogModal({ studentId, studentName, date: initialDate, defaultSection, onClose, onSaved }: Props) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
   const t = useT("teacherDailyLog")
@@ -96,6 +100,30 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
     attendanceStatus: "PRESENT", teacherObservation: "", globalScore: "",
   })
   const [existingLogId, setExistingLogId] = useState<string | null>(null)
+  const [copyingYesterday, setCopyingYesterday] = useState(false)
+
+  const sectionRefs = {
+    HIFZ: useRef<HTMLDivElement | null>(null),
+    MURAJA: useRef<HTMLDivElement | null>(null),
+    TALQIN: useRef<HTMLDivElement | null>(null),
+    COURSE: useRef<HTMLDivElement | null>(null),
+    ATTENDANCE: useRef<HTMLDivElement | null>(null),
+    GLOBAL: useRef<HTMLDivElement | null>(null),
+  }
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+
+  // Scroll vers la section par défaut au montage
+  useEffect(() => {
+    if (!defaultSection) return
+    setTimeout(() => {
+      if (defaultSection === "GLOBAL") {
+        scrollContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" })
+      } else if (sectionRefs[defaultSection]?.current) {
+        sectionRefs[defaultSection]!.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+      }
+    }, 200)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultSection])
 
   useEffect(() => {
     fetch("/api/surahs")
@@ -150,6 +178,52 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
   }, [studentId, date])
 
   const update = (field: string, value: string) => setForm((f) => ({ ...f, [field]: value }))
+
+  const copyYesterday = async () => {
+    setCopyingYesterday(true)
+    try {
+      const yesterday = new Date(date)
+      yesterday.setDate(yesterday.getDate() - 1)
+      const yesterdayStr = yesterday.toISOString().split("T")[0]
+      const res = await fetch(`/api/students/${studentId}/daily-log?date=${yesterdayStr}`)
+      const data = await res.json()
+      if (!data.log) {
+        alert(t("noYesterdayLog"))
+        setCopyingYesterday(false)
+        return
+      }
+      const log = data.log
+      setForm({
+        hifzFromSurahId: log.hifzFromSurahId?.toString() || "",
+        hifzFromVerse: log.hifzFromVerse?.toString() || "",
+        hifzToSurahId: log.hifzToSurahId?.toString() || "",
+        hifzToVerse: log.hifzToVerse?.toString() || "",
+        hifzNote: log.hifzNote || "",
+        murajaFromSurahId: log.murajaFromSurahId?.toString() || "",
+        murajaFromVerse: log.murajaFromVerse?.toString() || "",
+        murajaToSurahId: log.murajaToSurahId?.toString() || "",
+        murajaToVerse: log.murajaToVerse?.toString() || "",
+        murajaNote: log.murajaNote || "",
+        talqinFromSurahId: log.talqinFromSurahId?.toString() || "",
+        talqinFromVerse: log.talqinFromVerse?.toString() || "",
+        talqinToSurahId: log.talqinToSurahId?.toString() || "",
+        talqinToVerse: log.talqinToVerse?.toString() || "",
+        talqinNote: log.talqinNote || "",
+        courseBook: log.courseBook || "",
+        courseFromPage: log.courseFromPage?.toString() || "",
+        courseToPage: log.courseToPage?.toString() || "",
+        courseNote: log.courseNote || "",
+        attendanceStatus: log.attendanceStatus || "PRESENT",
+        teacherObservation: "",
+        globalScore: log.globalScore?.toString() || "",
+      })
+    } catch (e) {
+      console.error(e)
+      alert(t("error"))
+    } finally {
+      setCopyingYesterday(false)
+    }
+  }
 
   const handleSave = async () => {
     setSaving(true)
@@ -206,17 +280,27 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex-shrink-0 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-6 py-4 flex items-center justify-between">
+        <div className="flex-shrink-0 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-6 py-4 flex items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t("title")}</h2>
             <p className="text-xs text-gray-500">{studentName}</p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={copyYesterday}
+              disabled={copyingYesterday}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition disabled:opacity-50"
+            >
+              {copyingYesterday ? <Loader2 size={14} className="animate-spin" /> : <Copy size={14} />}
+              {t("copyYesterday")}
+            </button>
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-6 space-y-5">
           {/* Date + Global score */}
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -246,7 +330,7 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
           ) : (
             <>
               {/* Hifz */}
-              <Section icon={BookOpen} title={t("hifz")} color="text-emerald-600">
+              <Section icon={BookOpen} title={t("hifz")} color="text-emerald-600" divRef={sectionRefs.HIFZ}>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <SurahSelect surahs={surahs} locale={L} value={form.hifzFromSurahId} onChange={(v) => update("hifzFromSurahId", v)} label={t("fromSurah")} />
                   <VerseInput value={form.hifzFromVerse} onChange={(v) => update("hifzFromVerse", v)} label={t("fromVerse")} />
@@ -264,7 +348,7 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
               </Section>
 
               {/* Muraja */}
-              <Section icon={RotateCcw} title={t("muraja")} color="text-blue-600">
+              <Section icon={RotateCcw} title={t("muraja")} color="text-blue-600" divRef={sectionRefs.MURAJA}>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <SurahSelect surahs={surahs} locale={L} value={form.murajaFromSurahId} onChange={(v) => update("murajaFromSurahId", v)} label={t("fromSurah")} />
                   <VerseInput value={form.murajaFromVerse} onChange={(v) => update("murajaFromVerse", v)} label={t("fromVerse")} />
@@ -282,7 +366,7 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
               </Section>
 
               {/* Talqin */}
-              <Section icon={Headphones} title={t("talqin")} color="text-purple-600">
+              <Section icon={Headphones} title={t("talqin")} color="text-purple-600" divRef={sectionRefs.TALQIN}>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <SurahSelect surahs={surahs} locale={L} value={form.talqinFromSurahId} onChange={(v) => update("talqinFromSurahId", v)} label={t("fromSurah")} />
                   <VerseInput value={form.talqinFromVerse} onChange={(v) => update("talqinFromVerse", v)} label={t("fromVerse")} />
@@ -300,7 +384,7 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
               </Section>
 
               {/* Cours scientifique */}
-              <Section icon={GraduationCap} title={t("course")} color="text-amber-600">
+              <Section icon={GraduationCap} title={t("course")} color="text-amber-600" divRef={sectionRefs.COURSE}>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <div className="md:col-span-1">
                     <label className="block text-[11px] uppercase tracking-wider text-gray-500 mb-1">{t("book")}</label>
@@ -325,7 +409,7 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
               </Section>
 
               {/* Assiduité */}
-              <Section icon={CalendarDays} title={t("attendance")} color="text-red-600">
+              <Section icon={CalendarDays} title={t("attendance")} color="text-red-600" divRef={sectionRefs.ATTENDANCE}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-500 mb-1.5">{t("status")}</label>
