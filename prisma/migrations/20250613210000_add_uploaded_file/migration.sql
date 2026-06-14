@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "uploaded_files" (
+CREATE TABLE IF NOT EXISTS "uploaded_files" (
     "id" TEXT NOT NULL,
     "schoolId" TEXT,
     "hash" TEXT NOT NULL,
@@ -13,10 +13,10 @@ CREATE TABLE "uploaded_files" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "uploaded_files_key_key" ON "uploaded_files"("key");
+CREATE UNIQUE INDEX IF NOT EXISTS "uploaded_files_key_key" ON "uploaded_files"("key");
 
 -- CreateIndex
-CREATE INDEX "uploaded_files_hash_idx" ON "uploaded_files"("hash");
+CREATE INDEX IF NOT EXISTS "uploaded_files_hash_idx" ON "uploaded_files"("hash");
 
 -- CreateIndex
-CREATE INDEX "uploaded_files_schoolId_hash_idx" ON "uploaded_files"("schoolId", "hash");
+CREATE INDEX IF NOT EXISTS "uploaded_files_schoolId_hash_idx" ON "uploaded_files"("schoolId", "hash");
