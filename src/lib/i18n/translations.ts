@@ -275,7 +275,7 @@ export const translations = {
   // ─── Login Page ───────────────────────────────────────────────────
   login: {
     // Panneau gauche
-    feature1:       { fr: "Suivi de memorisation sourate par sourate", en: "Surah-by-surah memorization tracking", ar: "متابعة الحفظ سورة بسورة" },
+    feature1:       { fr: "Suivi de memorisation sourate par sourate", en: "Surah-by-surah memorization follow-up", ar: "متابعة الحفظ سورة بسورة" },
     feature2:       { fr: "Gestion complete eleves, enseignants & parents", en: "Full students, teachers & parents management", ar: "إدارة شاملة للطلاب والمعلمين وأولياء الأمور" },
     feature3:       { fr: "Rapports et statistiques detailles", en: "Detailed reports & statistics", ar: "تقارير وإحصائيات مفصلة" },
     badge:          { fr: "Plateforme N°1 ecoles coraniques", en: "#1 Platform for Quran schools", ar: "المنصة رقم 1 للمدارس القرآنية" },
@@ -819,7 +819,7 @@ export const translations = {
 
   // ─── progressX (app/teacher/progress/page.tsx) ─────────────────────────────────────────────
   progressX: {
-    title:           { fr: "Suivi mémorisation", en: "Memorization tracking", ar: "متابعة الحفظ" },
+    title:           { fr: "Suivi mémorisation", en: "Memorization progress", ar: "متابعة الحفظ" },
     subtitle:        { fr: "Assigner des sourates et mettre à jour la progression", en: "Assign surahs and update progress", ar: "تعيين السور وتحديث التقدم" },
     selectStudent:   { fr: "Sélectionner un élève", en: "Select a student", ar: "اختيار طالب" },
     search:          { fr: "Rechercher…", en: "Search…", ar: "بحث…" },
@@ -1292,7 +1292,7 @@ export const translations = {
 
   // ─── teacherDailyLog (components/teacher/TeacherDailyLogModal.tsx) ─────────────────────────────────────────────
   teacherDailyLog: {
-    title:             { fr: "Carnet de suivi quotidien", en: "Daily tracking log", ar: "سجل المتابعة اليومية" },
+    title:             { fr: "Carnet de suivi quotidien", en: "Daily log", ar: "سجل المتابعة اليومية" },
     date:              { fr: "Date", en: "Date", ar: "التاريخ" },
     globalScore:       { fr: "Note globale /20", en: "Global score /20", ar: "التقدير العام /20" },
     hifz:              { fr: "Hifz (Mémorisation)", en: "Hifz (Memorization)", ar: "الحفظ" },
@@ -1328,7 +1328,7 @@ export const translations = {
   // ─── teacherTracking (components/teacher/TeacherTrackingGrid.tsx) ─────────────────────────────────────────────
   teacherTracking: {
     title:             { fr: "Mes élèves", en: "My students", ar: "طلابي" },
-    subtitle:          { fr: "Suivez vos élèves jour par jour en un seul tableau.", en: "Track your students day by day in one single board.", ar: "تابع طلابك يوماً بيوم في جدول واحد." },
+    subtitle:          { fr: "Suivez vos élèves jour par jour en un seul tableau.", en: "Follow your students day by day in one single board.", ar: "تابع طلابك يوماً بيوم في جدول واحد." },
     student:           { fr: "Élève", en: "Student", ar: "الطالب" },
     attendance:        { fr: "Assiduité", en: "Attendance", ar: "المواظبة" },
     hifz:              { fr: "Hifz", en: "Hifz", ar: "الحفظ" },
