@@ -16,6 +16,7 @@ import { TeacherDailyLogModal } from "@/components/teacher/TeacherDailyLogModal"
 type AttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED" | null
 
 type SectionKey = "ATTENDANCE" | "HIFZ" | "MURAJA" | "TALQIN" | "COURSE"
+type ModalMode = SectionKey | "FULL"
 
 interface Surah {
   id: number
@@ -129,7 +130,7 @@ export function TeacherTrackingGrid({ initialGroups }: Props) {
   const [onlyEmpty, setOnlyEmpty] = useState(false)
   const [surahs, setSurahs] = useState<Surah[]>([])
 
-  const [modal, setModal] = useState<{ open: boolean; student: StudentRow | null; section: SectionKey | "GLOBAL" }>({
+  const [modal, setModal] = useState<{ open: boolean; student: StudentRow | null; section: ModalMode }>({
     open: false,
     student: null,
     section: "HIFZ",
@@ -182,7 +183,7 @@ export function TeacherTrackingGrid({ initialGroups }: Props) {
     handleDateChange(s)
   }
 
-  const openLog = (student: StudentRow, section: SectionKey | "GLOBAL") => {
+  const openLog = (student: StudentRow, section: ModalMode) => {
     setModal({ open: true, student, section })
   }
 
@@ -501,7 +502,7 @@ export function TeacherTrackingGrid({ initialGroups }: Props) {
                       {/* Note globale */}
                       <td className="px-3 py-2">
                         <button
-                          onClick={() => openLog(student, "GLOBAL")}
+                          onClick={() => openLog(student, "FULL")}
                           className={cn(
                             "w-full text-center px-2 py-2 rounded-lg text-xs font-bold border transition min-h-[40px]",
                             log?.globalScore !== null && log?.globalScore !== undefined
@@ -517,7 +518,7 @@ export function TeacherTrackingGrid({ initialGroups }: Props) {
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-1">
                           <button
-                            onClick={() => openLog(student, "GLOBAL")}
+                            onClick={() => openLog(student, "FULL")}
                             className="flex-1 px-2 py-2 text-[10px] font-medium bg-tahfidz-green text-white rounded-lg hover:bg-tahfidz-green/90 transition"
                           >
                             {t("openLog")}
@@ -547,7 +548,7 @@ export function TeacherTrackingGrid({ initialGroups }: Props) {
           studentName={L === "ar" && modal.student.user.fullNameAr ? modal.student.user.fullNameAr : modal.student.user.fullName}
           date={date}
           defaultSection={modal.section}
-          singleSection={modal.section !== "GLOBAL"}
+          singleSection={modal.section !== "FULL"}
           onClose={() => setModal({ open: false, student: null, section: "HIFZ" })}
           onSaved={loadData}
         />

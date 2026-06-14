@@ -11,7 +11,7 @@ interface Surah {
   verseCount: number
 }
 
-type LogSection = "HIFZ" | "MURAJA" | "TALQIN" | "COURSE" | "ATTENDANCE" | "GLOBAL"
+type LogSection = "HIFZ" | "MURAJA" | "TALQIN" | "COURSE" | "ATTENDANCE" | "FULL"
 
 interface Props {
   studentId: string
@@ -109,7 +109,7 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
     TALQIN: useRef<HTMLDivElement | null>(null),
     COURSE: useRef<HTMLDivElement | null>(null),
     ATTENDANCE: useRef<HTMLDivElement | null>(null),
-    GLOBAL: useRef<HTMLDivElement | null>(null),
+    FULL: useRef<HTMLDivElement | null>(null),
   }
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
@@ -122,7 +122,7 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
   useEffect(() => {
     if (!defaultSection) return
     setTimeout(() => {
-      if (defaultSection === "GLOBAL") {
+      if (defaultSection === "FULL") {
         scrollContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" })
       } else if (sectionRefs[defaultSection]?.current) {
         sectionRefs[defaultSection]!.current?.scrollIntoView({ behavior: "smooth", block: "start" })
