@@ -135,6 +135,9 @@ export function TeacherTrackingGrid({ initialGroups }: Props) {
     student: null,
     section: "HIFZ",
   })
+  const [editingScore, setEditingScore] = useState<Record<string, boolean>>({})
+  const [scoreDraft, setScoreDraft] = useState<Record<string, string>>({})
+  const [savingScore, setSavingScore] = useState<Record<string, boolean>>({})
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -227,6 +230,32 @@ export function TeacherTrackingGrid({ initialGroups }: Props) {
     } catch (e) {
       console.error(e)
       alert(t("error"))
+    }
+  }
+
+  const saveGlobalScore = async (student: StudentRow, value: string) => {
+    const num = value === "" ? null : parseInt(value, 10)
+    if (num !== null && (isNaN(num) || num < 0 || num > 20)) {
+      alert(t("scoreRange"))
+      return
+    }
+    setSavingScore((s) => ({ ...s, [student.id]: true }))
+    try {
+      const body: any = { date, globalScore: num }
+      const method = student.dailyLog ? "PATCH" : "POST"
+      const res = await fetch(`/api/students/${student.id}/daily-log`, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) throw new Error("Erreur")
+      loadData()
+    } catch (e) {
+      console.error(e)
+      alert(t("error"))
+    } finally {
+      setSavingScore((s) => ({ ...s, [student.id]: false }))
+      setEditingScore((s) => ({ ...s, [student.id]: false }))
     }
   }
 
@@ -499,19 +528,47 @@ export function TeacherTrackingGrid({ initialGroups }: Props) {
                         </button>
                       </td>
 
-                      {/* Note globale */}
+                      {/* Note globale - saisie directe */}
                       <td className="px-3 py-2">
-                        <button
-                          onClick={() => openLog(student, "FULL")}
-                          className={cn(
-                            "w-full text-center px-2 py-2 rounded-lg text-xs font-bold border transition min-h-[40px]",
-                            log?.globalScore !== null && log?.globalScore !== undefined
-                              ? "bg-tahfidz-green/10 border-tahfidz-green/20 text-tahfidz-green"
-                              : "border-dashed border-gray-200 dark:border-gray-700 text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
-                          )}
-                        >
-                          {log?.globalScore !== null && log?.globalScore !== undefined ? `${log.globalScore}/20` : "—"}
-                        </button>
+                        {editingScore[student.id] ? (
+                          <div className="relative">
+                            <input
+                              type="number"
+                              min={0}
+                              max={20}
+                              autoFocus
+                              value={scoreDraft[student.id] ?? ""}
+                              onChange={(e) => setScoreDraft((d) => ({ ...d, [student.id]: e.target.value }))}
+                              onBlur={() => saveGlobalScore(student, scoreDraft[student.id] ?? "")}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") saveGlobalScore(student, scoreDraft[student.id] ?? "")
+                                if (e.key === "Escape") {
+                                  setEditingScore((s) => ({ ...s, [student.id]: false }))
+                                  setScoreDraft((d) => ({ ...d, [student.id]: "" }))
+                                }
+                              }}
+                              className="w-full px-2 py-2 rounded-lg border border-tahfidz-green dark:border-tahfidz-green/50 bg-white dark:bg-gray-800 text-center text-xs font-bold text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/20 min-h-[40px]"
+                            />
+                            {savingScore[student.id] && (
+                              <Loader2 size={12} className="absolute right-2 top-1/2 -translate-y-1/2 animate-spin text-tahfidz-green" />
+                            )}
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setEditingScore((s) => ({ ...s, [student.id]: true }))
+                              setScoreDraft((d) => ({ ...d, [student.id]: log?.globalScore?.toString() ?? "" }))
+                            }}
+                            className={cn(
+                              "w-full text-center px-2 py-2 rounded-lg text-xs font-bold border transition min-h-[40px]",
+                              log?.globalScore !== null && log?.globalScore !== undefined
+                                ? "bg-tahfidz-green/10 border-tahfidz-green/20 text-tahfidz-green"
+                                : "border-dashed border-gray-200 dark:border-gray-700 text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                            )}
+                          >
+                            {log?.globalScore !== null && log?.globalScore !== undefined ? `${log.globalScore}/20` : "—"}
+                          </button>
+                        )}
                       </td>
 
                       {/* Actions */}

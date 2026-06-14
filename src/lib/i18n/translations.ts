@@ -1352,6 +1352,7 @@ export const translations = {
     absents:           { fr: "Absents", en: "Absents", ar: "الغائبون" },
     readyToEvaluate:   { fr: "À évaluer", en: "Ready to evaluate", ar: "جاهزون للتقييم" },
     loading:           { fr: "Chargement…", en: "Loading…", ar: "جارٍ التحميل…" },
+    scoreRange:        { fr: "La note doit être entre 0 et 20.", en: "Score must be between 0 and 20.", ar: "العلامة يجب أن تكون بين 0 و 20." },
     noStudents:        { fr: "Aucun élève dans ce groupe.", en: "No students in this group.", ar: "لا يوجد طلاب في هذه المجموعة." },
     noEmptyStudents:   { fr: "Tous les élèves sont renseignés pour cette date.", en: "All students are filled for this date.", ar: "جميع الطلاب معبأون لهذا التاريخ." },
     error:             { fr: "Erreur lors de la sauvegarde", en: "Error while saving", ar: "خطأ أثناء الحفظ" },
