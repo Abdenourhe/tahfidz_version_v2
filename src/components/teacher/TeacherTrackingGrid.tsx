@@ -191,15 +191,37 @@ export function TeacherTrackingGrid({ initialGroups }: Props) {
     const nextIndex = (ATTENDANCE_CYCLE.indexOf(current) + 1) % ATTENDANCE_CYCLE.length
     const next = ATTENDANCE_CYCLE[nextIndex]
 
-    const body: any = { date, attendanceStatus: next }
-    const method = student.dailyLog ? "PATCH" : "POST"
     try {
-      const res = await fetch(`/api/students/${student.id}/daily-log`, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      })
-      if (!res.ok) throw new Error("Erreur")
+      const promises: Promise<Response>[] = []
+
+      // Met à jour le carnet quotidien
+      const logBody: any = { date, attendanceStatus: next }
+      const logMethod = student.dailyLog ? "PATCH" : "POST"
+      promises.push(
+        fetch(`/api/students/${student.id}/daily-log`, {
+          method: logMethod,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(logBody),
+        })
+      )
+
+      // Synchronise avec l'onglet Présences si l'élève a un groupe
+      if (next && student.group?.id) {
+        promises.push(
+          fetch("/api/attendance", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              groupId: student.group.id,
+              date: `${date}T00:00:00.000Z`,
+              records: [{ studentId: student.id, status: next, notes: "" }],
+            }),
+          })
+        )
+      }
+
+      const results = await Promise.all(promises)
+      if (results.some((r) => !r.ok)) throw new Error("Erreur")
       loadData()
     } catch (e) {
       console.error(e)
@@ -495,7 +517,7 @@ export function TeacherTrackingGrid({ initialGroups }: Props) {
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-1">
                           <button
-                            onClick={() => openLog(student, "HIFZ")}
+                            onClick={() => openLog(student, "GLOBAL")}
                             className="flex-1 px-2 py-2 text-[10px] font-medium bg-tahfidz-green text-white rounded-lg hover:bg-tahfidz-green/90 transition"
                           >
                             {t("openLog")}
@@ -525,6 +547,7 @@ export function TeacherTrackingGrid({ initialGroups }: Props) {
           studentName={L === "ar" && modal.student.user.fullNameAr ? modal.student.user.fullNameAr : modal.student.user.fullName}
           date={date}
           defaultSection={modal.section}
+          singleSection={modal.section !== "GLOBAL"}
           onClose={() => setModal({ open: false, student: null, section: "HIFZ" })}
           onSaved={loadData}
         />

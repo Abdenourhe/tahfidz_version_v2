@@ -18,6 +18,7 @@ interface Props {
   studentName: string
   date?: string
   defaultSection?: LogSection
+  singleSection?: boolean
   onClose: () => void
   onSaved?: () => void
 }
@@ -79,7 +80,7 @@ function Section({
   )
 }
 
-export function TeacherDailyLogModal({ studentId, studentName, date: initialDate, defaultSection, onClose, onSaved }: Props) {
+export function TeacherDailyLogModal({ studentId, studentName, date: initialDate, defaultSection, singleSection = false, onClose, onSaved }: Props) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
   const t = useT("teacherDailyLog")
@@ -111,6 +112,11 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
     GLOBAL: useRef<HTMLDivElement | null>(null),
   }
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+
+  const showSection = (section: LogSection) => {
+    if (!singleSection) return true
+    return section === defaultSection
+  }
 
   // Scroll vers la section par défaut au montage
   useEffect(() => {
@@ -302,7 +308,7 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
 
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-6 space-y-5">
           {/* Date + Global score */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className={singleSection ? "" : "grid grid-cols-2 gap-4"}>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">{t("date")}</label>
               <input
@@ -312,17 +318,19 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
                 className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm"
               />
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">{t("globalScore")}</label>
-              <input
-                type="number"
-                min={0}
-                max={20}
-                value={form.globalScore}
-                onChange={(e) => update("globalScore", e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm"
-              />
-            </div>
+            {!singleSection && (
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{t("globalScore")}</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={20}
+                  value={form.globalScore}
+                  onChange={(e) => update("globalScore", e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm"
+                />
+              </div>
+            )}
           </div>
 
           {loadingSurahs ? (
@@ -330,113 +338,123 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
           ) : (
             <>
               {/* Hifz */}
-              <Section icon={BookOpen} title={t("hifz")} color="text-emerald-600" divRef={sectionRefs.HIFZ}>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <SurahSelect surahs={surahs} locale={L} value={form.hifzFromSurahId} onChange={(v) => update("hifzFromSurahId", v)} label={t("fromSurah")} />
-                  <VerseInput value={form.hifzFromVerse} onChange={(v) => update("hifzFromVerse", v)} label={t("fromVerse")} />
-                  <SurahSelect surahs={surahs} locale={L} value={form.hifzToSurahId} onChange={(v) => update("hifzToSurahId", v)} label={t("toSurah")} />
-                  <VerseInput value={form.hifzToVerse} onChange={(v) => update("hifzToVerse", v)} label={t("toVerse")} />
-                </div>
-                <textarea
-                  value={form.hifzNote}
-                  onChange={(e) => update("hifzNote", e.target.value)}
-                  placeholder={t("note")}
-                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 resize-none"
-                  rows={3}
-                />
-                {existingLogId && <DailyLogSectionThread studentId={studentId} dailyLogId={existingLogId} section="HIFZ" sectionLabel={t("hifz")} />}
-              </Section>
+              {showSection("HIFZ") && (
+                <Section icon={BookOpen} title={t("hifz")} color="text-emerald-600" divRef={sectionRefs.HIFZ}>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <SurahSelect surahs={surahs} locale={L} value={form.hifzFromSurahId} onChange={(v) => update("hifzFromSurahId", v)} label={t("fromSurah")} />
+                    <VerseInput value={form.hifzFromVerse} onChange={(v) => update("hifzFromVerse", v)} label={t("fromVerse")} />
+                    <SurahSelect surahs={surahs} locale={L} value={form.hifzToSurahId} onChange={(v) => update("hifzToSurahId", v)} label={t("toSurah")} />
+                    <VerseInput value={form.hifzToVerse} onChange={(v) => update("hifzToVerse", v)} label={t("toVerse")} />
+                  </div>
+                  <textarea
+                    value={form.hifzNote}
+                    onChange={(e) => update("hifzNote", e.target.value)}
+                    placeholder={t("note")}
+                    className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 resize-none"
+                    rows={3}
+                  />
+                  {existingLogId && <DailyLogSectionThread studentId={studentId} dailyLogId={existingLogId} section="HIFZ" sectionLabel={t("hifz")} />}
+                </Section>
+              )}
 
               {/* Muraja */}
-              <Section icon={RotateCcw} title={t("muraja")} color="text-blue-600" divRef={sectionRefs.MURAJA}>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <SurahSelect surahs={surahs} locale={L} value={form.murajaFromSurahId} onChange={(v) => update("murajaFromSurahId", v)} label={t("fromSurah")} />
-                  <VerseInput value={form.murajaFromVerse} onChange={(v) => update("murajaFromVerse", v)} label={t("fromVerse")} />
-                  <SurahSelect surahs={surahs} locale={L} value={form.murajaToSurahId} onChange={(v) => update("murajaToSurahId", v)} label={t("toSurah")} />
-                  <VerseInput value={form.murajaToVerse} onChange={(v) => update("murajaToVerse", v)} label={t("toVerse")} />
-                </div>
-                <textarea
-                  value={form.murajaNote}
-                  onChange={(e) => update("murajaNote", e.target.value)}
-                  placeholder={t("note")}
-                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
-                  rows={3}
-                />
-                {existingLogId && <DailyLogSectionThread studentId={studentId} dailyLogId={existingLogId} section="MURAJA" sectionLabel={t("muraja")} />}
-              </Section>
+              {showSection("MURAJA") && (
+                <Section icon={RotateCcw} title={t("muraja")} color="text-blue-600" divRef={sectionRefs.MURAJA}>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <SurahSelect surahs={surahs} locale={L} value={form.murajaFromSurahId} onChange={(v) => update("murajaFromSurahId", v)} label={t("fromSurah")} />
+                    <VerseInput value={form.murajaFromVerse} onChange={(v) => update("murajaFromVerse", v)} label={t("fromVerse")} />
+                    <SurahSelect surahs={surahs} locale={L} value={form.murajaToSurahId} onChange={(v) => update("murajaToSurahId", v)} label={t("toSurah")} />
+                    <VerseInput value={form.murajaToVerse} onChange={(v) => update("murajaToVerse", v)} label={t("toVerse")} />
+                  </div>
+                  <textarea
+                    value={form.murajaNote}
+                    onChange={(e) => update("murajaNote", e.target.value)}
+                    placeholder={t("note")}
+                    className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
+                    rows={3}
+                  />
+                  {existingLogId && <DailyLogSectionThread studentId={studentId} dailyLogId={existingLogId} section="MURAJA" sectionLabel={t("muraja")} />}
+                </Section>
+              )}
 
               {/* Talqin */}
-              <Section icon={Headphones} title={t("talqin")} color="text-purple-600" divRef={sectionRefs.TALQIN}>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <SurahSelect surahs={surahs} locale={L} value={form.talqinFromSurahId} onChange={(v) => update("talqinFromSurahId", v)} label={t("fromSurah")} />
-                  <VerseInput value={form.talqinFromVerse} onChange={(v) => update("talqinFromVerse", v)} label={t("fromVerse")} />
-                  <SurahSelect surahs={surahs} locale={L} value={form.talqinToSurahId} onChange={(v) => update("talqinToSurahId", v)} label={t("toSurah")} />
-                  <VerseInput value={form.talqinToVerse} onChange={(v) => update("talqinToVerse", v)} label={t("toVerse")} />
-                </div>
-                <textarea
-                  value={form.talqinNote}
-                  onChange={(e) => update("talqinNote", e.target.value)}
-                  placeholder={t("note")}
-                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 resize-none"
-                  rows={3}
-                />
-                {existingLogId && <DailyLogSectionThread studentId={studentId} dailyLogId={existingLogId} section="TALQIN" sectionLabel={t("talqin")} />}
-              </Section>
+              {showSection("TALQIN") && (
+                <Section icon={Headphones} title={t("talqin")} color="text-purple-600" divRef={sectionRefs.TALQIN}>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <SurahSelect surahs={surahs} locale={L} value={form.talqinFromSurahId} onChange={(v) => update("talqinFromSurahId", v)} label={t("fromSurah")} />
+                    <VerseInput value={form.talqinFromVerse} onChange={(v) => update("talqinFromVerse", v)} label={t("fromVerse")} />
+                    <SurahSelect surahs={surahs} locale={L} value={form.talqinToSurahId} onChange={(v) => update("talqinToSurahId", v)} label={t("toSurah")} />
+                    <VerseInput value={form.talqinToVerse} onChange={(v) => update("talqinToVerse", v)} label={t("toVerse")} />
+                  </div>
+                  <textarea
+                    value={form.talqinNote}
+                    onChange={(e) => update("talqinNote", e.target.value)}
+                    placeholder={t("note")}
+                    className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 resize-none"
+                    rows={3}
+                  />
+                  {existingLogId && <DailyLogSectionThread studentId={studentId} dailyLogId={existingLogId} section="TALQIN" sectionLabel={t("talqin")} />}
+                </Section>
+              )}
 
               {/* Cours scientifique */}
-              <Section icon={GraduationCap} title={t("course")} color="text-amber-600" divRef={sectionRefs.COURSE}>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  <div className="md:col-span-1">
-                    <label className="block text-[11px] uppercase tracking-wider text-gray-500 mb-1">{t("book")}</label>
-                    <input
-                      type="text"
-                      value={form.courseBook}
-                      onChange={(e) => update("courseBook", e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20"
-                    />
+              {showSection("COURSE") && (
+                <Section icon={GraduationCap} title={t("course")} color="text-amber-600" divRef={sectionRefs.COURSE}>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div className="md:col-span-1">
+                      <label className="block text-[11px] uppercase tracking-wider text-gray-500 mb-1">{t("book")}</label>
+                      <input
+                        type="text"
+                        value={form.courseBook}
+                        onChange={(e) => update("courseBook", e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                      />
+                    </div>
+                    <VerseInput value={form.courseFromPage} onChange={(v) => update("courseFromPage", v)} label={t("fromPage")} />
+                    <VerseInput value={form.courseToPage} onChange={(v) => update("courseToPage", v)} label={t("toPage")} />
                   </div>
-                  <VerseInput value={form.courseFromPage} onChange={(v) => update("courseFromPage", v)} label={t("fromPage")} />
-                  <VerseInput value={form.courseToPage} onChange={(v) => update("courseToPage", v)} label={t("toPage")} />
-                </div>
-                <textarea
-                  value={form.courseNote}
-                  onChange={(e) => update("courseNote", e.target.value)}
-                  placeholder={t("note")}
-                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 resize-none"
-                  rows={3}
-                />
-                {existingLogId && <DailyLogSectionThread studentId={studentId} dailyLogId={existingLogId} section="COURSE" sectionLabel={t("course")} />}
-              </Section>
+                  <textarea
+                    value={form.courseNote}
+                    onChange={(e) => update("courseNote", e.target.value)}
+                    placeholder={t("note")}
+                    className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 resize-none"
+                    rows={3}
+                  />
+                  {existingLogId && <DailyLogSectionThread studentId={studentId} dailyLogId={existingLogId} section="COURSE" sectionLabel={t("course")} />}
+                </Section>
+              )}
 
               {/* Assiduité */}
-              <Section icon={CalendarDays} title={t("attendance")} color="text-red-600" divRef={sectionRefs.ATTENDANCE}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1.5">{t("status")}</label>
-                    <select
-                      value={form.attendanceStatus}
-                      onChange={(e) => update("attendanceStatus", e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20"
-                    >
-                      <option value="PRESENT">{t("present")}</option>
-                      <option value="ABSENT">{t("absent")}</option>
-                      <option value="LATE">{t("late")}</option>
-                      <option value="EXCUSED">{t("excused")}</option>
-                    </select>
+              {showSection("ATTENDANCE") && (
+                <Section icon={CalendarDays} title={t("attendance")} color="text-red-600" divRef={sectionRefs.ATTENDANCE}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1.5">{t("status")}</label>
+                      <select
+                        value={form.attendanceStatus}
+                        onChange={(e) => update("attendanceStatus", e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                      >
+                        <option value="PRESENT">{t("present")}</option>
+                        <option value="ABSENT">{t("absent")}</option>
+                        <option value="LATE">{t("late")}</option>
+                        <option value="EXCUSED">{t("excused")}</option>
+                      </select>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-500 mb-1.5">{t("teacherObservation")}</label>
+                      <textarea
+                        value={form.teacherObservation}
+                        onChange={(e) => update("teacherObservation", e.target.value)}
+                        placeholder={t("observationPlaceholder")}
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 resize-none"
+                        rows={3}
+                      />
+                    </div>
                   </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-500 mb-1.5">{t("teacherObservation")}</label>
-                    <textarea
-                      value={form.teacherObservation}
-                      onChange={(e) => update("teacherObservation", e.target.value)}
-                      placeholder={t("observationPlaceholder")}
-                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 resize-none"
-                      rows={3}
-                    />
-                  </div>
-                </div>
-                {existingLogId && <DailyLogSectionThread studentId={studentId} dailyLogId={existingLogId} section="ATTENDANCE" sectionLabel={t("attendance")} />}
-              </Section>
+                  {existingLogId && <DailyLogSectionThread studentId={studentId} dailyLogId={existingLogId} section="ATTENDANCE" sectionLabel={t("attendance")} />}
+                </Section>
+              )}
             </>
           )}
         </div>
