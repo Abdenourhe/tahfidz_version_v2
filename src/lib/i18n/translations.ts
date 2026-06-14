@@ -1705,6 +1705,7 @@ export const translations = {
   teacherSidebar: {
     teacher:      { fr: "Enseignant", en: "Teacher", ar: "المعلم" },
     dashboard:    { fr: "Tableau de bord", en: "Dashboard", ar: "لوحة التحكم" },
+    tracking:     { fr: "Mes élèves", en: "My Students", ar: "طلابي" },
     students:     { fr: "Mes élèves", en: "My Students", ar: "طلابي" },
     groups:       { fr: "Mes groupes", en: "My Groups", ar: "مجموعاتي" },
     memorization: { fr: "Mémorisation", en: "Memorization", ar: "الحفظ" },
