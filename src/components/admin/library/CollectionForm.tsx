@@ -8,6 +8,7 @@ import { ArrowLeft, Loader2, Save, Upload } from "lucide-react"
 import { useState } from "react"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { libraryCollectionSchema, type LibraryCollectionInput } from "@/lib/validations/library"
+import { uploadFileWithDedup } from "@/lib/library-upload"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 
@@ -97,33 +98,8 @@ export function CollectionForm({ groups, collection }: Props) {
 
     setUploading(true)
     try {
-      const metaRes = await fetch("/api/library/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type,
-          size: file.size,
-          prefix: "collections",
-        }),
-      })
-      const meta: any = metaRes.ok ? await metaRes.json() : { error: await metaRes.text() || t("error") }
-      if (!metaRes.ok) {
-        setUploadError(meta.error || t("error"))
-        return
-      }
-
-      const uploadRes = await fetch(meta.uploadUrl, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": file.type },
-      })
-      if (!uploadRes.ok) {
-        setUploadError("Échec de l'upload sur le stockage")
-        return
-      }
-
-      setValue("coverImage", `r2://${meta.key}`)
+      const result = await uploadFileWithDedup({ file, prefix: "collections" })
+      setValue("coverImage", result.url)
     } catch (err: any) {
       setUploadError(err.message || t("error"))
     } finally {

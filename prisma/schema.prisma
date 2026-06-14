@@ -1250,3 +1250,18 @@ model UserBookmark {
   @@index([userId])
   @@map("user_bookmarks")
 }
+
+model UploadedFile {
+  id          String   @id @default(cuid())
+  schoolId    String?  // NULL = fichier global (superadmin)
+  hash        String   // SHA-256 du fichier
+  key         String   @unique // Clé R2 (ex: schools/.../file.pdf)
+  fileName    String
+  contentType String
+  size        Int
+  createdAt   DateTime @default(now())
+
+  @@index([hash])
+  @@index([schoolId, hash])
+  @@map("uploaded_files")
+}

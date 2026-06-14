@@ -10,6 +10,7 @@ import { useEffect, useState } from "react"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { libraryContentSchema, libraryEpisodeSchema } from "@/lib/validations/library"
 import { generatePdfThumbnail } from "@/lib/pdf-thumbnail-client"
+import { uploadFileWithDedup } from "@/lib/library-upload"
 import { z } from "zod"
 
 interface Category {
@@ -139,29 +140,6 @@ export function ContentForm({ categories, collections, content, isSuperAdmin = f
   const MAX_UPLOAD_SIZE = 5 * 1024 * 1024 * 1024 // 5 Go
   const MAX_IMAGE_SIZE = 2 * 1024 * 1024 // 2 Mo
 
-  async function uploadFileToR2(file: File, prefix: string): Promise<{ key: string } | { error: string }> {
-    const metaRes = await fetch("/api/library/upload", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ filename: file.name, contentType: file.type, size: file.size, prefix }),
-    })
-    const meta: any = metaRes.ok ? await metaRes.json() : { error: await metaRes.text() || t("error") }
-    if (!metaRes.ok || meta.error) {
-      return { error: meta.error || t("error") }
-    }
-
-    const uploadRes = await fetch(meta.uploadUrl, {
-      method: "PUT",
-      body: file,
-      headers: { "Content-Type": file.type },
-    })
-    if (!uploadRes.ok) {
-      return { error: "Échec de l'upload sur le stockage" }
-    }
-
-    return { key: meta.key }
-  }
-
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -172,12 +150,8 @@ export function ContentForm({ categories, collections, content, isSuperAdmin = f
     }
     setUploading(true)
     try {
-      const result = await uploadFileToR2(file, "contents")
-      if ("error" in result) {
-        setUploadError(result.error)
-        return
-      }
-      setValue("pdfUrl", `r2://${result.key}`)
+      const result = await uploadFileWithDedup({ file, prefix: "contents" })
+      setValue("pdfUrl", result.url)
       setUploadedFileName(file.name)
 
       // Extraction du nombre de pages et génération de la vignette de la première page.
@@ -187,10 +161,8 @@ export function ContentForm({ categories, collections, content, isSuperAdmin = f
 
         const thumbBlob = await (await fetch(dataUrl)).blob()
         const thumbFile = new File([thumbBlob], `thumbnail-${file.name.replace(/\.pdf$/i, ".jpg")}`, { type: "image/jpeg" })
-        const thumbResult = await uploadFileToR2(thumbFile, "thumbnails")
-        if ("key" in thumbResult) {
-          setValue("thumbnail", `r2://${thumbResult.key}`)
-        }
+        const thumbResult = await uploadFileWithDedup({ file: thumbFile, prefix: "thumbnails" })
+        setValue("thumbnail", thumbResult.url)
       } catch (thumbErr: any) {
         console.error("[PDF METADATA/THUMBNAIL]", thumbErr)
         // Ne pas bloquer l'upload principal si la vignette échoue.
@@ -216,12 +188,8 @@ export function ContentForm({ categories, collections, content, isSuperAdmin = f
     }
     setCoverUploading(true)
     try {
-      const result = await uploadFileToR2(file, "thumbnails")
-      if ("error" in result) {
-        setUploadError(result.error)
-        return
-      }
-      setValue("thumbnail", `r2://${result.key}`)
+      const result = await uploadFileWithDedup({ file, prefix: "thumbnails" })
+      setValue("thumbnail", result.url)
     } catch (err: any) {
       setUploadError(err.message || t("error"))
     } finally {
