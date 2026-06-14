@@ -113,7 +113,7 @@ export function TeacherProfileClient({ teacher, totalStudents, schoolName, schoo
       <ProfileAccordion title={t("quickActions")} icon={Settings} delay={0.5}>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {[
-            { href: "/teacher/students", label: t("myStudents"), icon: GraduationCap, color: "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300" },
+            { href: "/teacher/tracking", label: t("myStudents"), icon: GraduationCap, color: "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300" },
             { href: "/teacher/attendance", label: t("attendance"), icon: CalendarCheck, color: "bg-tahfidz-green-light dark:bg-emerald-900/20 text-tahfidz-green" },
             { href: "/teacher/memorization", label: t("progress"), icon: BookOpen, color: "bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300" },
             { href: "/teacher/evaluations", label: t("myEvaluations"), icon: ClipboardList, color: "bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300" },

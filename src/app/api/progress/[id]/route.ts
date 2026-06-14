@@ -118,7 +118,7 @@ export async function PATCH(
               title:   `⏳ ${prog.student.user.fullName} est prêt à réciter`,
               titleAr: `⏳ ${prog.student.user.fullName} جاهز للتلاوة`,
               message: `Sourate ${prog.surah.nameFr} — ${newVerse}/${prog.surah.verseCount} versets. Signalé par ${who}. Cliquez pour évaluer.`,
-              data:    { url: "/teacher/students", progressId: (await params).id, studentId: prog.student.id, reportedBy: session.user.role },
+              data:    { url: "/teacher/tracking", progressId: (await params).id, studentId: prog.student.id, reportedBy: session.user.role },
             },
           })
         }
@@ -195,7 +195,7 @@ export async function PATCH(
             type:    "progress_update",
             title,
             message,
-            data:    { url: "/teacher/students", progressId: (await params).id, currentVerse: newVerse, percentage: Math.round(newPct), milestone, updatedBy: session.user.role },
+            data:    { url: "/teacher/tracking", progressId: (await params).id, currentVerse: newVerse, percentage: Math.round(newPct), milestone, updatedBy: session.user.role },
           },
         })
       }

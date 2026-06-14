@@ -9,7 +9,7 @@ import { useSession } from "next-auth/react"
 import {
   LayoutDashboard, Users, GraduationCap, BookMarked,
   ClipboardCheck, Award, MessageSquare, Bell, UserCircle, Video, Library,
-  ChevronRight, LogOut, ClipboardList,
+  ChevronRight, LogOut,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
@@ -20,8 +20,7 @@ import { useSidebarCollapsed } from "@/hooks/useSidebarCollapsed"
 
 const NAV_ITEMS = [
   { href: "/teacher/dashboard",     icon: LayoutDashboard,  key: "dashboard" },
-  { href: "/teacher/tracking",      icon: ClipboardList,    key: "tracking" },
-  { href: "/teacher/students",      icon: Users,            key: "students" },
+  { href: "/teacher/tracking",      icon: Users,            key: "tracking" },
   { href: "/teacher/groups",        icon: GraduationCap,    key: "groups" },
   { href: "/teacher/memorization",  icon: BookMarked,       key: "memorization" },
   { href: "/teacher/library",       icon: Library,          key: "library" },

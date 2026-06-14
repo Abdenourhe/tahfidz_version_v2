@@ -5,13 +5,12 @@ import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
 import { useT } from "@/contexts/LanguageContext"
 import {
-  LayoutDashboard, Users, BookMarked, Award, UserCircle, ClipboardList,
+  LayoutDashboard, Users, BookMarked, Award, UserCircle,
 } from "lucide-react"
 
 const MOBILE_NAV = [
   { href: "/teacher/dashboard", icon: LayoutDashboard, key: "dashboard" },
-  { href: "/teacher/tracking", icon: ClipboardList, key: "tracking" },
-  { href: "/teacher/students", icon: Users, key: "students" },
+  { href: "/teacher/tracking", icon: Users, key: "tracking" },
   { href: "/teacher/memorization", icon: BookMarked, key: "memorization" },
   { href: "/teacher/evaluations", icon: Award, key: "evaluations" },
   { href: "/teacher/profile", icon: UserCircle, key: "profile" },

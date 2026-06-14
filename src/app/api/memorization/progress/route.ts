@@ -111,7 +111,7 @@ export async function PATCH(req: Request) {
             titleAr: `تقدم: ${assignment.student.user.fullName}`,
             message: `${assignment.student.user.fullName} a mémorisé ${versesMemorized} versets de ${assignment.surah.nameFr}`,
             messageAr: `حفظ ${assignment.student.user.fullName} ${versesMemorized} آيات من ${assignment.surah.nameAr}`,
-            data: { assignmentId, versesMemorized, percentage, url: "/teacher/students" },
+            data: { assignmentId, versesMemorized, percentage, url: "/teacher/tracking" },
           },
         })
       }

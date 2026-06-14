@@ -35,7 +35,7 @@ export const translations = {
     statistics:     { fr: "Statistiques",      en: "Statistics",       ar: "الإحصائيات" },
     admins:         { fr: "Administrateurs",   en: "Administrators",   ar: "المدراء" },
     dailyLog:       { fr: "Carnet de suivi",   en: "Daily log",        ar: "سجل المتابعة" },
-    tracking:       { fr: "Carnet de suivi",   en: "Daily tracking",   ar: "سجل المتابعة" },
+    tracking:       { fr: "Mes élèves",        en: "My students",      ar: "طلابي" },
     library:        { fr: "Bibliothèque",      en: "Library",          ar: "المكتبة" },
     superDashboard: { fr: "Dashboard",         en: "Dashboard",        ar: "لوحة التحكم" },
     schools:        { fr: "Écoles",            en: "Schools",          ar: "المدارس" },
@@ -691,29 +691,6 @@ export const translations = {
     error:           { fr: "Erreur", en: "Error", ar: "خطأ" },
   },
 
-  // ─── teacherStudentsListClient (components/teacher/TeacherStudentsListClient.tsx) ─────────────────────────────────────────────
-  teacherStudentsListClient: {
-    title:           { fr: "Mes élèves", en: "My students", ar: "طلابي" },
-    search:          { fr: "Rechercher un élève…", en: "Search a student…", ar: "بحث عن طالب…" },
-    noStudent:       { fr: "Aucun élève", en: "No students", ar: "لا يوجد طلاب" },
-    noStudentStatus: { fr: " avec ce statut", en: " with this status", ar: " بهذه الحالة" },
-    years:           { fr: "ans", en: "yrs", ar: "سنة" },
-    months:          { fr: "mois", en: "mo", ar: "شهر" },
-    noGroup:         { fr: "Sans groupe", en: "No group", ar: "بدون مجموعة" },
-    surahs:          { fr: "sour.", en: "surahs", ar: "سورة" },
-    noProgress:      { fr: "Aucune progression active", en: "No active progress", ar: "لا يوجد تقدم نشط" },
-    viewProfile:     { fr: "Voir le profil", en: "View profile", ar: "عرض الملف" },
-    evaluate:        { fr: "Évaluer", en: "Evaluate", ar: "تقييم" },
-    dailyLog:        { fr: "Carnet de suivi", en: "Daily log", ar: "سجل المتابعة" },
-    hasLog:          { fr: "Carnet auj.", en: "Log today", ar: "سجل اليوم" },
-    lastLog:         { fr: "Dernier carnet", en: "Last log", ar: "آخر سجل" },
-    noLogYet:        { fr: "Aucun carnet", en: "No log yet", ar: "لا يوجد سجل" },
-    present:         { fr: "Présent", en: "Present", ar: "حاضر" },
-    absent:          { fr: "Absent", en: "Absent", ar: "غائب" },
-    late:            { fr: "Retard", en: "Late", ar: "متأخر" },
-    excused:         { fr: "Excusé", en: "Excused", ar: "معذور" },
-  },
-
   // ─── groups_new (app/admin/groups/new/page.tsx) ─────────────────────────────────────────────
   groups_new: {
     back:            { fr: "Retour", en: "Back", ar: "رجوع" },
@@ -1350,7 +1327,7 @@ export const translations = {
 
   // ─── teacherTracking (components/teacher/TeacherTrackingGrid.tsx) ─────────────────────────────────────────────
   teacherTracking: {
-    title:             { fr: "Carnet de suivi", en: "Daily tracking", ar: "سجل المتابعة" },
+    title:             { fr: "Mes élèves", en: "My students", ar: "طلابي" },
     subtitle:          { fr: "Suivez vos élèves jour par jour en un seul tableau.", en: "Track your students day by day in one single board.", ar: "تابع طلابك يوماً بيوم في جدول واحد." },
     student:           { fr: "Élève", en: "Student", ar: "الطالب" },
     attendance:        { fr: "Assiduité", en: "Attendance", ar: "المواظبة" },

@@ -365,7 +365,10 @@ export function TeacherTrackingGrid({ initialGroups }: Props) {
                     <tr key={student.id} className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition">
                       {/* Élève */}
                       <td className="sticky start-0 z-10 bg-white dark:bg-gray-900 group-hover:bg-gray-50/50 dark:group-hover:bg-gray-800/30 px-4 py-3">
-                        <div className="flex items-center gap-3">
+                        <Link
+                          href={`/teacher/students/${student.id}`}
+                          className="flex items-center gap-3 group/row rounded-lg transition"
+                        >
                           <div className="w-9 h-9 rounded-lg gradient-tahfidz flex items-center justify-center overflow-hidden flex-shrink-0">
                             <AvatarLightbox
                               src={student.user.avatar}
@@ -380,14 +383,14 @@ export function TeacherTrackingGrid({ initialGroups }: Props) {
                             />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate group-hover/row:text-tahfidz-green transition">
                               {L === "ar" && student.user.fullNameAr ? student.user.fullNameAr : student.user.fullName}
                             </p>
                             <p className="text-[10px] text-gray-400 truncate">
                               {student.group ? (L === "ar" && student.group.nameAr ? student.group.nameAr : student.group.name) : t("noGroup")}
                             </p>
                           </div>
-                        </div>
+                        </Link>
                       </td>
 
                       {/* Assiduité - clic rapide */}
