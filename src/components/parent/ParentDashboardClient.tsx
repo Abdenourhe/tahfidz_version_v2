@@ -5,10 +5,8 @@ import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { AvatarLightbox } from "@/components/AvatarLightbox"
 import {
   CalendarDays, GraduationCap, User, ArrowRight,
-  CalendarCheck, Link2, Video, Bell, ChevronRight,
+  CalendarCheck, Bell, ChevronRight,
 } from "lucide-react"
-import { useSession } from "next-auth/react"
-import Image from "next/image"
 import Link from "next/link"
 
 interface Child {
@@ -96,73 +94,25 @@ function ChildCard({ child }: { child: Child }) {
   )
 }
 
-export function ParentDashboardClient({ todayDate, children, missingTomorrowIds }: Props) {
+export function ParentDashboardClient({ todayDate: _todayDate, children, missingTomorrowIds }: Props) {
   const t = useT("parentDashboardClient")
   const { locale } = useLanguage()
-  const { data: session } = useSession()
-  const schoolName = (session?.user as any)?.schoolName || "TAHFIDZ"
-  const schoolLogo = (session?.user as any)?.schoolLogo
 
   const missingChildren = children.filter(c => missingTomorrowIds.includes(c.id))
 
   return (
     <div className="space-y-5">
-      {/* Header école */}
-      <div className="flex items-center gap-4 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4 shadow-sm">
-        <div className="w-12 h-12 rounded-xl gradient-tahfidz flex items-center justify-center overflow-hidden shrink-0">
-          {schoolLogo ? (
-            <Image src={schoolLogo} alt={schoolName} width={48} height={48} className="w-full h-full object-cover" unoptimized />
-          ) : (
-            <span className="text-white font-bold text-lg">{schoolName.charAt(0).toUpperCase()}</span>
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">{schoolName}</h1>
-          <p className="text-xs text-gray-500">{t("title")} · {todayDate}</p>
-        </div>
-      </div>
-
-      {/* Quick actions */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {/* Actions rapides */}
+      <div className="flex items-center gap-3">
         <Link href="/parent/attendance"
-          className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm hover:border-tahfidz-green/40 hover:shadow-md transition active:scale-95">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center flex-shrink-0">
-            <CalendarCheck size={18} className="text-emerald-600" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-gray-800 dark:text-gray-200">Présences</p>
-            <p className="text-[10px] text-gray-400">Marquer pour demain</p>
-          </div>
-        </Link>
-        <Link href="/parent/halaqa"
-          className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm hover:border-blue-400/40 hover:shadow-md transition active:scale-95">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
-            <Video size={18} className="text-blue-600" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-gray-800 dark:text-gray-200">Halaqa</p>
-            <p className="text-[10px] text-gray-400">Sessions en ligne</p>
-          </div>
-        </Link>
-        <Link href="/parent/link"
-          className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm hover:border-orange-400/40 hover:shadow-md transition active:scale-95">
-          <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center flex-shrink-0">
-            <Link2 size={18} className="text-orange-600" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-gray-800 dark:text-gray-200">Lier un enfant</p>
-            <p className="text-[10px] text-gray-400">Ajouter un élève</p>
-          </div>
+          className="flex-1 flex items-center justify-center gap-2 p-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm hover:border-tahfidz-green/40 hover:shadow-md transition active:scale-95">
+          <CalendarCheck size={18} className="text-emerald-600" />
+          <span className="text-xs font-bold text-gray-800 dark:text-gray-200">{t("markAttendance")}</span>
         </Link>
         <Link href="/parent/notifications"
-          className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm hover:border-purple-400/40 hover:shadow-md transition active:scale-95">
-          <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
-            <Bell size={18} className="text-purple-600" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-gray-800 dark:text-gray-200">Notifications</p>
-            <p className="text-[10px] text-gray-400">Messages et alertes</p>
-          </div>
+          className="flex-1 flex items-center justify-center gap-2 p-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm hover:border-purple-400/40 hover:shadow-md transition active:scale-95">
+          <Bell size={18} className="text-purple-600" />
+          <span className="text-xs font-bold text-gray-800 dark:text-gray-200">{t("notifications")}</span>
         </Link>
       </div>
 
@@ -212,7 +162,7 @@ export function ParentDashboardClient({ todayDate, children, missingTomorrowIds 
             <p className="text-sm text-gray-500 mb-4">{t("noChildDesc")}</p>
             <Link href="/parent/link"
               className="inline-flex items-center gap-2 px-5 py-2.5 gradient-tahfidz text-white text-sm font-semibold rounded-xl hover:opacity-90 transition active:scale-95">
-              <Link2 size={14} /> Lier un enfant
+              <User size={14} /> Lier un enfant
             </Link>
           </div>
         ) : (

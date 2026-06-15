@@ -797,6 +797,14 @@ export const translations = {
     noAtt:           { fr: "Aucune présence enregistrée", en: "No attendance recorded", ar: "لا يوجد حضور مسجل" },
     dailyLog:        { fr: "Carnet de suivi", en: "Daily log", ar: "سجل المتابعة" },
     noDailyLog:      { fr: "Aucun carnet de suivi enregistré", en: "No daily log recorded", ar: "لا يوجد سجل متابعة مسجل" },
+    showEmptyDays:   { fr: "Afficher jours vides", en: "Show empty days", ar: "عرض الأيام الفارغة" },
+    hideEmptyDays:   { fr: "Masquer jours vides", en: "Hide empty days", ar: "إخفاء الأيام الفارغة" },
+    dailyLogSectionPresence: { fr: "Présence", en: "Attendance", ar: "الحضور" },
+    dailyLogSectionHifz:     { fr: "Hifz", en: "Hifz", ar: "الحفظ" },
+    dailyLogSectionMuraja:   { fr: "Muraja'a", en: "Muraja'a", ar: "المراجعة" },
+    dailyLogSectionTalqin:   { fr: "Talqin", en: "Talqin", ar: "التلقين" },
+    dailyLogSectionCourse:   { fr: "Cours", en: "Course", ar: "الدرس" },
+    dailyLogSectionGeneral:  { fr: "Général", en: "General", ar: "عام" },
     noBadge:         { fr: "Aucun badge encore", en: "No badges yet", ar: "لا توجد شارات بعد" },
     badgeDesc:       { fr: "Les badges sont attribués pour les efforts et la régularité", en: "Badges are awarded for effort and regularity", ar: "يتم منح الشارات للجهد والانتظام" },
     present:         { fr: "Présent", en: "Present", ar: "حاضر" },
@@ -1458,6 +1466,8 @@ export const translations = {
   // ─── parentDashboardClient (components/parent/ParentDashboardClient.tsx) ─────────────────────────────────────────────
   parentDashboardClient: {
     title:           { fr: "Suivi de mes enfants", en: "My children's progress", ar: "متابعة أبنائي" },
+    markAttendance:  { fr: "Marquer présences", en: "Mark attendance", ar: "تسجيل الحضور" },
+    notifications:   { fr: "Notifications", en: "Notifications", ar: "الإشعارات" },
     noChild:         { fr: "Aucun enfant lié", en: "No linked child", ar: "لا يوجد طفل مرتبط" },
     noChildDesc:     { fr: "Demandez à l'administrateur de lier votre compte.", en: "Ask the administrator to link your account.", ar: "اطلب من المدير ربط حسابك بحساب طفلك." },
     memorized:       { fr: "Mémorisées", en: "Memorized", ar: "محفوظة" },

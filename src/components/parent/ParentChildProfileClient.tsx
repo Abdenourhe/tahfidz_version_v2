@@ -1,18 +1,19 @@
 "use client"
 // ParentChildProfileClient.tsx — Page détail enfant, scroll unique sans onglets
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import Link from "next/link"
 import {
-  ArrowLeft, BookOpen, Star, Award, CalendarCheck,
+  ArrowLeft, BookOpen, Star, Award,
   Phone, Mail, RefreshCw, CheckCircle2, RotateCcw, X, Clock,
-  TrendingUp, Flame, MessageCircle, ClipboardList
+  TrendingUp, Flame, MessageCircle, ClipboardList, Eye, EyeOff
 } from "lucide-react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { useSession } from "next-auth/react"
 import { cn } from "@/lib/utils"
 import { AvatarUploader } from "@/components/shared/AvatarUploader"
 import { TeacherChat } from "@/components/parent/TeacherChat"
+import DailyLogSectionThread from "@/components/DailyLogSectionThread"
 
 interface Progress {
   id: string; surahId: number; currentVerse: number; completionPercentage: number
@@ -116,21 +117,23 @@ function TeacherChatCard({ student, parentUserId, studentId }: { student: Studen
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2 mt-4">
-        {student.teacher.user.phone && (
-          <a href={`tel:${student.teacher.user.phone}`} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-green-50 hover:text-green-700 hover:border-green-200 transition">
-            <Phone size={14} /> Appeler
-          </a>
-        )}
-        <a href={`mailto:${student.teacher.user.email}`} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition">
-          <Mail size={14} /> Email
-        </a>
+      <div className="flex flex-col gap-2 mt-4">
         {parentUserId && (
           <button onClick={() => setChatOpen(v => !v)}
-            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-tahfidz-green text-white text-sm font-medium hover:opacity-90 transition shadow-sm">
-            <MessageCircle size={14} /> {chatOpen ? "Fermer" : "Contacter"}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-tahfidz-green text-white text-sm font-bold hover:opacity-90 transition shadow-sm">
+            <MessageCircle size={16} /> {chatOpen ? "Fermer la discussion" : "Contacter l'enseignant"}
           </button>
         )}
+        <div className="flex items-center gap-2">
+          {student.teacher.user.phone && (
+            <a href={`tel:${student.teacher.user.phone}`} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-green-50 hover:text-green-700 hover:border-green-200 transition">
+              <Phone size={13} /> Appeler
+            </a>
+          )}
+          <a href={`mailto:${student.teacher.user.email}`} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition">
+            <Mail size={13} /> Email
+          </a>
+        </div>
       </div>
 
       {/* Chat panel */}
@@ -164,6 +167,8 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([])
   const [attendances, setAttendances] = useState<Attendance[]>([])
   const [dailyLogs, setDailyLogs] = useState<any[]>([])
+  const [dailyLogRange, setDailyLogRange] = useState<7 | 14 | 30>(7)
+  const [showEmptyDays, setShowEmptyDays] = useState(false)
   const [badges, setBadges] = useState<Badge[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -219,6 +224,23 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
   const presentCnt = attendances.filter(a => a.status === "PRESENT" || a.status === "LATE").length
   const attRate = attendances.length > 0 ? Math.round((presentCnt / attendances.length) * 100) : 0
   const avgScore = evaluations.length > 0 ? Math.round(evaluations.reduce((a, e) => a + e.finalScore, 0) / evaluations.length) : null
+
+  const logHasContent = (log: any) =>
+    log.hifzFromSurahId ||
+    log.murajaFromSurahId ||
+    log.talqinFromSurahId ||
+    log.courseBook ||
+    (log.globalScore !== null && log.globalScore !== undefined) ||
+    log.teacherObservation
+
+  const filteredLogs = useMemo(() => {
+    const cutoff = new Date()
+    cutoff.setHours(0, 0, 0, 0)
+    cutoff.setDate(cutoff.getDate() - dailyLogRange + 1)
+    return dailyLogs
+      .filter((log) => new Date(log.date) >= cutoff)
+      .filter((log) => showEmptyDays || logHasContent(log))
+  }, [dailyLogs, dailyLogRange, showEmptyDays])
 
   const LEVEL_LABEL: Record<string, string> = { beginner: "Débutant", intermediate: "Intermédiaire", advanced: "Avancé" }
 
@@ -453,93 +475,99 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
 
       {/* ── Carnet de suivi quotidien ── */}
       <div>
-        <SectionTitle icon={ClipboardList} title={t("dailyLog")} count={dailyLogs.length} />
-        {dailyLogs.length === 0 ? (
+        <div className="flex items-center justify-between mb-3">
+          <SectionTitle icon={ClipboardList} title={t("dailyLog")} count={filteredLogs.length} />
+          <div className="flex items-center gap-2">
+            <div className="flex items-center bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-0.5">
+              {[7, 14, 30].map((d) => (
+                <button
+                  key={d}
+                  onClick={() => setDailyLogRange(d as 7 | 14 | 30)}
+                  className={cn(
+                    "px-2 py-1 text-[10px] font-medium rounded-md transition",
+                    dailyLogRange === d
+                      ? "bg-tahfidz-green text-white"
+                      : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                  )}
+                >
+                  {d}j
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowEmptyDays((v) => !v)}
+              title={showEmptyDays ? t("hideEmptyDays") : t("showEmptyDays")}
+              className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-gray-500 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg hover:text-gray-700 transition"
+            >
+              {showEmptyDays ? <EyeOff size={12} /> : <Eye size={12} />}
+              {showEmptyDays ? t("hideEmptyDays") : t("showEmptyDays")}
+            </button>
+          </div>
+        </div>
+
+        {filteredLogs.length === 0 ? (
           <p className="text-sm text-gray-400 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6">{t("noDailyLog")}</p>
         ) : (
-          <div className="space-y-3">
-            {dailyLogs.slice(0, 7).map((log: any) => (
+          <div className="space-y-4">
+            {filteredLogs.map((log: any) => (
               <div key={log.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 shadow-sm">
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-3">
                   <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{fmtDate(log.date, L, { weekday: "short", day: "2-digit", month: "short" })}</p>
                   {log.globalScore !== null && log.globalScore !== undefined && (
                     <span className="text-xs font-bold text-tahfidz-green bg-tahfidz-green-light px-2 py-0.5 rounded-lg">{log.globalScore}/20</span>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-2">
+
+                <div className="space-y-3">
+                  {log.attendanceStatus && (
+                    <div className="space-y-1">
+                      <span className={cn("inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg border", ATT_CFG[log.attendanceStatus]?.cls ?? "bg-gray-100 text-gray-600")}>
+                        {ATT_CFG[log.attendanceStatus]?.label ?? log.attendanceStatus}
+                      </span>
+                      <DailyLogSectionThread studentId={studentId} dailyLogId={log.id} section="ATTENDANCE" sectionLabel={t("dailyLogSectionPresence")} />
+                    </div>
+                  )}
                   {log.hifzFromSurahId && (
-                    <span className="text-[11px] px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100">
-                      Hifz: {formatRange(log.hifzFromSurahId, log.hifzFromVerse, log.hifzToSurahId, log.hifzToVerse)}
-                    </span>
+                    <div className="space-y-1">
+                      <span className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100">
+                        {t("dailyLogSectionHifz")}: {formatRange(log.hifzFromSurahId, log.hifzFromVerse, log.hifzToSurahId, log.hifzToVerse)}
+                      </span>
+                      <DailyLogSectionThread studentId={studentId} dailyLogId={log.id} section="HIFZ" sectionLabel={t("dailyLogSectionHifz")} />
+                    </div>
                   )}
                   {log.murajaFromSurahId && (
-                    <span className="text-[11px] px-2 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100">
-                      Muraja: {formatRange(log.murajaFromSurahId, log.murajaFromVerse, log.murajaToSurahId, log.murajaToVerse)}
-                    </span>
+                    <div className="space-y-1">
+                      <span className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100">
+                        {t("dailyLogSectionMuraja")}: {formatRange(log.murajaFromSurahId, log.murajaFromVerse, log.murajaToSurahId, log.murajaToVerse)}
+                      </span>
+                      <DailyLogSectionThread studentId={studentId} dailyLogId={log.id} section="MURAJA" sectionLabel={t("dailyLogSectionMuraja")} />
+                    </div>
                   )}
                   {log.talqinFromSurahId && (
-                    <span className="text-[11px] px-2 py-1 rounded-lg bg-purple-50 text-purple-700 border border-purple-100">
-                      Talqin: {formatRange(log.talqinFromSurahId, log.talqinFromVerse, log.talqinToSurahId, log.talqinToVerse)}
-                    </span>
+                    <div className="space-y-1">
+                      <span className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg bg-purple-50 text-purple-700 border border-purple-100">
+                        {t("dailyLogSectionTalqin")}: {formatRange(log.talqinFromSurahId, log.talqinFromVerse, log.talqinToSurahId, log.talqinToVerse)}
+                      </span>
+                      <DailyLogSectionThread studentId={studentId} dailyLogId={log.id} section="TALQIN" sectionLabel={t("dailyLogSectionTalqin")} />
+                    </div>
                   )}
                   {log.courseBook && (
-                    <span className="text-[11px] px-2 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-100">
-                      Cours: {log.courseBook} {log.courseFromPage}{log.courseToPage && log.courseToPage !== log.courseFromPage ? `→${log.courseToPage}` : ""}
-                    </span>
+                    <div className="space-y-1">
+                      <span className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-100">
+                        {t("dailyLogSectionCourse")}: {log.courseBook} {log.courseFromPage}{log.courseToPage && log.courseToPage !== log.courseFromPage ? `→${log.courseToPage}` : ""}
+                      </span>
+                      <DailyLogSectionThread studentId={studentId} dailyLogId={log.id} section="COURSE" sectionLabel={t("dailyLogSectionCourse")} />
+                    </div>
                   )}
-                  {log.attendanceStatus && (
-                    <span className={cn("text-[11px] px-2 py-1 rounded-lg border", ATT_CFG[log.attendanceStatus]?.cls ?? "bg-gray-100 text-gray-600")}>
-                      {ATT_CFG[log.attendanceStatus]?.label ?? log.attendanceStatus}
-                    </span>
+                  {log.teacherObservation && (
+                    <div className="space-y-1">
+                      <p className="text-xs text-gray-500 italic border-l-2 border-tahfidz-green pl-3">« {log.teacherObservation} »</p>
+                      <DailyLogSectionThread studentId={studentId} dailyLogId={log.id} section="GENERAL" sectionLabel={t("dailyLogSectionGeneral")} />
+                    </div>
                   )}
                 </div>
-                {log.teacherObservation && (
-                  <p className="mt-2 text-xs text-gray-500 italic border-l-2 border-tahfidz-green pl-3">« {log.teacherObservation} »</p>
-                )}
               </div>
             ))}
-          </div>
-        )}
-      </div>
-
-      {/* ── Présences ── */}
-      <div>
-        <SectionTitle icon={CalendarCheck} title={t("attendance") || "Présences"} count={attendances.length} />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-          {Object.entries(ATT_CFG).map(([status, cfg]) => {
-            const count = attendances.filter(a => a.status === status).length
-            return (
-              <div key={status} className={`rounded-xl p-2.5 text-center border ${cfg.cls} bg-opacity-30`}>
-                <span className={`inline-block w-2 h-2 rounded-full ${cfg.dot} mb-1`} />
-                <p className="text-lg font-bold">{count}</p>
-                <p className="text-[9px] font-bold">{cfg.label}</p>
-              </div>
-            )
-          })}
-        </div>
-        {attendances.length === 0 ? (
-          <p className="text-sm text-gray-400 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6">{t("noAtt")}</p>
-        ) : (
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 shadow-sm">
-            <div className="flex flex-wrap gap-1.5">
-              {attendances.map(att => {
-                const cfg = ATT_CFG[att.status] ?? ATT_CFG.ABSENT
-                return (
-                  <div key={att.id}
-                    title={`${cfg.label} — ${fmtDate(att.date, L, { weekday: "long", day: "2-digit", month: "short" })}${att.notes ? ` — ${att.notes}` : ""}`}
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold cursor-help transition hover:scale-110 ${cfg.cls}`}>
-                    {cfg.short}
-                  </div>
-                )
-              })}
-            </div>
-            <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-gray-50 dark:border-gray-800">
-              {Object.entries(ATT_CFG).map(([, cfg]) => (
-                <span key={cfg.label} className="flex items-center gap-1 text-[10px]">
-                  <span className={`w-2 h-2 rounded-full ${cfg.dot}`} /> {cfg.label}
-                </span>
-              ))}
-            </div>
           </div>
         )}
       </div>
