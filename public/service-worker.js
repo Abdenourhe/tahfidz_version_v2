@@ -26,6 +26,17 @@ self.addEventListener("push", (event) => {
   event.waitUntil(self.registration.showNotification(title, options))
 })
 
+self.addEventListener("pushsubscriptionchange", (event) => {
+  // L'abonnement a été renouvelé par le navigateur. On ne peut pas le renvoyer
+  // automatiquement sans la clé VAPID côté client, donc on notifie l'utilisateur.
+  event.waitUntil(
+    self.registration.showNotification("TAHFIDZ", {
+      body: "Veuillez réactiver les notifications dans les paramètres.",
+      tag: "subscription-change",
+    })
+  )
+})
+
 self.addEventListener("notificationclick", (event) => {
   event.notification.close()
   const url = event.notification.data?.url || "/"

@@ -1454,6 +1454,8 @@ export const translations = {
   pushNotifications: {
     enabled:           { fr: "Notifications actives", en: "Notifications on", ar: "الإشعارات مفعلة" },
     disabled:          { fr: "Activer les notifications", en: "Enable notifications", ar: "تفعيل الإشعارات" },
+    notSupported:      { fr: "Navigateur incompatible", en: "Browser not supported", ar: "المتصفح غير مدعوم" },
+    permissionDenied:  { fr: "Permission refusée", en: "Permission denied", ar: "الإذن مرفوض" },
   },
 
   // ─── parentDailyLog (components/parent/ParentDailyLogView.tsx) ─────────────────────────────────────────────
