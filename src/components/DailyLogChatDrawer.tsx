@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useSession } from "next-auth/react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { cn } from "@/lib/utils"
+import PushNotificationToggle from "@/components/parent/PushNotificationToggle"
 import {
   MessageCircle,
   Send,
@@ -490,6 +491,7 @@ export default function DailyLogChatDrawer({
                     {totalUnread} {t("newMessages")}
                   </span>
                 )}
+                <PushNotificationToggle />
                 {canClearSection && activeData && activeData.comments.length > 0 && (
                   <button
                     onClick={clearSection}

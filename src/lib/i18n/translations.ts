@@ -1450,6 +1450,12 @@ export const translations = {
     section_GENERAL:   { fr: "Général", en: "General", ar: "عام" },
   },
 
+  // ─── pushNotifications (components/parent/PushNotificationToggle.tsx) ─────────────────────────────────────────────
+  pushNotifications: {
+    enabled:           { fr: "Notifications actives", en: "Notifications on", ar: "الإشعارات مفعلة" },
+    disabled:          { fr: "Activer les notifications", en: "Enable notifications", ar: "تفعيل الإشعارات" },
+  },
+
   // ─── parentDailyLog (components/parent/ParentDailyLogView.tsx) ─────────────────────────────────────────────
   parentDailyLog: {
     noLogs:            { fr: "Aucun carnet disponible pour le moment.", en: "No daily logs available yet.", ar: "لا يوجد سجلات متاحة حالياً." },

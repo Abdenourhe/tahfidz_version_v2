@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { sendPushToUsers } from "@/lib/web-push"
 
 const ALL_SECTIONS = ["ATTENDANCE", "HIFZ", "MURAJA", "TALQIN", "COURSE", "GENERAL"]
 
@@ -155,6 +156,40 @@ export async function POST(
         reactions: { select: { emoji: true, userId: true } },
       },
     })
+
+    // Notifier les autres participants par push
+    const recipients = new Set<string>()
+    const isTeacherLike =
+      session.user.role === "TEACHER" ||
+      session.user.role === "ADMIN" ||
+      session.user.role === "SUPERADMIN"
+    const isParent = session.user.role === "PARENT"
+
+    if (isTeacherLike) {
+      student.parentLinks.forEach((l) => recipients.add(l.parent.userId))
+    }
+    if (isParent || session.user.role === "ADMIN" || session.user.role === "SUPERADMIN") {
+      if (student.teacher?.userId) recipients.add(student.teacher.userId)
+    }
+    recipients.delete(session.user.id)
+
+    if (recipients.size > 0) {
+      const senderName = comment.user.fullName || "Quelqu'un"
+      const sectionLabels: Record<string, string> = {
+        ATTENDANCE: "Présence",
+        HIFZ: "Hifz",
+        MURAJA: "Muraja'a",
+        TALQIN: "Talqin",
+        COURSE: "Cours",
+        GENERAL: "Général",
+      }
+      sendPushToUsers(Array.from(recipients), {
+        title: "Nouveau message — TAHFIDZ",
+        body: `${senderName} a commenté ${sectionLabels[section] || section}`,
+        url: `/parent/child/${studentId}`,
+        tag: `daily-log-${dailyLogId}-${section}`,
+      }).catch((e) => console.error("[PUSH COMMENT]", e))
+    }
 
     return NextResponse.json({ comment }, { status: 201 })
   } catch (error: any) {
