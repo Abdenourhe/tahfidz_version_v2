@@ -68,6 +68,12 @@ interface StudentRow {
   user: { id: string; fullName: string; fullNameAr: string | null; avatar: string | null }
   group: { id: string; name: string; nameAr: string | null } | null
   dailyLog: DailyLog | null
+  lastLogs: {
+    hifz?: DailyLog
+    muraja?: DailyLog
+    talqin?: DailyLog
+    course?: DailyLog
+  }
   activeProgress: ActiveProgress | null
   readyForEvaluation: boolean
 }
@@ -402,6 +408,19 @@ export function TeacherStudentsGrid({ initialGroups }: Props) {
   const isRtl = dir === "rtl"
   const PrevIcon = isRtl ? ChevronRight : ChevronLeft
   const NextIcon = isRtl ? ChevronLeft : ChevronRight
+
+  const lastLogForModal = (student: StudentRow, section: ModalMode) => {
+    if (section === "FULL" || section === "ATTENDANCE") {
+      return {
+        ...student.lastLogs.hifz,
+        ...student.lastLogs.muraja,
+        ...student.lastLogs.talqin,
+        ...student.lastLogs.course,
+      }
+    }
+    const key = section.toLowerCase() as keyof StudentRow["lastLogs"]
+    return student.lastLogs[key]
+  }
 
   return (
     <div className="space-y-4">
@@ -785,7 +804,12 @@ export function TeacherStudentsGrid({ initialGroups }: Props) {
                         >
                           {log?.hifzFromSurahId
                             ? verseRange(findSurah(log.hifzFromSurahId), log.hifzFromVerse, findSurah(log.hifzToSurahId), log.hifzToVerse, L)
-                            : <EmptyCell label={t("fill")} colorClass="text-emerald-400/70 dark:text-emerald-500/60" />}
+                            : student.lastLogs.hifz
+                              ? (() => {
+                                  const text = verseRange(findSurah(student.lastLogs.hifz.hifzFromSurahId), student.lastLogs.hifz.hifzFromVerse, findSurah(student.lastLogs.hifz.hifzToSurahId), student.lastLogs.hifz.hifzToVerse, L)
+                                  return <span className="text-emerald-700/50 dark:text-emerald-300/50 truncate" title={`${t("last")}: ${text}`}>{text}</span>
+                                })()
+                              : <EmptyCell label={t("fill")} colorClass="text-emerald-400/70 dark:text-emerald-500/60" />}
                         </button>
                       </td>
 
@@ -802,7 +826,12 @@ export function TeacherStudentsGrid({ initialGroups }: Props) {
                         >
                           {log?.murajaFromSurahId
                             ? verseRange(findSurah(log.murajaFromSurahId), log.murajaFromVerse, findSurah(log.murajaToSurahId), log.murajaToVerse, L)
-                            : <EmptyCell label={t("fill")} colorClass="text-blue-400/70 dark:text-blue-500/60" />}
+                            : student.lastLogs.muraja
+                              ? (() => {
+                                  const text = verseRange(findSurah(student.lastLogs.muraja.murajaFromSurahId), student.lastLogs.muraja.murajaFromVerse, findSurah(student.lastLogs.muraja.murajaToSurahId), student.lastLogs.muraja.murajaToVerse, L)
+                                  return <span className="text-blue-700/50 dark:text-blue-300/50 truncate" title={`${t("last")}: ${text}`}>{text}</span>
+                                })()
+                              : <EmptyCell label={t("fill")} colorClass="text-blue-400/70 dark:text-blue-500/60" />}
                         </button>
                       </td>
 
@@ -819,7 +848,12 @@ export function TeacherStudentsGrid({ initialGroups }: Props) {
                         >
                           {log?.talqinFromSurahId
                             ? verseRange(findSurah(log.talqinFromSurahId), log.talqinFromVerse, findSurah(log.talqinToSurahId), log.talqinToVerse, L)
-                            : <EmptyCell label={t("fill")} colorClass="text-purple-400/70 dark:text-purple-500/60" />}
+                            : student.lastLogs.talqin
+                              ? (() => {
+                                  const text = verseRange(findSurah(student.lastLogs.talqin.talqinFromSurahId), student.lastLogs.talqin.talqinFromVerse, findSurah(student.lastLogs.talqin.talqinToSurahId), student.lastLogs.talqin.talqinToVerse, L)
+                                  return <span className="text-purple-700/50 dark:text-purple-300/50 truncate" title={`${t("last")}: ${text}`}>{text}</span>
+                                })()
+                              : <EmptyCell label={t("fill")} colorClass="text-purple-400/70 dark:text-purple-500/60" />}
                         </button>
                       </td>
 
@@ -836,7 +870,13 @@ export function TeacherStudentsGrid({ initialGroups }: Props) {
                         >
                           {log?.courseBook
                             ? `${log.courseBook}${log.courseFromPage ? ` ${log.courseFromPage}${log.courseToPage && log.courseToPage !== log.courseFromPage ? `→${log.courseToPage}` : ""}` : ""}`
-                            : <EmptyCell label={t("fill")} colorClass="text-amber-400/70 dark:text-amber-500/60" />}
+                            : student.lastLogs.course
+                              ? (() => {
+                                  const last = student.lastLogs.course
+                                  const text = `${last.courseBook}${last.courseFromPage ? ` ${last.courseFromPage}${last.courseToPage && last.courseToPage !== last.courseFromPage ? `→${last.courseToPage}` : ""}` : ""}`
+                                  return <span className="text-amber-700/50 dark:text-amber-300/50 truncate" title={`${t("last")}: ${text}`}>{text}</span>
+                                })()
+                              : <EmptyCell label={t("fill")} colorClass="text-amber-400/70 dark:text-amber-500/60" />}
                         </button>
                       </td>
 
@@ -964,6 +1004,7 @@ export function TeacherStudentsGrid({ initialGroups }: Props) {
           date={date}
           defaultSection={modal.section}
           singleSection={modal.section !== "FULL"}
+          lastLog={lastLogForModal(modal.student, modal.section)}
           onClose={() => setModal({ open: false, student: null, section: "HIFZ" })}
           onSaved={loadData}
         />

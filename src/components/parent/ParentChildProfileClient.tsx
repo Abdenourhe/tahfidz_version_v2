@@ -6,10 +6,11 @@ import Link from "next/link"
 import {
   ArrowLeft, BookOpen, Star, Award, CalendarCheck,
   Phone, Mail, RefreshCw, CheckCircle2, RotateCcw, X, Clock,
-  TrendingUp, Flame, MessageCircle
+  TrendingUp, Flame, MessageCircle, ClipboardList
 } from "lucide-react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { useSession } from "next-auth/react"
+import { cn } from "@/lib/utils"
 import { AvatarUploader } from "@/components/shared/AvatarUploader"
 import { TeacherChat } from "@/components/parent/TeacherChat"
 
@@ -162,26 +163,30 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
   const [progress, setProgress] = useState<Progress[]>([])
   const [evaluations, setEvaluations] = useState<Evaluation[]>([])
   const [attendances, setAttendances] = useState<Attendance[]>([])
+  const [dailyLogs, setDailyLogs] = useState<any[]>([])
   const [badges, setBadges] = useState<Badge[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [_lastSync, setLastSync] = useState<Date>(new Date())
+  const [surahs, setSurahs] = useState<Record<number, { nameFr: string; nameAr: string }>>({})
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true)
     else setRefreshing(true)
     try {
-      const [studRes, progRes, evalRes, attRes] = await Promise.all([
+      const [studRes, progRes, evalRes, attRes, logRes] = await Promise.all([
         fetch(`/api/students/${studentId}`),
         fetch(`/api/progress?studentId=${studentId}`),
         fetch(`/api/evaluations?studentId=${studentId}&limit=10`),
         fetch(`/api/attendance?studentId=${studentId}&dateFrom=${(() => { const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString().split("T")[0] })()}T00:00:00Z`),
+        fetch(`/api/students/${studentId}/daily-log?recent=true`),
       ])
-      const [studData, progData, evalData, attData] = await Promise.all([
+      const [studData, progData, evalData, attData, logData] = await Promise.all([
         studRes.ok ? studRes.json() : null,
         progRes.ok ? progRes.json() : null,
         evalRes.ok ? evalRes.json() : null,
         attRes.ok ? attRes.json() : null,
+        logRes.ok ? logRes.json() : null,
       ])
       if (studData?.student) {
         setStudent(studData.student)
@@ -191,12 +196,23 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
       if (progData?.progress) setProgress(progData.progress)
       if (evalData?.evaluations) setEvaluations(evalData.evaluations)
       if (attData?.attendances) setAttendances(attData.attendances)
+      if (logData?.logs) setDailyLogs(logData.logs)
       setLastSync(new Date())
     } finally { setLoading(false); setRefreshing(false) }
   }, [studentId])
 
   useEffect(() => { load() }, [load])
   useEffect(() => { const id = setInterval(() => load(true), 60_000); return () => clearInterval(id) }, [load])
+
+  useEffect(() => {
+    fetch("/api/surahs")
+      .then((r) => r.json())
+      .then((d) => {
+        const map: Record<number, { nameFr: string; nameAr: string }> = {}
+        ;(d.surahs || []).forEach((s: any) => { map[s.id] = s })
+        setSurahs(map)
+      })
+  }, [])
 
   const memorized = progress.filter(p => p.status === "MEMORIZED")
   const inProgress = progress.filter(p => p.status !== "MEMORIZED")
@@ -225,6 +241,21 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
   }
 
   const u = student.user
+
+  const surahName = (id?: number | null) => id && surahs[id] ? (L === "ar" ? surahs[id].nameAr : surahs[id].nameFr) : null
+
+  const formatRange = (fromSurahId?: number | null, fromVerse?: number | null, toSurahId?: number | null, toVerse?: number | null) => {
+    const a = surahName(fromSurahId)
+    const b = surahName(toSurahId)
+    if (!a && !b) return null
+    const same = !toSurahId || fromSurahId === toSurahId
+    if (same) {
+      if (fromVerse && toVerse && fromVerse !== toVerse) return `${a} ${fromVerse}→${toVerse}`
+      if (fromVerse) return `${a} ${fromVerse}`
+      return a
+    }
+    return `${a} ${fromVerse ?? ""} → ${b} ${toVerse ?? ""}`
+  }
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -416,6 +447,57 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
                 </div>
               )
             })}
+          </div>
+        )}
+      </div>
+
+      {/* ── Carnet de suivi quotidien ── */}
+      <div>
+        <SectionTitle icon={ClipboardList} title={t("dailyLog")} count={dailyLogs.length} />
+        {dailyLogs.length === 0 ? (
+          <p className="text-sm text-gray-400 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6">{t("noDailyLog")}</p>
+        ) : (
+          <div className="space-y-3">
+            {dailyLogs.slice(0, 7).map((log: any) => (
+              <div key={log.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{fmtDate(log.date, L, { weekday: "short", day: "2-digit", month: "short" })}</p>
+                  {log.globalScore !== null && log.globalScore !== undefined && (
+                    <span className="text-xs font-bold text-tahfidz-green bg-tahfidz-green-light px-2 py-0.5 rounded-lg">{log.globalScore}/20</span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {log.hifzFromSurahId && (
+                    <span className="text-[11px] px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100">
+                      Hifz: {formatRange(log.hifzFromSurahId, log.hifzFromVerse, log.hifzToSurahId, log.hifzToVerse)}
+                    </span>
+                  )}
+                  {log.murajaFromSurahId && (
+                    <span className="text-[11px] px-2 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100">
+                      Muraja: {formatRange(log.murajaFromSurahId, log.murajaFromVerse, log.murajaToSurahId, log.murajaToVerse)}
+                    </span>
+                  )}
+                  {log.talqinFromSurahId && (
+                    <span className="text-[11px] px-2 py-1 rounded-lg bg-purple-50 text-purple-700 border border-purple-100">
+                      Talqin: {formatRange(log.talqinFromSurahId, log.talqinFromVerse, log.talqinToSurahId, log.talqinToVerse)}
+                    </span>
+                  )}
+                  {log.courseBook && (
+                    <span className="text-[11px] px-2 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-100">
+                      Cours: {log.courseBook} {log.courseFromPage}{log.courseToPage && log.courseToPage !== log.courseFromPage ? `→${log.courseToPage}` : ""}
+                    </span>
+                  )}
+                  {log.attendanceStatus && (
+                    <span className={cn("text-[11px] px-2 py-1 rounded-lg border", ATT_CFG[log.attendanceStatus]?.cls ?? "bg-gray-100 text-gray-600")}>
+                      {ATT_CFG[log.attendanceStatus]?.label ?? log.attendanceStatus}
+                    </span>
+                  )}
+                </div>
+                {log.teacherObservation && (
+                  <p className="mt-2 text-xs text-gray-500 italic border-l-2 border-tahfidz-green pl-3">« {log.teacherObservation} »</p>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>

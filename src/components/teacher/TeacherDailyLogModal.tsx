@@ -13,12 +13,38 @@ interface Surah {
 
 type LogSection = "HIFZ" | "MURAJA" | "TALQIN" | "COURSE" | "ATTENDANCE" | "FULL"
 
+interface LastLogValues {
+  hifzFromSurahId?: number | null
+  hifzFromVerse?: number | null
+  hifzToSurahId?: number | null
+  hifzToVerse?: number | null
+  hifzNote?: string | null
+  murajaFromSurahId?: number | null
+  murajaFromVerse?: number | null
+  murajaToSurahId?: number | null
+  murajaToVerse?: number | null
+  murajaNote?: string | null
+  talqinFromSurahId?: number | null
+  talqinFromVerse?: number | null
+  talqinToSurahId?: number | null
+  talqinToVerse?: number | null
+  talqinNote?: string | null
+  courseBook?: string | null
+  courseFromPage?: number | null
+  courseToPage?: number | null
+  courseNote?: string | null
+  attendanceStatus?: string | null
+  teacherObservation?: string | null
+  globalScore?: number | null
+}
+
 interface Props {
   studentId: string
   studentName: string
   date?: string
   defaultSection?: LogSection
   singleSection?: boolean
+  lastLog?: LastLogValues | null
   onClose: () => void
   onSaved?: () => void
 }
@@ -80,7 +106,7 @@ function Section({
   )
 }
 
-export function TeacherDailyLogModal({ studentId, studentName, date: initialDate, defaultSection, singleSection = false, onClose, onSaved }: Props) {
+export function TeacherDailyLogModal({ studentId, studentName, date: initialDate, defaultSection, singleSection = false, lastLog, onClose, onSaved }: Props) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
   const t = useT("teacherDailyLog")
@@ -142,45 +168,35 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
     fetch(`/api/students/${studentId}/daily-log?date=${date}`)
       .then((r) => r.json())
       .then((d) => {
-        if (d.log) {
-          const log = d.log
-          setExistingLogId(log.id)
-          setForm({
-            hifzFromSurahId: log.hifzFromSurahId?.toString() || "",
-            hifzFromVerse: log.hifzFromVerse?.toString() || "",
-            hifzToSurahId: log.hifzToSurahId?.toString() || "",
-            hifzToVerse: log.hifzToVerse?.toString() || "",
-            hifzNote: log.hifzNote || "",
-            murajaFromSurahId: log.murajaFromSurahId?.toString() || "",
-            murajaFromVerse: log.murajaFromVerse?.toString() || "",
-            murajaToSurahId: log.murajaToSurahId?.toString() || "",
-            murajaToVerse: log.murajaToVerse?.toString() || "",
-            murajaNote: log.murajaNote || "",
-            talqinFromSurahId: log.talqinFromSurahId?.toString() || "",
-            talqinFromVerse: log.talqinFromVerse?.toString() || "",
-            talqinToSurahId: log.talqinToSurahId?.toString() || "",
-            talqinToVerse: log.talqinToVerse?.toString() || "",
-            talqinNote: log.talqinNote || "",
-            courseBook: log.courseBook || "",
-            courseFromPage: log.courseFromPage?.toString() || "",
-            courseToPage: log.courseToPage?.toString() || "",
-            courseNote: log.courseNote || "",
-            attendanceStatus: log.attendanceStatus || "PRESENT",
-            teacherObservation: log.teacherObservation || "",
-            globalScore: log.globalScore?.toString() || "",
-          })
-        } else {
-          setExistingLogId(null)
-          setForm({
-            hifzFromSurahId: "", hifzFromVerse: "", hifzToSurahId: "", hifzToVerse: "", hifzNote: "",
-            murajaFromSurahId: "", murajaFromVerse: "", murajaToSurahId: "", murajaToVerse: "", murajaNote: "",
-            talqinFromSurahId: "", talqinFromVerse: "", talqinToSurahId: "", talqinToVerse: "", talqinNote: "",
-            courseBook: "", courseFromPage: "", courseToPage: "", courseNote: "",
-            attendanceStatus: "PRESENT", teacherObservation: "", globalScore: "",
-          })
-        }
+        const log = d.log
+        setExistingLogId(log?.id || null)
+        // Fusion : valeurs du jour prioritaires, sinon dernières valeurs connues
+        setForm({
+          hifzFromSurahId: log?.hifzFromSurahId?.toString() || lastLog?.hifzFromSurahId?.toString() || "",
+          hifzFromVerse: log?.hifzFromVerse?.toString() || lastLog?.hifzFromVerse?.toString() || "",
+          hifzToSurahId: log?.hifzToSurahId?.toString() || lastLog?.hifzToSurahId?.toString() || "",
+          hifzToVerse: log?.hifzToVerse?.toString() || lastLog?.hifzToVerse?.toString() || "",
+          hifzNote: log?.hifzNote || lastLog?.hifzNote || "",
+          murajaFromSurahId: log?.murajaFromSurahId?.toString() || lastLog?.murajaFromSurahId?.toString() || "",
+          murajaFromVerse: log?.murajaFromVerse?.toString() || lastLog?.murajaFromVerse?.toString() || "",
+          murajaToSurahId: log?.murajaToSurahId?.toString() || lastLog?.murajaToSurahId?.toString() || "",
+          murajaToVerse: log?.murajaToVerse?.toString() || lastLog?.murajaToVerse?.toString() || "",
+          murajaNote: log?.murajaNote || lastLog?.murajaNote || "",
+          talqinFromSurahId: log?.talqinFromSurahId?.toString() || lastLog?.talqinFromSurahId?.toString() || "",
+          talqinFromVerse: log?.talqinFromVerse?.toString() || lastLog?.talqinFromVerse?.toString() || "",
+          talqinToSurahId: log?.talqinToSurahId?.toString() || lastLog?.talqinToSurahId?.toString() || "",
+          talqinToVerse: log?.talqinToVerse?.toString() || lastLog?.talqinToVerse?.toString() || "",
+          talqinNote: log?.talqinNote || lastLog?.talqinNote || "",
+          courseBook: log?.courseBook || lastLog?.courseBook || "",
+          courseFromPage: log?.courseFromPage?.toString() || lastLog?.courseFromPage?.toString() || "",
+          courseToPage: log?.courseToPage?.toString() || lastLog?.courseToPage?.toString() || "",
+          courseNote: log?.courseNote || lastLog?.courseNote || "",
+          attendanceStatus: log?.attendanceStatus || lastLog?.attendanceStatus || "PRESENT",
+          teacherObservation: log?.teacherObservation || lastLog?.teacherObservation || "",
+          globalScore: log?.globalScore?.toString() || lastLog?.globalScore?.toString() || "",
+        })
       })
-  }, [studentId, date])
+  }, [studentId, date, lastLog])
 
   const update = (field: string, value: string) => setForm((f) => ({ ...f, [field]: value }))
 
@@ -191,32 +207,44 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
       const num = (v: string) => (v ? parseInt(v, 10) : null)
       const addIf = (key: string, val: string) => { if (val) body[key] = num(val) || val }
 
-      addIf("hifzFromSurahId", form.hifzFromSurahId)
-      addIf("hifzFromVerse", form.hifzFromVerse)
-      addIf("hifzToSurahId", form.hifzToSurahId)
-      addIf("hifzToVerse", form.hifzToVerse)
-      if (form.hifzNote) body.hifzNote = form.hifzNote
+      const includeSection = (section: LogSection) => !singleSection || defaultSection === section
 
-      addIf("murajaFromSurahId", form.murajaFromSurahId)
-      addIf("murajaFromVerse", form.murajaFromVerse)
-      addIf("murajaToSurahId", form.murajaToSurahId)
-      addIf("murajaToVerse", form.murajaToVerse)
-      if (form.murajaNote) body.murajaNote = form.murajaNote
+      if (includeSection("HIFZ")) {
+        addIf("hifzFromSurahId", form.hifzFromSurahId)
+        addIf("hifzFromVerse", form.hifzFromVerse)
+        addIf("hifzToSurahId", form.hifzToSurahId)
+        addIf("hifzToVerse", form.hifzToVerse)
+        if (form.hifzNote) body.hifzNote = form.hifzNote
+      }
 
-      addIf("talqinFromSurahId", form.talqinFromSurahId)
-      addIf("talqinFromVerse", form.talqinFromVerse)
-      addIf("talqinToSurahId", form.talqinToSurahId)
-      addIf("talqinToVerse", form.talqinToVerse)
-      if (form.talqinNote) body.talqinNote = form.talqinNote
+      if (includeSection("MURAJA")) {
+        addIf("murajaFromSurahId", form.murajaFromSurahId)
+        addIf("murajaFromVerse", form.murajaFromVerse)
+        addIf("murajaToSurahId", form.murajaToSurahId)
+        addIf("murajaToVerse", form.murajaToVerse)
+        if (form.murajaNote) body.murajaNote = form.murajaNote
+      }
 
-      if (form.courseBook) body.courseBook = form.courseBook
-      addIf("courseFromPage", form.courseFromPage)
-      addIf("courseToPage", form.courseToPage)
-      if (form.courseNote) body.courseNote = form.courseNote
+      if (includeSection("TALQIN")) {
+        addIf("talqinFromSurahId", form.talqinFromSurahId)
+        addIf("talqinFromVerse", form.talqinFromVerse)
+        addIf("talqinToSurahId", form.talqinToSurahId)
+        addIf("talqinToVerse", form.talqinToVerse)
+        if (form.talqinNote) body.talqinNote = form.talqinNote
+      }
 
-      body.attendanceStatus = form.attendanceStatus
-      if (form.teacherObservation) body.teacherObservation = form.teacherObservation
-      addIf("globalScore", form.globalScore)
+      if (includeSection("COURSE")) {
+        if (form.courseBook) body.courseBook = form.courseBook
+        addIf("courseFromPage", form.courseFromPage)
+        addIf("courseToPage", form.courseToPage)
+        if (form.courseNote) body.courseNote = form.courseNote
+      }
+
+      if (!singleSection) {
+        body.attendanceStatus = form.attendanceStatus
+        if (form.teacherObservation) body.teacherObservation = form.teacherObservation
+        addIf("globalScore", form.globalScore)
+      }
 
       const method = existingLogId ? "PATCH" : "POST"
       const res = await fetch(`/api/students/${studentId}/daily-log`, {

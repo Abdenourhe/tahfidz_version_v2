@@ -75,6 +75,37 @@ export async function GET(req: NextRequest) {
       orderBy: { user: { fullName: "asc" } },
     })
 
+    // Derniers logs non vides par section pour chaque élève (avant la date sélectionnée)
+    const studentIds = students.map((s) => s.id)
+    const lastLogs = studentIds.length
+      ? await prisma.dailyProgressLog.findMany({
+          where: {
+            studentId: { in: studentIds },
+            date: { lt: dateObj },
+            OR: [
+              { hifzFromSurahId: { not: null } },
+              { murajaFromSurahId: { not: null } },
+              { talqinFromSurahId: { not: null } },
+              { courseBook: { not: null } },
+            ],
+          },
+          orderBy: { date: "desc" },
+          take: studentIds.length * 4,
+        })
+      : []
+
+    const lastByStudent = lastLogs.reduce<
+      Record<string, { hifz?: typeof lastLogs[0]; muraja?: typeof lastLogs[0]; talqin?: typeof lastLogs[0]; course?: typeof lastLogs[0] }>
+    >((acc, log) => {
+      if (!acc[log.studentId]) acc[log.studentId] = {}
+      const entry = acc[log.studentId]
+      if (log.hifzFromSurahId && !entry.hifz) entry.hifz = log
+      if (log.murajaFromSurahId && !entry.muraja) entry.muraja = log
+      if (log.talqinFromSurahId && !entry.talqin) entry.talqin = log
+      if (log.courseBook && !entry.course) entry.course = log
+      return acc
+    }, {})
+
     const result = students.map((s) => {
       const activeProgress = s.memorizationProgress[0] ?? null
       const readyForEvaluation = activeProgress
@@ -86,6 +117,7 @@ export async function GET(req: NextRequest) {
         user: s.user,
         group: s.group,
         dailyLog: s.dailyLogs[0] ?? null,
+        lastLogs: lastByStudent[s.id] || {},
         activeProgress,
         readyForEvaluation,
       }
@@ -104,6 +136,14 @@ export async function GET(req: NextRequest) {
         if (log.talqinFromSurahId) surahIds.add(log.talqinFromSurahId)
         if (log.talqinToSurahId) surahIds.add(log.talqinToSurahId)
       }
+    })
+    lastLogs.forEach((log) => {
+      if (log.hifzFromSurahId) surahIds.add(log.hifzFromSurahId)
+      if (log.hifzToSurahId) surahIds.add(log.hifzToSurahId)
+      if (log.murajaFromSurahId) surahIds.add(log.murajaFromSurahId)
+      if (log.murajaToSurahId) surahIds.add(log.murajaToSurahId)
+      if (log.talqinFromSurahId) surahIds.add(log.talqinFromSurahId)
+      if (log.talqinToSurahId) surahIds.add(log.talqinToSurahId)
     })
 
     const surahs = surahIds.size

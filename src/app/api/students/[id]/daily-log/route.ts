@@ -193,7 +193,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             titleAr: `سجل اليوم: ${student.user.fullName}`,
             message: `Le carnet de suivi du ${data.date} a été rempli par l'enseignant.`,
             messageAr: `تم ملء سجل المتابعة بتاريخ ${data.date} من قبل المعلم.`,
-            data: { logId: log.id, studentId: id, date: data.date, url: "/parent/dashboard" },
+            data: { logId: log.id, studentId: id, date: data.date, url: `/parent/child/${id}` },
           })),
         })
       }
@@ -301,7 +301,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
               titleAr: `سجل محدث: ${student.user.fullName}`,
               message: `Le carnet de suivi du ${data.date} a été mis à jour par l'enseignant.`,
               messageAr: `تم تحديث سجل المتابعة بتاريخ ${data.date} من قبل المعلم.`,
-              data: { logId: log.id, studentId: id, date: data.date, url: "/parent/dashboard" },
+              data: { logId: log.id, studentId: id, date: data.date, url: `/parent/child/${id}` },
             })),
           })
         }
