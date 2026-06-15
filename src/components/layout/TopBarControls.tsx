@@ -5,6 +5,7 @@
 import { useState, useEffect } from "react"
 import { useTheme } from "next-themes"
 import { useLanguage } from "@/contexts/LanguageContext"
+import PushNotificationToggle from "@/components/parent/PushNotificationToggle"
 import { Sun, Moon } from "lucide-react"
 import ReactCountryFlag from "react-country-flag"
 import { motion, AnimatePresence } from "framer-motion"
@@ -25,6 +26,8 @@ export function TopBarControls({ dropdownAlign = "right" }: TopBarControlsProps)
 
   return (
     <div className="flex items-center gap-2">
+      <PushNotificationToggle />
+
       {/* Language Switcher avec dropdown animé */}
       <div className="relative">
         <button
