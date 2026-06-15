@@ -58,7 +58,7 @@ const UI: Record<string, { fr: string; en: string; ar: string }> = {
   filters:             { fr: "Filtres",                    en: "Filters",                  ar: "فلاتر" },
   years:               { fr: "ans",                        en: "yrs",                      ar: "سنة" },
   notProvided:         { fr: "Non renseigné",              en: "Not set",                  ar: "غير محدد" },
-  subtitle:            { fr: "Gestion des inscriptions et suivis", en: "Enrollment and tracking management", ar: "إدارة التسجيلات والمتابعة" },
+  subtitle:            { fr: "Gestion des inscriptions et suivis", en: "Enrollment and follow-up management", ar: "إدارة التسجيلات والمتابعة" },
   certificate:         { fr: "Certificat",                 en: "Certificate",              ar: "شهادة" },
   registrationCard:    { fr: "Fiche d'inscription",        en: "Registration card",        ar: "بطاقة التسجيل" },
   viewProfile:         { fr: "Voir le profil",             en: "View profile",             ar: "عرض الملف" },

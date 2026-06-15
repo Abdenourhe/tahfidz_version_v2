@@ -64,7 +64,7 @@ export function TeacherStudentDetailClient({
   return (
     <div className="space-y-6 max-w-5xl">
       <div className="flex items-center gap-3">
-        <Link href="/teacher/tracking" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition">
+        <Link href="/teacher/students" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition">
           <ArrowLeft size={18} className="text-gray-500" />
         </Link>
         <div className="flex-1">

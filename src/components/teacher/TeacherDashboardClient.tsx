@@ -29,7 +29,7 @@ export function TeacherDashboardClient({ teacher, stats }: Props) {
       title: t("myStudents"),
       value: stats.totalStudents,
       icon: Users,
-      href: "/teacher/tracking",
+      href: "/teacher/students",
       color: "bg-blue-500",
     },
     {

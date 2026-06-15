@@ -1,14 +1,14 @@
-// src/app/teacher/tracking/page.tsx
+// src/app/teacher/students/page.tsx
 // Page hub du carnet de suivi enseignant : tableau intelligent journalier.
 
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
-import { TeacherTrackingGrid } from "@/components/teacher/TeacherTrackingGrid"
+import { TeacherStudentsGrid } from "@/components/teacher/TeacherStudentsGrid"
 
 export const dynamic = "force-dynamic"
 
-export default async function TeacherTrackingPage() {
+export default async function TeacherElevesPage() {
   const session = await auth()
   if (!session?.user || !["ADMIN", "TEACHER"].includes(session.user.role)) {
     redirect("/login")
@@ -31,11 +31,13 @@ export default async function TeacherTrackingPage() {
       schoolId,
       ...(teacherId ? { teacherId } : {}),
     },
-    select: { id: true, name: true, nameAr: true },
+    select: { id: true, name: true, nameAr: true, schedule: true },
     orderBy: { name: "asc" },
   })
 
+  const typedGroups = groups.map((g) => ({ ...g, schedule: g.schedule as Record<string, string> | null }))
+
   return (
-    <TeacherTrackingGrid initialGroups={groups} />
+    <TeacherStudentsGrid initialGroups={typedGroups} />
   )
 }

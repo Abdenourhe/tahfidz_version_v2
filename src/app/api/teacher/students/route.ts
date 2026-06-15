@@ -1,4 +1,4 @@
-// src/app/api/teacher/tracking/route.ts
+// src/app/api/teacher/students/route.ts
 // GET batch : élèves + logs du jour + progression active + groupes de l'enseignant
 
 import { NextRequest, NextResponse } from "next/server"
@@ -115,7 +115,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ students: result, groups, surahs })
   } catch (error: any) {
-    console.error("[TEACHER TRACKING GET]", error)
+    console.error("[TEACHER ELEVES GET]", error)
     return NextResponse.json({ error: error.message || "Erreur serveur" }, { status: 500 })
   }
 }

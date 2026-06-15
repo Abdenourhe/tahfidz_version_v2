@@ -20,7 +20,7 @@ import { useSidebarCollapsed } from "@/hooks/useSidebarCollapsed"
 
 const NAV_ITEMS = [
   { href: "/teacher/dashboard",     icon: LayoutDashboard,  key: "dashboard" },
-  { href: "/teacher/tracking",      icon: Users,            key: "tracking" },
+  { href: "/teacher/students",        icon: Users,            key: "students" },
   { href: "/teacher/groups",        icon: GraduationCap,    key: "groups" },
   { href: "/teacher/memorization",  icon: BookMarked,       key: "memorization" },
   { href: "/teacher/library",       icon: Library,          key: "library" },

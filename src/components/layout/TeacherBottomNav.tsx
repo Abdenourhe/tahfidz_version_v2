@@ -10,7 +10,7 @@ import {
 
 const MOBILE_NAV = [
   { href: "/teacher/dashboard", icon: LayoutDashboard, key: "dashboard" },
-  { href: "/teacher/tracking", icon: Users, key: "tracking" },
+  { href: "/teacher/students", icon: Users, key: "myStudents" },
   { href: "/teacher/memorization", icon: BookMarked, key: "memorization" },
   { href: "/teacher/evaluations", icon: Award, key: "evaluations" },
   { href: "/teacher/profile", icon: UserCircle, key: "profile" },

@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
-import { X, BookOpen, RotateCcw, Headphones, GraduationCap, CalendarDays, Save, Loader2, CheckCircle2, Copy } from "lucide-react"
+import { X, BookOpen, RotateCcw, Headphones, GraduationCap, CalendarDays, Save, Loader2, CheckCircle2 } from "lucide-react"
 import DailyLogSectionThread from "@/components/DailyLogSectionThread"
 
 interface Surah {
@@ -101,7 +101,6 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
     attendanceStatus: "PRESENT", teacherObservation: "", globalScore: "",
   })
   const [existingLogId, setExistingLogId] = useState<string | null>(null)
-  const [copyingYesterday, setCopyingYesterday] = useState(false)
 
   const sectionRefs = {
     HIFZ: useRef<HTMLDivElement | null>(null),
@@ -185,52 +184,6 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
 
   const update = (field: string, value: string) => setForm((f) => ({ ...f, [field]: value }))
 
-  const copyYesterday = async () => {
-    setCopyingYesterday(true)
-    try {
-      const yesterday = new Date(date)
-      yesterday.setDate(yesterday.getDate() - 1)
-      const yesterdayStr = yesterday.toISOString().split("T")[0]
-      const res = await fetch(`/api/students/${studentId}/daily-log?date=${yesterdayStr}`)
-      const data = await res.json()
-      if (!data.log) {
-        alert(t("noYesterdayLog"))
-        setCopyingYesterday(false)
-        return
-      }
-      const log = data.log
-      setForm({
-        hifzFromSurahId: log.hifzFromSurahId?.toString() || "",
-        hifzFromVerse: log.hifzFromVerse?.toString() || "",
-        hifzToSurahId: log.hifzToSurahId?.toString() || "",
-        hifzToVerse: log.hifzToVerse?.toString() || "",
-        hifzNote: log.hifzNote || "",
-        murajaFromSurahId: log.murajaFromSurahId?.toString() || "",
-        murajaFromVerse: log.murajaFromVerse?.toString() || "",
-        murajaToSurahId: log.murajaToSurahId?.toString() || "",
-        murajaToVerse: log.murajaToVerse?.toString() || "",
-        murajaNote: log.murajaNote || "",
-        talqinFromSurahId: log.talqinFromSurahId?.toString() || "",
-        talqinFromVerse: log.talqinFromVerse?.toString() || "",
-        talqinToSurahId: log.talqinToSurahId?.toString() || "",
-        talqinToVerse: log.talqinToVerse?.toString() || "",
-        talqinNote: log.talqinNote || "",
-        courseBook: log.courseBook || "",
-        courseFromPage: log.courseFromPage?.toString() || "",
-        courseToPage: log.courseToPage?.toString() || "",
-        courseNote: log.courseNote || "",
-        attendanceStatus: log.attendanceStatus || "PRESENT",
-        teacherObservation: "",
-        globalScore: log.globalScore?.toString() || "",
-      })
-    } catch (e) {
-      console.error(e)
-      alert(t("error"))
-    } finally {
-      setCopyingYesterday(false)
-    }
-  }
-
   const handleSave = async () => {
     setSaving(true)
     try {
@@ -292,14 +245,6 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
             <p className="text-xs text-gray-500">{studentName}</p>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={copyYesterday}
-              disabled={copyingYesterday}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition disabled:opacity-50"
-            >
-              {copyingYesterday ? <Loader2 size={14} className="animate-spin" /> : <Copy size={14} />}
-              {t("copyYesterday")}
-            </button>
             <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition">
               <X size={18} />
             </button>

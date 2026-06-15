@@ -63,7 +63,7 @@ const ROLE_NAV: Record<string, { sectionKey?: string; items: { href: string; lab
     {
       items: [
         { href: "/teacher/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
-        { href: "/teacher/tracking", labelKey: "tracking", icon: Users },
+        { href: "/teacher/students", labelKey: "myStudents", icon: Users },
         { href: "/teacher/groups", labelKey: "groups", icon: BookOpen },
         { href: "/teacher/memorization", labelKey: "memorization", icon: BookMarked },
         { href: "/teacher/attendance", labelKey: "attendance", icon: CalendarCheck },

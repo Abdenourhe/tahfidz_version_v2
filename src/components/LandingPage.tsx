@@ -114,7 +114,7 @@ const dict = {
       badge: "🎉 New · Electronic Halaqa Online available",
       title: "The intelligent platform for",
       titleHighlight: "Quran schools",
-      subtitle: "Manage your Quran memorization school with excellence. Students, teachers, groups, tracking, evaluations — all in one place.",
+      subtitle: "Manage your Quran memorization school with excellence. Students, teachers, groups, follow-up, evaluations — all in one place.",
       ctaPrimary: "Register my school",
       ctaSecondary: "Watch demo",
       stat1: "Schools", stat2: "Students", stat3: "Teachers",
@@ -125,7 +125,7 @@ const dict = {
       items: [
         { icon: GraduationCap, title: "Student management", desc: "Enrollment, complete profiles, status, history — all centralized." },
         { icon: BookOpen, title: "Groups & Halaqas", desc: "Create and manage your groups, assign students and teachers in a few clicks." },
-        { icon: BookMarked, title: "Memorization tracking", desc: "Track progress surah by surah with detailed error notation." },
+        { icon: BookMarked, title: "Memorization follow-up", desc: "Track progress surah by surah with detailed error notation." },
         { icon: BarChart2, title: "Reports & statistics", desc: "Dashboards and written reports on halaqas, memorization and attendance." },
         { icon: Megaphone, title: "Announcements", desc: "Communicate in real-time with students, parents and teachers." },
         { icon: Wifi, title: "Electronic Halaqa Online", desc: "Virtual recitation sessions live — individual and collective rooms." },
@@ -137,7 +137,7 @@ const dict = {
       steps: [
         { num: "01", title: "Register your school", desc: "Create your account in minutes with your Quran school information." },
         { num: "02", title: "Add your members", desc: "Import or add your students, teachers and parents to the platform." },
-        { num: "03", title: "Start tracking", desc: "Launch halaqas, record attendance and track memorization." },
+        { num: "03", title: "Start supervising", desc: "Launch halaqas, record attendance and track memorization." },
       ],
     },
     users: {
@@ -145,9 +145,9 @@ const dict = {
       subtitle: "Dedicated spaces adapted to each user",
       items: [
         { icon: Shield, role: "Administrator", desc: "Complete school view, user management, reports and settings." },
-        { icon: Users, role: "Teacher", desc: "Group management, attendance, evaluations and recitation tracking." },
-        { icon: GraduationCap, role: "Student", desc: "Progress tracking, schedule, results and personal goals." },
-        { icon: UserCheck, role: "Parent", desc: "Real-time tracking of child's progress and notifications." },
+        { icon: Users, role: "Teacher", desc: "Group management, attendance, evaluations and recitation follow-up." },
+        { icon: GraduationCap, role: "Student", desc: "Progress monitoring, schedule, results and personal goals." },
+        { icon: UserCheck, role: "Parent", desc: "Real-time monitoring of child's progress and notifications." },
       ],
     },
     stats: {
@@ -162,7 +162,7 @@ const dict = {
     testimonials: {
       title: "What our users say",
       items: [
-        { name: "Sheikh Mohammed B.", role: "Director, Medersa Al-Nour", text: "TAHFIDZ has revolutionized our school management. The surah-by-surah tracking is an exceptional feature." },
+        { name: "Sheikh Mohammed B.", role: "Director, Medersa Al-Nour", text: "TAHFIDZ has revolutionized our school management. The surah-by-surah follow-up is an exceptional feature." },
         { name: "Imam Karim T.", role: "Teacher, Ibn Taymiya School", text: "I can finally dedicate more time to teaching and less to paperwork. The interface is intuitive and beautiful." },
         { name: "Fatima Z.", role: "Parent", text: "I follow my son's progress in real-time. The notifications keep me informed of his achievements." },
       ],

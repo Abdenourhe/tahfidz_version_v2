@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { useSearchParams } from "next/navigation"
-import { CheckCircle2, XCircle, Loader2, Users, AlertTriangle, Save, Clock, BookOpen, ChevronLeft, ChevronRight } from "lucide-react"
+import { CheckCircle2, XCircle, Loader2, Users, AlertTriangle, Clock, BookOpen, ChevronLeft, ChevronRight } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 
 interface Group { id: string; name: string; schedule?: Record<string, string> | null }
@@ -79,8 +79,6 @@ export default function TeacherAttendanceValidation() {
   const [attendance, setAttendance] = useState<Record<string, string>>({})
   const [parentAlertsMap, setParentAlertsMap] = useState<Record<string, ParentAlert>>({})
   const [loadingStudents, setLoadingStudents] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
 
   /* ── Alerts section ── */
   const [alerts, setAlerts] = useState<ParentAlert[]>([])
@@ -186,36 +184,6 @@ export default function TeacherAttendanceValidation() {
 
   useEffect(() => { loadAlerts() }, [loadAlerts])
 
-  /* ── Save attendance batch ── */
-  const handleSaveAttendance = async () => {
-    if (!selectedGroup || students.length === 0) return
-    setSaving(true)
-    try {
-      const records = students.map(s => ({
-        studentId: s.id,
-        status: (attendance[s.id] || "PRESENT") as "PRESENT" | "ABSENT" | "LATE" | "EXCUSED",
-      }))
-      const r = await fetch("/api/attendance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          groupId: selectedGroup,
-          date: new Date(`${date}T12:00:00Z`).toISOString(),
-          records,
-        }),
-      })
-      if (!r.ok) throw new Error("Erreur")
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
-      loadAlerts()
-    } catch (e) {
-      console.error(e)
-      alert(t("saveError"))
-    } finally {
-      setSaving(false)
-    }
-  }
-
   /* ── Validate / Reject alert ── */
   const handleValidateAlert = async (id: string, validated: boolean, reason?: string) => {
     setValidating(id)
@@ -276,14 +244,6 @@ export default function TeacherAttendanceValidation() {
               {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
             </select>
           </div>
-          <button
-            onClick={handleSaveAttendance}
-            disabled={saving || students.length === 0}
-            className="flex items-center gap-2 px-4 py-2 bg-tahfidz-green text-white text-sm font-medium rounded-lg hover:bg-tahfidz-green-dark transition disabled:opacity-50"
-          >
-            {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <CheckCircle2 size={14} /> : <Save size={14} />}
-            {saved ? t("saved") : saving ? t("saving") : t("validateAll")}
-          </button>
         </div>
 
         {/* Calendar card */}

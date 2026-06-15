@@ -76,6 +76,14 @@
     text-align: right;
   }
 
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
   /* ═══════════════════════════════════════════════════════════
      POLICES SPÉCIALES CERTIFICATS
      ═══════════════════════════════════════════════════════════ */

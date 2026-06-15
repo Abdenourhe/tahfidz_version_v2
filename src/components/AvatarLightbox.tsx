@@ -30,7 +30,11 @@ export function AvatarLightbox({ src, alt, fallback, className = "", imgClassNam
         src={src}
         alt={alt}
         className={`object-cover cursor-zoom-in ${imgClassName}`}
-        onClick={() => setOpen(true)}
+        onClick={(e) => {
+          e.stopPropagation()
+          e.preventDefault()
+          setOpen(true)
+        }}
       />
       {open && (
         <div
