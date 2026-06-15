@@ -483,12 +483,15 @@ model DailyProgressLog {
 }
 
 model DailyLogComment {
-  id         String   @id @default(uuid())
-  dailyLogId String
-  section    String // HIFZ, MURAJA, TALQIN, COURSE, ATTENDANCE, GENERAL
-  userId     String
-  message    String   @db.Text
-  createdAt  DateTime @default(now())
+  id              String   @id @default(uuid())
+  dailyLogId      String
+  section         String // HIFZ, MURAJA, TALQIN, COURSE, ATTENDANCE, GENERAL
+  userId          String
+  message         String   @db.Text
+  attachmentKey   String?
+  attachmentName  String?
+  attachmentType  String?
+  createdAt       DateTime @default(now())
 
   dailyLog DailyProgressLog        @relation(fields: [dailyLogId], references: [id], onDelete: Cascade)
   user     User                    @relation(fields: [userId], references: [id], onDelete: Cascade)

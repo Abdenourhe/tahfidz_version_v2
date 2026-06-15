@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { deleteObject } from "@/lib/r2"
 
 export async function DELETE(
   req: Request,
@@ -43,9 +44,24 @@ export async function DELETE(
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
     }
 
+    const commentsToDelete = await prisma.dailyLogComment.findMany({
+      where: { dailyLogId, section },
+      select: { attachmentKey: true },
+    })
+
     const { count } = await prisma.dailyLogComment.deleteMany({
       where: { dailyLogId, section },
     })
+
+    for (const c of commentsToDelete) {
+      if (c.attachmentKey) {
+        try {
+          await deleteObject(c.attachmentKey)
+        } catch (e) {
+          console.error("[CLEAR SECTION DELETE R2]", e)
+        }
+      }
+    }
 
     return NextResponse.json({ cleared: count })
   } catch (error: any) {

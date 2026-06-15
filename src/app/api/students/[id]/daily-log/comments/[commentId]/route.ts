@@ -4,6 +4,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { deleteObject } from "@/lib/r2"
 
 export async function DELETE(
   _req: Request,
@@ -23,6 +24,7 @@ export async function DELETE(
         dailyLog: { include: { student: { include: { teacher: { select: { userId: true } } } } } },
       },
     })
+    const attachmentKey = comment?.attachmentKey
     if (!comment) {
       return NextResponse.json({ error: "Commentaire introuvable" }, { status: 404 })
     }
@@ -38,6 +40,15 @@ export async function DELETE(
     }
 
     await prisma.dailyLogComment.delete({ where: { id: commentId } })
+
+    if (attachmentKey) {
+      try {
+        await deleteObject(attachmentKey)
+      } catch (e) {
+        console.error("[DELETE R2 OBJECT]", e)
+      }
+    }
+
     return NextResponse.json({ success: true })
   } catch (error: any) {
     console.error("[DAILY_LOG_COMMENT DELETE]", error)

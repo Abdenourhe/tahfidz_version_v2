@@ -107,9 +107,10 @@ export async function POST(
 
     const { id: studentId } = await params
     const body = await req.json()
-    const { dailyLogId, section, message } = body
+    const { dailyLogId, section, message, attachment } = body
+    const hasAttachment = attachment?.key && attachment?.type
 
-    if (!dailyLogId || !section || !message?.trim()) {
+    if (!dailyLogId || !section || (!message?.trim() && !hasAttachment)) {
       return NextResponse.json({ error: "Champs requis manquants" }, { status: 400 })
     }
 
@@ -140,7 +141,10 @@ export async function POST(
         dailyLogId,
         section,
         userId: session.user.id,
-        message: message.trim(),
+        message: message?.trim() || "",
+        attachmentKey: hasAttachment ? attachment.key : null,
+        attachmentName: hasAttachment ? attachment.name || null : null,
+        attachmentType: hasAttachment ? attachment.type : null,
         reads: {
           create: { userId: session.user.id },
         },
@@ -148,6 +152,7 @@ export async function POST(
       include: {
         user: { select: { id: true, fullName: true, fullNameAr: true, role: true, avatar: true } },
         reads: { where: { userId: session.user.id }, select: { id: true } },
+        reactions: { select: { emoji: true, userId: true } },
       },
     })
 

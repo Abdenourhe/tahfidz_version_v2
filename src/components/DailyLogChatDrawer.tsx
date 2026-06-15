@@ -13,6 +13,7 @@ import {
   X,
   CheckCheck,
   SmilePlus,
+  Paperclip,
 } from "lucide-react"
 
 interface Reaction {
@@ -33,6 +34,21 @@ interface CommentItem {
     avatar: string | null
   }
   reactions: Reaction[]
+  attachmentKey: string | null
+  attachmentName: string | null
+  attachmentType: string | null
+}
+
+function getAttachmentUrl(studentId: string, key: string) {
+  return `/api/students/${studentId}/daily-log/comments/attachment?key=${encodeURIComponent(key)}`
+}
+
+function isImageType(type?: string | null) {
+  return type?.startsWith("image/") ?? false
+}
+
+function isAudioType(type?: string | null) {
+  return type?.startsWith("audio/") ?? false
 }
 
 interface SectionData {
@@ -133,6 +149,10 @@ export default function DailyLogChatDrawer({
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [clearing, setClearing] = useState(false)
   const [emojiPickerFor, setEmojiPickerFor] = useState<string | null>(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const canClearSection =
@@ -207,18 +227,79 @@ export default function DailyLogChatDrawer({
     markSectionRead(section)
   }
 
+  const uploadFile = async (file: File): Promise<{ key: string; name: string; type: string } | null> => {
+    setUploading(true)
+    setUploadError(null)
+    try {
+      const res = await fetch(`/api/students/${studentId}/daily-log/comments/upload`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: file.name,
+          contentType: file.type,
+          size: file.size,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setUploadError(json.error || t("uploadError"))
+        return null
+      }
+
+      const uploadRes = await fetch(json.uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      })
+      if (!uploadRes.ok) {
+        setUploadError(t("uploadError"))
+        return null
+      }
+
+      return { key: json.key, name: file.name, type: file.type }
+    } catch (e) {
+      console.error(e)
+      setUploadError(t("uploadError"))
+      return null
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) setSelectedFile(file)
+    if (e.target) e.target.value = ""
+  }
+
   const send = async () => {
-    if (!message.trim() || !dailyLogId) return
+    if ((!message.trim() && !selectedFile) || !dailyLogId) return
     setSending(true)
     try {
+      let attachment = null
+      if (selectedFile) {
+        attachment = await uploadFile(selectedFile)
+        if (!attachment) {
+          setSending(false)
+          return
+        }
+      }
+
       const res = await fetch(`/api/students/${studentId}/daily-log/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dailyLogId, section: activeSection, message }),
+        body: JSON.stringify({
+          dailyLogId,
+          section: activeSection,
+          message,
+          attachment,
+        }),
       })
       const json = await res.json()
       if (res.ok && json.comment) {
         setMessage("")
+        setSelectedFile(null)
+        setUploadError(null)
         setData((prev) => {
           if (!prev) return prev
           return {
@@ -537,6 +618,50 @@ export default function DailyLogChatDrawer({
                           {c.message}
                         </div>
 
+                        {/* Pièce jointe */}
+                        {c.attachmentKey && (
+                          <div
+                            className={cn(
+                              "mt-1.5",
+                              isMe ? "text-right" : "text-left"
+                            )}
+                          >
+                            {isImageType(c.attachmentType) ? (
+                              <a
+                                href={getAttachmentUrl(studentId, c.attachmentKey)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-block"
+                              >
+                                <img
+                                  src={getAttachmentUrl(studentId, c.attachmentKey)}
+                                  alt={c.attachmentName || ""}
+                                  className="max-w-[200px] max-h-[200px] rounded-xl border border-gray-200 dark:border-gray-700 object-cover"
+                                />
+                              </a>
+                            ) : isAudioType(c.attachmentType) ? (
+                              <audio
+                                controls
+                                className="max-w-[240px] h-8"
+                              >
+                                <source
+                                  src={getAttachmentUrl(studentId, c.attachmentKey)}
+                                  type={c.attachmentType || "audio/mpeg"}
+                                />
+                              </audio>
+                            ) : (
+                              <a
+                                href={getAttachmentUrl(studentId, c.attachmentKey)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-xs text-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                              >
+                                📎 {c.attachmentName || t("attachment")}
+                              </a>
+                            )}
+                          </div>
+                        )}
+
                         {/* Réactions */}
                         <div
                           className={cn(
@@ -629,21 +754,70 @@ export default function DailyLogChatDrawer({
 
             {/* Input */}
             <div className="p-3 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+              {selectedFile && (
+                <div className="mb-2 p-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                  <div className="flex items-center gap-2 min-w-0">
+                    {selectedFile.type.startsWith("image/") ? (
+                      <img
+                        src={URL.createObjectURL(selectedFile)}
+                        alt=""
+                        className="w-10 h-10 rounded-lg object-cover border border-gray-200 dark:border-gray-700"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 text-lg">
+                        🎤
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-medium text-gray-700 dark:text-gray-200 truncate max-w-[180px]">
+                        {selectedFile.name}
+                      </p>
+                      <p className="text-[9px] text-gray-400">
+                        {(selectedFile.size / 1024 / 1024).toFixed(2)} Mo
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => { setSelectedFile(null); setUploadError(null) }}
+                    className="p-1 text-gray-400 hover:text-red-500 transition"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
+              {uploadError && (
+                <p className="text-[10px] text-red-500 mb-2 text-center">{uploadError}</p>
+              )}
               <div className="flex items-end gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,audio/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading || sending}
+                  className="p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-500 hover:text-tahfidz-green hover:border-tahfidz-green/30 transition disabled:opacity-50"
+                  title={t("attachFile")}
+                >
+                  {uploading ? <Loader2 size={16} className="animate-spin" /> : <Paperclip size={16} />}
+                </button>
                 <input
                   type="text"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && send()}
-                  placeholder={t("writeMessage")}
+                  placeholder={selectedFile ? t("addCaption") : t("writeMessage")}
                   className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-xs focus:outline-none focus:ring-2 focus:ring-tahfidz-green/20 focus:border-tahfidz-green/50"
                 />
                 <button
                   onClick={send}
-                  disabled={sending || !message.trim()}
+                  disabled={sending || (!message.trim() && !selectedFile)}
                   className="p-2.5 bg-tahfidz-green text-white rounded-xl hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {sending ? (
+                  {sending || uploading ? (
                     <Loader2 size={16} className="animate-spin" />
                   ) : (
                     <Send size={16} />
