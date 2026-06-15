@@ -6,14 +6,14 @@ import Link from "next/link"
 import {
   ArrowLeft, BookOpen, Star, Award,
   Phone, Mail, RefreshCw, CheckCircle2, RotateCcw, X, Clock,
-  TrendingUp, Flame, MessageCircle, ClipboardList, Eye, EyeOff
+  TrendingUp, Flame, MessageCircle, ClipboardList, Eye, EyeOff, ChevronRight
 } from "lucide-react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { useSession } from "next-auth/react"
 import { cn } from "@/lib/utils"
 import { AvatarUploader } from "@/components/shared/AvatarUploader"
 import { TeacherChat } from "@/components/parent/TeacherChat"
-import DailyLogSectionThread from "@/components/DailyLogSectionThread"
+import DailyLogChatDrawer from "@/components/DailyLogChatDrawer"
 
 interface Progress {
   id: string; surahId: number; currentVerse: number; completionPercentage: number
@@ -169,11 +169,23 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
   const [dailyLogs, setDailyLogs] = useState<any[]>([])
   const [dailyLogRange, setDailyLogRange] = useState<7 | 14 | 30>(7)
   const [showEmptyDays, setShowEmptyDays] = useState(false)
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, { total: number; sections: Record<string, number> }>>({})
+  const [drawerLog, setDrawerLog] = useState<any>(null)
   const [badges, setBadges] = useState<Badge[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [_lastSync, setLastSync] = useState<Date>(new Date())
   const [surahs, setSurahs] = useState<Record<number, { nameFr: string; nameAr: string }>>({})
+
+  const loadUnreadCounts = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/students/${studentId}/daily-log/comments/unread-counts`)
+      const data = await res.json()
+      setUnreadCounts(data.counts || {})
+    } catch (e) {
+      console.error(e)
+    }
+  }, [studentId])
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true)
@@ -202,9 +214,10 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
       if (evalData?.evaluations) setEvaluations(evalData.evaluations)
       if (attData?.attendances) setAttendances(attData.attendances)
       if (logData?.logs) setDailyLogs(logData.logs)
+      await loadUnreadCounts()
       setLastSync(new Date())
     } finally { setLoading(false); setRefreshing(false) }
-  }, [studentId])
+  }, [studentId, loadUnreadCounts])
 
   useEffect(() => { load() }, [load])
   useEffect(() => { const id = setInterval(() => load(true), 60_000); return () => clearInterval(id) }, [load])
@@ -524,7 +537,6 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
                       <span className={cn("inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg border", ATT_CFG[log.attendanceStatus]?.cls ?? "bg-gray-100 text-gray-600")}>
                         {ATT_CFG[log.attendanceStatus]?.label ?? log.attendanceStatus}
                       </span>
-                      <DailyLogSectionThread studentId={studentId} dailyLogId={log.id} section="ATTENDANCE" sectionLabel={t("dailyLogSectionPresence")} />
                     </div>
                   )}
                   {log.hifzFromSurahId && (
@@ -532,7 +544,6 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
                       <span className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100">
                         {t("dailyLogSectionHifz")}: {formatRange(log.hifzFromSurahId, log.hifzFromVerse, log.hifzToSurahId, log.hifzToVerse)}
                       </span>
-                      <DailyLogSectionThread studentId={studentId} dailyLogId={log.id} section="HIFZ" sectionLabel={t("dailyLogSectionHifz")} />
                     </div>
                   )}
                   {log.murajaFromSurahId && (
@@ -540,7 +551,6 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
                       <span className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100">
                         {t("dailyLogSectionMuraja")}: {formatRange(log.murajaFromSurahId, log.murajaFromVerse, log.murajaToSurahId, log.murajaToVerse)}
                       </span>
-                      <DailyLogSectionThread studentId={studentId} dailyLogId={log.id} section="MURAJA" sectionLabel={t("dailyLogSectionMuraja")} />
                     </div>
                   )}
                   {log.talqinFromSurahId && (
@@ -548,7 +558,6 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
                       <span className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg bg-purple-50 text-purple-700 border border-purple-100">
                         {t("dailyLogSectionTalqin")}: {formatRange(log.talqinFromSurahId, log.talqinFromVerse, log.talqinToSurahId, log.talqinToVerse)}
                       </span>
-                      <DailyLogSectionThread studentId={studentId} dailyLogId={log.id} section="TALQIN" sectionLabel={t("dailyLogSectionTalqin")} />
                     </div>
                   )}
                   {log.courseBook && (
@@ -556,21 +565,48 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
                       <span className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-100">
                         {t("dailyLogSectionCourse")}: {log.courseBook} {log.courseFromPage}{log.courseToPage && log.courseToPage !== log.courseFromPage ? `→${log.courseToPage}` : ""}
                       </span>
-                      <DailyLogSectionThread studentId={studentId} dailyLogId={log.id} section="COURSE" sectionLabel={t("dailyLogSectionCourse")} />
                     </div>
                   )}
                   {log.teacherObservation && (
                     <div className="space-y-1">
                       <p className="text-xs text-gray-500 italic border-l-2 border-tahfidz-green pl-3">« {log.teacherObservation} »</p>
-                      <DailyLogSectionThread studentId={studentId} dailyLogId={log.id} section="GENERAL" sectionLabel={t("dailyLogSectionGeneral")} />
                     </div>
                   )}
+                </div>
+
+                {/* Bouton discussion unique par jour */}
+                <div className="mt-3 pt-3 border-t border-gray-50 dark:border-gray-800 flex justify-end">
+                  <button
+                    onClick={() => setDrawerLog(log)}
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-tahfidz-green-light hover:text-tahfidz-green dark:hover:bg-emerald-900/20 transition"
+                  >
+                    <MessageCircle size={14} />
+                    {t("discuss")}
+                    {(unreadCounts[log.id]?.total || 0) > 0 && (
+                      <span className="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold rounded-full bg-red-500 text-white">
+                        {unreadCounts[log.id].total}
+                      </span>
+                    )}
+                    <ChevronRight size={14} className="text-gray-400" />
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Drawer de discussion */}
+      {drawerLog && (
+        <DailyLogChatDrawer
+          studentId={studentId}
+          dailyLogId={drawerLog.id}
+          date={drawerLog.date}
+          open={!!drawerLog}
+          onOpenChange={(open) => !open && setDrawerLog(null)}
+          onUpdate={loadUnreadCounts}
+        />
+      )}
 
       {/* ── Badges ── */}
       <div>

@@ -1,10 +1,12 @@
 // src/app/api/students/[id]/daily-log/comments/route.ts
-// GET: List comments for a daily log section
+// GET: List comments for a daily log section, or all sections if section=ALL
 // POST: Add a comment
 
 import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+
+const ALL_SECTIONS = ["ATTENDANCE", "HIFZ", "MURAJA", "TALQIN", "COURSE", "GENERAL"]
 
 export async function GET(
   req: Request,
@@ -21,8 +23,8 @@ export async function GET(
     const dailyLogId = searchParams.get("dailyLogId")
     const section = searchParams.get("section")
 
-    if (!dailyLogId || !section) {
-      return NextResponse.json({ error: "dailyLogId et section requis" }, { status: 400 })
+    if (!dailyLogId) {
+      return NextResponse.json({ error: "dailyLogId requis" }, { status: 400 })
     }
 
     // Vérifier que l'utilisateur a accès à cet élève
@@ -49,15 +51,44 @@ export async function GET(
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
     }
 
-    const comments = await prisma.dailyLogComment.findMany({
-      where: { dailyLogId, section },
+    const userId = session.user.id
+
+    // Mode section unique (compatibilité avec DailyLogSectionThread)
+    if (section && section !== "ALL") {
+      const comments = await prisma.dailyLogComment.findMany({
+        where: { dailyLogId, section },
+        include: {
+          user: { select: { id: true, fullName: true, fullNameAr: true, role: true, avatar: true } },
+          reads: { where: { userId }, select: { id: true } },
+        },
+        orderBy: { createdAt: "asc" },
+      })
+
+      const unreadCount = comments.filter((c) => c.userId !== userId && c.reads.length === 0).length
+
+      return NextResponse.json({ comments, unreadCount })
+    }
+
+    // Mode toutes les sections (pour le drawer de discussion)
+    const allComments = await prisma.dailyLogComment.findMany({
+      where: { dailyLogId },
       include: {
         user: { select: { id: true, fullName: true, fullNameAr: true, role: true, avatar: true } },
+        reads: { where: { userId }, select: { id: true } },
       },
       orderBy: { createdAt: "asc" },
     })
 
-    return NextResponse.json({ comments })
+    const sections: Record<string, { comments: typeof allComments; unreadCount: number }> = {}
+    for (const key of ALL_SECTIONS) {
+      const list = allComments.filter((c) => c.section === key)
+      sections[key] = {
+        comments: list,
+        unreadCount: list.filter((c) => c.userId !== userId && c.reads.length === 0).length,
+      }
+    }
+
+    return NextResponse.json({ sections })
   } catch (error: any) {
     console.error("[DAILY_LOG_COMMENTS GET]", error)
     return NextResponse.json({ error: error.message || "Erreur serveur" }, { status: 500 })
@@ -110,9 +141,13 @@ export async function POST(
         section,
         userId: session.user.id,
         message: message.trim(),
+        reads: {
+          create: { userId: session.user.id },
+        },
       },
       include: {
         user: { select: { id: true, fullName: true, fullNameAr: true, role: true, avatar: true } },
+        reads: { where: { userId: session.user.id }, select: { id: true } },
       },
     })
 

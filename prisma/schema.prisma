@@ -164,9 +164,10 @@ model User {
   auditLogs         AuditLog[]         @relation("UserAuditLogs")
   feedbacks         Feedback[]         @relation("UserFeedbacks")
   parentAttendances ParentAttendance[]
-  dailyLogsCreated  DailyProgressLog[]
-  dailyLogComments  DailyLogComment[]
-  contentProgress   UserContentProgress[]
+  dailyLogsCreated     DailyProgressLog[]
+  dailyLogComments     DailyLogComment[]
+  dailyLogCommentReads DailyLogCommentRead[]
+  contentProgress      UserContentProgress[]
   bookmarks         UserBookmark[]
 
   @@unique([schoolId, email])
@@ -488,11 +489,26 @@ model DailyLogComment {
   message    String   @db.Text
   createdAt  DateTime @default(now())
 
-  dailyLog DailyProgressLog @relation(fields: [dailyLogId], references: [id], onDelete: Cascade)
-  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dailyLog DailyProgressLog  @relation(fields: [dailyLogId], references: [id], onDelete: Cascade)
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reads    DailyLogCommentRead[]
 
   @@index([dailyLogId, section])
   @@map("daily_log_comments")
+}
+
+model DailyLogCommentRead {
+  id        String   @id @default(uuid())
+  commentId String
+  userId    String
+  readAt    DateTime @default(now())
+
+  comment DailyLogComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+  @@index([userId])
+  @@map("daily_log_comment_reads")
 }
 
 // ==================== ÉVALUATIONS ====================

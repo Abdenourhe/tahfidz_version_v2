@@ -805,6 +805,7 @@ export const translations = {
     dailyLogSectionTalqin:   { fr: "Talqin", en: "Talqin", ar: "التلقين" },
     dailyLogSectionCourse:   { fr: "Cours", en: "Course", ar: "الدرس" },
     dailyLogSectionGeneral:  { fr: "Général", en: "General", ar: "عام" },
+    discuss:         { fr: "Discussion", en: "Discussion", ar: "المناقشة" },
     noBadge:         { fr: "Aucun badge encore", en: "No badges yet", ar: "لا توجد شارات بعد" },
     badgeDesc:       { fr: "Les badges sont attribués pour les efforts et la régularité", en: "Badges are awarded for effort and regularity", ar: "يتم منح الشارات للجهد والانتظام" },
     present:         { fr: "Présent", en: "Present", ar: "حاضر" },
@@ -1416,6 +1417,30 @@ export const translations = {
     writeMessage:      { fr: "Écrire un message...", en: "Write a message...", ar: "اكتب رسالة..." },
     delete:            { fr: "Supprimer", en: "Delete", ar: "حذف" },
     confirmDelete:     { fr: "Supprimer ce message ?", en: "Delete this message?", ar: "حذف هذه الرسالة؟" },
+  },
+
+  // ─── dailyLogChatDrawer (components/DailyLogChatDrawer.tsx) ─────────────────────────────────────────────
+  dailyLogChatDrawer: {
+    discussion:        { fr: "Discussion", en: "Discussion", ar: "المناقشة" },
+    newMessages:       { fr: "non lus", en: "unread", ar: "غير مقروءة" },
+    loading:           { fr: "Chargement...", en: "Loading...", ar: "جارٍ التحميل..." },
+    noMessagesTitle:   { fr: "Aucun message", en: "No messages", ar: "لا توجد رسائل" },
+    noMessagesDesc:    { fr: "Soyez le premier à écrire dans cette section.", en: "Be the first to write in this section.", ar: "كن أول من يكتب في هذا القسم." },
+    writeMessage:      { fr: "Écrire un message...", en: "Write a message...", ar: "اكتب رسالة..." },
+    delete:            { fr: "Supprimer", en: "Delete", ar: "حذف" },
+    confirmDelete:     { fr: "Supprimer ce message ?", en: "Delete this message?", ar: "حذف هذه الرسالة؟" },
+    activeSection:     { fr: "Section active", en: "Active section", ar: "القسم النشط" },
+    roleTeacher:       { fr: "Enseignant", en: "Teacher", ar: "المعلم" },
+    roleParent:        { fr: "Parent", en: "Parent", ar: "ولي الأمر" },
+    roleStudent:       { fr: "Élève", en: "Student", ar: "التلميذ" },
+    roleAdmin:         { fr: "Admin", en: "Admin", ar: "المشرف" },
+    roleSuperadmin:    { fr: "Superadmin", en: "Superadmin", ar: "المشرف العام" },
+    section_ATTENDANCE:{ fr: "Présence", en: "Attendance", ar: "الحضور" },
+    section_HIFZ:      { fr: "Hifz", en: "Hifz", ar: "الحفظ" },
+    section_MURAJA:    { fr: "Muraja'a", en: "Muraja'a", ar: "المراجعة" },
+    section_TALQIN:    { fr: "Talqin", en: "Talqin", ar: "التلقين" },
+    section_COURSE:    { fr: "Cours", en: "Course", ar: "الدرس" },
+    section_GENERAL:   { fr: "Général", en: "General", ar: "عام" },
   },
 
   // ─── parentDailyLog (components/parent/ParentDailyLogView.tsx) ─────────────────────────────────────────────
