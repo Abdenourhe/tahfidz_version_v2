@@ -8,6 +8,12 @@ import { prisma } from "@/lib/prisma"
 
 const ALL_SECTIONS = ["ATTENDANCE", "HIFZ", "MURAJA", "TALQIN", "COURSE", "GENERAL"]
 
+const commentInclude = (userId: string) => ({
+  user: { select: { id: true, fullName: true, fullNameAr: true, role: true, avatar: true } },
+  reads: { where: { userId }, select: { id: true } },
+  reactions: { select: { emoji: true, userId: true } },
+})
+
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -57,10 +63,7 @@ export async function GET(
     if (section && section !== "ALL") {
       const comments = await prisma.dailyLogComment.findMany({
         where: { dailyLogId, section },
-        include: {
-          user: { select: { id: true, fullName: true, fullNameAr: true, role: true, avatar: true } },
-          reads: { where: { userId }, select: { id: true } },
-        },
+        include: commentInclude(userId),
         orderBy: { createdAt: "asc" },
       })
 
@@ -72,10 +75,7 @@ export async function GET(
     // Mode toutes les sections (pour le drawer de discussion)
     const allComments = await prisma.dailyLogComment.findMany({
       where: { dailyLogId },
-      include: {
-        user: { select: { id: true, fullName: true, fullNameAr: true, role: true, avatar: true } },
-        reads: { where: { userId }, select: { id: true } },
-      },
+      include: commentInclude(userId),
       orderBy: { createdAt: "asc" },
     })
 

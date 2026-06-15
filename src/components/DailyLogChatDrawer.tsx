@@ -12,7 +12,13 @@ import {
   Loader2,
   X,
   CheckCheck,
+  SmilePlus,
 } from "lucide-react"
+
+interface Reaction {
+  emoji: string
+  userId: string
+}
 
 interface CommentItem {
   id: string
@@ -26,11 +32,28 @@ interface CommentItem {
     role: string
     avatar: string | null
   }
+  reactions: Reaction[]
 }
 
 interface SectionData {
   comments: CommentItem[]
   unreadCount: number
+}
+
+const QUICK_REACTIONS = ["👍", "❤️", "✓", "🙏", "👏"]
+
+function aggregateReactions(reactions: Reaction[], currentUserId?: string) {
+  const map: Record<string, { emoji: string; count: number; userReacted: boolean }> = {}
+  for (const r of reactions || []) {
+    if (!map[r.emoji]) {
+      map[r.emoji] = { emoji: r.emoji, count: 0, userReacted: false }
+    }
+    map[r.emoji].count++
+    if (r.userId === currentUserId) {
+      map[r.emoji].userReacted = true
+    }
+  }
+  return Object.values(map).sort((a, b) => b.count - a.count)
 }
 
 const SECTIONS = ["ATTENDANCE", "HIFZ", "MURAJA", "TALQIN", "COURSE", "GENERAL"] as const
@@ -108,7 +131,14 @@ export default function DailyLogChatDrawer({
   const [message, setMessage] = useState("")
   const [sending, setSending] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [clearing, setClearing] = useState(false)
+  const [emojiPickerFor, setEmojiPickerFor] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  const canClearSection =
+    session?.user?.role === "ADMIN" ||
+    session?.user?.role === "SUPERADMIN" ||
+    session?.user?.role === "TEACHER"
 
   const load = useCallback(async () => {
     if (!open || !dailyLogId) return
@@ -233,6 +263,72 @@ export default function DailyLogChatDrawer({
     }
   }
 
+  const toggleReaction = async (commentId: string, emoji: string) => {
+    try {
+      const res = await fetch(
+        `/api/students/${studentId}/daily-log/comments/${commentId}/reactions`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ emoji }),
+        }
+      )
+      if (!res.ok) return
+      const json = await res.json()
+      setData((prev) => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          [activeSection]: {
+            ...prev[activeSection],
+            comments: prev[activeSection].comments.map((c) => {
+              if (c.id !== commentId) return c
+              const existing = c.reactions.find((r) => r.userId === currentUserId && r.emoji === emoji)
+              if (json.action === "removed" || existing) {
+                return {
+                  ...c,
+                  reactions: c.reactions.filter((r) => !(r.userId === currentUserId && r.emoji === emoji)),
+                }
+              }
+              return {
+                ...c,
+                reactions: [...c.reactions, { emoji, userId: currentUserId || "" }],
+              }
+            }),
+          },
+        }
+      })
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const clearSection = async () => {
+    if (!confirm(t("confirmClearSection"))) return
+    setClearing(true)
+    try {
+      const res = await fetch(`/api/students/${studentId}/daily-log/comments/clear-section`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dailyLogId, section: activeSection }),
+      })
+      if (res.ok) {
+        setData((prev) => {
+          if (!prev) return prev
+          return {
+            ...prev,
+            [activeSection]: { ...prev[activeSection], comments: [], unreadCount: 0 },
+          }
+        })
+        onUpdate?.()
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setClearing(false)
+    }
+  }
+
   const activeData = data?.[activeSection]
   const totalUnread = data
     ? Object.values(data).reduce((sum, s) => sum + (s.unreadCount || 0), 0)
@@ -312,6 +408,17 @@ export default function DailyLogChatDrawer({
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-300">
                     {totalUnread} {t("newMessages")}
                   </span>
+                )}
+                {canClearSection && activeData && activeData.comments.length > 0 && (
+                  <button
+                    onClick={clearSection}
+                    disabled={clearing}
+                    title={t("clearSection")}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition disabled:opacity-50"
+                  >
+                    {clearing ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                    {t("clearSection")}
+                  </button>
                 )}
                 <button
                   onClick={() => onOpenChange(false)}
@@ -429,6 +536,61 @@ export default function DailyLogChatDrawer({
                         >
                           {c.message}
                         </div>
+
+                        {/* Réactions */}
+                        <div
+                          className={cn(
+                            "flex items-center gap-1 mt-1.5 flex-wrap",
+                            isMe ? "justify-end" : "justify-start"
+                          )}
+                        >
+                          {aggregateReactions(c.reactions, currentUserId).map((r) => (
+                            <button
+                              key={r.emoji}
+                              onClick={() => toggleReaction(c.id, r.emoji)}
+                              className={cn(
+                                "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] transition",
+                                r.userReacted
+                                  ? "bg-tahfidz-green/10 text-tahfidz-green border border-tahfidz-green/30"
+                                  : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                              )}
+                            >
+                              <span>{r.emoji}</span>
+                              {r.count > 1 && <span className="font-medium">{r.count}</span>}
+                            </button>
+                          ))}
+                          <div className="relative">
+                            <button
+                              onClick={() => setEmojiPickerFor(emojiPickerFor === c.id ? null : c.id)}
+                              className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-600 transition"
+                              title={t("addReaction")}
+                            >
+                              <SmilePlus size={10} />
+                            </button>
+                            {emojiPickerFor === c.id && (
+                              <div
+                                className={cn(
+                                  "absolute bottom-7 z-20 flex items-center gap-1 p-1.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg",
+                                  isMe ? "right-0" : "left-0"
+                                )}
+                              >
+                                {QUICK_REACTIONS.map((emoji) => (
+                                  <button
+                                    key={emoji}
+                                    onClick={() => {
+                                      toggleReaction(c.id, emoji)
+                                      setEmojiPickerFor(null)
+                                    }}
+                                    className="w-7 h-7 flex items-center justify-center text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                                  >
+                                    {emoji}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
                         <div
                           className={cn(
                             "flex items-center gap-1.5 mt-1",

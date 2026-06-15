@@ -164,10 +164,11 @@ model User {
   auditLogs         AuditLog[]         @relation("UserAuditLogs")
   feedbacks         Feedback[]         @relation("UserFeedbacks")
   parentAttendances ParentAttendance[]
-  dailyLogsCreated     DailyProgressLog[]
-  dailyLogComments     DailyLogComment[]
-  dailyLogCommentReads DailyLogCommentRead[]
-  contentProgress      UserContentProgress[]
+  dailyLogsCreated         DailyProgressLog[]
+  dailyLogComments         DailyLogComment[]
+  dailyLogCommentReads     DailyLogCommentRead[]
+  dailyLogCommentReactions DailyLogCommentReaction[]
+  contentProgress          UserContentProgress[]
   bookmarks         UserBookmark[]
 
   @@unique([schoolId, email])
@@ -489,9 +490,10 @@ model DailyLogComment {
   message    String   @db.Text
   createdAt  DateTime @default(now())
 
-  dailyLog DailyProgressLog  @relation(fields: [dailyLogId], references: [id], onDelete: Cascade)
-  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dailyLog DailyProgressLog        @relation(fields: [dailyLogId], references: [id], onDelete: Cascade)
+  user     User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
   reads    DailyLogCommentRead[]
+  reactions DailyLogCommentReaction[]
 
   @@index([dailyLogId, section])
   @@map("daily_log_comments")
@@ -509,6 +511,22 @@ model DailyLogCommentRead {
   @@unique([commentId, userId])
   @@index([userId])
   @@map("daily_log_comment_reads")
+}
+
+model DailyLogCommentReaction {
+  id        String   @id @default(uuid())
+  commentId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  comment DailyLogComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId, emoji])
+  @@index([commentId])
+  @@index([userId])
+  @@map("daily_log_comment_reactions")
 }
 
 // ==================== ÉVALUATIONS ====================
