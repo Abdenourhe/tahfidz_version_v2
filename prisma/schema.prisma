@@ -876,6 +876,10 @@ model DirectMessage {
   sentAt     DateTime  @default(now())
   deletedAt  DateTime?
 
+  // Suppression côté utilisateur (chaque portail vide sa propre vue)
+  deletedBySenderAt   DateTime?
+  deletedByReceiverAt DateTime?
+
   replyToId String?
   replyTo   DirectMessage?  @relation("MessageThread", fields: [replyToId], references: [id])
   replies   DirectMessage[] @relation("MessageThread")

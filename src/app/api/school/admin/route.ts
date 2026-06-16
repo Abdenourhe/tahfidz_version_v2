@@ -15,11 +15,11 @@ export async function GET() {
     const admin = await prisma.user.findFirst({
       where: {
         schoolId: session.user.schoolId,
-        role: "ADMIN",
+        role: { in: ["ADMIN", "SUPERADMIN"] },
         isActive: true,
       },
       select: { id: true, fullName: true, fullNameAr: true, email: true, role: true },
-      orderBy: { createdAt: "asc" },
+      orderBy: { role: "asc", createdAt: "asc" },
     })
 
     if (!admin) {

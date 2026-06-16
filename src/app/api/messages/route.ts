@@ -21,7 +21,14 @@ export async function GET(req: Request) {
   const type = searchParams.get("type") || "all"
   const otherUserId = searchParams.get("otherUserId")
 
-  let where: any = { deletedAt: null }
+  // Filtre côté utilisateur : chacun vide sa propre vue
+  let where: any = {
+    deletedAt: null,
+    OR: [
+      { fromUserId: session.user.id, deletedBySenderAt: null },
+      { toUserId: session.user.id, deletedByReceiverAt: null },
+    ],
+  }
 
   if (type === "sent") {
     where = { ...where, fromUserId: session.user.id }
@@ -64,7 +71,7 @@ export async function GET(req: Request) {
   }))
 
   const unreadCount = await prisma.directMessage.count({
-    where: { toUserId: session.user.id, isRead: false, deletedAt: null },
+    where: { toUserId: session.user.id, isRead: false, deletedAt: null, deletedByReceiverAt: null },
   })
 
   return NextResponse.json({ messages, unreadCount })
@@ -166,15 +173,24 @@ export async function DELETE(req: Request) {
   const { searchParams } = new URL(req.url)
   const otherUserId = searchParams.get("otherUserId")
   if (!otherUserId) return NextResponse.json({ error: "otherUserId requis" }, { status: 400 })
-  await prisma.directMessage.deleteMany({
+  // Suppression côté utilisateur : chaque portail vide sa propre vue
+  await prisma.directMessage.updateMany({
     where: {
       schoolId: session.user.schoolId,
       deletedAt: null,
-      OR: [
-        { fromUserId: session.user.id, toUserId: otherUserId },
-        { fromUserId: otherUserId, toUserId: session.user.id },
-      ],
+      fromUserId: session.user.id,
+      toUserId: otherUserId,
     },
+    data: { deletedBySenderAt: new Date() },
+  })
+  await prisma.directMessage.updateMany({
+    where: {
+      schoolId: session.user.schoolId,
+      deletedAt: null,
+      fromUserId: otherUserId,
+      toUserId: session.user.id,
+    },
+    data: { deletedByReceiverAt: new Date() },
   })
   return NextResponse.json({ success: true })
 }
