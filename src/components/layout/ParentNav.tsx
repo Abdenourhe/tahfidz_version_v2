@@ -10,6 +10,7 @@ import { motion } from "framer-motion"
 import { LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/contexts/LanguageContext"
+import { useMediaQuery } from "@/hooks/useMediaQuery"
 import { PARENT_NAV_ITEMS } from "@/lib/nav/parent-nav"
 import { TopBarControls } from "@/components/layout/TopBarControls"
 import { NotificationNavItem } from "@/components/layout/NotificationNavItem"
@@ -23,6 +24,7 @@ interface ParentNavProps {
 export function ParentNav({ user: _user, schoolName, schoolLogo }: ParentNavProps) {
   const pathname = usePathname()
   const [panelOpen, setPanelOpen] = useState(false)
+  const showNavLabels = useMediaQuery("(min-width: 1536px)")
   const { useT: tFn } = useLanguage()
   const { data: session } = useSession()
   const tN = (k: string) => tFn("nav", k)
@@ -82,6 +84,7 @@ export function ParentNav({ user: _user, schoolName, schoolLogo }: ParentNavProp
                       iconActiveClass="text-emerald-600 dark:text-emerald-400"
                       iconInactiveClass="text-gray-400"
                       className="rounded-xl px-2.5 py-2"
+                      showLabel={showNavLabels}
                     />
                   </div>
                 )
@@ -120,7 +123,7 @@ export function ParentNav({ user: _user, schoolName, schoolLogo }: ParentNavProp
                           isActive ? "text-emerald-600 dark:text-emerald-400" : "text-gray-400"
                         )}
                       />
-                      <span className="hidden xl:inline whitespace-nowrap">{label}</span>
+                      <span className={cn("whitespace-nowrap", showNavLabels ? "inline" : "hidden")}>{label}</span>
                     </motion.div>
                   </Link>
                 </div>

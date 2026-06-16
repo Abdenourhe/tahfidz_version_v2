@@ -16,6 +16,7 @@ interface Props {
   iconContainerClass?: string
   className?: string
   collapsed?: boolean
+  showLabel?: boolean
 }
 
 export function NotificationNavItem({
@@ -29,6 +30,7 @@ export function NotificationNavItem({
   iconContainerClass,
   className,
   collapsed,
+  showLabel = true,
 }: Props) {
   const { unreadCount } = useNotification()
 
@@ -67,7 +69,7 @@ export function NotificationNavItem({
           {iconEl}
         </div>
       )}
-      {!collapsed && <span className="flex-1 truncate">{label}</span>}
+      {!collapsed && showLabel && <span className="flex-1 truncate">{label}</span>}
     </Link>
   )
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import { createPortal } from "react-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { useSession } from "next-auth/react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
@@ -447,10 +448,10 @@ export default function DailyLogChatDrawer({
     }
   }
 
-  return (
+  const drawer = (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex justify-end sm:justify-end">
+        <div className="fixed inset-0 z-[60] flex justify-end sm:justify-end">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -835,4 +836,7 @@ export default function DailyLogChatDrawer({
       )}
     </AnimatePresence>
   )
+
+  if (typeof document === "undefined") return null
+  return createPortal(drawer, document.body)
 }
