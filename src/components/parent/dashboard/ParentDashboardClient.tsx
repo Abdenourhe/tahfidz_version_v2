@@ -1,7 +1,7 @@
 "use client"
 // src/components/parent/dashboard/ParentDashboardClient.tsx — Centre d'opération parent
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useSession } from "next-auth/react"
 import { useT } from "@/contexts/LanguageContext"
 import { User } from "lucide-react"
@@ -34,24 +34,19 @@ interface Props {
   todayDate: string
   children: Child[]
   missingTomorrowIds: string[]
+  schoolAdmin: { id: string; fullName: string; email: string; phone?: string | null; role?: string } | null
 }
 
-export function ParentDashboardClient({ todayDate: _todayDate, children, missingTomorrowIds }: Props) {
+export function ParentDashboardClient({ todayDate: _todayDate, children, missingTomorrowIds, schoolAdmin }: Props) {
   const t = useT("parentDashboardClient")
   const { data: session } = useSession()
   const firstName = session?.user?.name?.split(" ")[0] || ""
   const parentUserId = session?.user?.id
 
-  const [admin, setAdmin] = useState<{ id: string; fullName: string; email: string; phone?: string | null } | null>(null)
   const [teacherChat, setTeacherChat] = useState<{ child: Child; open: boolean } | null>(null)
   const [adminChatOpen, setAdminChatOpen] = useState(false)
 
-  useEffect(() => {
-    fetch("/api/school/admin")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d?.admin) setAdmin(d.admin) })
-      .catch((e) => console.error(e))
-  }, [])
+  const admin = schoolAdmin
 
   const missingChildren = children.filter((c) => missingTomorrowIds.includes(c.id))
 
@@ -128,7 +123,7 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
         <AdminParentChatDrawer
           otherUserId={admin.id}
           otherUserName={admin.fullName}
-          otherUserRole="ADMIN"
+          otherUserRole={admin.role || "ADMIN"}
           open={adminChatOpen}
           onOpenChange={setAdminChatOpen}
         />

@@ -12,6 +12,10 @@ export async function GET() {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
     }
 
+    if (!session.user.schoolId) {
+      return NextResponse.json({ error: "École non définie" }, { status: 400 })
+    }
+
     const admin = await prisma.user.findFirst({
       where: {
         schoolId: session.user.schoolId,
@@ -19,7 +23,7 @@ export async function GET() {
         isActive: true,
       },
       select: { id: true, fullName: true, fullNameAr: true, email: true, phone: true, role: true },
-      orderBy: { role: "asc", createdAt: "asc" },
+      orderBy: [{ role: "asc" }, { createdAt: "asc" }],
     })
 
     if (!admin) {

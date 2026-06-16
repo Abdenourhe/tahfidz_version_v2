@@ -60,11 +60,23 @@ export default async function ParentDashboard() {
 
   const missingIds = childrenIds.filter(id => !tomorrowAttendances.some(a => a.studentId === id))
 
+  // Admin de l'école pour le chat administration (récupéré côté serveur)
+  const schoolAdmin = await prisma.user.findFirst({
+    where: {
+      schoolId: session.user.schoolId,
+      role: { in: ["ADMIN", "SUPERADMIN"] },
+      isActive: true,
+    },
+    select: { id: true, fullName: true, fullNameAr: true, email: true, phone: true, role: true },
+    orderBy: [{ role: "asc" }, { createdAt: "asc" }],
+  })
+
   return (
     <div className="max-w-3xl mx-auto">
       <ParentDashboardClient
         todayDate={formatDate(new Date())}
         missingTomorrowIds={missingIds}
+        schoolAdmin={schoolAdmin}
       >
         {children}
       </ParentDashboardClient>

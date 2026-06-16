@@ -5,16 +5,13 @@ import { useState, useEffect, useCallback, useMemo } from "react"
 import Link from "next/link"
 import {
   ArrowLeft, BookOpen, Star, Award,
-  Phone, Mail, RefreshCw, CheckCircle2, RotateCcw, X, Clock,
-  TrendingUp, Flame, MessageCircle, ClipboardList, Eye, EyeOff, ChevronRight, Building2
+  RefreshCw, CheckCircle2, RotateCcw, X, Clock,
+  TrendingUp, Flame, MessageCircle, ClipboardList, Eye, EyeOff, ChevronRight
 } from "lucide-react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
-import { useSession } from "next-auth/react"
 import { cn } from "@/lib/utils"
 import { AvatarUploader } from "@/components/shared/AvatarUploader"
-import { TeacherChat } from "@/components/parent/child/TeacherChat"
 import DailyLogChatDrawer from "@/components/DailyLogChatDrawer"
-import AdminParentChatDrawer from "@/components/admin/AdminParentChatDrawer"
 
 interface Progress {
   id: string; surahId: number; currentVerse: number; completionPercentage: number
@@ -91,131 +88,10 @@ function SectionTitle({ icon: Icon, title, count }: { icon: any; title: string; 
   )
 }
 
-function AdminChatCard({
-  admin,
-  parentUserId,
-  open,
-  onOpenChange,
-}: {
-  admin: { id: string; fullName: string; fullNameAr?: string | null; email: string; phone?: string | null; role: string } | null
-  parentUserId?: string
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}) {
-  const t = useT("parentChildProfileClient_2")
-  if (!admin || !parentUserId) return null
-  return (
-    <div className="bg-gradient-to-br from-purple-50/60 to-white dark:from-purple-900/10 dark:to-gray-900 rounded-2xl border border-purple-100/60 dark:border-purple-800/30 p-5 shadow-sm">
-      <div className="flex items-center gap-4">
-        <div className="relative shrink-0">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white text-lg font-bold shadow-sm">
-            <Building2 size={24} />
-          </div>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-base font-bold text-gray-900 dark:text-gray-100">{admin.fullName}</p>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-semibold tracking-wide uppercase">{t("administration")}</span>
-          </div>
-          <p className="text-xs text-gray-400 mt-0.5">{admin.email}</p>
-        </div>
-      </div>
-      <button
-        onClick={() => onOpenChange(!open)}
-        className="w-full flex items-center justify-center gap-2 px-4 py-3 mt-4 rounded-xl bg-purple-600 text-white text-sm font-bold hover:opacity-90 transition shadow-sm"
-      >
-        <MessageCircle size={16} /> {t("contactAdmin")}
-      </button>
-      <div className="flex items-center gap-2 mt-2">
-        {admin.phone && (
-          <a
-            href={`tel:${admin.phone}`}
-            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 transition"
-          >
-            <Phone size={13} /> {t("call")}
-          </a>
-        )}
-        <a
-          href={`mailto:${admin.email}`}
-          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 transition"
-        >
-          <Mail size={13} /> {t("email")}
-        </a>
-      </div>
-    </div>
-  )
-}
-
-function TeacherChatCard({ student, parentUserId, studentId }: { student: Student; parentUserId?: string; studentId: string }) {
-  const [chatOpen, setChatOpen] = useState(false)
-  if (!student.teacher) return null
-  return (
-    <div className="bg-gradient-to-br from-emerald-50/60 to-white dark:from-emerald-900/10 dark:to-gray-900 rounded-2xl border border-emerald-100/60 dark:border-emerald-800/30 p-5 shadow-sm">
-      <div className="flex items-center gap-4">
-        {/* Avatar */}
-        <div className="relative shrink-0">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-tahfidz-green to-emerald-600 flex items-center justify-center text-white text-lg font-bold shadow-sm">
-            {student.teacher.user.fullName.charAt(0).toUpperCase()}
-          </div>
-          <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white dark:border-gray-900 rounded-full" />
-        </div>
-
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-base font-bold text-gray-900 dark:text-gray-100">{student.teacher.user.fullName}</p>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-tahfidz-green-light dark:bg-emerald-900/30 text-tahfidz-green font-semibold tracking-wide">ENSEIGNANT</span>
-          </div>
-          <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" /> En ligne
-          </p>
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="flex flex-col gap-2 mt-4">
-        {parentUserId && (
-          <button onClick={() => setChatOpen(v => !v)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-tahfidz-green text-white text-sm font-bold hover:opacity-90 transition shadow-sm">
-            <MessageCircle size={16} /> {chatOpen ? "Fermer la discussion" : "Contacter l'enseignant"}
-          </button>
-        )}
-        <div className="flex items-center gap-2">
-          {student.teacher.user.phone && (
-            <a href={`tel:${student.teacher.user.phone}`} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-green-50 hover:text-green-700 hover:border-green-200 transition">
-              <Phone size={13} /> Appeler
-            </a>
-          )}
-          <a href={`mailto:${student.teacher.user.email}`} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition">
-            <Mail size={13} /> Email
-          </a>
-        </div>
-      </div>
-
-      {/* Chat panel */}
-      {chatOpen && parentUserId && (
-        <div className="mt-3">
-          <TeacherChat
-            teacherUserId={student.teacher.user.id}
-            teacherName={student.teacher.user.fullName}
-            parentUserId={parentUserId}
-            childName={student.user.fullName}
-            studentId={studentId}
-            open={chatOpen}
-            onOpenChange={setChatOpen}
-          />
-        </div>
-      )}
-    </div>
-  )
-}
-
 export function ParentChildProfileClient({ studentId }: { studentId: string }) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
   const t = useT("parentChildProfileClient_2")
-  const { data: session } = useSession()
-  const parentUserId = session?.user?.id
 
   const [student, setStudent] = useState<Student | null>(null)
   const [studentAvatar, setStudentAvatar] = useState<string | null>(null)
@@ -232,16 +108,6 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
   const [refreshing, setRefreshing] = useState(false)
   const [_lastSync, setLastSync] = useState<Date>(new Date())
   const [surahs, setSurahs] = useState<Record<number, { nameFr: string; nameAr: string }>>({})
-  const [schoolAdmin, setSchoolAdmin] = useState<{ id: string; fullName: string; fullNameAr?: string | null; email: string; role: string } | null>(null)
-  const [adminChatOpen, setAdminChatOpen] = useState(false)
-
-  useEffect(() => {
-    fetch("/api/school/admin")
-      .then((r) => r.ok ? r.json() : null)
-      .then((d) => { if (d?.admin) setSchoolAdmin(d.admin) })
-      .catch((e) => console.error(e))
-  }, [])
-
   const loadUnreadCounts = useCallback(async () => {
     try {
       const res = await fetch(`/api/students/${studentId}/daily-log/comments/unread-counts`)
@@ -428,21 +294,6 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
           ))}
         </div>
       </div>
-
-      {/* ── Enseignant ── */}
-      {student.teacher && (
-        <TeacherChatCard student={student} parentUserId={parentUserId} studentId={studentId} />
-      )}
-
-      {/* ── Administration ── */}
-      {schoolAdmin && (
-        <AdminChatCard
-          admin={schoolAdmin}
-          parentUserId={parentUserId}
-          open={adminChatOpen}
-          onOpenChange={setAdminChatOpen}
-        />
-      )}
 
       {/* ── Mémorisation en cours ── */}
       <div>
@@ -680,17 +531,6 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
           open={!!drawerLog}
           onOpenChange={(open) => !open && setDrawerLog(null)}
           onUpdate={loadUnreadCounts}
-        />
-      )}
-
-      {/* Drawer admin */}
-      {schoolAdmin && (
-        <AdminParentChatDrawer
-          otherUserId={schoolAdmin.id}
-          otherUserName={schoolAdmin.fullName}
-          otherUserRole={schoolAdmin.role}
-          open={adminChatOpen}
-          onOpenChange={setAdminChatOpen}
         />
       )}
 

@@ -22,21 +22,21 @@ export async function GET(req: Request) {
   const otherUserId = searchParams.get("otherUserId")
 
   // Filtre côté utilisateur : chacun vide sa propre vue
-  let where: any = {
-    deletedAt: null,
+  const userFilter = {
     OR: [
       { fromUserId: session.user.id, deletedBySenderAt: null },
       { toUserId: session.user.id, deletedByReceiverAt: null },
     ],
   }
 
+  let conversationFilter: any = null
+
   if (type === "sent") {
-    where = { ...where, fromUserId: session.user.id }
+    conversationFilter = { fromUserId: session.user.id }
   } else if (type === "inbox") {
-    where = { ...where, toUserId: session.user.id }
+    conversationFilter = { toUserId: session.user.id }
   } else if (type === "conversation" && otherUserId) {
-    where = {
-      ...where,
+    conversationFilter = {
       schoolId: session.user.schoolId,
       OR: [
         { fromUserId: session.user.id, toUserId: otherUserId },
@@ -44,10 +44,14 @@ export async function GET(req: Request) {
       ],
     }
   } else {
-    where = {
-      ...where,
+    conversationFilter = {
       OR: [{ fromUserId: session.user.id }, { toUserId: session.user.id }],
     }
+  }
+
+  const where: any = {
+    deletedAt: null,
+    AND: [userFilter, conversationFilter],
   }
 
   const rawMessages = await prisma.directMessage.findMany({
