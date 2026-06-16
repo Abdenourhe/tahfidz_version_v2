@@ -248,106 +248,104 @@ export function MobileHeader({
               >
 
                 {/* User section */}
-                <div className="relative px-5 pt-8 pb-12 bg-gradient-to-br from-tahfidz-green via-emerald-600 to-teal-700 text-white text-center overflow-hidden">
-                  <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,_white_1px,_transparent_1px)] bg-[length:16px_16px]" />
-                  <div className="relative z-10">
-                    <div className="w-20 h-20 rounded-2xl bg-white/20 border-2 border-white/30 flex items-center justify-center overflow-hidden mx-auto shadow-lg backdrop-blur-sm">
+                <div className="px-5 py-6 bg-gradient-to-br from-tahfidz-green to-emerald-600 text-white">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-2xl bg-white/20 border-2 border-white/30 flex items-center justify-center overflow-hidden flex-shrink-0 backdrop-blur-sm">
                       {userInfo?.avatar ? (
                         <img src={userInfo.avatar} alt={userDisplayName} className="w-full h-full object-cover" />
                       ) : (
-                        <span className="text-white font-bold text-3xl">{userDisplayName.charAt(0).toUpperCase()}</span>
+                        <span className="text-white font-bold text-xl">{userDisplayName.charAt(0).toUpperCase()}</span>
                       )}
                     </div>
-                    <p className="font-bold text-lg text-white mt-4 truncate">{userDisplayName}</p>
-                    <p className="text-sm text-white/80 truncate">{userEmail}</p>
-                    {userRoleLabel && (
-                      <span className="inline-block mt-2 text-[10px] px-3 py-1 rounded-full bg-white/20 text-white font-bold uppercase tracking-wider">
-                        {userRoleLabel}
-                      </span>
-                    )}
+                    <div className="min-w-0">
+                      <p className="font-bold text-base text-white truncate">{userDisplayName}</p>
+                      <p className="text-xs text-white/80 truncate">{userEmail}</p>
+                      {userRoleLabel && (
+                        <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full bg-white/20 text-white font-bold uppercase tracking-wider">
+                          {userRoleLabel}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Content card overlapping header */}
-                <div className="flex-1 overflow-y-auto -mt-6 pt-6 pb-2 bg-white dark:bg-gray-900 rounded-t-3xl relative z-20">
-                  {/* Navigation links */}
-                  {navSections.length > 0 && (
-                    <div className="py-2">
-                      {navSections.map((section, si) => (
-                        <div key={si} className="px-3 mb-2">
-                          {section.sectionKey && (
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 mb-1 mt-2">
-                              {t(section.sectionKey) || section.sectionKey}
-                            </p>
-                          )}
-                          <motion.nav
-                            variants={containerVariants}
-                            initial="hidden"
-                            animate="show"
-                            className="flex flex-col items-center gap-2"
-                          >
-                            {section.items.map((item) => {
-                              const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
-                              const Icon = item.icon
-                              const isNotification = item.href.endsWith("/notifications")
-                              return (
-                                <motion.div key={item.href} variants={itemVariants} className="w-full max-w-[280px]">
-                                  <Link
-                                    ref={isActive ? activeLinkRef : undefined}
-                                    href={item.href}
-                                    onClick={() => setMenuOpen(false)}
-                                    className={cn(
-                                      "flex items-center gap-4 px-4 py-3 rounded-2xl text-sm font-medium transition",
-                                      isActive
-                                        ? "bg-tahfidz-green-light text-tahfidz-green shadow-sm"
-                                        : "text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
-                                    )}
-                                  >
-                                    <div className={cn(
-                                      "relative w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
-                                      isActive ? "bg-tahfidz-green/20" : "bg-gray-100 dark:bg-gray-800"
-                                    )}>
-                                      <Icon
-                                        size={20}
-                                        strokeWidth={isActive ? 2.5 : 1.5}
-                                        className={cn(
-                                          isActive ? (item.color || "text-tahfidz-green") : (item.color || "text-gray-500 dark:text-gray-400")
-                                        )}
-                                      />
-                                      {isNotification && unreadCount > 0 && (
-                                        <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-0.5 bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">
-                                          {unreadCount > 99 ? "99+" : unreadCount}
-                                        </span>
+                {/* Navigation links */}
+                {navSections.length > 0 && (
+                  <div className="flex-1 overflow-y-auto py-2">
+                    {navSections.map((section, si) => (
+                      <div key={si} className="px-3 mb-2">
+                        {section.sectionKey && (
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 mb-1 mt-2">
+                            {t(section.sectionKey) || section.sectionKey}
+                          </p>
+                        )}
+                        <motion.nav
+                          variants={containerVariants}
+                          initial="hidden"
+                          animate="show"
+                          className="flex flex-col items-center gap-2"
+                        >
+                          {section.items.map((item) => {
+                            const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+                            const Icon = item.icon
+                            const isNotification = item.href.endsWith("/notifications")
+                            return (
+                              <motion.div key={item.href} variants={itemVariants} className="w-full max-w-[280px]">
+                                <Link
+                                  ref={isActive ? activeLinkRef : undefined}
+                                  href={item.href}
+                                  onClick={() => setMenuOpen(false)}
+                                  className={cn(
+                                    "flex items-center gap-4 px-4 py-3 rounded-2xl text-sm font-medium transition",
+                                    isActive
+                                      ? "bg-tahfidz-green-light text-tahfidz-green shadow-sm"
+                                      : "text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
+                                  )}
+                                >
+                                  <div className={cn(
+                                    "relative w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                                    isActive ? "bg-tahfidz-green/20" : "bg-gray-100 dark:bg-gray-800"
+                                  )}>
+                                    <Icon
+                                      size={20}
+                                      strokeWidth={isActive ? 2.5 : 1.5}
+                                      className={cn(
+                                        isActive ? (item.color || "text-tahfidz-green") : (item.color || "text-gray-500 dark:text-gray-400")
                                       )}
-                                    </div>
-                                    <span className="flex-1 text-center">{t(item.labelKey) || item.labelKey}</span>
-                                  </Link>
-                                </motion.div>
-                              )
-                            })}
-                          </motion.nav>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Controls */}
-                  <div className="px-5 py-3 border-t border-b border-gray-100 dark:border-gray-800">
-                    <TopBarControls dropdownAlign="left" />
+                                    />
+                                    {isNotification && unreadCount > 0 && (
+                                      <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-0.5 bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">
+                                        {unreadCount > 99 ? "99+" : unreadCount}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="flex-1 text-center">{t(item.labelKey) || item.labelKey}</span>
+                                </Link>
+                              </motion.div>
+                            )
+                          })}
+                        </motion.nav>
+                      </div>
+                    ))}
                   </div>
+                )}
 
-                  {/* Logout */}
-                  <div className="p-4 border-t border-gray-100 dark:border-gray-800">
-                    <motion.button
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => { setMenuOpen(false); signOut({ callbackUrl: "/login" }) }}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full"
-                    >
-                      <LogOut size={16} />
-                      <span>{t("logout") || "Déconnexion"}</span>
-                    </motion.button>
-                    <p className="text-[10px] text-gray-300 text-center mt-2">{displayName}</p>
-                  </div>
+                {/* Controls */}
+                <div className="px-5 py-3 border-t border-b border-gray-100 dark:border-gray-800">
+                  <TopBarControls dropdownAlign="left" />
+                </div>
+
+                {/* Logout */}
+                <div className="p-4 border-t border-gray-100 dark:border-gray-800">
+                  <motion.button
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => { setMenuOpen(false); signOut({ callbackUrl: "/login" }) }}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full"
+                  >
+                    <LogOut size={16} />
+                    <span>{t("logout") || "Déconnexion"}</span>
+                  </motion.button>
+                  <p className="text-[10px] text-gray-300 text-center mt-2">{displayName}</p>
                 </div>
               </motion.div>
             </div>
