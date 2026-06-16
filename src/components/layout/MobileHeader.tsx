@@ -243,25 +243,25 @@ export function MobileHeader({
                 animate={{ x: 0 }}
                 exit={{ x: "-100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="pointer-events-auto w-72 max-w-[80vw] max-h-[85vh] h-auto bg-white dark:bg-gray-900 rounded-r-3xl shadow-2xl flex flex-col overflow-hidden"
+                className="pointer-events-auto w-72 max-w-[80vw] max-h-[85vh] h-auto bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-r-[2rem] shadow-2xl shadow-black/20 border-r border-white/20 dark:border-white/10 flex flex-col overflow-hidden"
                 data-mobile-role={role}
               >
 
                 {/* User section */}
-                <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+                <div className="px-5 py-6 bg-gradient-to-br from-tahfidz-green to-emerald-600 text-white">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-tahfidz-green flex items-center justify-center overflow-hidden flex-shrink-0">
+                    <div className="w-14 h-14 rounded-2xl bg-white/20 border-2 border-white/30 flex items-center justify-center overflow-hidden flex-shrink-0 backdrop-blur-sm">
                       {userInfo?.avatar ? (
                         <img src={userInfo.avatar} alt={userDisplayName} className="w-full h-full object-cover" />
                       ) : (
-                        <span className="text-white font-bold text-lg">{userDisplayName.charAt(0).toUpperCase()}</span>
+                        <span className="text-white font-bold text-xl">{userDisplayName.charAt(0).toUpperCase()}</span>
                       )}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-bold text-sm text-gray-900 dark:text-white truncate">{userDisplayName}</p>
-                      <p className="text-[11px] text-gray-400 truncate">{userEmail}</p>
+                      <p className="font-bold text-base text-white truncate">{userDisplayName}</p>
+                      <p className="text-xs text-white/80 truncate">{userEmail}</p>
                       {userRoleLabel && (
-                        <span className="inline-block mt-0.5 text-[9px] px-1.5 py-0.5 rounded-full bg-tahfidz-green-light dark:bg-emerald-900/30 text-tahfidz-green font-bold uppercase tracking-wider">
+                        <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full bg-white/20 text-white font-bold uppercase tracking-wider">
                           {userRoleLabel}
                         </span>
                       )}
@@ -296,18 +296,21 @@ export function MobileHeader({
                                   href={item.href}
                                   onClick={() => setMenuOpen(false)}
                                   className={cn(
-                                    "flex items-center justify-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-medium transition",
+                                    "flex items-center gap-4 px-4 py-3 rounded-2xl text-sm font-medium transition",
                                     isActive
                                       ? "bg-tahfidz-green-light text-tahfidz-green shadow-sm"
                                       : "text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
                                   )}
                                 >
-                                  <div className="relative">
+                                  <div className={cn(
+                                    "relative w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                                    isActive ? "bg-tahfidz-green/20" : "bg-gray-100 dark:bg-gray-800"
+                                  )}>
                                     <Icon
-                                      size={24}
+                                      size={20}
                                       strokeWidth={isActive ? 2.5 : 1.5}
                                       className={cn(
-                                        isActive ? (item.color || "text-tahfidz-green") : (item.color || "text-gray-400 dark:text-gray-500")
+                                        isActive ? (item.color || "text-tahfidz-green") : (item.color || "text-gray-500 dark:text-gray-400")
                                       )}
                                     />
                                     {isNotification && unreadCount > 0 && (
