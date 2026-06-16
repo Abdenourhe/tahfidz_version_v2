@@ -1,7 +1,16 @@
 "use client"
 
 import Link from "next/link"
-import { ChevronRight, GraduationCap, Star, User } from "lucide-react"
+import {
+  ChevronRight,
+  GraduationCap,
+  Star,
+  User,
+  MessageCircle,
+  Phone,
+  Mail,
+  Building2,
+} from "lucide-react"
 import { useT } from "@/contexts/LanguageContext"
 import { AvatarLightbox } from "@/components/AvatarLightbox"
 
@@ -11,21 +20,26 @@ interface Child {
   currentStreak: number
   user: { fullName: string; fullNameAr: string | null; avatar: string | null }
   group: { name: string } | null
-  teacher: { user: { fullName: string } } | null
+  teacher: { user: { id: string; fullName: string; phone?: string | null; email: string } } | null
   studentBadges: { id: string; badge: { icon: string; name: string } }[]
   _count: { memorizedSurahs: number }
 }
 
-export function ChildCard({ child }: { child: Child }) {
+interface Props {
+  child: Child
+  admin: { id: string; fullName: string; email: string; phone?: string | null } | null
+  onContactTeacher: (child: Child) => void
+  onContactAdmin: () => void
+}
+
+export function ChildCard({ child, admin, onContactTeacher, onContactAdmin }: Props) {
   const t = useT("parentDashboardClient")
+  const teacher = child.teacher?.user
 
   return (
-    <Link
-      href={`/parent/child/${child.id}`}
-      className="group block bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4 shadow-sm hover:shadow-md hover:border-tahfidz-green/30 transition-all duration-200 active:scale-[0.98]"
-    >
-      <div className="flex items-start gap-4">
-        {/* Avatar */}
+    <div className="group bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4 shadow-sm hover:shadow-md hover:border-tahfidz-green/30 transition-all duration-200">
+      {/* Hero ligne cliquable */}
+      <Link href={`/parent/child/${child.id}`} className="flex items-start gap-4 active:scale-[0.98] transition">
         <div className="w-16 h-16 rounded-2xl gradient-tahfidz flex items-center justify-center overflow-hidden flex-shrink-0 ring-2 ring-emerald-50 dark:ring-emerald-900/20">
           <AvatarLightbox
             src={child.user.avatar}
@@ -36,7 +50,6 @@ export function ChildCard({ child }: { child: Child }) {
           />
         </div>
 
-        {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div>
@@ -56,9 +69,9 @@ export function ChildCard({ child }: { child: Child }) {
                 <GraduationCap size={9} /> {child.group.name}
               </span>
             )}
-            {child.teacher && (
+            {teacher && (
               <span className="flex items-center gap-1 text-[10px] bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 px-2 py-0.5 rounded-full font-medium">
-                <User size={9} /> {child.teacher.user.fullName}
+                <User size={9} /> {teacher.fullName}
               </span>
             )}
           </div>
@@ -98,7 +111,48 @@ export function ChildCard({ child }: { child: Child }) {
             </div>
           )}
         </div>
+      </Link>
+
+      {/* Actions rapides */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 pt-4 border-t border-gray-50 dark:border-gray-800">
+        {teacher && (
+          <>
+            <button
+              onClick={() => onContactTeacher(child)}
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-tahfidz-green text-white text-[10px] font-bold hover:opacity-90 transition active:scale-95"
+            >
+              <MessageCircle size={13} />
+              {t("contactTeacher")}
+            </button>
+            {teacher.phone && (
+              <a
+                href={`tel:${teacher.phone}`}
+                className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-[10px] font-bold hover:bg-gray-50 transition active:scale-95"
+              >
+                <Phone size={13} />
+                {t("call")}
+              </a>
+            )}
+            <a
+              href={`mailto:${teacher.email}`}
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-[10px] font-bold hover:bg-gray-50 transition active:scale-95"
+            >
+              <Mail size={13} />
+              {t("email")}
+            </a>
+          </>
+        )}
+
+        {admin && (
+          <button
+            onClick={onContactAdmin}
+            className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-purple-600 text-white text-[10px] font-bold hover:opacity-90 transition active:scale-95"
+          >
+            <Building2 size={13} />
+            {t("contactAdmin")}
+          </button>
+        )}
       </div>
-    </Link>
+    </div>
   )
 }

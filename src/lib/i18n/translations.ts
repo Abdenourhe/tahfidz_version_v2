@@ -777,6 +777,7 @@ export const translations = {
     teacher:         { fr: "Enseignant", en: "Teacher", ar: "المعلم" },
     administration:  { fr: "Administration", en: "Administration", ar: "الإدارة" },
     contactAdmin:    { fr: "Contacter l'administration", en: "Contact administration", ar: "التواصل مع الإدارة" },
+    call:            { fr: "Appeler", en: "Call", ar: "اتصال" },
     email:           { fr: "Envoyer un email", en: "Send email", ar: "إرسال بريد" },
     memorization:    { fr: "Mémorisation", en: "Memorization", ar: "الحفظ" },
     evaluations:     { fr: "Évaluations", en: "Evaluations", ar: "التقييمات" },
@@ -1542,6 +1543,10 @@ export const translations = {
     attendanceAlertOne:  { fr: "La présence de {{name}} pour demain n'est pas marquée.", en: "{{name}}'s attendance for tomorrow is not marked.", ar: "لم يتم تسجيل حضور {{name}} ليوم الغد." },
     attendanceAlertMany: { fr: "La présence de {{count}} enfants pour demain n'est pas marquée.", en: "Attendance for {{count}} children tomorrow is not marked.", ar: "لم يتم تسجيل حضور {{count}} أطفال ليوم الغد." },
     clickToMark:     { fr: "Cliquez pour marquer →", en: "Click to mark →", ar: "انقر للتسجيل →" },
+    contactTeacher:  { fr: "Contacter l'enseignant", en: "Contact teacher", ar: "التواصل مع المعلم" },
+    contactAdmin:    { fr: "Contacter l'administration", en: "Contact administration", ar: "التواصل مع الإدارة" },
+    call:            { fr: "Appeler", en: "Call", ar: "اتصال" },
+    email:           { fr: "Email", en: "Email", ar: "بريد" },
   },
 
   // ─── teacherDashboardClient (components/teacher/TeacherDashboardClient.tsx) ─────────────────────────────────────────────

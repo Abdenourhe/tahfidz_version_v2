@@ -16,7 +16,7 @@ async function getParentData(userId: string) {
             include: {
               user: { select: { fullName: true, fullNameAr: true, avatar: true } },
               group: { select: { name: true } },
-              teacher: { include: { user: { select: { fullName: true } } } },
+              teacher: { include: { user: { select: { id: true, fullName: true, phone: true, email: true } } } },
               studentBadges: {
                 include: { badge: { select: { icon: true, name: true } } },
                 orderBy: { earnedAt: "desc" },

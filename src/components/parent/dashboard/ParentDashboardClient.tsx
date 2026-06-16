@@ -1,6 +1,7 @@
 "use client"
 // src/components/parent/dashboard/ParentDashboardClient.tsx — Centre d'opération parent
 
+import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useT } from "@/contexts/LanguageContext"
 import { User } from "lucide-react"
@@ -8,6 +9,15 @@ import Link from "next/link"
 import { ChildCard } from "./ChildCard"
 import { QuickActions } from "./QuickActions"
 import { AttendanceAlert } from "./AttendanceAlert"
+import { TeacherChat } from "@/components/parent/child/TeacherChat"
+import AdminParentChatDrawer from "@/components/admin/AdminParentChatDrawer"
+
+interface TeacherUser {
+  id: string
+  fullName: string
+  phone?: string | null
+  email: string
+}
 
 interface Child {
   id: string
@@ -15,7 +25,7 @@ interface Child {
   currentStreak: number
   user: { fullName: string; fullNameAr: string | null; avatar: string | null }
   group: { name: string } | null
-  teacher: { user: { fullName: string } } | null
+  teacher: { user: TeacherUser } | null
   studentBadges: { id: string; badge: { icon: string; name: string } }[]
   _count: { memorizedSurahs: number }
 }
@@ -30,6 +40,18 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
   const t = useT("parentDashboardClient")
   const { data: session } = useSession()
   const firstName = session?.user?.name?.split(" ")[0] || ""
+  const parentUserId = session?.user?.id
+
+  const [admin, setAdmin] = useState<{ id: string; fullName: string; email: string; phone?: string | null } | null>(null)
+  const [teacherChat, setTeacherChat] = useState<{ child: Child; open: boolean } | null>(null)
+  const [adminChatOpen, setAdminChatOpen] = useState(false)
+
+  useEffect(() => {
+    fetch("/api/school/admin")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.admin) setAdmin(d.admin) })
+      .catch((e) => console.error(e))
+  }, [])
 
   const missingChildren = children.filter((c) => missingTomorrowIds.includes(c.id))
 
@@ -72,13 +94,45 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-3">
+          <div className="grid grid-cols-1 gap-4">
             {children.map((child) => (
-              <ChildCard key={child.id} child={child} />
+              <ChildCard
+                key={child.id}
+                child={child}
+                admin={admin}
+                onContactTeacher={(c) => setTeacherChat({ child: c, open: true })}
+                onContactAdmin={() => setAdminChatOpen(true)}
+              />
             ))}
           </div>
         )}
       </div>
+
+      {/* Teacher chat panel */}
+      {teacherChat?.child.teacher && parentUserId && (
+        <div className="fixed inset-x-0 bottom-0 z-50 md:absolute md:bottom-auto md:top-20 md:left-1/2 md:-translate-x-1/2 md:w-[480px]">
+          <TeacherChat
+            teacherUserId={teacherChat.child.teacher.user.id}
+            teacherName={teacherChat.child.teacher.user.fullName}
+            parentUserId={parentUserId}
+            childName={teacherChat.child.user.fullName}
+            studentId={teacherChat.child.id}
+            open={teacherChat.open}
+            onOpenChange={(open) => setTeacherChat((prev) => (prev ? { ...prev, open } : null))}
+          />
+        </div>
+      )}
+
+      {/* Admin chat drawer */}
+      {admin && (
+        <AdminParentChatDrawer
+          otherUserId={admin.id}
+          otherUserName={admin.fullName}
+          otherUserRole="ADMIN"
+          open={adminChatOpen}
+          onOpenChange={setAdminChatOpen}
+        />
+      )}
     </div>
   )
 }

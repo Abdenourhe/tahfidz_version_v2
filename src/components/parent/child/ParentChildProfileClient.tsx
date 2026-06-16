@@ -97,7 +97,7 @@ function AdminChatCard({
   open,
   onOpenChange,
 }: {
-  admin: { id: string; fullName: string; fullNameAr?: string | null; email: string; role: string } | null
+  admin: { id: string; fullName: string; fullNameAr?: string | null; email: string; phone?: string | null; role: string } | null
   parentUserId?: string
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -126,6 +126,22 @@ function AdminChatCard({
       >
         <MessageCircle size={16} /> {t("contactAdmin")}
       </button>
+      <div className="flex items-center gap-2 mt-2">
+        {admin.phone && (
+          <a
+            href={`tel:${admin.phone}`}
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 transition"
+          >
+            <Phone size={13} /> {t("call")}
+          </a>
+        )}
+        <a
+          href={`mailto:${admin.email}`}
+          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 transition"
+        >
+          <Mail size={13} /> {t("email")}
+        </a>
+      </div>
     </div>
   )
 }
