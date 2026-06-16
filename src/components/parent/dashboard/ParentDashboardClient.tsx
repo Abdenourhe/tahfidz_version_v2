@@ -1,16 +1,20 @@
 "use client"
-// src/components/parent/dashboard/ParentDashboardClient.tsx — Centre d'opération parent
+// ParentDashboardClient.tsx — Centre d'opération parent moderne
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useSession } from "next-auth/react"
-import { useT } from "@/contexts/LanguageContext"
-import { User } from "lucide-react"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
+import { motion } from "framer-motion"
+import { User, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { ChildCard } from "./ChildCard"
 import { QuickActions } from "./QuickActions"
 import { AttendanceAlert } from "./AttendanceAlert"
+import { AIParentSummary } from "./AIParentSummary"
 import { TeacherChat } from "@/components/parent/child/TeacherChat"
 import AdminParentChatDrawer from "@/components/admin/AdminParentChatDrawer"
+import { TiltCard } from "@/components/shared/TiltCard"
+import { cn } from "@/lib/utils"
 
 interface TeacherUser {
   id: string
@@ -37,7 +41,37 @@ interface Props {
   schoolAdmin: { id: string; fullName: string; email: string; phone?: string | null; role?: string } | null
 }
 
+function useHijriDate(locale: string) {
+  return useMemo(() => {
+    try {
+      const date = new Date()
+      const options: Intl.DateTimeFormatOptions = {
+        calendar: "islamic",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }
+      return new Intl.DateTimeFormat(locale === "ar" ? "ar-SA" : "en-US", options).format(date)
+    } catch {
+      return ""
+    }
+  }, [locale])
+}
+
+function useGregorianDate(locale: string) {
+  return useMemo(() => {
+    const date = new Date()
+    return new Intl.DateTimeFormat(locale === "ar" ? "ar-SA" : locale === "en" ? "en-US" : "fr-FR", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(date)
+  }, [locale])
+}
+
 export function ParentDashboardClient({ todayDate: _todayDate, children, missingTomorrowIds, schoolAdmin }: Props) {
+  const { locale } = useLanguage()
   const t = useT("parentDashboardClient")
   const { data: session } = useSession()
   const firstName = session?.user?.name?.split(" ")[0] || ""
@@ -47,18 +81,83 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
   const [adminChatOpen, setAdminChatOpen] = useState(false)
 
   const admin = schoolAdmin
-
   const missingChildren = children.filter((c) => missingTomorrowIds.includes(c.id))
+
+  const hijriDate = useHijriDate(locale)
+  const gregorianDate = useGregorianDate(locale)
+
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.08 },
+    },
+  }
+
+  const item = {
+    hidden: { opacity: 0, y: 16 },
+    show: { opacity: 1, y: 0 },
+  }
 
   return (
     <div className="space-y-5">
-      {/* En-tête de bienvenue */}
-      <div>
-        <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">
-          {firstName ? t("welcome").replace("{{name}}", firstName) : t("welcomeFallback")}
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t("subtitle")}</p>
-      </div>
+      {/* Header glassmorphism avec avatar et dates */}
+      <TiltCard intensity={4} className="group">
+        <div
+          className={cn(
+            "relative overflow-hidden rounded-2xl border p-5",
+            "bg-gradient-to-br from-tahfidz-green/10 via-white/70 to-tahfidz-gold/10",
+            "dark:from-tahfidz-green/15 dark:via-gray-900/80 dark:to-tahfidz-gold/10",
+            "border-white/60 dark:border-white/10",
+            "backdrop-blur-xl shadow-xl shadow-black/5 dark:shadow-black/20"
+          )}
+        >
+          <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-tahfidz-green/20 blur-3xl" />
+          <div className="absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-tahfidz-gold/20 blur-3xl" />
+
+          <div className="relative flex items-center gap-4">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 200, damping: 20 }}
+              className="relative shrink-0"
+            >
+              <div className="absolute inset-0 rounded-full bg-tahfidz-green/30 blur-md" />
+              <div className="relative h-14 w-14 rounded-full gradient-tahfidz flex items-center justify-center text-white text-xl font-bold ring-2 ring-white/50 dark:ring-white/20">
+                {firstName.charAt(0).toUpperCase() || "?"}
+              </div>
+            </motion.div>
+
+            <div className="min-w-0 flex-1">
+              <motion.h1
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100"
+              >
+                {firstName ? t("welcome").replace("{{name}}", firstName) : t("welcomeFallback")}
+              </motion.h1>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.15 }}
+                className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-gray-500 dark:text-gray-400"
+              >
+                <span>{gregorianDate}</span>
+                {hijriDate && (
+                  <>
+                    <span className="hidden sm:inline text-gray-300">|</span>
+                    <span className="arabic text-tahfidz-green font-medium">{hijriDate}</span>
+                  </>
+                )}
+              </motion.div>
+            </div>
+
+            <div className="hidden sm:flex h-10 w-10 items-center justify-center rounded-xl bg-white/60 dark:bg-white/5 text-tahfidz-green">
+              <Sparkles size={20} />
+            </div>
+          </div>
+        </div>
+      </TiltCard>
 
       {/* Actions rapides */}
       <QuickActions />
@@ -66,8 +165,11 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
       {/* Alerte présence */}
       <AttendanceAlert missingChildren={missingChildren} />
 
+      {/* Résumé intelligent */}
+      {children.length > 0 && <AIParentSummary students={children} missingIds={missingTomorrowIds} />}
+
       {/* Mes enfants */}
-      <div>
+      <motion.div variants={container} initial="hidden" animate="show">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
             <User size={16} className="text-tahfidz-green" />
@@ -77,7 +179,7 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
         </div>
 
         {children.length === 0 ? (
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-10 text-center">
+          <motion.div variants={item} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-10 text-center">
             <p className="text-4xl mb-3">👨‍👩‍👦</p>
             <p className="font-semibold text-gray-700 dark:text-gray-200 mb-2">{t("noChild")}</p>
             <p className="text-sm text-gray-500 mb-4">{t("noChildDesc")}</p>
@@ -87,21 +189,22 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
             >
               {t("linkChild")}
             </Link>
-          </div>
+          </motion.div>
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {children.map((child) => (
-              <ChildCard
-                key={child.id}
-                child={child}
-                admin={admin}
-                onContactTeacher={(c) => setTeacherChat({ child: c, open: true })}
-                onContactAdmin={() => setAdminChatOpen(true)}
-              />
+              <motion.div key={child.id} variants={item}>
+                <ChildCard
+                  child={child}
+                  admin={admin}
+                  onContactTeacher={(c) => setTeacherChat({ child: c, open: true })}
+                  onContactAdmin={() => setAdminChatOpen(true)}
+                />
+              </motion.div>
             ))}
           </div>
         )}
-      </div>
+      </motion.div>
 
       {/* Teacher chat panel */}
       {teacherChat?.child.teacher && parentUserId && (

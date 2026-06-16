@@ -1547,6 +1547,12 @@ export const translations = {
     contactAdmin:    { fr: "Contacter l'administration", en: "Contact administration", ar: "التواصل مع الإدارة" },
     call:            { fr: "Appeler", en: "Call", ar: "اتصال" },
     email:           { fr: "Email", en: "Email", ar: "بريد" },
+    aiSummaryTitle:  { fr: "Résumé intelligent", en: "Smart summary", ar: "ملخص ذكي" },
+    summaryAttendance: { fr: "Présence à marquer demain pour {{names}}.", en: "Attendance to mark tomorrow for {{names}}.", ar: "يجب تسجيل الحضور غداً لـ {{names}}." },
+    summaryStreak:   { fr: "{{name}} est en série de {{days}} jours !", en: "{{name}} is on a {{days}}-day streak!", ar: "{{name}} في سلسلة {{days}} أيام!" },
+    summaryBadge:    { fr: "{{name}} a débloqué le badge {{badge}}.", en: "{{name}} unlocked the {{badge}} badge.", ar: "حصل {{name}} على شارة {{badge}}." },
+    summaryBeginner: { fr: "{{names}} commencent leur parcours de mémorisation.", en: "{{names}} are starting their memorization journey.", ar: "{{names}} يبدأون رحلة الحفظ." },
+    summaryAllGood:  { fr: "Tout va bien, aucune action requise.", en: "All good, no action required.", ar: "كل شيء على ما يرام، لا توجد إجراءات مطلوبة." },
   },
 
   // ─── teacherDashboardClient (components/teacher/TeacherDashboardClient.tsx) ─────────────────────────────────────────────
