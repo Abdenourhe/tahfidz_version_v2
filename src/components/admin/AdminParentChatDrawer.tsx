@@ -125,8 +125,11 @@ export default function AdminParentChatDrawer({
     if (!confirm(t("confirmClear"))) return
     setDeleting(true)
     try {
-      await fetch(`/api/messages?otherUserId=${otherUserId}`, { method: "DELETE" })
-      setMessages([])
+      const res = await fetch(`/api/messages?otherUserId=${otherUserId}`, { method: "DELETE" })
+      if (res.ok) {
+        setMessages([])
+        await load()
+      }
     } catch (e) {
       console.error(e)
     } finally {

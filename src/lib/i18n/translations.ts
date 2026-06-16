@@ -2288,6 +2288,18 @@ export const translations = {
     error:          { fr: "Erreur lors du chargement", en: "Loading error", ar: "خطأ في التحميل" },
   },
 
+  // ─── teacherChat (components/parent/child/TeacherChat.tsx) ─────────────────────────────────────────────
+  teacherChat: {
+    contact:         { fr: "Contacter", en: "Contact", ar: "تواصل" },
+    writeMessage:    { fr: "Écrivez un message…", en: "Write a message…", ar: "اكتب رسالة…" },
+    empty:           { fr: "Écrivez le premier message", en: "Write the first message", ar: "اكتب الرسالة الأولى" },
+    clearConfirm:    { fr: "Vider cette conversation ?", en: "Clear this conversation?", ar: "مسح هذه المحادثة؟" },
+    deleteMessage:   { fr: "Supprimer ce message ?", en: "Delete this message?", ar: "حذف هذه الرسالة؟" },
+    reply:           { fr: "Répondre à", en: "Reply to", ar: "الرد على" },
+    yourAnswer:      { fr: "Votre réponse…", en: "Your answer…", ar: "إجابتك…" },
+    online:          { fr: "En ligne", en: "Online", ar: "متصل" },
+  },
+
   // ─── parentRegister (components/parent/register/ParentRegisterForm.tsx) ─────────────────────────────────────────────
   parentRegister: {
     title:            { fr: "Inscription parent", en: "Parent registration", ar: "تسجيل ولي الأمر" },

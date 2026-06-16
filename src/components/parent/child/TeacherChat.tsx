@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { Send, Loader2, MessageCircle, X, Trash2, ChevronDown } from "lucide-react"
+import { useT } from "@/contexts/LanguageContext"
 import { ChatBubble, ChatMessage } from "@/components/shared/ChatBubble"
 
 interface Message extends ChatMessage {
@@ -44,7 +45,7 @@ function useScrollBehavior(
   return { showJumpBtn, scrollToBottom, onScroll }
 }
 
-export function TeacherChat({ teacherUserId, teacherName: _teacherName, parentUserId, childName, studentId, open, onOpenChange }: {
+export function TeacherChat({ teacherUserId, teacherName, parentUserId, childName, studentId, open, onOpenChange }: {
   teacherUserId: string
   teacherName: string
   parentUserId: string
@@ -63,6 +64,7 @@ export function TeacherChat({ teacherUserId, teacherName: _teacherName, parentUs
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
   const [replyingTo, setReplyingTo] = useState<Message | null>(null)
+  const t = useT("teacherChat")
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -129,7 +131,7 @@ export function TeacherChat({ teacherUserId, teacherName: _teacherName, parentUs
   }
 
   const deleteMessage = async (messageId: string) => {
-    if (!confirm("Supprimer ce message ?")) return
+    if (!confirm(t("deleteMessage"))) return
     try {
       const res = await fetch(`/api/messages/${messageId}`, { method: "DELETE" })
       if (res.ok) load()
@@ -137,10 +139,13 @@ export function TeacherChat({ teacherUserId, teacherName: _teacherName, parentUs
   }
 
   const clearChat = async () => {
-    if (!confirm("Vider cette conversation ?")) return
+    if (!confirm(t("clearConfirm"))) return
     try {
-      await fetch(`/api/messages?otherUserId=${teacherUserId}`, { method: "DELETE" })
-      setMessages([])
+      const res = await fetch(`/api/messages?otherUserId=${teacherUserId}`, { method: "DELETE" })
+      if (res.ok) {
+        setMessages([])
+        await load()
+      }
     } catch (e) { console.error(e) }
   }
 
@@ -158,7 +163,7 @@ export function TeacherChat({ teacherUserId, teacherName: _teacherName, parentUs
     return (
       <motion.button onClick={() => setChatOpen(true)} whileTap={{ scale: 0.95 }}
         className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-tahfidz-green text-white text-sm font-medium hover:opacity-90 transition shadow-sm">
-        <MessageCircle size={14} /> Contacter
+        <MessageCircle size={14} /> {t("contact")}
       </motion.button>
     )
   }
@@ -172,10 +177,10 @@ export function TeacherChat({ teacherUserId, teacherName: _teacherName, parentUs
       <div className="flex items-center justify-between px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-green-500" />
-          <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Discussion</span>
+          <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate max-w-[180px]">{teacherName}</span>
         </div>
         <div className="flex items-center gap-0.5">
-          <motion.button whileTap={{ scale: 0.85 }} onClick={clearChat} className="p-2 rounded-xl hover:bg-red-50 text-gray-400 hover:text-red-500 transition" title="Vider">
+          <motion.button whileTap={{ scale: 0.85 }} onClick={clearChat} className="p-2 rounded-xl hover:bg-red-50 text-gray-400 hover:text-red-500 transition" title={t("clearConfirm")}>
             <Trash2 size={14} />
           </motion.button>
           <motion.button whileTap={{ scale: 0.85 }} onClick={() => setChatOpen(false)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 transition">
@@ -194,7 +199,7 @@ export function TeacherChat({ teacherUserId, teacherName: _teacherName, parentUs
           ) : messages.length === 0 ? (
             <motion.div key="empty" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center justify-center h-full text-gray-400 gap-2">
               <MessageCircle size={28} className="opacity-40" />
-              <p className="text-xs">Écrivez le premier message</p>
+              <p className="text-xs">{t("empty")}</p>
             </motion.div>
           ) : (
             groups.map((group, gi) => (
@@ -249,7 +254,7 @@ export function TeacherChat({ teacherUserId, teacherName: _teacherName, parentUs
           >
             <div className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg border-l-2 border-tahfidz-green bg-white dark:bg-gray-800">
               <div className="min-w-0">
-                <p className="text-[10px] font-bold text-tahfidz-green">Répondre à {replyingTo.fromUser.fullName}</p>
+                <p className="text-[10px] font-bold text-tahfidz-green">{t("reply")} {replyingTo.fromUser.fullName}</p>
                 <p className="text-[11px] text-gray-400 truncate">{replyingTo.body}</p>
               </div>
               <button onClick={() => setReplyingTo(null)} className="p-1 rounded hover:bg-gray-100 text-gray-400"><X size={12} /></button>
@@ -262,7 +267,7 @@ export function TeacherChat({ teacherUserId, teacherName: _teacherName, parentUs
       <div className="flex items-center gap-2 p-3 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
         <input ref={inputRef} value={text} onChange={e => setText(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send() } }}
-          placeholder={replyingTo ? "Votre réponse..." : "Écrivez un message..."}
+          placeholder={replyingTo ? t("yourAnswer") : t("writeMessage")}
           className="flex-1 text-sm px-4 py-2.5 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/30 focus:border-tahfidz-green transition"
         />
         <motion.button whileTap={{ scale: 0.85 }} onClick={send} disabled={sending || !text.trim()}
