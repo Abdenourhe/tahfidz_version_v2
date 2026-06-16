@@ -287,28 +287,28 @@ export function MobileHeader({
                           variants={containerVariants}
                           initial="hidden"
                           animate="show"
-                          className="flex flex-wrap justify-center gap-2"
+                          className="flex flex-col items-center gap-2"
                         >
                           {section.items.map((item) => {
                             const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
                             const Icon = item.icon
                             const isNotification = item.href.endsWith("/notifications")
                             return (
-                              <motion.div key={item.href} variants={itemVariants}>
+                              <motion.div key={item.href} variants={itemVariants} className="w-full max-w-[280px]">
                                 <Link
                                   ref={isActive ? activeLinkRef : undefined}
                                   href={item.href}
                                   onClick={() => setMenuOpen(false)}
                                   className={cn(
-                                    "flex flex-col items-center justify-center gap-1.5 w-[104px] px-2 py-3 rounded-xl text-xs font-medium text-center transition",
+                                    "flex items-center justify-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-medium transition",
                                     isActive
-                                      ? "bg-tahfidz-green-light text-tahfidz-green"
-                                      : "text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
+                                      ? "bg-tahfidz-green-light text-tahfidz-green shadow-sm"
+                                      : "text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
                                   )}
                                 >
                                   <div className="relative">
                                     <Icon
-                                      size={22}
+                                      size={24}
                                       strokeWidth={isActive ? 2.5 : 1.5}
                                       className={cn(
                                         isActive ? (item.color || "text-tahfidz-green") : (item.color || "text-gray-400 dark:text-gray-500")
@@ -320,7 +320,7 @@ export function MobileHeader({
                                       </span>
                                     )}
                                   </div>
-                                  <span className="leading-tight">{t(item.labelKey) || item.labelKey}</span>
+                                  <span className="flex-1 text-center">{t(item.labelKey) || item.labelKey}</span>
                                 </Link>
                               </motion.div>
                             )
