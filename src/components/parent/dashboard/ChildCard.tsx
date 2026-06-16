@@ -15,7 +15,6 @@ import {
 } from "lucide-react"
 import { useT } from "@/contexts/LanguageContext"
 import { AvatarLightbox } from "@/components/AvatarLightbox"
-import { TiltCard } from "@/components/shared/TiltCard"
 import { cn } from "@/lib/utils"
 
 interface Child {
@@ -54,17 +53,16 @@ export function ChildCard({ child, admin, onContactTeacher, onContactAdmin }: Pr
   const teacher = child.teacher?.user
 
   return (
-    <TiltCard intensity={6} className="group">
-      <div
-        className={cn(
-          "relative overflow-hidden rounded-2xl border p-4 transition-all duration-300",
-          "bg-gradient-to-br from-white/80 to-white/50 dark:from-gray-900/80 dark:to-gray-900/50",
-          "border-white/50 dark:border-white/10",
-          "backdrop-blur-xl shadow-lg shadow-black/5 dark:shadow-black/20",
-          "hover:shadow-xl hover:shadow-tahfidz-green/10 dark:hover:shadow-tahfidz-green/10",
-          "hover:border-tahfidz-green/30 dark:hover:border-tahfidz-green/30"
-        )}
-      >
+    <div
+      className={cn(
+        "group relative overflow-hidden rounded-2xl border p-4 transition-all duration-300",
+        "bg-gradient-to-br from-white/80 to-white/50 dark:from-gray-900/80 dark:to-gray-900/50",
+        "border-white/50 dark:border-white/10",
+        "backdrop-blur-xl shadow-lg shadow-black/5 dark:shadow-black/20",
+        "hover:shadow-xl hover:shadow-tahfidz-green/10 dark:hover:shadow-tahfidz-green/10",
+        "hover:border-tahfidz-green/30 dark:hover:border-tahfidz-green/30"
+      )}
+    >
         {/* Glow décoratif au hover */}
         <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-tahfidz-green/10 blur-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
         <div className="absolute -bottom-8 -left-8 h-24 w-24 rounded-full bg-tahfidz-gold/10 blur-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
@@ -206,7 +204,6 @@ export function ChildCard({ child, admin, onContactTeacher, onContactAdmin }: Pr
           )}
         </div>
       </div>
-    </TiltCard>
   )
 }
 
