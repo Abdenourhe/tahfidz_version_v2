@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import { useLockBodyScroll } from "@/hooks/useLockBodyScroll"
 import { motion, AnimatePresence } from "framer-motion"
 import { useSession } from "next-auth/react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
@@ -53,6 +54,8 @@ export default function AdminParentChatDrawer({
   const [sending, setSending] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  useLockBodyScroll(open)
 
   const load = useCallback(async () => {
     if (!open || !otherUserId) return
@@ -170,13 +173,13 @@ export default function AdminParentChatDrawer({
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-stretch sm:justify-end">
+        <div className="fixed inset-0 z-50 flex justify-end">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => onOpenChange(false)}
-            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
           />
           <motion.div
             initial={{ x: "100%" }}
@@ -185,10 +188,10 @@ export default function AdminParentChatDrawer({
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
             className={cn(
               "relative z-10 flex flex-col overflow-hidden bg-white dark:bg-gray-900 shadow-2xl",
-              // Mobile : modale flottante compacte (pas plein écran)
-              "w-[calc(100%-2rem)] max-w-md h-auto max-h-[80vh] rounded-2xl border border-gray-200 dark:border-gray-800 mb-4",
+              // Mobile : drawer latéral professionnel style iOS
+              "h-full w-[calc(100%-1.5rem)] max-w-md rounded-l-2xl border-l border-gray-200 dark:border-gray-800",
               // Desktop : drawer latéral classique
-              "sm:h-full sm:w-[480px] sm:max-h-none sm:rounded-none sm:mb-0 sm:border-l sm:border-y-0 sm:border-r-0"
+              "sm:w-[480px] sm:max-w-none sm:rounded-l-none"
             )}
           >
             {/* Header */}

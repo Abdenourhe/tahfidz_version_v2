@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Send, Loader2, MessageCircle, X, Trash2, ChevronDown } from "lucide-react"
 import { useT } from "@/contexts/LanguageContext"
 import { cn } from "@/lib/utils"
+import { useLockBodyScroll } from "@/hooks/useLockBodyScroll"
 import { ChatBubble, ChatMessage } from "@/components/shared/ChatBubble"
 
 interface Message extends ChatMessage {
@@ -72,6 +73,8 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
   const inputRef = useRef<HTMLInputElement>(null)
 
   const { showJumpBtn, scrollToBottom, onScroll } = useScrollBehavior(scrollRef, [messages.length])
+
+  useLockBodyScroll(chatOpen)
 
   const load = async () => {
     try {
