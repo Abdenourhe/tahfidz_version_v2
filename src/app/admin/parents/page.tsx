@@ -35,7 +35,7 @@ export default async function AdminParentsPage({
     prisma.parent.findMany({
       where,
       include: {
-        user: { select: { fullName: true, fullNameAr: true, email: true, phone: true, isActive: true, createdAt: true } },
+        user: { select: { id: true, fullName: true, fullNameAr: true, email: true, phone: true, isActive: true, createdAt: true } },
         childrenLinks: {
           where: { isVerified: true },
           include: { student: { include: { user: { select: { fullName: true } } } } },

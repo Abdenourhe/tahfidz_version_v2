@@ -8,8 +8,9 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import {
-  Plus, Search, Users, ArrowLeft, Phone, Mail, Link2, Pencil, Trash2, AlertTriangle,
+  Plus, Search, Users, ArrowLeft, Phone, Mail, Link2, Pencil, Trash2, AlertTriangle, MessageCircle,
 } from "lucide-react"
+import AdminParentChatDrawer from "@/components/admin/AdminParentChatDrawer"
 import { formatDate, statusLabel } from "@/lib/utils"
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -19,6 +20,7 @@ import { formatDate, statusLabel } from "@/lib/utils"
 interface ParentRow {
   id: string
   user: {
+    id: string
     fullName: string
     fullNameAr: string | null
     email: string
@@ -51,6 +53,7 @@ export function ParentsListClient({ parents: initialParents, total: _total, page
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [chatParent, setChatParent] = useState<ParentRow | null>(null)
 
   const handleDelete = async () => {
     if (!deleteId) return
@@ -159,6 +162,12 @@ export function ParentsListClient({ parents: initialParents, total: _total, page
               <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700">
                 <span className="text-xs text-gray-400">{t("enrolled")} {fmtDate(parent.user.createdAt)}</span>
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setChatParent(parent)}
+                    className="p-1.5 text-gray-400 hover:text-tahfidz-green hover:bg-tahfidz-green-light dark:hover:bg-emerald-900/20 rounded-md transition"
+                    title={t("message") || "Message"}>
+                    <MessageCircle size={14} />
+                  </button>
                   <Link href={`/admin/parents/${parent.id}/edit`}
                     className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition"
                     title={t("edit")}>
@@ -178,6 +187,17 @@ export function ParentsListClient({ parents: initialParents, total: _total, page
           ))
         )}
       </div>
+
+      {/* Drawer de chat */}
+      {chatParent && (
+        <AdminParentChatDrawer
+          otherUserId={chatParent.user.id}
+          otherUserName={chatParent.user.fullName}
+          otherUserRole="PARENT"
+          open={!!chatParent}
+          onOpenChange={(open) => !open && setChatParent(null)}
+        />
+      )}
 
       {/* Confirmation dialog */}
       {deleteId && (

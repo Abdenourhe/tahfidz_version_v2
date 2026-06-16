@@ -365,6 +365,7 @@ export const translations = {
     deleteSuccess:   { fr: "Parent supprimé avec succès.", en: "Parent deleted successfully.", ar: "تم حذف الولي بنجاح." },
     save:            { fr: "Enregistrer", en: "Save", ar: "حفظ" },
     cancel:          { fr: "Annuler", en: "Cancel", ar: "إلغاء" },
+    message:         { fr: "Message", en: "Message", ar: "رسالة" },
   },
 
   // ─── parents_2 (components/admin/parents.tsx) ─────────────────────────────────────────────
@@ -783,6 +784,8 @@ export const translations = {
     attendance30:    { fr: "Présence 30j", en: "Attendance 30d", ar: "حضور 30 يوماً" },
     avgScore:        { fr: "Score moyen", en: "Avg. score", ar: "متوسط الدرجات" },
     teacher:         { fr: "Enseignant", en: "Teacher", ar: "المعلم" },
+    administration:  { fr: "Administration", en: "Administration", ar: "الإدارة" },
+    contactAdmin:    { fr: "Contacter l'administration", en: "Contact administration", ar: "التواصل مع الإدارة" },
     email:           { fr: "Envoyer un email", en: "Send email", ar: "إرسال بريد" },
     memorization:    { fr: "Mémorisation", en: "Memorization", ar: "الحفظ" },
     evaluations:     { fr: "Évaluations", en: "Evaluations", ar: "التقييمات" },
@@ -1453,9 +1456,24 @@ export const translations = {
   // ─── pushNotifications (components/parent/PushNotificationToggle.tsx) ─────────────────────────────────────────────
   pushNotifications: {
     enabled:           { fr: "Notifications actives", en: "Notifications on", ar: "الإشعارات مفعلة" },
-    disabled:          { fr: "Activer les notifications", en: "Enable notifications", ar: "تفعيل الإشعارات" },
+    disabled:          { fr: "Activer les notifications", en: "Enable notifications", ar: "تفعير الإشعارات" },
     notSupported:      { fr: "Navigateur incompatible", en: "Browser not supported", ar: "المتصفح غير مدعوم" },
     permissionDenied:  { fr: "Permission refusée", en: "Permission denied", ar: "الإذن مرفوض" },
+  },
+
+  // ─── adminChat (components/admin/AdminParentChatDrawer.tsx) ─────────────────────────────────────────────
+  adminChat: {
+    defaultSubject:    { fr: "Discussion", en: "Discussion", ar: "محادثة" },
+    loading:           { fr: "Chargement...", en: "Loading...", ar: "جارٍ التحميل..." },
+    noMessagesTitle:   { fr: "Aucun message", en: "No messages", ar: "لا توجد رسائل" },
+    noMessagesDesc:    { fr: "Soyez le premier à écrire.", en: "Be the first to write.", ar: "كن أول من يكتب." },
+    writeMessage:      { fr: "Écrire un message...", en: "Write a message...", ar: "اكتب رسالة..." },
+    clear:             { fr: "Vider", en: "Clear", ar: "مسح" },
+    confirmClear:      { fr: "Supprimer toute la conversation ?", en: "Delete the whole conversation?", ar: "حذف المحادثة بالكامل؟" },
+    roleAdmin:         { fr: "Admin", en: "Admin", ar: "المشرف" },
+    roleSuperadmin:    { fr: "Superadmin", en: "Superadmin", ar: "المشرف العام" },
+    roleParent:        { fr: "Parent", en: "Parent", ar: "ولي الأمر" },
+    roleTeacher:       { fr: "Enseignant", en: "Teacher", ar: "المعلم" },
   },
 
   // ─── parentDailyLog (components/parent/ParentDailyLogView.tsx) ─────────────────────────────────────────────

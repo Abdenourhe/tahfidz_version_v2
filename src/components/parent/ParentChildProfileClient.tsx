@@ -6,7 +6,7 @@ import Link from "next/link"
 import {
   ArrowLeft, BookOpen, Star, Award,
   Phone, Mail, RefreshCw, CheckCircle2, RotateCcw, X, Clock,
-  TrendingUp, Flame, MessageCircle, ClipboardList, Eye, EyeOff, ChevronRight
+  TrendingUp, Flame, MessageCircle, ClipboardList, Eye, EyeOff, ChevronRight, Building2
 } from "lucide-react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { useSession } from "next-auth/react"
@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils"
 import { AvatarUploader } from "@/components/shared/AvatarUploader"
 import { TeacherChat } from "@/components/parent/TeacherChat"
 import DailyLogChatDrawer from "@/components/DailyLogChatDrawer"
+import AdminParentChatDrawer from "@/components/admin/AdminParentChatDrawer"
 
 interface Progress {
   id: string; surahId: number; currentVerse: number; completionPercentage: number
@@ -86,6 +87,45 @@ function SectionTitle({ icon: Icon, title, count }: { icon: any; title: string; 
       <Icon size={14} className="text-gray-400" />
       <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">{title}</h3>
       {count !== undefined && <span className="text-[10px] bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded-full font-bold">{count}</span>}
+    </div>
+  )
+}
+
+function AdminChatCard({
+  admin,
+  parentUserId,
+  open,
+  onOpenChange,
+}: {
+  admin: { id: string; fullName: string; fullNameAr?: string | null; email: string; role: string } | null
+  parentUserId?: string
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  const t = useT("parentChildProfileClient_2")
+  if (!admin || !parentUserId) return null
+  return (
+    <div className="bg-gradient-to-br from-purple-50/60 to-white dark:from-purple-900/10 dark:to-gray-900 rounded-2xl border border-purple-100/60 dark:border-purple-800/30 p-5 shadow-sm">
+      <div className="flex items-center gap-4">
+        <div className="relative shrink-0">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white text-lg font-bold shadow-sm">
+            <Building2 size={24} />
+          </div>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-base font-bold text-gray-900 dark:text-gray-100">{admin.fullName}</p>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-semibold tracking-wide uppercase">{t("administration")}</span>
+          </div>
+          <p className="text-xs text-gray-400 mt-0.5">{admin.email}</p>
+        </div>
+      </div>
+      <button
+        onClick={() => onOpenChange(!open)}
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 mt-4 rounded-xl bg-purple-600 text-white text-sm font-bold hover:opacity-90 transition shadow-sm"
+      >
+        <MessageCircle size={16} /> {t("contactAdmin")}
+      </button>
     </div>
   )
 }
@@ -176,6 +216,15 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
   const [refreshing, setRefreshing] = useState(false)
   const [_lastSync, setLastSync] = useState<Date>(new Date())
   const [surahs, setSurahs] = useState<Record<number, { nameFr: string; nameAr: string }>>({})
+  const [schoolAdmin, setSchoolAdmin] = useState<{ id: string; fullName: string; fullNameAr?: string | null; email: string; role: string } | null>(null)
+  const [adminChatOpen, setAdminChatOpen] = useState(false)
+
+  useEffect(() => {
+    fetch("/api/school/admin")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d?.admin) setSchoolAdmin(d.admin) })
+      .catch((e) => console.error(e))
+  }, [])
 
   const loadUnreadCounts = useCallback(async () => {
     try {
@@ -367,6 +416,16 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
       {/* ── Enseignant ── */}
       {student.teacher && (
         <TeacherChatCard student={student} parentUserId={parentUserId} studentId={studentId} />
+      )}
+
+      {/* ── Administration ── */}
+      {schoolAdmin && (
+        <AdminChatCard
+          admin={schoolAdmin}
+          parentUserId={parentUserId}
+          open={adminChatOpen}
+          onOpenChange={setAdminChatOpen}
+        />
       )}
 
       {/* ── Mémorisation en cours ── */}
@@ -605,6 +664,17 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
           open={!!drawerLog}
           onOpenChange={(open) => !open && setDrawerLog(null)}
           onUpdate={loadUnreadCounts}
+        />
+      )}
+
+      {/* Drawer admin */}
+      {schoolAdmin && (
+        <AdminParentChatDrawer
+          otherUserId={schoolAdmin.id}
+          otherUserName={schoolAdmin.fullName}
+          otherUserRole={schoolAdmin.role}
+          open={adminChatOpen}
+          onOpenChange={setAdminChatOpen}
         />
       )}
 

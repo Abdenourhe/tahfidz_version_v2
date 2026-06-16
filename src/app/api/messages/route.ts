@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { sendMail, isMailConfigured } from "@/lib/mail"
 import { NextResponse } from "next/server"
 import { z } from "zod"
+import { sendPushToUser } from "@/lib/web-push"
 
 const sendSchema = z.object({
   toUserId: z.string().uuid(),
@@ -113,12 +114,14 @@ export async function POST(req: Request) {
     if (linkedStudent) studentIdForNotif = linkedStudent.id
   }
 
+  const redirectUrl = toUserWithPrefs.role === "TEACHER"
+    ? "/teacher/messages"
+    : toUserWithPrefs.role === "ADMIN" || toUserWithPrefs.role === "SUPERADMIN"
+    ? "/admin/notifications"
+    : (studentIdForNotif ? `/parent/child/${studentIdForNotif}?chat=open` : "/parent/dashboard")
+
   // Notification conditionnelle selon les préférences du destinataire
   if (toUserWithPrefs.messageNotifications) {
-    const redirectUrl = toUserWithPrefs.role === "TEACHER"
-      ? "/teacher/messages"
-      : (studentIdForNotif ? `/parent/child/${studentIdForNotif}?chat=open` : "/parent/dashboard")
-
     await prisma.notification.create({
       data: {
         schoolId: session.user.schoolId,
@@ -139,6 +142,19 @@ export async function POST(req: Request) {
         html: `<div style="font-family:sans-serif;padding:24px;max-width:560px;"><h2>📬 Nouveau message</h2><p><strong>De :</strong> ${fromUser?.fullName ?? "Inconnu"}</p><p><strong>Objet :</strong> ${subject}</p><div style="background:#f9fafb;padding:16px;border-radius:8px;white-space:pre-wrap;">${msgBody}</div><p style="margin-top:20px;"><a href="${process.env.NEXT_PUBLIC_APP_URL}" style="background:#1D9E75;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;">Voir sur TAHFIDZ</a></p></div>`,
       })
     } catch(e) { console.error("Email error:", e) }
+  }
+
+  // Notification push au destinataire s'il est abonné
+  try {
+    const senderName = fromUser?.fullName || "TAHFIDZ"
+    await sendPushToUser(toUserId, {
+      title: `Nouveau message — ${senderName}`,
+      body: msgBody.slice(0, 100) + (msgBody.length > 100 ? "…" : ""),
+      url: redirectUrl,
+      tag: `direct-message-${session.user.id}-${toUserId}`,
+    })
+  } catch (e) {
+    console.error("[DIRECT MESSAGE PUSH]", e)
   }
 
   return NextResponse.json({ message }, { status: 201 })
