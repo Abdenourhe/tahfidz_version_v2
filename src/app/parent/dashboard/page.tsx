@@ -3,7 +3,7 @@ import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { formatDate } from "@/lib/utils"
-import { ParentDashboardClient } from "@/components/parent/ParentDashboardClient"
+import { ParentDashboardClient } from "@/components/parent/dashboard/ParentDashboardClient"
 
 async function getParentData(userId: string) {
   return prisma.parent.findUnique({

@@ -2,7 +2,7 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import ParentMemorizationView from "@/components/parent/ParentMemorizationView"
+import ParentMemorizationView from "@/components/parent/child/ParentMemorizationView"
 
 export default async function ParentChildMemorizationPage({
   params,

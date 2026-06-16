@@ -1,7 +1,7 @@
 // src/app/parent/child/[id]/page.tsx
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
-import { ParentChildProfileClient } from "@/components/parent/ParentChildProfileClient"
+import { ParentChildProfileClient } from "@/components/parent/child/ParentChildProfileClient"
 
 export default async function ParentChildPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth()

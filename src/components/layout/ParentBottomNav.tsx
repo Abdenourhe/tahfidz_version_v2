@@ -1,31 +1,24 @@
+// src/components/layout/ParentBottomNav.tsx
 "use client"
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
 import { useT } from "@/contexts/LanguageContext"
-import {
-  LayoutDashboard, Bell, UserCircle, CalendarDays, Video, Library,
-} from "lucide-react"
-
-const MOBILE_NAV = [
-  { href: "/parent/dashboard", icon: LayoutDashboard, key: "dashboard" },
-  { href: "/parent/attendance", icon: CalendarDays, key: "attendance" },
-  { href: "/parent/halaqa", icon: Video, key: "halaqa" },
-  { href: "/parent/library", icon: Library, key: "library" },
-  { href: "/parent/notifications", icon: Bell, key: "notifications" },
-  { href: "/parent/profile", icon: UserCircle, key: "profile" },
-]
+import { PARENT_NAV_ITEMS } from "@/lib/nav/parent-nav"
 
 export function ParentBottomNav() {
   const pathname = usePathname() ?? ""
   const t = useT("nav")
 
+  // On masque "Lier un enfant" du bottom nav pour garder 5 icônes max
+  const mobileItems = PARENT_NAV_ITEMS.filter(item => item.mobile !== false)
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
       <div className="mx-4 mb-4 safe-area-pb">
         <div className="flex items-center justify-around h-16 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl rounded-2xl shadow-xl shadow-black/10 dark:shadow-black/30 border border-gray-200/50 dark:border-gray-800/50">
-          {MOBILE_NAV.map((item) => {
+          {mobileItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
 

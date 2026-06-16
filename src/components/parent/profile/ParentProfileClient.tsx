@@ -9,7 +9,7 @@ import { ProfileHeader } from "@/components/profile/ProfileHeader"
 import { StatCard } from "@/components/profile/StatCard"
 import { ProfileAccordion } from "@/components/profile/ProfileAccordion"
 
-import { ParentProfileSettings } from "@/components/parent/ParentProfileSettings"
+import { ParentProfileSettings } from "@/components/parent/profile/ParentProfileSettings"
 import { Phone, Mail, BookOpen, Star, Award, User, Bug, Settings, Globe, Languages, ArrowRight } from "lucide-react"
 import { FeedbackModal } from "@/components/shared/FeedbackModal"
 import { AvatarUploader } from "@/components/shared/AvatarUploader"

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useSession } from "next-auth/react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { cn } from "@/lib/utils"
-import PushNotificationToggle from "@/components/parent/PushNotificationToggle"
+import PushNotificationToggle from "@/components/shared/PushNotificationToggle"
 import {
   MessageCircle,
   Send,

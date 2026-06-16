@@ -617,7 +617,7 @@ export const translations = {
     unknown:         { fr: "—", en: "—", ar: "—" },
   },
 
-  // ─── parentProfileClient (components/parent/ParentProfileClient.tsx) ─────────────────────────────────────────────
+  // ─── parentProfileClient (components/parent/profile/ParentProfileClient.tsx) ─────────────────────────────────────────────
   parentProfileClient: {
     title:           { fr: "Mon profil", en: "My profile", ar: "ملفي الشخصي" },
     welcome:         { fr: "Bienvenue", en: "Welcome", ar: "مرحباً" },
@@ -647,7 +647,7 @@ export const translations = {
     settings:        { fr: "Paramètres du compte", en: "Account settings", ar: "إعدادات الحساب" },
   },
 
-  // ─── parentProfileSettings (components/parent/ParentProfileSettings.tsx) ─────────────────────────────────────────────
+  // ─── parentProfileSettings (components/parent/profile/ParentProfileSettings.tsx) ─────────────────────────────────────────────
   parentProfileSettings: {
     editProfile:       { fr: "Modifier mon profil", en: "Edit profile", ar: "تعديل الملف الشخصي" },
     fullName:          { fr: "Nom complet", en: "Full name", ar: "الاسم الكامل" },
@@ -760,16 +760,7 @@ export const translations = {
     error:           { fr: "Erreur", en: "Error", ar: "خطأ" },
   },
 
-  // ─── parentChildProfileClient_1 (components/parent/ParentChildProfileClient.tsx) ─────────────────────────────────────────────
-  parentChildProfileClient_1: {
-    update:          { fr: "Mettre à jour la progression", en: "Update progress", ar: "تحديث التقدم" },
-    verse:           { fr: "Verset", en: "Verse", ar: "آية" },
-    all:             { fr: "Tout", en: "All", ar: "الكل" },
-    saved:           { fr: "Enregistré", en: "Saved", ar: "تم الحفظ" },
-    error:           { fr: "Erreur", en: "Error", ar: "خطأ" },
-  },
-
-  // ─── parentChildProfileClient_2 (components/parent/ParentChildProfileClient.tsx) ─────────────────────────────────────────────
+  // ─── parentChildProfileClient_2 (components/parent/child/ParentChildProfileClient.tsx) ─────────────────────────────────────────────
   parentChildProfileClient_2: {
     loading:         { fr: "Chargement du profil…", en: "Loading profile…", ar: "جارٍ تحميل الملف…" },
     notFound:        { fr: "Profil introuvable ou accès non autorisé", en: "Profile not found or unauthorized access", ar: "الملف غير موجود أو الوصول غير مصرح به" },
@@ -1453,7 +1444,7 @@ export const translations = {
     section_GENERAL:   { fr: "Général", en: "General", ar: "عام" },
   },
 
-  // ─── pushNotifications (components/parent/PushNotificationToggle.tsx) ─────────────────────────────────────────────
+  // ─── pushNotifications (components/shared/PushNotificationToggle.tsx) ─────────────────────────────────────────────
   pushNotifications: {
     enabled:           { fr: "Notifications actives", en: "Notifications on", ar: "الإشعارات مفعلة" },
     disabled:          { fr: "Activer les notifications", en: "Enable notifications", ar: "تفعير الإشعارات" },
@@ -1521,15 +1512,23 @@ export const translations = {
     noStudent:       { fr: "Aucun élève", en: "No students", ar: "لا يوجد طلاب" },
   },
 
-  // ─── parentDashboardClient (components/parent/ParentDashboardClient.tsx) ─────────────────────────────────────────────
+  // ─── parentDashboardClient (components/parent/dashboard/ParentDashboardClient.tsx) ─────────────────────────────────────────────
   parentDashboardClient: {
     title:           { fr: "Suivi de mes enfants", en: "My children's progress", ar: "متابعة أبنائي" },
-    markAttendance:  { fr: "Marquer présences", en: "Mark attendance", ar: "تسجيل الحضور" },
+    welcome:         { fr: "Bonjour {{name}} 👋", en: "Hello {{name}} 👋", ar: "مرحباً {{name}} 👋" },
+    welcomeFallback: { fr: "Bienvenue", en: "Welcome", ar: "أهلاً بك" },
+    subtitle:        { fr: "Voici le suivi de vos enfants.", en: "Here is your children's progress.", ar: "إليك متابعة أبنائك." },
+    markAttendance:  { fr: "Présences", en: "Attendance", ar: "الحضور" },
     notifications:   { fr: "Notifications", en: "Notifications", ar: "الإشعارات" },
+    linkChild:       { fr: "Lier un enfant", en: "Link a child", ar: "ربط طفل" },
+    myChildren:      { fr: "Mes enfants", en: "My children", ar: "أبنائي" },
+    viewProfile:     { fr: "Voir le profil", en: "View profile", ar: "عرض الملف" },
     noChild:         { fr: "Aucun enfant lié", en: "No linked child", ar: "لا يوجد طفل مرتبط" },
     noChildDesc:     { fr: "Demandez à l'administrateur de lier votre compte.", en: "Ask the administrator to link your account.", ar: "اطلب من المدير ربط حسابك بحساب طفلك." },
     memorized:       { fr: "Mémorisées", en: "Memorized", ar: "محفوظة" },
+    memorizedShort:  { fr: "mémorisées", en: "memorized", ar: "محفوظة" },
     streak:          { fr: "Streak", en: "Streak", ar: "التسلسل" },
+    streakShort:     { fr: "jours", en: "days", ar: "أيام" },
     badges:          { fr: "Badges", en: "Badges", ar: "الشارات" },
     stars:           { fr: "étoiles", en: "stars", ar: "نجوم" },
     inProgress:      { fr: "Mémorisations en cours", en: "In-progress memorizations", ar: "الحفظ الجاري" },
@@ -1540,6 +1539,9 @@ export const translations = {
     prof:            { fr: "Prof.", en: "Teacher", ar: "أ." },
     memorizationTab: { fr: "Mémorisation", en: "Memorization", ar: "الحفظ" },
     attendanceTab:   { fr: "Présence", en: "Attendance", ar: "الحضور" },
+    attendanceAlertOne:  { fr: "La présence de {{name}} pour demain n'est pas marquée.", en: "{{name}}'s attendance for tomorrow is not marked.", ar: "لم يتم تسجيل حضور {{name}} ليوم الغد." },
+    attendanceAlertMany: { fr: "La présence de {{count}} enfants pour demain n'est pas marquée.", en: "Attendance for {{count}} children tomorrow is not marked.", ar: "لم يتم تسجيل حضور {{count}} أطفال ليوم الغد." },
+    clickToMark:     { fr: "Cliquez pour marquer →", en: "Click to mark →", ar: "انقر للتسجيل →" },
   },
 
   // ─── teacherDashboardClient (components/teacher/TeacherDashboardClient.tsx) ─────────────────────────────────────────────
@@ -2281,7 +2283,7 @@ export const translations = {
     error:          { fr: "Erreur lors du chargement", en: "Loading error", ar: "خطأ في التحميل" },
   },
 
-  // ─── parentRegister (components/parent/ParentRegisterForm.tsx) ─────────────────────────────────────────────
+  // ─── parentRegister (components/parent/register/ParentRegisterForm.tsx) ─────────────────────────────────────────────
   parentRegister: {
     title:            { fr: "Inscription parent", en: "Parent registration", ar: "تسجيل ولي الأمر" },
     subtitle:         { fr: "Rejoignez TAHFIDZ et suivez la progression de votre enfant", en: "Join TAHFIDZ and track your child's progress", ar: "انضم إلى TAHFIDZ وتابع تقدم طفلك" },

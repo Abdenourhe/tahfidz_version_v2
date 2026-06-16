@@ -12,7 +12,7 @@ import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { useSession } from "next-auth/react"
 import { cn } from "@/lib/utils"
 import { AvatarUploader } from "@/components/shared/AvatarUploader"
-import { TeacherChat } from "@/components/parent/TeacherChat"
+import { TeacherChat } from "@/components/parent/child/TeacherChat"
 import DailyLogChatDrawer from "@/components/DailyLogChatDrawer"
 import AdminParentChatDrawer from "@/components/admin/AdminParentChatDrawer"
 

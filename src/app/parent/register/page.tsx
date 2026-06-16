@@ -1,6 +1,6 @@
 // src/app/parent/register/page.tsx
 import { prisma } from "@/lib/prisma"
-import { ParentRegisterForm } from "@/components/parent/ParentRegisterForm"
+import { ParentRegisterForm } from "@/components/parent/register/ParentRegisterForm"
 
 interface PageProps {
   searchParams: Promise<{ invite?: string; student?: string }>

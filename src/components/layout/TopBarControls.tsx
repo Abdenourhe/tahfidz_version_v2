@@ -5,7 +5,7 @@
 import { useState, useEffect } from "react"
 import { useTheme } from "next-themes"
 import { useLanguage } from "@/contexts/LanguageContext"
-import PushNotificationToggle from "@/components/parent/PushNotificationToggle"
+import PushNotificationToggle from "@/components/shared/PushNotificationToggle"
 import { Sun, Moon } from "lucide-react"
 import ReactCountryFlag from "react-country-flag"
 import { motion, AnimatePresence } from "framer-motion"

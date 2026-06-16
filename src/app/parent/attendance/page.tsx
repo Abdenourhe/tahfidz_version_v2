@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
-import { ParentProfileAttendance } from "@/components/parent/ParentProfileAttendance"
+import { ParentProfileAttendance } from "@/components/parent/attendance/ParentProfileAttendance"
 
 export default async function ParentAttendancePage() {
   const session = await auth()

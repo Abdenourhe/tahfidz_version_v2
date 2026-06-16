@@ -6,9 +6,10 @@ import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
 import { useSession } from "next-auth/react"
-import { LayoutDashboard, Link2, Bell, LogOut, User, Video, CalendarDays, Library } from "lucide-react"
+import { LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/contexts/LanguageContext"
+import { PARENT_NAV_ITEMS } from "@/lib/nav/parent-nav"
 import { TopBarControls } from "@/components/layout/TopBarControls"
 import { NotificationNavItem } from "@/components/layout/NotificationNavItem"
 
@@ -20,7 +21,7 @@ interface ParentNavProps {
 
 export function ParentNav({ user: _user, schoolName, schoolLogo }: ParentNavProps) {
   const pathname = usePathname()
-  const { locale, useT: tFn } = useLanguage()
+  const { useT: tFn } = useLanguage()
   const { data: session } = useSession()
   const tN = (k: string) => tFn("nav", k)
   const tA = (k: string) => tFn("auth", k)
@@ -28,16 +29,6 @@ export function ParentNav({ user: _user, schoolName, schoolLogo }: ParentNavProp
   const displayName = schoolName || "TAHFIDZ"
   const logo = schoolLogo
   const schoolSlug = session?.user?.schoolSlug
-
-  const navItems = [
-    { label: tN("dashboard"),   href: "/parent/dashboard",      icon: LayoutDashboard },
-    { label: locale === "ar" ? "ربط طفل" : locale === "en" ? "Link a child" : "Lier un enfant", href: "/parent/link", icon: Link2 },
-    { label: locale === "ar" ? "الحضور" : locale === "en" ? "Attendance" : "Présence", href: "/parent/attendance", icon: CalendarDays },
-    { label: tN("halaqa"), href: "/parent/halaqa", icon: Video },
-    { label: tN("library"), href: "/parent/library", icon: Library },
-    { label: tN("notifications"), href: "/parent/notifications", icon: Bell },
-    { label: locale === "ar" ? "ملفي الشخصي" : locale === "en" ? "My profile" : "Mon profil",  href: "/parent/profile", icon: User },
-  ]
 
   return (
     <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 sticky top-0 z-40">
@@ -62,14 +53,15 @@ export function ParentNav({ user: _user, schoolName, schoolLogo }: ParentNavProp
 
           {/* Nav centrale */}
           <nav className="flex items-center gap-0.5 bg-gray-100/60 dark:bg-gray-800/60 rounded-xl p-1">
-            {navItems.map(item => {
+            {PARENT_NAV_ITEMS.map(item => {
               const isActive = pathname === item.href
+              const Icon = item.icon
               if (item.href === "/parent/notifications") {
                 return (
                   <NotificationNavItem
                     key={item.href}
                     href={item.href}
-                    label={item.label}
+                    label={tN(item.key)}
                     isActive={isActive}
                     activeClass="bg-white dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 shadow-sm"
                     inactiveClass="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
@@ -88,8 +80,8 @@ export function ParentNav({ user: _user, schoolName, schoolLogo }: ParentNavProp
                       : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                   )}
                 >
-                  <item.icon size={15} className={cn(isActive ? "text-emerald-600 dark:text-emerald-400" : "text-gray-400")} />
-                  <span className="hidden md:inline">{item.label}</span>
+                  <Icon size={15} className={cn(isActive ? "text-emerald-600 dark:text-emerald-400" : "text-gray-400")} />
+                  <span className="hidden md:inline">{tN(item.key)}</span>
                 </Link>
               )
             })}

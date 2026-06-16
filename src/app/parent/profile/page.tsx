@@ -2,7 +2,7 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { ParentProfileClient } from "@/components/parent/ParentProfileClient"
+import { ParentProfileClient } from "@/components/parent/profile/ParentProfileClient"
 
 export default async function ParentProfilePage() {
   const session = await auth()
