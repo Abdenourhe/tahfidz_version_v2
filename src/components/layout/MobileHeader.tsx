@@ -15,6 +15,7 @@ import {
 import { TopBarControls } from "./TopBarControls"
 import { useT } from "@/contexts/LanguageContext"
 import { cn } from "@/lib/utils"
+import { useLockBodyScroll } from "@/hooks/useLockBodyScroll"
 import { useSession, signOut } from "next-auth/react"
 import { useNotification } from "@/contexts/NotificationContext"
 
@@ -173,6 +174,8 @@ export function MobileHeader({
   const userEmail = session?.user?.email || ""
   const userRoleLabel = ROLE_LABELS[userInfo?.role || session?.user?.role || ""] || userInfo?.role || ""
 
+  useLockBodyScroll(menuOpen)
+
   return (
     <>
       <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-800/50 safe-area-pt">
@@ -220,7 +223,7 @@ export function MobileHeader({
         </div>
       </header>
 
-      {/* Drawer */}
+      {/* Bottom sheet menu */}
       <AnimatePresence>
         {menuOpen && (
           <>
@@ -228,117 +231,124 @@ export function MobileHeader({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60]"
               onClick={() => setMenuOpen(false)}
             />
 
-            <motion.div
-              ref={drawerRef}
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed start-0 top-0 bottom-0 w-72 bg-white dark:bg-gray-900 z-50 shadow-2xl flex flex-col h-[100dvh] overflow-y-auto pb-24"
-              data-mobile-role={role}
-            >
-              {/* User section */}
-              <div className="px-5 py-5 border-b border-gray-100 dark:border-gray-800">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-tahfidz-green flex items-center justify-center overflow-hidden flex-shrink-0">
-                    {userInfo?.avatar ? (
-                      <img src={userInfo.avatar} alt={userDisplayName} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-white font-bold text-lg">{userDisplayName.charAt(0).toUpperCase()}</span>
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-bold text-sm text-gray-900 dark:text-white truncate">{userDisplayName}</p>
-                    <p className="text-[11px] text-gray-400 truncate">{userEmail}</p>
-                    {userRoleLabel && (
-                      <span className="inline-block mt-0.5 text-[9px] px-1.5 py-0.5 rounded-full bg-tahfidz-green-light dark:bg-emerald-900/30 text-tahfidz-green font-bold uppercase tracking-wider">
-                        {userRoleLabel}
-                      </span>
-                    )}
-                  </div>
+            <div className="fixed inset-0 z-[60] flex items-end justify-center pointer-events-none">
+              <motion.div
+                ref={drawerRef}
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="pointer-events-auto w-full max-w-md bg-white dark:bg-gray-900 rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col overflow-hidden"
+                data-mobile-role={role}
+              >
+                {/* Handle */}
+                <div className="flex justify-center pt-3 pb-1">
+                  <div className="w-10 h-1.5 rounded-full bg-gray-300 dark:bg-gray-700" />
                 </div>
-              </div>
 
-              {/* Navigation links */}
-              {navSections.length > 0 && (
-                <div className="flex-1 overflow-y-auto py-2">
-                  {navSections.map((section, si) => (
-                    <div key={si} className="px-3 mb-2">
-                      {section.sectionKey && (
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 mb-1 mt-2">
-                          {t(section.sectionKey) || section.sectionKey}
-                        </p>
+                {/* User section */}
+                <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-tahfidz-green flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {userInfo?.avatar ? (
+                        <img src={userInfo.avatar} alt={userDisplayName} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-white font-bold text-lg">{userDisplayName.charAt(0).toUpperCase()}</span>
                       )}
-                      <motion.nav
-                        variants={containerVariants}
-                        initial="hidden"
-                        animate="show"
-                        className="space-y-0.5"
-                      >
-                        {section.items.map((item) => {
-                          const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
-                          const Icon = item.icon
-                          const isNotification = item.href.endsWith("/notifications")
-                          return (
-                            <motion.div key={item.href} variants={itemVariants}>
-                              <Link
-                                ref={isActive ? activeLinkRef : undefined}
-                                href={item.href}
-                                onClick={() => setMenuOpen(false)}
-                                className={cn(
-                                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition",
-                                  isActive
-                                    ? "bg-tahfidz-green-light text-tahfidz-green"
-                                    : "text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
-                                )}
-                              >
-                                <Icon
-                                  size={18}
-                                  strokeWidth={isActive ? 2.5 : 1.5}
-                                  className={cn(
-                                    "shrink-0",
-                                    isActive ? (item.color || "text-tahfidz-green") : (item.color || "text-gray-400 dark:text-gray-500")
-                                  )}
-                                />
-                                <span className="flex-1">{t(item.labelKey) || item.labelKey}</span>
-                                {isNotification && unreadCount > 0 && (
-                                  <span className="min-w-[18px] h-[18px] px-1 bg-red-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center">
-                                    {unreadCount > 99 ? "99+" : unreadCount}
-                                  </span>
-                                )}
-                              </Link>
-                            </motion.div>
-                          )
-                        })}
-                      </motion.nav>
                     </div>
-                  ))}
+                    <div className="min-w-0">
+                      <p className="font-bold text-sm text-gray-900 dark:text-white truncate">{userDisplayName}</p>
+                      <p className="text-[11px] text-gray-400 truncate">{userEmail}</p>
+                      {userRoleLabel && (
+                        <span className="inline-block mt-0.5 text-[9px] px-1.5 py-0.5 rounded-full bg-tahfidz-green-light dark:bg-emerald-900/30 text-tahfidz-green font-bold uppercase tracking-wider">
+                          {userRoleLabel}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              )}
 
-              {/* Controls */}
-              <div className="px-5 py-3 border-t border-b border-gray-100 dark:border-gray-800">
-                <TopBarControls dropdownAlign="left" />
-              </div>
+                {/* Navigation links */}
+                {navSections.length > 0 && (
+                  <div className="flex-1 overflow-y-auto py-2">
+                    {navSections.map((section, si) => (
+                      <div key={si} className="px-3 mb-2">
+                        {section.sectionKey && (
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 mb-1 mt-2">
+                            {t(section.sectionKey) || section.sectionKey}
+                          </p>
+                        )}
+                        <motion.nav
+                          variants={containerVariants}
+                          initial="hidden"
+                          animate="show"
+                          className="space-y-0.5"
+                        >
+                          {section.items.map((item) => {
+                            const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+                            const Icon = item.icon
+                            const isNotification = item.href.endsWith("/notifications")
+                            return (
+                              <motion.div key={item.href} variants={itemVariants}>
+                                <Link
+                                  ref={isActive ? activeLinkRef : undefined}
+                                  href={item.href}
+                                  onClick={() => setMenuOpen(false)}
+                                  className={cn(
+                                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition",
+                                    isActive
+                                      ? "bg-tahfidz-green-light text-tahfidz-green"
+                                      : "text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
+                                  )}
+                                >
+                                  <Icon
+                                    size={18}
+                                    strokeWidth={isActive ? 2.5 : 1.5}
+                                    className={cn(
+                                      "shrink-0",
+                                      isActive ? (item.color || "text-tahfidz-green") : (item.color || "text-gray-400 dark:text-gray-500")
+                                    )}
+                                  />
+                                  <span className="flex-1">{t(item.labelKey) || item.labelKey}</span>
+                                  {isNotification && unreadCount > 0 && (
+                                    <span className="min-w-[18px] h-[18px] px-1 bg-red-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center">
+                                      {unreadCount > 99 ? "99+" : unreadCount}
+                                    </span>
+                                  )}
+                                </Link>
+                              </motion.div>
+                            )
+                          })}
+                        </motion.nav>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-              {/* Logout */}
-              <div className="p-4 border-t border-gray-100 dark:border-gray-800">
-                <motion.button
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => { setMenuOpen(false); signOut({ callbackUrl: "/login" }) }}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full"
-                >
-                  <LogOut size={16} />
-                  <span>{t("logout") || "Déconnexion"}</span>
-                </motion.button>
-                <p className="text-[10px] text-gray-300 text-center mt-2">{displayName}</p>
-              </div>
-            </motion.div>
+                {/* Controls */}
+                <div className="px-5 py-3 border-t border-b border-gray-100 dark:border-gray-800">
+                  <TopBarControls dropdownAlign="left" />
+                </div>
+
+                {/* Logout */}
+                <div className="p-4 border-t border-gray-100 dark:border-gray-800">
+                  <motion.button
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => { setMenuOpen(false); signOut({ callbackUrl: "/login" }) }}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full"
+                  >
+                    <LogOut size={16} />
+                    <span>{t("logout") || "Déconnexion"}</span>
+                  </motion.button>
+                  <p className="text-[10px] text-gray-300 text-center mt-2">{displayName}</p>
+                </div>
+              </motion.div>
+            </div>
           </>
         )}
       </AnimatePresence>
