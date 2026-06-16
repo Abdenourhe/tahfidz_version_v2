@@ -132,9 +132,10 @@ function urlBase64ToUint8Array(base64String: string) {
 interface Props {
   className?: string
   compact?: boolean
+  labelClassName?: string
 }
 
-export default function PushNotificationToggle({ className, compact }: Props) {
+export default function PushNotificationToggle({ className, compact, labelClassName }: Props) {
   const t = useT("pushNotifications")
   const { supported, subscribed, loading, error, subscribe, unsubscribe } = usePushNotifications(t)
   const [busy, setBusy] = useState(false)
@@ -171,7 +172,7 @@ export default function PushNotificationToggle({ className, compact }: Props) {
         ) : (
           <BellOff size={14} />
         )}
-        {!compact && <span>{subscribed ? t("enabled") : t("disabled")}</span>}
+        {!compact && <span className={labelClassName}>{subscribed ? t("enabled") : t("disabled")}</span>}
       </button>
       {error && (
         <span className="text-[9px] text-red-500 flex items-center gap-1">

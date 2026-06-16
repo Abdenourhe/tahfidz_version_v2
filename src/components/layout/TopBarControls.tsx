@@ -6,7 +6,6 @@ import { useState, useEffect } from "react"
 import { useTheme } from "next-themes"
 import { useLanguage } from "@/contexts/LanguageContext"
 import PushNotificationToggle from "@/components/shared/PushNotificationToggle"
-import { useMediaQuery } from "@/hooks/useMediaQuery"
 import { Sun, Moon } from "lucide-react"
 import ReactCountryFlag from "react-country-flag"
 import { motion, AnimatePresence } from "framer-motion"
@@ -18,7 +17,6 @@ interface TopBarControlsProps {
 export function TopBarControls({ dropdownAlign = "right" }: TopBarControlsProps) {
   const { theme, setTheme } = useTheme()
   const { locale, setLocale } = useLanguage()
-  const isWide = useMediaQuery("(min-width: 1536px)")
   const [mounted, setMounted] = useState(false)
   const [langMenuOpen, setLangMenuOpen] = useState(false)
 
@@ -28,7 +26,7 @@ export function TopBarControls({ dropdownAlign = "right" }: TopBarControlsProps)
 
   return (
     <div className="flex items-center gap-2">
-      <PushNotificationToggle compact={!isWide} />
+      <PushNotificationToggle labelClassName="hidden 2xl:inline" />
 
       {/* Language Switcher avec dropdown animé */}
       <div className="relative">

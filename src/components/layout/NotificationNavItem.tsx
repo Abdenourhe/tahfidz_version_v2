@@ -17,6 +17,7 @@ interface Props {
   className?: string
   collapsed?: boolean
   showLabel?: boolean
+  responsiveLabel?: boolean
 }
 
 export function NotificationNavItem({
@@ -31,6 +32,7 @@ export function NotificationNavItem({
   className,
   collapsed,
   showLabel = true,
+  responsiveLabel = false,
 }: Props) {
   const { unreadCount } = useNotification()
 
@@ -69,7 +71,9 @@ export function NotificationNavItem({
           {iconEl}
         </div>
       )}
-      {!collapsed && showLabel && <span className="flex-1 truncate">{label}</span>}
+      {!collapsed && showLabel && (
+        <span className={cn("flex-1 truncate", responsiveLabel ? "hidden 2xl:inline" : "")}>{label}</span>
+      )}
     </Link>
   )
 }
