@@ -766,6 +766,7 @@ export const translations = {
     notFound:        { fr: "Profil introuvable ou accès non autorisé", en: "Profile not found or unauthorized access", ar: "الملف غير موجود أو الوصول غير مصرح به" },
     back:            { fr: "← Retour", en: "← Back", ar: "→ رجوع" },
     backProfile:     { fr: "Retour à mon profil", en: "Back to my profile", ar: "العودة إلى ملفي" },
+    close:           { fr: "Fermer", en: "Close", ar: "إغلاق" },
     sync:            { fr: "Synchro", en: "Sync", ar: "مزامنة" },
     refresh:         { fr: "Actualiser", en: "Refresh", ar: "تحديث" },
     stars:           { fr: "étoiles", en: "stars", ar: "نجوم" },

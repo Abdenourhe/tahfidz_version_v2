@@ -32,10 +32,10 @@ export function ParentNav({ user: _user, schoolName, schoolLogo }: ParentNavProp
 
   return (
     <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 sticky top-0 z-40">
-      <div className="max-w-5xl mx-auto px-3 md:px-6">
-        <div className="flex items-center justify-between h-16 gap-2">
+      <div className="max-w-6xl mx-auto px-3 md:px-6">
+        <div className="grid grid-cols-3 items-center h-16 gap-2">
           {/* Logo + Nom école */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2.5 shrink-0 justify-self-start">
             <div className="w-9 h-9 rounded-xl gradient-tahfidz flex items-center justify-center overflow-hidden shadow-sm shadow-tahfidz-green/20">
               {logo ? (
                 <Image src={logo} alt={displayName} width={36} height={36} className="w-full h-full object-cover" />
@@ -52,7 +52,7 @@ export function ParentNav({ user: _user, schoolName, schoolLogo }: ParentNavProp
           </div>
 
           {/* Nav centrale — une ligne d'icônes distinctes */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-1 justify-self-center">
             {PARENT_NAV_ITEMS.map((item, index) => {
               const isActive = pathname === item.href
               const Icon = item.icon
@@ -107,7 +107,7 @@ export function ParentNav({ user: _user, schoolName, schoolLogo }: ParentNavProp
           </nav>
 
           {/* Controls + Logout */}
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-1 shrink-0 justify-self-end">
             <TopBarControls />
             <motion.button
               whileHover={{ scale: 1.05 }}

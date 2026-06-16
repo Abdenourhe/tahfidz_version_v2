@@ -88,7 +88,15 @@ function SectionTitle({ icon: Icon, title, count }: { icon: any; title: string; 
   )
 }
 
-export function ParentChildProfileClient({ studentId }: { studentId: string }) {
+export function ParentChildProfileClient({
+  studentId,
+  embedded,
+  onClose,
+}: {
+  studentId: string
+  embedded?: boolean
+  onClose?: () => void
+}) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
   const t = useT("parentChildProfileClient_2")
@@ -224,12 +232,21 @@ export function ParentChildProfileClient({ studentId }: { studentId: string }) {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className={cn("space-y-6", embedded ? "h-full" : "max-w-5xl")}>
       {/* Top bar */}
       <div className="flex items-center justify-between">
-        <Link href="/parent/dashboard" className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition">
-          <ArrowLeft size={16} /> {t("backProfile")}
-        </Link>
+        {embedded && onClose ? (
+          <button
+            onClick={onClose}
+            className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition"
+          >
+            <X size={16} /> {t("close")}
+          </button>
+        ) : (
+          <Link href="/parent/dashboard" className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition">
+            <ArrowLeft size={16} /> {t("backProfile")}
+          </Link>
+        )}
         <button onClick={() => load(true)} disabled={refreshing}
           className="p-2 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition disabled:opacity-50">
           <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />

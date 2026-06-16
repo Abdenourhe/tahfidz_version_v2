@@ -1,10 +1,11 @@
 "use client"
 // ParentDashboardClient.tsx — Centre d'opération parent moderne
 
-import { useState, useMemo, useRef } from "react"
+import { useState, useMemo, useRef, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { User, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { ChildCard } from "./ChildCard"
@@ -12,7 +13,9 @@ import { QuickActions } from "./QuickActions"
 import { AIParentSummary } from "./AIParentSummary"
 import { TeacherChat } from "@/components/parent/child/TeacherChat"
 import AdminParentChatDrawer from "@/components/admin/AdminParentChatDrawer"
+import { ParentChildProfileClient } from "@/components/parent/child/ParentChildProfileClient"
 import { TiltCard } from "@/components/shared/TiltCard"
+import { useMediaQuery } from "@/hooks/useMediaQuery"
 import { cn } from "@/lib/utils"
 
 interface TeacherUser {
@@ -72,12 +75,15 @@ function useGregorianDate(locale: string) {
 export function ParentDashboardClient({ todayDate: _todayDate, children, missingTomorrowIds, schoolAdmin }: Props) {
   const { locale } = useLanguage()
   const t = useT("parentDashboardClient")
+  const router = useRouter()
   const { data: session } = useSession()
   const firstName = session?.user?.name?.split(" ")[0] || ""
   const parentUserId = session?.user?.id
+  const isDesktop = useMediaQuery("(min-width: 1280px)")
 
   const [teacherChat, setTeacherChat] = useState<{ child: Child; open: boolean } | null>(null)
   const [adminChatOpen, setAdminChatOpen] = useState(false)
+  const [selectedChildId, setSelectedChildId] = useState<string | null>(null)
   const childrenRef = useRef<HTMLDivElement>(null)
 
   const admin = schoolAdmin
@@ -89,6 +95,37 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
 
   const hijriDate = useHijriDate(locale)
   const gregorianDate = useGregorianDate(locale)
+
+  // Gestion de l'historique navigateur pour le master-detail
+  useEffect(() => {
+    const onPopState = (e: PopStateEvent) => {
+      const state = e.state as { childId?: string } | null
+      setSelectedChildId(state?.childId ?? null)
+    }
+    window.addEventListener("popstate", onPopState)
+    return () => window.removeEventListener("popstate", onPopState)
+  }, [])
+
+  const handleSelectChild = useCallback(
+    (child: Child) => {
+      if (!isDesktop) {
+        router.push(`/parent/child/${child.id}`)
+        return
+      }
+      setSelectedChildId(child.id)
+      window.history.pushState({ childId: child.id }, "", `/parent/child/${child.id}`)
+    },
+    [isDesktop, router]
+  )
+
+  const handleCloseDetail = useCallback(() => {
+    setSelectedChildId(null)
+    if (window.history.state?.childId) {
+      window.history.back()
+    } else {
+      window.history.pushState({}, "", "/parent/dashboard")
+    }
+  }, [])
 
   const container = {
     hidden: { opacity: 0 },
@@ -103,7 +140,7 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
     show: { opacity: 1, y: 0 },
   }
 
-  return (
+  const dashboardContent = (
     <div className="space-y-5">
       {/* Header glassmorphism avec avatar et dates */}
       <TiltCard intensity={4} className="group">
@@ -204,6 +241,7 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
                   admin={admin}
                   onContactTeacher={(c) => setTeacherChat({ child: c, open: true })}
                   onContactAdmin={() => setAdminChatOpen(true)}
+                  onSelect={isDesktop ? handleSelectChild : undefined}
                 />
               </motion.div>
             ))}
@@ -237,5 +275,59 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
         />
       )}
     </div>
+  )
+
+  return (
+    <AnimatePresence mode="wait">
+      {selectedChildId && isDesktop ? (
+        <motion.div
+          key="split"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed top-16 left-0 right-0 bottom-0 z-30 flex bg-gray-50 dark:bg-gray-950"
+        >
+          {/* Dashboard — glisse vers la gauche */}
+          <motion.div
+            initial={{ x: "50%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "50%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 180 }}
+            className="w-1/2 h-full overflow-y-auto"
+          >
+            <div className="max-w-2xl mx-auto px-6 py-6">
+              {dashboardContent}
+            </div>
+          </motion.div>
+
+          {/* Panneau de détail enfant */}
+          <motion.div
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 180 }}
+            className="w-1/2 h-full overflow-y-auto bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-2xl"
+          >
+            <div className="min-h-full p-6">
+              <ParentChildProfileClient
+                studentId={selectedChildId}
+                embedded
+                onClose={handleCloseDetail}
+              />
+            </div>
+          </motion.div>
+        </motion.div>
+      ) : (
+        <motion.div
+          key="dashboard"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="max-w-6xl mx-auto px-4 py-6"
+        >
+          {dashboardContent}
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
