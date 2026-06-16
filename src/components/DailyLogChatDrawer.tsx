@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useSession } from "next-auth/react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { cn } from "@/lib/utils"
+import { useLockBodyScroll } from "@/hooks/useLockBodyScroll"
 import PushNotificationToggle from "@/components/shared/PushNotificationToggle"
 import {
   MessageCircle,
@@ -156,6 +157,8 @@ export default function DailyLogChatDrawer({
   const [uploadError, setUploadError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  useLockBodyScroll(open)
 
   const canClearSection =
     session?.user?.role === "ADMIN" ||
