@@ -309,13 +309,11 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
             className="w-1/2 h-full overflow-y-auto bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-2xl"
           >
             <div className="min-h-full px-6 py-6">
-              <div className="max-w-3xl mr-auto">
-                <ParentChildProfileClient
-                  studentId={selectedChildId}
-                  embedded
-                  onClose={handleCloseDetail}
-                />
-              </div>
+              <ParentChildProfileClient
+                studentId={selectedChildId}
+                embedded
+                onClose={handleCloseDetail}
+              />
             </div>
           </motion.div>
         </motion.div>

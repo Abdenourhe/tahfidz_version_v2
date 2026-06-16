@@ -287,49 +287,51 @@ export function ParentChildProfileClient({
 
       {/* ── Hero ── */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
-        <div className="flex items-start gap-4">
-          <AvatarUploader
-            currentAvatar={studentAvatar}
-            name={u.fullName}
-            size={96}
-            uploadUrl={`/api/students/${studentId}/avatar`}
-            onUploaded={(url) => setStudentAvatar(url)}
-          />
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{u.fullName}</h1>
-            {u.fullNameAr && <p className="arabic text-gray-500 dark:text-gray-400 text-sm">{u.fullNameAr}</p>}
-            <div className="flex flex-wrap items-center gap-2 mt-2">
-              {student.group && (
-                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg bg-tahfidz-green-light dark:bg-emerald-900/20 text-tahfidz-green font-bold">
-                  <BookOpen size={10} /> {student.group.name}
+        {!embedded && (
+          <div className="flex items-start gap-4">
+            <AvatarUploader
+              currentAvatar={studentAvatar}
+              name={u.fullName}
+              size={96}
+              uploadUrl={`/api/students/${studentId}/avatar`}
+              onUploaded={(url) => setStudentAvatar(url)}
+            />
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{u.fullName}</h1>
+              {u.fullNameAr && <p className="arabic text-gray-500 dark:text-gray-400 text-sm">{u.fullNameAr}</p>}
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                {student.group && (
+                  <span className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg bg-tahfidz-green-light dark:bg-emerald-900/20 text-tahfidz-green font-bold">
+                    <BookOpen size={10} /> {student.group.name}
+                  </span>
+                )}
+                {student.group?.level && (
+                  <span className="text-[11px] px-2 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 font-medium">
+                    {LEVEL_LABEL[student.group.level] ?? student.group.level}
+                  </span>
+                )}
+                {fmtAge(student.dateOfBirth, L) && (
+                  <span className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 font-medium">
+                    <Clock size={10} /> {fmtAge(student.dateOfBirth, L)}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-3 mt-3">
+                <span className="inline-flex items-center gap-1 text-xs font-bold text-tahfidz-gold bg-tahfidz-gold-light dark:bg-yellow-900/20 px-2 py-1 rounded-lg">
+                  <Star size={11} className="fill-tahfidz-gold" /> {student.totalStars}
                 </span>
-              )}
-              {student.group?.level && (
-                <span className="text-[11px] px-2 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 font-medium">
-                  {LEVEL_LABEL[student.group.level] ?? student.group.level}
-                </span>
-              )}
-              {fmtAge(student.dateOfBirth, L) && (
-                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 font-medium">
-                  <Clock size={10} /> {fmtAge(student.dateOfBirth, L)}
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-3 mt-3">
-              <span className="inline-flex items-center gap-1 text-xs font-bold text-tahfidz-gold bg-tahfidz-gold-light dark:bg-yellow-900/20 px-2 py-1 rounded-lg">
-                <Star size={11} className="fill-tahfidz-gold" /> {student.totalStars}
-              </span>
-              {student.currentStreak > 0 && (
-                <span className="inline-flex items-center gap-1 text-xs font-bold text-orange-600 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-lg">
-                  <Flame size={11} /> {student.currentStreak}j
-                </span>
-              )}
+                {student.currentStreak > 0 && (
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-orange-600 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-lg">
+                    <Flame size={11} /> {student.currentStreak}j
+                  </span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Stats row */}
-        <div className="grid grid-cols-4 gap-2 mt-4 pt-4 border-t border-gray-50 dark:border-gray-800">
+        <div className={cn("grid grid-cols-4 gap-2", !embedded && "mt-4 pt-4 border-t border-gray-50 dark:border-gray-800")}>
           {[
             { v: student._count.memorizedSurahs, l: t("memorized"), c: "text-emerald-600" },
             { v: inProgress.length, l: t("inProgress"), c: "text-blue-600" },
