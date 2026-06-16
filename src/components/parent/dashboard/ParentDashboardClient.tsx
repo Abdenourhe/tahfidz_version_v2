@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { motion, AnimatePresence } from "framer-motion"
-import { User, Sparkles } from "lucide-react"
+import { User, Sparkles, Bug } from "lucide-react"
 import Link from "next/link"
 import { ChildCard } from "./ChildCard"
 import { QuickActions } from "./QuickActions"
@@ -16,6 +16,7 @@ import AdminParentChatDrawer from "@/components/admin/AdminParentChatDrawer"
 import { ParentChildProfileClient } from "@/components/parent/child/ParentChildProfileClient"
 import { ParentAttendancePanel } from "@/components/parent/attendance/ParentAttendancePanel"
 import { TiltCard } from "@/components/shared/TiltCard"
+import { FeedbackModal } from "@/components/shared/FeedbackModal"
 import { useMediaQuery } from "@/hooks/useMediaQuery"
 import { cn } from "@/lib/utils"
 
@@ -90,6 +91,7 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
 
   const [teacherChat, setTeacherChat] = useState<{ child: Child; open: boolean } | null>(null)
   const [adminChatOpen, setAdminChatOpen] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [sidePanel, setSidePanel] = useState<SidePanel>(null)
   const [surahs, setSurahs] = useState<Record<number, { nameFr: string; nameAr: string }>>({})
   const childrenRef = useRef<HTMLDivElement>(null)
@@ -321,19 +323,45 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
       </motion.div>
 
       {/* Teacher chat panel */}
-      {teacherChat?.child.teacher && parentUserId && (
-        <div className="fixed inset-x-0 bottom-0 z-50 md:absolute md:bottom-auto md:top-20 md:left-1/2 md:-translate-x-1/2 md:w-[480px]">
-          <TeacherChat
-            teacherUserId={teacherChat.child.teacher.user.id}
-            teacherName={teacherChat.child.teacher.user.fullName}
-            parentUserId={parentUserId}
-            childName={teacherChat.child.user.fullName}
-            studentId={teacherChat.child.id}
-            open={teacherChat.open}
-            onOpenChange={(open) => setTeacherChat((prev) => (prev ? { ...prev, open } : null))}
+      {teacherChat?.child.teacher && parentUserId && teacherChat.open && (
+        <div className="fixed inset-0 z-[60] md:absolute md:inset-auto md:bottom-auto md:top-20 md:left-1/2 md:-translate-x-1/2 md:w-[480px]">
+          <div
+            className="absolute inset-0 bg-black/30 md:hidden"
+            onClick={() => setTeacherChat((prev) => (prev ? { ...prev, open: false } : null))}
           />
+          <div className="relative h-full md:h-auto flex flex-col md:block">
+            <TeacherChat
+              teacherUserId={teacherChat.child.teacher.user.id}
+              teacherName={teacherChat.child.teacher.user.fullName}
+              parentUserId={parentUserId}
+              childName={teacherChat.child.user.fullName}
+              studentId={teacherChat.child.id}
+              open={teacherChat.open}
+              onOpenChange={(open) => setTeacherChat((prev) => (prev ? { ...prev, open } : null))}
+              className="rounded-none md:rounded-2xl"
+            />
+          </div>
         </div>
       )}
+
+      {/* Bouton Signaler flottant */}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={() => setFeedbackOpen(true)}
+        className="fixed bottom-24 right-4 z-40 md:bottom-8 md:right-8 flex items-center gap-2 px-4 py-3 bg-red-500 text-white text-sm font-bold rounded-full shadow-xl hover:bg-red-600 transition"
+      >
+        <Bug size={18} />
+        <span className="hidden sm:inline">{t("report")}</span>
+      </motion.button>
+
+      <FeedbackModal
+        isOpen={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+        userRole={session?.user?.role || "PARENT"}
+        userName={session?.user?.name || ""}
+        userEmail={session?.user?.email || ""}
+      />
 
       {/* Admin chat drawer */}
       {admin && (

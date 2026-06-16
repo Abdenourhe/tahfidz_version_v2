@@ -27,6 +27,7 @@ export function ParentBottomNav() {
               <Link
                 key={item.href}
                 href={item.href}
+                title={t(item.key)}
                 className="relative flex flex-col items-center justify-center gap-1 w-full h-full tap-feedback"
               >
                 <motion.div
@@ -48,7 +49,7 @@ export function ParentBottomNav() {
                 <motion.span
                   animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0.7, y: 0 }}
                   className={cn(
-                    "text-[9px] font-bold transition-colors",
+                    "hidden text-[9px] font-bold transition-colors",
                     isActive ? "text-tahfidz-green" : "text-gray-400 dark:text-gray-500"
                   )}
                 >

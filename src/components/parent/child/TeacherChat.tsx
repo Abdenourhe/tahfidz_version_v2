@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { Send, Loader2, MessageCircle, X, Trash2, ChevronDown } from "lucide-react"
 import { useT } from "@/contexts/LanguageContext"
+import { cn } from "@/lib/utils"
 import { ChatBubble, ChatMessage } from "@/components/shared/ChatBubble"
 
 interface Message extends ChatMessage {
@@ -45,7 +46,7 @@ function useScrollBehavior(
   return { showJumpBtn, scrollToBottom, onScroll }
 }
 
-export function TeacherChat({ teacherUserId, teacherName, parentUserId, childName, studentId, open, onOpenChange }: {
+export function TeacherChat({ teacherUserId, teacherName, parentUserId, childName, studentId, open, onOpenChange, className }: {
   teacherUserId: string
   teacherName: string
   parentUserId: string
@@ -53,6 +54,7 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
   studentId: string
   open?: boolean
   onOpenChange?: (v: boolean) => void
+  className?: string
 }) {
   const searchParams = useSearchParams()
   const [internalOpen, setInternalOpen] = useState(searchParams.get("chat") === "open")
@@ -171,7 +173,7 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
   return (
     <motion.div initial={{ opacity: 0, y: 16, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ type: "spring", stiffness: 300, damping: 25 }}
-      className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-lg overflow-hidden mt-3"
+      className={cn("bg-white dark:bg-gray-900 md:rounded-2xl border border-gray-100 dark:border-gray-800 md:shadow-lg overflow-hidden md:mt-3 flex flex-col h-full md:h-auto", className)}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
@@ -190,7 +192,7 @@ export function TeacherChat({ teacherUserId, teacherName, parentUserId, childNam
       </div>
 
       {/* Messages */}
-      <div ref={scrollRef} onScroll={onScroll} className="h-72 overflow-y-auto p-3 space-y-1 scroll-smooth relative">
+      <div ref={scrollRef} onScroll={onScroll} className="flex-1 md:flex-none md:h-72 overflow-y-auto p-3 space-y-1 scroll-smooth relative">
         <AnimatePresence initial={false}>
           {loading && messages.length === 0 ? (
             <motion.div key="loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex justify-center py-8">
