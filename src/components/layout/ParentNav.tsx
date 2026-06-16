@@ -98,7 +98,7 @@ export function ParentNav({ user: _user, schoolName, schoolLogo }: ParentNavProp
                           isActive ? "text-emerald-600 dark:text-emerald-400" : "text-gray-400"
                         )}
                       />
-                      <span className="hidden lg:inline whitespace-nowrap">{label}</span>
+                      <span className="hidden xl:inline whitespace-nowrap">{label}</span>
                     </motion.div>
                   </Link>
                 </div>

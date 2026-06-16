@@ -295,7 +295,7 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
             transition={{ type: "spring", damping: 25, stiffness: 180 }}
             className="w-1/2 h-full overflow-y-auto"
           >
-            <div className="max-w-2xl mx-auto px-6 py-6">
+            <div className="max-w-2xl ml-auto px-6 py-6">
               {dashboardContent}
             </div>
           </motion.div>
@@ -308,12 +308,14 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
             transition={{ type: "spring", damping: 25, stiffness: 180 }}
             className="w-1/2 h-full overflow-y-auto bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-2xl"
           >
-            <div className="min-h-full p-6">
-              <ParentChildProfileClient
-                studentId={selectedChildId}
-                embedded
-                onClose={handleCloseDetail}
-              />
+            <div className="min-h-full px-6 py-6">
+              <div className="max-w-3xl mr-auto">
+                <ParentChildProfileClient
+                  studentId={selectedChildId}
+                  embedded
+                  onClose={handleCloseDetail}
+                />
+              </div>
             </div>
           </motion.div>
         </motion.div>
