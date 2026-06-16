@@ -32,10 +32,10 @@ export function ParentNav({ user: _user, schoolName, schoolLogo }: ParentNavProp
 
   return (
     <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 sticky top-0 z-40">
-      <div className="max-w-5xl mx-auto px-4 md:px-6">
-        <div className="flex items-center justify-between h-16">
+      <div className="max-w-5xl mx-auto px-3 md:px-6">
+        <div className="flex items-center justify-between h-16 gap-2">
           {/* Logo + Nom école */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 shrink-0">
             <div className="w-9 h-9 rounded-xl gradient-tahfidz flex items-center justify-center overflow-hidden shadow-sm shadow-tahfidz-green/20">
               {logo ? (
                 <Image src={logo} alt={displayName} width={36} height={36} className="w-full h-full object-cover" />
@@ -51,67 +51,63 @@ export function ParentNav({ user: _user, schoolName, schoolLogo }: ParentNavProp
             </div>
           </div>
 
-          {/* Nav centrale moderne */}
-          <nav className="hidden md:flex items-center gap-1 bg-gray-100/60 dark:bg-gray-800/60 rounded-2xl p-1.5 border border-gray-200/50 dark:border-gray-700/50">
-            {PARENT_NAV_ITEMS.map((item) => {
+          {/* Nav centrale — une ligne d'icônes distinctes */}
+          <nav className="hidden md:flex items-center gap-1">
+            {PARENT_NAV_ITEMS.map((item, index) => {
               const isActive = pathname === item.href
               const Icon = item.icon
               const label = tN(item.key)
 
               if (item.href === "/parent/notifications") {
                 return (
-                  <NotificationNavItem
-                    key={item.href}
-                    href={item.href}
-                    label={label}
-                    isActive={isActive}
-                    activeClass="bg-white dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 shadow-md shadow-emerald-500/10"
-                    inactiveClass="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/30"
-                    iconActiveClass="text-emerald-600 dark:text-emerald-400"
-                    iconInactiveClass="text-gray-400"
-                    className="rounded-xl"
-                  />
+                  <div key={item.href} className="flex items-center">
+                    {index > 0 && <span className="w-px h-4 bg-gray-200 dark:bg-gray-700 mx-1" />}
+                    <NotificationNavItem
+                      href={item.href}
+                      label={label}
+                      isActive={isActive}
+                      activeClass="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
+                      inactiveClass="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      iconActiveClass="text-emerald-600 dark:text-emerald-400"
+                      iconInactiveClass="text-gray-400"
+                      className="rounded-xl px-2.5 py-2"
+                    />
+                  </div>
                 )
               }
 
               return (
-                <Link key={item.href} href={item.href} title={label}>
-                  <motion.div
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    className={cn(
-                      "flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200",
-                      isActive
-                        ? "bg-white dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 shadow-md shadow-emerald-500/10"
-                        : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/30"
-                    )}
-                  >
-                    <div
+                <div key={item.href} className="flex items-center">
+                  {index > 0 && <span className="w-px h-4 bg-gray-200 dark:bg-gray-700 mx-1" />}
+                  <Link href={item.href} title={label}>
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                       className={cn(
-                        "flex items-center justify-center w-7 h-7 rounded-lg transition-colors",
+                        "flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-semibold transition-all duration-200",
                         isActive
-                          ? "bg-emerald-50 dark:bg-emerald-900/30"
-                          : "bg-transparent group-hover:bg-gray-100 dark:group-hover:bg-gray-800"
+                          ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
+                          : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                       )}
                     >
                       <Icon
-                        size={17}
+                        size={18}
                         strokeWidth={isActive ? 2.5 : 2}
                         className={cn(
-                          "transition-colors",
+                          "shrink-0 transition-colors",
                           isActive ? "text-emerald-600 dark:text-emerald-400" : "text-gray-400"
                         )}
                       />
-                    </div>
-                    <span className="hidden lg:inline">{label}</span>
-                  </motion.div>
-                </Link>
+                      <span className="hidden lg:inline whitespace-nowrap">{label}</span>
+                    </motion.div>
+                  </Link>
+                </div>
               )
             })}
           </nav>
 
           {/* Controls + Logout */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 shrink-0">
             <TopBarControls />
             <motion.button
               whileHover={{ scale: 1.05 }}

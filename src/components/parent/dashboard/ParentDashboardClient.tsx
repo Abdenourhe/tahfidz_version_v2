@@ -1,7 +1,7 @@
 "use client"
 // ParentDashboardClient.tsx — Centre d'opération parent moderne
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useRef } from "react"
 import { useSession } from "next-auth/react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { motion } from "framer-motion"
@@ -9,7 +9,6 @@ import { User, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { ChildCard } from "./ChildCard"
 import { QuickActions } from "./QuickActions"
-import { AttendanceAlert } from "./AttendanceAlert"
 import { AIParentSummary } from "./AIParentSummary"
 import { TeacherChat } from "@/components/parent/child/TeacherChat"
 import AdminParentChatDrawer from "@/components/admin/AdminParentChatDrawer"
@@ -79,9 +78,14 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
 
   const [teacherChat, setTeacherChat] = useState<{ child: Child; open: boolean } | null>(null)
   const [adminChatOpen, setAdminChatOpen] = useState(false)
+  const childrenRef = useRef<HTMLDivElement>(null)
 
   const admin = schoolAdmin
   const missingChildren = children.filter((c) => missingTomorrowIds.includes(c.id))
+
+  const scrollToChildren = () => {
+    childrenRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }
 
   const hijriDate = useHijriDate(locale)
   const gregorianDate = useGregorianDate(locale)
@@ -159,17 +163,18 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
         </div>
       </TiltCard>
 
-      {/* Actions rapides */}
-      <QuickActions />
-
-      {/* Alerte présence */}
-      <AttendanceAlert missingChildren={missingChildren} />
+      {/* Raccourcis intelligents — non redondants avec la nav */}
+      <QuickActions
+        missingCount={missingChildren.length}
+        onContactAdmin={() => setAdminChatOpen(true)}
+        onScrollToChildren={scrollToChildren}
+      />
 
       {/* Résumé intelligent */}
       {children.length > 0 && <AIParentSummary students={children} missingIds={missingTomorrowIds} />}
 
       {/* Mes enfants */}
-      <motion.div variants={container} initial="hidden" animate="show">
+      <motion.div ref={childrenRef} variants={container} initial="hidden" animate="show">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
             <User size={16} className="text-tahfidz-green" />
