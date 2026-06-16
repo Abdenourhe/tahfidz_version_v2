@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import {
@@ -10,10 +11,10 @@ import {
   MessageCircle,
   Phone,
   Mail,
-  Building2,
   Flame,
+  ClipboardList,
 } from "lucide-react"
-import { useT } from "@/contexts/LanguageContext"
+import { useT, useLanguage } from "@/contexts/LanguageContext"
 import { AvatarLightbox } from "@/components/AvatarLightbox"
 import { cn } from "@/lib/utils"
 
@@ -28,12 +29,35 @@ interface Child {
   _count: { memorizedSurahs: number }
 }
 
+interface DailyLog {
+  id: string
+  date: string
+  attendanceStatus?: string | null
+  globalScore?: number | null
+  hifzFromSurahId?: number | null
+  hifzToSurahId?: number | null
+  murajaFromSurahId?: number | null
+  murajaToSurahId?: number | null
+  talqinFromSurahId?: number | null
+  talqinToSurahId?: number | null
+  courseBook?: string | null
+  courseFromPage?: number | null
+  courseToPage?: number | null
+  teacherObservation?: string | null
+}
+
 interface Props {
   child: Child
-  admin: { id: string; fullName: string; email: string; phone?: string | null } | null
+  surahs?: Record<number, { nameFr: string; nameAr: string }>
   onContactTeacher: (child: Child) => void
-  onContactAdmin: () => void
   onSelect?: (child: Child) => void
+}
+
+const ATT_CFG: Record<string, { label: string; cls: string }> = {
+  PRESENT: { label: "Présent", cls: "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800" },
+  LATE:    { label: "Retard",  cls: "bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800" },
+  EXCUSED: { label: "Excusé",  cls: "bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800" },
+  ABSENT:  { label: "Absent",  cls: "bg-red-50 text-red-600 border-red-100 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800" },
 }
 
 function AnimatedNumber({ value }: { value: number }) {
@@ -145,11 +169,47 @@ function HeroContent({ child }: { child: Child }) {
   )
 }
 
-export function ChildCard({ child, admin, onContactTeacher, onContactAdmin, onSelect }: Props) {
+export function ChildCard({ child, surahs = {}, onContactTeacher, onSelect }: Props) {
   const t = useT("parentDashboardClient")
+  const { locale } = useLanguage()
   const teacher = child.teacher?.user
 
+  const [lastLog, setLastLog] = useState<DailyLog | null>(null)
+
+  useEffect(() => {
+    fetch(`/api/students/${child.id}/daily-log?recent=true`)
+      .then((r) => r.json())
+      .then((d) => {
+        const logs = d.logs || []
+        setLastLog(logs[0] || null)
+      })
+      .catch((e) => console.error(e))
+  }, [child.id])
+
   const heroClass = "relative flex items-start gap-4 active:scale-[0.98] transition"
+
+  const dateLocale = locale === "ar" ? "ar-SA" : locale === "en" ? "en-US" : "fr-FR"
+  const fmtDate = (dateStr: string) =>
+    new Date(`${dateStr}T12:00:00`).toLocaleDateString(dateLocale, { weekday: "short", day: "numeric", month: "short" })
+
+  const surahName = (id?: number | null) => (id && surahs[id] ? surahs[id].nameFr : null)
+
+  const formatRange = (fromId?: number | null, toId?: number | null) => {
+    const a = surahName(fromId)
+    const b = surahName(toId)
+    if (!a && !b) return null
+    if (!toId || fromId === toId) return a
+    return `${a} → ${b}`
+  }
+
+  const hasLogContent = lastLog && (
+    lastLog.attendanceStatus ||
+    lastLog.globalScore !== null ||
+    lastLog.hifzFromSurahId ||
+    lastLog.murajaFromSurahId ||
+    lastLog.talqinFromSurahId ||
+    lastLog.courseBook
+  )
 
   return (
     <div
@@ -177,52 +237,83 @@ export function ChildCard({ child, admin, onContactTeacher, onContactAdmin, onSe
         </Link>
       )}
 
-      {/* Actions rapides modernisées */}
-      <div className="relative grid grid-cols-4 gap-2 mt-4 pt-4 border-t border-gray-100/60 dark:border-gray-800/60">
-        {teacher && (
-          <>
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => onContactTeacher(child)}
-              className="flex flex-col sm:flex-row items-center justify-center gap-1 px-2 py-2 rounded-xl bg-tahfidz-green text-white text-[10px] font-bold hover:opacity-90 transition shadow-sm shadow-tahfidz-green/20"
-            >
-              <MessageCircle size={13} />
-              <span className="hidden sm:inline">{t("contactTeacher")}</span>
-            </motion.button>
-            <a
-              href={teacher.phone ? `tel:${teacher.phone}` : undefined}
-              onClick={(e) => { if (!teacher.phone) e.preventDefault() }}
-              className={cn(
-                "flex flex-col sm:flex-row items-center justify-center gap-1 px-2 py-2 rounded-xl text-[10px] font-bold transition active:scale-95",
-                teacher.phone
-                  ? "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50"
-                  : "bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-400 cursor-not-allowed"
-              )}
-            >
-              <Phone size={13} />
-              <span className="hidden sm:inline">{t("call")}</span>
-            </a>
-            <a
-              href={`mailto:${teacher.email}`}
-              className="flex flex-col sm:flex-row items-center justify-center gap-1 px-2 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-[10px] font-bold hover:bg-gray-50 transition active:scale-95"
-            >
-              <Mail size={13} />
-              <span className="hidden sm:inline">{t("email")}</span>
-            </a>
-          </>
-        )}
+      {/* Dernier carnet de suivi */}
+      {hasLogContent && (
+        <div className="relative mt-3 pt-3 border-t border-gray-100/60 dark:border-gray-800/60">
+          <div className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-400 mb-1.5">
+            <ClipboardList size={11} />
+            <span className="font-semibold">{t("lastDailyLog")}</span>
+            <span>·</span>
+            <span>{fmtDate(lastLog!.date)}</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {lastLog!.attendanceStatus && (
+              <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-bold", ATT_CFG[lastLog!.attendanceStatus]?.cls ?? "bg-gray-100 text-gray-600")}>
+                {ATT_CFG[lastLog!.attendanceStatus]?.label ?? lastLog!.attendanceStatus}
+              </span>
+            )}
+            {lastLog!.globalScore !== null && lastLog!.globalScore !== undefined && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-tahfidz-green-light text-tahfidz-green font-bold">
+                {lastLog!.globalScore}/20
+              </span>
+            )}
+            {formatRange(lastLog!.hifzFromSurahId, lastLog!.hifzToSurahId) && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800">
+                H: {formatRange(lastLog!.hifzFromSurahId, lastLog!.hifzToSurahId)}
+              </span>
+            )}
+            {formatRange(lastLog!.murajaFromSurahId, lastLog!.murajaToSurahId) && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
+                M: {formatRange(lastLog!.murajaFromSurahId, lastLog!.murajaToSurahId)}
+              </span>
+            )}
+            {formatRange(lastLog!.talqinFromSurahId, lastLog!.talqinToSurahId) && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800">
+                T: {formatRange(lastLog!.talqinFromSurahId, lastLog!.talqinToSurahId)}
+              </span>
+            )}
+            {lastLog!.courseBook && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800">
+                C: {lastLog!.courseBook} {lastLog!.courseFromPage}{lastLog!.courseToPage && lastLog!.courseToPage !== lastLog!.courseFromPage ? `→${lastLog!.courseToPage}` : ""}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
-        {admin && (
+      {/* Actions rapides modernisées */}
+      {teacher && (
+        <div className="relative grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-gray-100/60 dark:border-gray-800/60">
           <motion.button
             whileTap={{ scale: 0.95 }}
-            onClick={onContactAdmin}
-            className="flex flex-col sm:flex-row items-center justify-center gap-1 px-2 py-2 rounded-xl bg-purple-600 text-white text-[10px] font-bold hover:opacity-90 transition shadow-sm shadow-purple-600/20"
+            onClick={() => onContactTeacher(child)}
+            className="flex flex-col sm:flex-row items-center justify-center gap-1 px-2 py-2 rounded-xl bg-tahfidz-green text-white text-[10px] font-bold hover:opacity-90 transition shadow-sm shadow-tahfidz-green/20"
           >
-            <Building2 size={13} />
-            <span className="hidden sm:inline">{t("contactAdmin")}</span>
+            <MessageCircle size={13} />
+            <span className="hidden sm:inline">{t("contactTeacher")}</span>
           </motion.button>
-        )}
-      </div>
+          <a
+            href={teacher.phone ? `tel:${teacher.phone}` : undefined}
+            onClick={(e) => { if (!teacher.phone) e.preventDefault() }}
+            className={cn(
+              "flex flex-col sm:flex-row items-center justify-center gap-1 px-2 py-2 rounded-xl text-[10px] font-bold transition active:scale-95",
+              teacher.phone
+                ? "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50"
+                : "bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-400 cursor-not-allowed"
+            )}
+          >
+            <Phone size={13} />
+            <span className="hidden sm:inline">{t("call")}</span>
+          </a>
+          <a
+            href={`mailto:${teacher.email}`}
+            className="flex flex-col sm:flex-row items-center justify-center gap-1 px-2 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-[10px] font-bold hover:bg-gray-50 transition active:scale-95"
+          >
+            <Mail size={13} />
+            <span className="hidden sm:inline">{t("email")}</span>
+          </a>
+        </div>
+      )}
     </div>
   )
 }

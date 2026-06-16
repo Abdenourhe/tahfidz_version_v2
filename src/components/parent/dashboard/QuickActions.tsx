@@ -1,6 +1,5 @@
 "use client"
 
-import Link from "next/link"
 import { motion } from "framer-motion"
 import { CalendarClock, Building2, TrendingUp } from "lucide-react"
 import { useT } from "@/contexts/LanguageContext"
@@ -10,15 +9,16 @@ interface Props {
   missingCount: number
   onContactAdmin: () => void
   onScrollToChildren?: () => void
+  onOpenAttendance: () => void
 }
 
-export function QuickActions({ missingCount, onContactAdmin, onScrollToChildren }: Props) {
+export function QuickActions({ missingCount, onContactAdmin, onScrollToChildren, onOpenAttendance }: Props) {
   const t = useT("parentDashboardClient")
 
   const actions = [
     {
       key: "tomorrowAttendance",
-      href: "/parent/attendance",
+      onClick: onOpenAttendance,
       icon: CalendarClock,
       color: "amber",
       label: missingCount > 0
@@ -92,11 +92,7 @@ export function QuickActions({ missingCount, onContactAdmin, onScrollToChildren 
           </motion.div>
         )
 
-        return action.href ? (
-          <Link key={action.key} href={action.href} className="block">
-            {content}
-          </Link>
-        ) : (
+        return (
           <button key={action.key} onClick={action.onClick} className="block w-full text-left">
             {content}
           </button>

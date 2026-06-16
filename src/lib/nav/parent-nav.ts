@@ -4,7 +4,6 @@
 import {
   LayoutDashboard,
   Link2,
-  CalendarDays,
   Video,
   Library,
   Bell,
@@ -22,7 +21,6 @@ export interface ParentNavItem {
 export const PARENT_NAV_ITEMS: ParentNavItem[] = [
   { key: "dashboard", href: "/parent/dashboard", icon: LayoutDashboard },
   { key: "linkChild", href: "/parent/link", icon: Link2 },
-  { key: "attendance", href: "/parent/attendance", icon: CalendarDays },
   { key: "halaqa", href: "/parent/halaqa", icon: Video },
   { key: "library", href: "/parent/library", icon: Library },
   { key: "notifications", href: "/parent/notifications", icon: Bell },

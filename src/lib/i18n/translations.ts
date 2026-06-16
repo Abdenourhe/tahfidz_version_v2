@@ -1554,6 +1554,7 @@ export const translations = {
     tomorrowAttendanceAlert: { fr: "Présences demain ({{count}})", en: "Tomorrow attendance ({{count}})", ar: "حضور الغد ({{count}})" },
     tomorrowAttendanceOk: { fr: "Présences à jour", en: "Attendance up to date", ar: "الحضور محدّث" },
     childrenProgress: { fr: "Progrès des enfants", en: "Children progress", ar: "تقدم الأبناء" },
+    lastDailyLog:    { fr: "Dernier carnet", en: "Latest daily log", ar: "آخر سجل" },
     summaryAttendance: { fr: "Présence à marquer demain pour {{names}}.", en: "Attendance to mark tomorrow for {{names}}.", ar: "يجب تسجيل الحضور غداً لـ {{names}}." },
     summaryStreak:   { fr: "{{name}} est en série de {{days}} jours !", en: "{{name}} is on a {{days}}-day streak!", ar: "{{name}} في سلسلة {{days}} أيام!" },
     summaryBadge:    { fr: "{{name}} a débloqué le badge {{badge}}.", en: "{{name}} unlocked the {{badge}} badge.", ar: "حصل {{name}} على شارة {{badge}}." },

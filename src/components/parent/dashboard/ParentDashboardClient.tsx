@@ -14,6 +14,7 @@ import { AIParentSummary } from "./AIParentSummary"
 import { TeacherChat } from "@/components/parent/child/TeacherChat"
 import AdminParentChatDrawer from "@/components/admin/AdminParentChatDrawer"
 import { ParentChildProfileClient } from "@/components/parent/child/ParentChildProfileClient"
+import { ParentAttendancePanel } from "@/components/parent/attendance/ParentAttendancePanel"
 import { TiltCard } from "@/components/shared/TiltCard"
 import { useMediaQuery } from "@/hooks/useMediaQuery"
 import { cn } from "@/lib/utils"
@@ -42,6 +43,11 @@ interface Props {
   missingTomorrowIds: string[]
   schoolAdmin: { id: string; fullName: string; email: string; phone?: string | null; role?: string } | null
 }
+
+type SidePanel =
+  | { type: "child"; childId: string }
+  | { type: "attendance" }
+  | null
 
 function useHijriDate(locale: string) {
   return useMemo(() => {
@@ -83,7 +89,8 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
 
   const [teacherChat, setTeacherChat] = useState<{ child: Child; open: boolean } | null>(null)
   const [adminChatOpen, setAdminChatOpen] = useState(false)
-  const [selectedChildId, setSelectedChildId] = useState<string | null>(null)
+  const [sidePanel, setSidePanel] = useState<SidePanel>(null)
+  const [surahs, setSurahs] = useState<Record<number, { nameFr: string; nameAr: string }>>({})
   const childrenRef = useRef<HTMLDivElement>(null)
 
   const admin = schoolAdmin
@@ -96,11 +103,22 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
   const hijriDate = useHijriDate(locale)
   const gregorianDate = useGregorianDate(locale)
 
+  // Chargement des sourates pour les résumés de carnet
+  useEffect(() => {
+    fetch("/api/surahs")
+      .then((r) => r.json())
+      .then((d) => {
+        const map: Record<number, { nameFr: string; nameAr: string }> = {}
+        ;(d.surahs || []).forEach((s: any) => { map[s.id] = s })
+        setSurahs(map)
+      })
+  }, [])
+
   // Gestion de l'historique navigateur pour le master-detail
   useEffect(() => {
     const onPopState = (e: PopStateEvent) => {
-      const state = e.state as { childId?: string } | null
-      setSelectedChildId(state?.childId ?? null)
+      const state = e.state as { panel?: SidePanel } | null
+      setSidePanel(state?.panel ?? null)
     }
     window.addEventListener("popstate", onPopState)
     return () => window.removeEventListener("popstate", onPopState)
@@ -112,15 +130,26 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
         router.push(`/parent/child/${child.id}`)
         return
       }
-      setSelectedChildId(child.id)
-      window.history.pushState({ childId: child.id }, "", `/parent/child/${child.id}`)
+      const panel: SidePanel = { type: "child", childId: child.id }
+      setSidePanel(panel)
+      window.history.pushState({ panel }, "", `/parent/child/${child.id}`)
     },
     [isDesktop, router]
   )
 
+  const handleOpenAttendance = useCallback(() => {
+    if (!isDesktop) {
+      router.push("/parent/attendance")
+      return
+    }
+    const panel: SidePanel = { type: "attendance" }
+    setSidePanel(panel)
+    window.history.pushState({ panel }, "", "/parent/attendance")
+  }, [isDesktop, router])
+
   const handleCloseDetail = useCallback(() => {
-    setSelectedChildId(null)
-    if (window.history.state?.childId) {
+    setSidePanel(null)
+    if (window.history.state?.panel) {
       window.history.back()
     } else {
       window.history.pushState({}, "", "/parent/dashboard")
@@ -205,6 +234,7 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
         missingCount={missingChildren.length}
         onContactAdmin={() => setAdminChatOpen(true)}
         onScrollToChildren={scrollToChildren}
+        onOpenAttendance={handleOpenAttendance}
       />
 
       {/* Résumé intelligent */}
@@ -238,9 +268,8 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
               <motion.div key={child.id} variants={item}>
                 <ChildCard
                   child={child}
-                  admin={admin}
+                  surahs={surahs}
                   onContactTeacher={(c) => setTeacherChat({ child: c, open: true })}
-                  onContactAdmin={() => setAdminChatOpen(true)}
                   onSelect={isDesktop ? handleSelectChild : undefined}
                 />
               </motion.div>
@@ -279,7 +308,7 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
 
   return (
     <AnimatePresence mode="wait">
-      {selectedChildId && isDesktop ? (
+      {sidePanel && isDesktop ? (
         <motion.div
           key="split"
           initial={{ opacity: 0 }}
@@ -300,7 +329,7 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
             </div>
           </motion.div>
 
-          {/* Panneau de détail enfant */}
+          {/* Panneau latéral */}
           <motion.div
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
@@ -309,11 +338,15 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
             className="w-1/2 h-full overflow-y-auto bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-2xl"
           >
             <div className="min-h-full px-6 py-6">
-              <ParentChildProfileClient
-                studentId={selectedChildId}
-                embedded
-                onClose={handleCloseDetail}
-              />
+              {sidePanel.type === "child" ? (
+                <ParentChildProfileClient
+                  studentId={sidePanel.childId}
+                  embedded
+                  onClose={handleCloseDetail}
+                />
+              ) : (
+                <ParentAttendancePanel />
+              )}
             </div>
           </motion.div>
         </motion.div>
