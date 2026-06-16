@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useRef, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { motion, AnimatePresence } from "framer-motion"
 import { User, Sparkles } from "lucide-react"
@@ -82,6 +82,7 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
   const { locale } = useLanguage()
   const t = useT("parentDashboardClient")
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { data: session } = useSession()
   const firstName = session?.user?.name?.split(" ")[0] || ""
   const parentUserId = session?.user?.id
@@ -124,6 +125,30 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
     return () => window.removeEventListener("popstate", onPopState)
   }, [])
 
+  // Réouverture du panneau au refresh (URL /parent/dashboard?childId=... ou ?attendance=1)
+  useEffect(() => {
+    if (!isDesktop) return
+    const childId = searchParams.get("childId")
+    const attendance = searchParams.get("attendance")
+    if (childId && children.some((c) => c.id === childId)) {
+      setSidePanel({ type: "child", childId })
+    } else if (attendance === "1") {
+      setSidePanel({ type: "attendance" })
+    }
+  }, [searchParams, isDesktop, children])
+
+  // Sur mobile, les query params redirigent vers les pages dédiées
+  useEffect(() => {
+    if (isDesktop) return
+    const childId = searchParams.get("childId")
+    const attendance = searchParams.get("attendance")
+    if (childId) {
+      router.replace(`/parent/child/${childId}`)
+    } else if (attendance === "1") {
+      router.replace("/parent/attendance")
+    }
+  }, [searchParams, isDesktop, router])
+
   const handleSelectChild = useCallback(
     (child: Child) => {
       if (!isDesktop) {
@@ -132,7 +157,7 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
       }
       const panel: SidePanel = { type: "child", childId: child.id }
       setSidePanel(panel)
-      window.history.pushState({ panel }, "", `/parent/child/${child.id}`)
+      window.history.pushState({ panel }, "", `/parent/dashboard?childId=${child.id}`)
     },
     [isDesktop, router]
   )
@@ -144,17 +169,34 @@ export function ParentDashboardClient({ todayDate: _todayDate, children, missing
     }
     const panel: SidePanel = { type: "attendance" }
     setSidePanel(panel)
-    window.history.pushState({ panel }, "", "/parent/attendance")
+    window.history.pushState({ panel }, "", "/parent/dashboard?attendance=1")
   }, [isDesktop, router])
 
   const handleCloseDetail = useCallback(() => {
     setSidePanel(null)
-    if (window.history.state?.panel) {
+    const hasQueryPanel =
+      typeof window !== "undefined" &&
+      (new URLSearchParams(window.location.search).has("childId") ||
+        new URLSearchParams(window.location.search).has("attendance"))
+    if (hasQueryPanel) {
+      window.history.replaceState({}, "", "/parent/dashboard")
+    } else if (window.history.state?.panel) {
       window.history.back()
     } else {
       window.history.pushState({}, "", "/parent/dashboard")
     }
   }, [])
+
+  // Communication avec le header parent (fermeture via le lien Tableau de bord)
+  useEffect(() => {
+    const onClosePanel = () => handleCloseDetail()
+    window.addEventListener("parent:close-panel", onClosePanel)
+    return () => window.removeEventListener("parent:close-panel", onClosePanel)
+  }, [handleCloseDetail])
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("parent:panel-change", { detail: { open: !!sidePanel } }))
+  }, [sidePanel])
 
   const container = {
     hidden: { opacity: 0 },

@@ -1,12 +1,21 @@
-// src/app/parent/child/[id]/page.tsx
-import { auth } from "@/auth"
-import { redirect } from "next/navigation"
+"use client"
+// Page détail enfant côté parent : sur desktop on préfère le master-detail du dashboard
+
+import { useEffect } from "react"
+import { useParams, useRouter } from "next/navigation"
 import { ParentChildProfileClient } from "@/components/parent/child/ParentChildProfileClient"
 
-export default async function ParentChildPage({ params }: { params: Promise<{ id: string }> }) {
-  const session = await auth()
-  if (!session?.user || session.user.role !== "PARENT") redirect("/login")
+export default function ParentChildPage() {
+  const params = useParams()
+  const router = useRouter()
+  const id = params.id as string
 
-  const { id } = await params
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (window.innerWidth >= 1280) {
+      router.replace(`/parent/dashboard?childId=${id}`)
+    }
+  }, [id, router])
+
   return <ParentChildProfileClient studentId={id} />
 }

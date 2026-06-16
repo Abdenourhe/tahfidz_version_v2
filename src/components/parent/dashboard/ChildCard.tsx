@@ -36,14 +36,19 @@ interface DailyLog {
   globalScore?: number | null
   hifzFromSurahId?: number | null
   hifzToSurahId?: number | null
+  hifzNote?: string | null
   murajaFromSurahId?: number | null
   murajaToSurahId?: number | null
+  murajaNote?: string | null
   talqinFromSurahId?: number | null
   talqinToSurahId?: number | null
+  talqinNote?: string | null
   courseBook?: string | null
   courseFromPage?: number | null
   courseToPage?: number | null
+  courseNote?: string | null
   teacherObservation?: string | null
+  parentObservation?: string | null
 }
 
 interface Props {
@@ -189,8 +194,11 @@ export function ChildCard({ child, surahs = {}, onContactTeacher, onSelect }: Pr
   const heroClass = "relative flex items-start gap-4 active:scale-[0.98] transition"
 
   const dateLocale = locale === "ar" ? "ar-SA" : locale === "en" ? "en-US" : "fr-FR"
-  const fmtDate = (dateStr: string) =>
-    new Date(`${dateStr}T12:00:00`).toLocaleDateString(dateLocale, { weekday: "short", day: "numeric", month: "short" })
+  const fmtDate = (dateStr: string) => {
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return dateStr
+    return d.toLocaleDateString(dateLocale, { weekday: "short", day: "numeric", month: "short" })
+  }
 
   const surahName = (id?: number | null) => (id && surahs[id] ? surahs[id].nameFr : null)
 
@@ -208,8 +216,25 @@ export function ChildCard({ child, surahs = {}, onContactTeacher, onSelect }: Pr
     lastLog.hifzFromSurahId ||
     lastLog.murajaFromSurahId ||
     lastLog.talqinFromSurahId ||
-    lastLog.courseBook
+    lastLog.courseBook ||
+    lastLog.hifzNote ||
+    lastLog.murajaNote ||
+    lastLog.talqinNote ||
+    lastLog.courseNote ||
+    lastLog.teacherObservation ||
+    lastLog.parentObservation
   )
+
+  const noteItems = lastLog
+    ? [
+        { key: "hifz", label: t("hifzNoteLabel"), text: lastLog.hifzNote, color: "emerald" },
+        { key: "muraja", label: t("murajaNoteLabel"), text: lastLog.murajaNote, color: "blue" },
+        { key: "talqin", label: t("talqinNoteLabel"), text: lastLog.talqinNote, color: "purple" },
+        { key: "course", label: t("courseNoteLabel"), text: lastLog.courseNote, color: "amber" },
+        { key: "teacherObservation", label: t("teacherObservationLabel"), text: lastLog.teacherObservation, color: "gray" },
+        { key: "parentObservation", label: t("parentObservationLabel"), text: lastLog.parentObservation, color: "gray" },
+      ].filter((n) => !!n.text)
+    : []
 
   return (
     <div
@@ -278,6 +303,26 @@ export function ChildCard({ child, surahs = {}, onContactTeacher, onSelect }: Pr
               </span>
             )}
           </div>
+
+          {noteItems.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {noteItems.map((note) => (
+                <p key={note.key} className="flex items-start gap-1.5 text-[10px] text-gray-600 dark:text-gray-300">
+                  <span className={cn(
+                    "shrink-0 font-semibold",
+                    note.color === "emerald" && "text-emerald-600",
+                    note.color === "blue" && "text-blue-600",
+                    note.color === "purple" && "text-purple-600",
+                    note.color === "amber" && "text-amber-600",
+                    note.color === "gray" && "text-gray-500 dark:text-gray-400"
+                  )}>
+                    {note.label}:
+                  </span>
+                  <span className="line-clamp-2">{note.text}</span>
+                </p>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

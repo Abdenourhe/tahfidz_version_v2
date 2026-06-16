@@ -4,6 +4,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
+import { useState, useEffect } from "react"
 import { signOut, useSession } from "next-auth/react"
 import { motion } from "framer-motion"
 import { LogOut } from "lucide-react"
@@ -21,10 +22,20 @@ interface ParentNavProps {
 
 export function ParentNav({ user: _user, schoolName, schoolLogo }: ParentNavProps) {
   const pathname = usePathname()
+  const [panelOpen, setPanelOpen] = useState(false)
   const { useT: tFn } = useLanguage()
   const { data: session } = useSession()
   const tN = (k: string) => tFn("nav", k)
   const tA = (k: string) => tFn("auth", k)
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ open: boolean }>).detail
+      setPanelOpen(detail?.open ?? false)
+    }
+    window.addEventListener("parent:panel-change", handler)
+    return () => window.removeEventListener("parent:panel-change", handler)
+  }, [])
 
   const displayName = schoolName || "TAHFIDZ"
   const logo = schoolLogo
@@ -76,10 +87,21 @@ export function ParentNav({ user: _user, schoolName, schoolLogo }: ParentNavProp
                 )
               }
 
+              const isDashboard = item.href === "/parent/dashboard"
+
               return (
                 <div key={item.href} className="flex items-center">
                   {index > 0 && <span className="w-px h-4 bg-gray-200 dark:bg-gray-700 mx-1" />}
-                  <Link href={item.href} title={label}>
+                  <Link
+                    href={item.href}
+                    title={label}
+                    onClick={(e) => {
+                      if (panelOpen && isDashboard) {
+                        e.preventDefault()
+                        window.dispatchEvent(new CustomEvent("parent:close-panel"))
+                      }
+                    }}
+                  >
                     <motion.div
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}

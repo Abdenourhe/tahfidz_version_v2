@@ -1,39 +1,22 @@
-import { redirect } from "next/navigation"
-import { auth } from "@/auth"
-import { prisma } from "@/lib/prisma"
-import { ParentProfileAttendance } from "@/components/parent/attendance/ParentProfileAttendance"
+"use client"
+// Page présences parent : sur desktop on préfère le master-detail du dashboard
 
-export default async function ParentAttendancePage() {
-  const session = await auth()
-  if (!session?.user || session.user.role !== "PARENT") {
-    redirect("/login")
-  }
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { ParentAttendancePanel } from "@/components/parent/attendance/ParentAttendancePanel"
 
-  const parent = await prisma.parent.findUnique({
-    where: { userId: session.user.id },
-    include: {
-      childrenLinks: {
-        where: { isVerified: true },
-        include: {
-          student: {
-            include: {
-              user: { select: { fullName: true, fullNameAr: true, avatar: true } },
-              group: { select: { id: true, name: true, schedule: true } },
-              teacher: { include: { user: { select: { fullName: true } } } },
-            },
-          },
-        },
-      },
-    },
-  })
+export default function ParentAttendancePage() {
+  const router = useRouter()
 
-  if (!parent) {
-    redirect("/login")
-  }
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth >= 1280) {
+      router.replace("/parent/dashboard?attendance=1")
+    }
+  }, [router])
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <ParentProfileAttendance>{parent.childrenLinks as any}</ParentProfileAttendance>
+      <ParentAttendancePanel />
     </div>
   )
 }
