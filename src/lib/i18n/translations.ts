@@ -1451,6 +1451,8 @@ export const translations = {
     disabled:          { fr: "Activer les notifications", en: "Enable notifications", ar: "تفعير الإشعارات" },
     notSupported:      { fr: "Navigateur incompatible", en: "Browser not supported", ar: "المتصفح غير مدعوم" },
     permissionDenied:  { fr: "Permission refusée", en: "Permission denied", ar: "الإذن مرفوض" },
+    vapidMissing:      { fr: "Clé VAPID manquante", en: "VAPID key missing", ar: "مفتاح VAPID مفقود" },
+    subscribeError:    { fr: "Erreur d'abonnement", en: "Subscription error", ar: "خطأ في الاشتراك" },
   },
 
   // ─── adminChat (components/admin/AdminParentChatDrawer.tsx) ─────────────────────────────────────────────

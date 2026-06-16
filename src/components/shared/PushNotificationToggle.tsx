@@ -5,7 +5,8 @@ import { useT } from "@/contexts/LanguageContext"
 import { Bell, BellOff, Loader2, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-export function usePushNotifications() {
+export function usePushNotifications(t?: (key: string) => string) {
+  const _t = t || ((key: string) => key)
   const [supported, setSupported] = useState(false)
   const [subscribed, setSubscribed] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -30,14 +31,19 @@ export function usePushNotifications() {
       setLoading(false)
       return
     }
-    setSupported(true)
 
     navigator.serviceWorker
       .register("/service-worker.js")
-      .then(() => checkSubscription())
+      .then(() => {
+        setSupported(true)
+        return checkSubscription()
+      })
       .catch((err) => {
         console.error("[SW REGISTER]", err)
-        setError(err.message || "Impossible d'enregistrer le service worker")
+        // En local ou si le service de push n'est pas disponible, on désactive
+        // silencieusement l'option sans afficher d'erreur brute à l'utilisateur.
+        setSupported(false)
+        setError(null)
       })
       .finally(() => setLoading(false))
   }, [checkSubscription])
@@ -47,14 +53,14 @@ export function usePushNotifications() {
       setError(null)
       const permission = await Notification.requestPermission()
       if (permission !== "granted") {
-        setError("Permission refusée")
+        setError(_t("permissionDenied"))
         return false
       }
 
       const res = await fetch("/api/notifications/vapid-public-key")
       const data = await res.json()
       if (!data.publicKey) {
-        setError(data.error || "Clé VAPID manquante")
+        setError(data.error || _t("vapidMissing"))
         return false
       }
 
@@ -78,7 +84,7 @@ export function usePushNotifications() {
 
       if (!subRes.ok) {
         const err = await subRes.json()
-        setError(err.error || "Erreur d'abonnement")
+        setError(err.error || _t("subscribeError"))
         return false
       }
 
@@ -86,7 +92,7 @@ export function usePushNotifications() {
       return true
     } catch (e: any) {
       console.error("[PUSH SUBSCRIBE]", e)
-      setError(e.message || "Erreur d'abonnement")
+      setError(_t("subscribeError"))
       return false
     }
   }
@@ -129,16 +135,13 @@ interface Props {
 
 export default function PushNotificationToggle({ className }: Props) {
   const t = useT("pushNotifications")
-  const { supported, subscribed, loading, error, subscribe, unsubscribe } = usePushNotifications()
+  const { supported, subscribed, loading, error, subscribe, unsubscribe } = usePushNotifications(t)
   const [busy, setBusy] = useState(false)
 
+  // Si le navigateur ne supporte pas les notifications push (ou que le service
+  // de push n'est pas disponible), on masque complètement le toggle.
   if (!supported) {
-    return (
-      <div className={cn("flex items-center gap-1.5 text-[10px] text-gray-400", className)}>
-        <AlertCircle size={12} />
-        <span>{t("notSupported")}</span>
-      </div>
-    )
+    return null
   }
 
   const toggle = async () => {
