@@ -236,20 +236,16 @@ export function MobileHeader({
               onClick={() => setMenuOpen(false)}
             />
 
-            <div className="fixed inset-0 z-[60] flex items-end justify-center pointer-events-none">
+            <div className="fixed inset-0 z-[60] flex items-center justify-start pointer-events-none">
               <motion.div
                 ref={drawerRef}
-                initial={{ y: "100%" }}
-                animate={{ y: 0 }}
-                exit={{ y: "100%" }}
+                initial={{ x: "-100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "-100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="pointer-events-auto w-full max-w-md bg-white dark:bg-gray-900 rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col overflow-hidden"
+                className="pointer-events-auto w-72 max-w-[80vw] max-h-[85vh] h-auto bg-white dark:bg-gray-900 rounded-r-3xl shadow-2xl flex flex-col overflow-hidden"
                 data-mobile-role={role}
               >
-                {/* Handle */}
-                <div className="flex justify-center pt-3 pb-1">
-                  <div className="w-10 h-1.5 rounded-full bg-gray-300 dark:bg-gray-700" />
-                </div>
 
                 {/* User section */}
                 <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
