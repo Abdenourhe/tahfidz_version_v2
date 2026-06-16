@@ -287,7 +287,7 @@ export function MobileHeader({
                           variants={containerVariants}
                           initial="hidden"
                           animate="show"
-                          className="space-y-0.5"
+                          className="flex flex-wrap justify-center gap-2"
                         >
                           {section.items.map((item) => {
                             const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
@@ -300,26 +300,27 @@ export function MobileHeader({
                                   href={item.href}
                                   onClick={() => setMenuOpen(false)}
                                   className={cn(
-                                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition",
+                                    "flex flex-col items-center justify-center gap-1.5 w-[104px] px-2 py-3 rounded-xl text-xs font-medium text-center transition",
                                     isActive
                                       ? "bg-tahfidz-green-light text-tahfidz-green"
                                       : "text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
                                   )}
                                 >
-                                  <Icon
-                                    size={18}
-                                    strokeWidth={isActive ? 2.5 : 1.5}
-                                    className={cn(
-                                      "shrink-0",
-                                      isActive ? (item.color || "text-tahfidz-green") : (item.color || "text-gray-400 dark:text-gray-500")
+                                  <div className="relative">
+                                    <Icon
+                                      size={22}
+                                      strokeWidth={isActive ? 2.5 : 1.5}
+                                      className={cn(
+                                        isActive ? (item.color || "text-tahfidz-green") : (item.color || "text-gray-400 dark:text-gray-500")
+                                      )}
+                                    />
+                                    {isNotification && unreadCount > 0 && (
+                                      <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-0.5 bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">
+                                        {unreadCount > 99 ? "99+" : unreadCount}
+                                      </span>
                                     )}
-                                  />
-                                  <span className="flex-1">{t(item.labelKey) || item.labelKey}</span>
-                                  {isNotification && unreadCount > 0 && (
-                                    <span className="min-w-[18px] h-[18px] px-1 bg-red-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center">
-                                      {unreadCount > 99 ? "99+" : unreadCount}
-                                    </span>
-                                  )}
+                                  </div>
+                                  <span className="leading-tight">{t(item.labelKey) || item.labelKey}</span>
                                 </Link>
                               </motion.div>
                             )
