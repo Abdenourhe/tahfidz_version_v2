@@ -6,7 +6,7 @@ import { useTheme } from "next-themes"
 import { motion, type Variants } from "framer-motion"
 import {
   Menu, X, Star, Play, Check, ArrowRight, Sun, Moon,
-  Sparkles, Heart,
+  Sparkles, Heart, ExternalLink,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getIcon } from "@/lib/landing/icon-mapper"
@@ -617,53 +617,101 @@ function CTASection({ t }: { t: LandingContent }) {
   )
 }
 
+const footerLinks = {
+  product: [
+    { href: "/#features", external: false },
+    { href: "/#pricing", external: false },
+    { href: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", external: true },
+    { href: "/updates", external: false },
+  ],
+  support: [
+    { href: "/help", external: false },
+    { href: "mailto:contact@tahfidz.com?subject=Contact%20TAHFIDZ", external: false },
+    { href: "/docs", external: false },
+    { href: "/api-docs", external: false },
+  ],
+  legal: [
+    { href: "/privacy", external: false },
+    { href: "/terms", external: false },
+    { href: "/security", external: false },
+  ],
+}
+
+function FooterLink({ href, external, children }: { href: string; external?: boolean; children: React.ReactNode }) {
+  const baseClass = "group inline-flex items-center gap-1.5 hover:text-tahfidz-green transition"
+
+  if (external) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={baseClass}>
+        {children}
+        <ExternalLink size={12} className="opacity-60 group-hover:opacity-100" />
+      </a>
+    )
+  }
+
+  if (href.startsWith("mailto:")) {
+    return <a href={href} className={baseClass}>{children}</a>
+  }
+
+  if (href.startsWith("/#")) {
+    return <a href={href} className={baseClass}>{children}</a>
+  }
+
+  return <Link href={href} className={baseClass}>{children}</Link>
+}
+
 function Footer({ t }: { t: LandingContent }) {
   return (
     <footer className="bg-gray-900 text-gray-300 py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid md:grid-cols-4 gap-10 mb-12">
           <div className="md:col-span-1">
-            <div className="flex items-center gap-2.5 mb-4">
+            <Link href="/" className="flex items-center gap-2.5 mb-4 group">
               <div className="w-9 h-9 rounded-xl bg-tahfidz-green flex items-center justify-center text-white font-bold text-lg">ط</div>
               <span className="font-bold text-lg text-white">TAHFIDZ</span>
-            </div>
+            </Link>
             <p className="text-sm text-gray-400 leading-relaxed">{t.footer.desc}</p>
           </div>
 
           <div>
             <h4 className="text-white font-semibold mb-4">{t.footer.product}</h4>
-            <ul className="space-y-2 text-sm">
+            <ul className="space-y-2.5 text-sm">
               {t.footer.linksProduct.map((link, i) => (
-                <li key={i}><a href="#" className="hover:text-tahfidz-green transition">{link}</a></li>
+                <li key={i}>
+                  <FooterLink {...footerLinks.product[i]}>{link}</FooterLink>
+                </li>
               ))}
             </ul>
           </div>
 
           <div>
             <h4 className="text-white font-semibold mb-4">{t.footer.support}</h4>
-            <ul className="space-y-2 text-sm">
+            <ul className="space-y-2.5 text-sm">
               {t.footer.linksSupport.map((link, i) => (
-                <li key={i}><a href="#" className="hover:text-tahfidz-green transition">{link}</a></li>
+                <li key={i}>
+                  <FooterLink {...footerLinks.support[i]}>{link}</FooterLink>
+                </li>
               ))}
             </ul>
           </div>
 
           <div>
             <h4 className="text-white font-semibold mb-4">{t.footer.legal}</h4>
-            <ul className="space-y-2 text-sm">
+            <ul className="space-y-2.5 text-sm">
               {t.footer.linksLegal.map((link, i) => (
-                <li key={i}><a href="#" className="hover:text-tahfidz-green transition">{link}</a></li>
+                <li key={i}>
+                  <FooterLink {...footerLinks.legal[i]}>{link}</FooterLink>
+                </li>
               ))}
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-gray-500">&copy; {new Date().getFullYear()}{t.footer.copyright}</p>
-          <div className="flex items-center gap-4">
-            <Heart size={16} className="text-tahfidz-green" />
-            <span className="text-sm text-gray-500">{t.footer.copyright}</span>
-          </div>
+        <div className="border-t border-gray-800 pt-8 flex flex-col items-center justify-center gap-3">
+          <p className="text-sm text-gray-500 flex items-center gap-2 text-center">
+            <Heart size={14} className="text-tahfidz-green" />
+            &copy; {new Date().getFullYear()} TAHFIDZ. {t.footer.copyright}
+          </p>
         </div>
       </div>
     </footer>

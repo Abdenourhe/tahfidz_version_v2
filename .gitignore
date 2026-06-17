@@ -37,7 +37,7 @@ yarn-error.log*
 next-env.d.ts
 
 # prisma
-prisma/migrations/
+# NOTE: migrations are tracked in Git so Vercel can run `prisma migrate deploy`.
 
 .vercel
 
