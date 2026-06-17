@@ -555,7 +555,7 @@ function PricingSection({ t }: { t: LandingContent }) {
                 </div>
                 <div className="mb-6" dir={t.dir === "rtl" ? "ltr" : undefined}>
                   <span className="text-4xl font-bold text-gray-900 dark:text-white">{plan.price}</span>
-                  <span className="text-gray-500 dark:text-gray-400 text-sm">{" "}{t.pricing.currency}{t.pricing.perYear}</span>
+                  <span className="text-gray-500 dark:text-gray-400 text-sm">{" "}{t.pricing.currency}{" "}{t.pricing.perYear}</span>
                 </div>
                 <ul className="space-y-3 mb-8 flex-1">
                   {plan.features.map((feature, i) => (
