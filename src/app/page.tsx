@@ -18,9 +18,9 @@ export default async function RootPage() {
   const config = await prisma.siteConfig.findUnique({ where: { key: "landing" } })
   const rawContent = (config?.value as Record<Lang, LandingContent> | undefined) ?? defaultLandingContent
   const landingContent: Record<Lang, LandingContent> = {
-    fr: normalizeLandingContent(rawContent.fr),
-    en: normalizeLandingContent(rawContent.en),
-    ar: normalizeLandingContent(rawContent.ar),
+    fr: normalizeLandingContent(rawContent.fr, "fr"),
+    en: normalizeLandingContent(rawContent.en, "en"),
+    ar: normalizeLandingContent(rawContent.ar, "ar"),
   }
 
   return <LandingPage content={landingContent} initialLang="fr" />

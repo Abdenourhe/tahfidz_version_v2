@@ -129,9 +129,12 @@ export function normalizeFooterLink(link: unknown): FooterLink {
   return { label: '', href: '/', external: false }
 }
 
-export function normalizeLandingContent(content: unknown): LandingContent {
+export function normalizeLandingContent(
+  content: unknown,
+  lang: "fr" | "en" | "ar" = "fr"
+): LandingContent {
   const c = content as Partial<LandingContent>
-  const defaultLang = defaultLandingContent.fr
+  const defaultLang = defaultLandingContent[lang]
 
   return {
     dir: c.dir ?? defaultLang.dir,

@@ -746,8 +746,8 @@ function LandingEditor({
                 <option value='year'>Annuel</option>
               </select>
             </div>
-            <Field label='Libellé mensuel' value={content.pricing.monthlyLabel} onChange={(v) => setSection('pricing', { ...content.pricing, monthlyLabel: v })} />
-            <Field label='Libellé annuel' value={content.pricing.yearlyLabel} onChange={(v) => setSection('pricing', { ...content.pricing, yearlyLabel: v })} />
+            <Field label='Libellé mensuel (ex: mois / month / شهر)' value={content.pricing.monthlyLabel} onChange={(v) => setSection('pricing', { ...content.pricing, monthlyLabel: v })} />
+            <Field label='Libellé annuel (ex: an / year / سنة)' value={content.pricing.yearlyLabel} onChange={(v) => setSection('pricing', { ...content.pricing, yearlyLabel: v })} />
             <Field label='Libellé bouton' value={content.pricing.request} onChange={(v) => setSection('pricing', { ...content.pricing, request: v })} />
             <Field label='Libellé populaire' value={content.pricing.popular} onChange={(v) => setSection('pricing', { ...content.pricing, popular: v })} />
             <div className='space-y-1.5'>
@@ -1224,9 +1224,9 @@ const PAGE_LABELS: Record<SitePageKey, string> = {
 
 export function SiteConfigClient({ initialLanding, initialGlobal, initialPages }: SiteConfigClientProps) {
   const [landing, setLanding] = useState<Landing>({
-    fr: normalizeLandingContent(initialLanding.fr),
-    en: normalizeLandingContent(initialLanding.en),
-    ar: normalizeLandingContent(initialLanding.ar),
+    fr: normalizeLandingContent(initialLanding.fr, 'fr'),
+    en: normalizeLandingContent(initialLanding.en, 'en'),
+    ar: normalizeLandingContent(initialLanding.ar, 'ar'),
   })
   const [global, setGlobal] = useState<GlobalContent>(normalizeGlobal(initialGlobal))
   const [pages, setPages] = useState<Record<SitePageKey, SitePageConfig>>(initialPages)
