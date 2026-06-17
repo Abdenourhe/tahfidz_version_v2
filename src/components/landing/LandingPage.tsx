@@ -518,10 +518,6 @@ const periodLabels: Record<Lang, { monthly: string; yearly: string; month: strin
 function PricingSection({ t, lang }: { t: LandingContent; lang: Lang }) {
   const [period, setPeriod] = useState<"month" | "year">(t.pricing.period ?? "year")
 
-  useEffect(() => {
-    setPeriod(t.pricing.period ?? "year")
-  }, [t.pricing.period])
-
   const labels = periodLabels[lang]
   const periodLabel = period === "month" ? labels.month : labels.year
 
