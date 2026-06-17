@@ -1,18 +1,7 @@
 // src/lib/landing/default-content.ts
 // Contenu par défaut de la landing page TAHFIDZ (éditable depuis le superadmin)
 
-import type { ComponentType } from "react"
-import {
-  BookOpen,
-  Users,
-  GraduationCap,
-  BarChart2,
-  Megaphone,
-  Shield,
-  UserCheck,
-  BookMarked,
-  Wifi,
-} from "lucide-react"
+
 
 export interface LandingContent {
   dir: "ltr" | "rtl"
@@ -354,20 +343,3 @@ export const defaultLandingContent: Record<"fr" | "en" | "ar", LandingContent> =
   },
 }
 
-export type IconComponent = ComponentType<{
-  size?: number
-  className?: string
-  strokeWidth?: number
-}>
-
-export const iconMap: Record<string, IconComponent> = {
-  BookOpen: BookOpen as IconComponent,
-  Users: Users as IconComponent,
-  GraduationCap: GraduationCap as IconComponent,
-  BarChart2: BarChart2 as IconComponent,
-  Megaphone: Megaphone as IconComponent,
-  Shield: Shield as IconComponent,
-  UserCheck: UserCheck as IconComponent,
-  BookMarked: BookMarked as IconComponent,
-  Wifi: Wifi as IconComponent,
-}

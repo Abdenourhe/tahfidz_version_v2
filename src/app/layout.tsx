@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next"
 import { Inter, Playfair_Display, Cormorant_Garamond } from "next/font/google"
 import "./globals.css"
 import { Providers } from "@/components/Providers"
+import { GlobalBanner } from "@/components/layout/GlobalBanner"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -75,7 +76,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className={`${inter.className} ${playfair.variable} ${cormorant.variable}`}>
-        <Providers>{children}</Providers>
+        <Providers>
+          <GlobalBanner />
+          {children}
+        </Providers>
       </body>
     </html>
   )
