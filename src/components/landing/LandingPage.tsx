@@ -554,8 +554,8 @@ function PricingSection({ t }: { t: LandingContent }) {
                   <p className="text-sm text-gray-500 dark:text-gray-400">{plan.students}</p>
                 </div>
                 <div className="mb-6">
-                  <span className="text-4xl font-bold text-gray-900 dark:text-white">{plan.price === "0" ? "0" : plan.price}</span>
-                  <span className="text-gray-500 dark:text-gray-400 text-sm">{plan.price === "0" ? "" : t.pricing.perYear}</span>
+                  <span className="text-4xl font-bold text-gray-900 dark:text-white">{plan.price}</span>
+                  <span className="text-gray-500 dark:text-gray-400 text-sm"> {t.pricing.currency}{t.pricing.perYear}</span>
                 </div>
                 <ul className="space-y-3 mb-8 flex-1">
                   {plan.features.map((feature, i) => (

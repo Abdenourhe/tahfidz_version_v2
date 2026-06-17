@@ -59,6 +59,7 @@ export interface LandingContent {
     perYear: string
     request: string
     popular: string
+    currency: string
     plans: Array<{ name: string; students: string; price: string; features: string[] }>
   }
   cta: {
@@ -150,6 +151,7 @@ export function normalizeLandingContent(content: unknown): LandingContent {
     pricing: {
       ...defaultLang.pricing,
       ...c.pricing,
+      currency: c.pricing?.currency ?? defaultLang.pricing.currency,
       plans: (c.pricing?.plans ?? defaultLang.pricing.plans).map((plan) => ({
         name: plan.name,
         students: plan.students,
@@ -238,6 +240,7 @@ export const defaultLandingContent: Record<"fr" | "en" | "ar", LandingContent> =
       perYear: "/an",
       request: "Demander",
       popular: "Populaire",
+      currency: "$ CAD",
       plans: [
         { name: "Gratuit", students: "Jusqu'a 50 eleves", price: "0", features: ["Gestion des eleves", "2 enseignants", "1 halaqa", "Rapports basiques", "Support email"] },
         { name: "Starter", students: "51 - 200 eleves", price: "49", features: ["Tout du plan Gratuit", "10 enseignants", "Halaqas illimitees", "Notifications push", "Exports PDF"] },
@@ -344,6 +347,7 @@ export const defaultLandingContent: Record<"fr" | "en" | "ar", LandingContent> =
       perYear: "/year",
       request: "Request",
       popular: "Popular",
+      currency: "$ CAD",
       plans: [
         { name: "Free", students: "Up to 50 students", price: "0", features: ["Student management", "2 teachers", "1 halaqa", "Basic reports", "Email support"] },
         { name: "Starter", students: "51 - 200 students", price: "49", features: ["Everything in Free", "10 teachers", "Unlimited halaqas", "Push notifications", "PDF exports"] },
@@ -450,6 +454,7 @@ export const defaultLandingContent: Record<"fr" | "en" | "ar", LandingContent> =
       perYear: "/سنة",
       request: "اطلب",
       popular: "الأكثر شيوعاً",
+      currency: "دولار كندي",
       plans: [
         { name: "مجاني", students: "حتى 50 طالب", price: "0", features: ["إدارة الطلاب", "2 معلم", "1 حلقة", "تقارير أساسية", "دعم بالبريد"] },
         { name: "Starter", students: "51 - 200 طالب", price: "49", features: ["كل شيء في المجاني", "10 معلمين", "حلقات غير محدودة", "إشعارات فورية", "تصدير PDF"] },

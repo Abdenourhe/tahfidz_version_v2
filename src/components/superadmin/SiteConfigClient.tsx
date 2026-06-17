@@ -733,6 +733,7 @@ function LandingEditor({
             <Field label='Libellé /an' value={content.pricing.perYear} onChange={(v) => setSection('pricing', { ...content.pricing, perYear: v })} />
             <Field label='Libellé bouton' value={content.pricing.request} onChange={(v) => setSection('pricing', { ...content.pricing, request: v })} />
             <Field label='Libellé populaire' value={content.pricing.popular} onChange={(v) => setSection('pricing', { ...content.pricing, popular: v })} />
+            <Field label='Devise' value={content.pricing.currency} onChange={(v) => setSection('pricing', { ...content.pricing, currency: v })} />
           </div>
           <div className='space-y-3'>
             <label className='block text-xs font-medium text-gray-600 dark:text-gray-400'>Plans</label>

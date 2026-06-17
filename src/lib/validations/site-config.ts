@@ -96,6 +96,7 @@ const landingContentSchema = z.object({
     perYear: z.string().min(1),
     request: z.string().min(1),
     popular: z.string().min(1),
+    currency: z.string().min(1),
     plans: z.array(landingPricingPlanSchema).min(1),
   }),
   cta: z.object({
