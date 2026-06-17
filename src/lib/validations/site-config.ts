@@ -36,7 +36,9 @@ const landingTestimonialSchema = z.object({
 const landingPricingPlanSchema = z.object({
   name: z.string().min(1),
   students: z.string().min(1),
-  price: z.string().min(1),
+  monthlyPrice: z.string().min(1),
+  yearlyPrice: z.string().min(1),
+  price: z.string().min(1).optional(),
   features: z.array(z.string().min(1)),
 })
 
@@ -93,9 +95,12 @@ const landingContentSchema = z.object({
   pricing: z.object({
     title: z.string().min(1),
     subtitle: z.string().min(1),
-    perYear: z.string().min(1),
+    period: z.enum(["month", "year"]),
+    monthlyLabel: z.string().min(1),
+    yearlyLabel: z.string().min(1),
     request: z.string().min(1),
     popular: z.string().min(1),
+    perYear: z.string().min(1).optional(),
     currency: z.string().min(1),
     plans: z.array(landingPricingPlanSchema).min(1),
   }),

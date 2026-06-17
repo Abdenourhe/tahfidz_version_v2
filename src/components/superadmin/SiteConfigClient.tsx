@@ -730,8 +730,24 @@ function LandingEditor({
         <div className='space-y-4'>
           <Field label='Titre de section' value={content.pricing.title} onChange={(v) => setSection('pricing', { ...content.pricing, title: v })} />
           <Field label='Sous-titre' value={content.pricing.subtitle} onChange={(v) => setSection('pricing', { ...content.pricing, subtitle: v })} />
-          <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4'>
-            <Field label='Libellé /an' value={content.pricing.perYear} onChange={(v) => setSection('pricing', { ...content.pricing, perYear: v })} />
+          <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4'>
+            <div className='space-y-1.5'>
+              <label className='block text-xs font-medium text-gray-600 dark:text-gray-400'>Période par défaut</label>
+              <select
+                value={content.pricing.period}
+                onChange={(e) => setSection('pricing', { ...content.pricing, period: e.target.value as 'month' | 'year' })}
+                className={cn(
+                  'w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700',
+                  'rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none',
+                  'focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green'
+                )}
+              >
+                <option value='month'>Mensuel</option>
+                <option value='year'>Annuel</option>
+              </select>
+            </div>
+            <Field label='Libellé mensuel' value={content.pricing.monthlyLabel} onChange={(v) => setSection('pricing', { ...content.pricing, monthlyLabel: v })} />
+            <Field label='Libellé annuel' value={content.pricing.yearlyLabel} onChange={(v) => setSection('pricing', { ...content.pricing, yearlyLabel: v })} />
             <Field label='Libellé bouton' value={content.pricing.request} onChange={(v) => setSection('pricing', { ...content.pricing, request: v })} />
             <Field label='Libellé populaire' value={content.pricing.popular} onChange={(v) => setSection('pricing', { ...content.pricing, popular: v })} />
             <div className='space-y-1.5'>
@@ -767,7 +783,7 @@ function LandingEditor({
                     <Trash2 className='w-3.5 h-3.5' />
                   </button>
                 </div>
-                <div className='grid grid-cols-1 sm:grid-cols-4 gap-3'>
+                <div className='grid grid-cols-1 sm:grid-cols-5 gap-3'>
                   <Field
                     label='Nom'
                     value={plan.name}
@@ -787,11 +803,20 @@ function LandingEditor({
                     }}
                   />
                   <Field
-                    label='Prix'
-                    value={plan.price}
+                    label='Prix mensuel'
+                    value={plan.monthlyPrice}
                     onChange={(v) => {
                       const next = [...content.pricing.plans]
-                      next[index] = { ...plan, price: v }
+                      next[index] = { ...plan, monthlyPrice: v }
+                      setSection('pricing', { ...content.pricing, plans: next })
+                    }}
+                  />
+                  <Field
+                    label='Prix annuel'
+                    value={plan.yearlyPrice}
+                    onChange={(v) => {
+                      const next = [...content.pricing.plans]
+                      next[index] = { ...plan, yearlyPrice: v }
                       setSection('pricing', { ...content.pricing, plans: next })
                     }}
                   />
@@ -809,7 +834,7 @@ function LandingEditor({
             ))}
             <button
               type='button'
-              onClick={() => setSection('pricing', { ...content.pricing, plans: [...content.pricing.plans, { name: '', students: '', price: '', features: [''] }] })}
+              onClick={() => setSection('pricing', { ...content.pricing, plans: [...content.pricing.plans, { name: '', students: '', monthlyPrice: '', yearlyPrice: '', features: [''] }] })}
               className='flex items-center gap-1.5 text-xs font-medium text-tahfidz-green hover:text-tahfidz-green/80 transition-colors'
             >
               <Plus className='w-3.5 h-3.5' />

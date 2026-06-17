@@ -56,11 +56,13 @@ export interface LandingContent {
   pricing: {
     title: string
     subtitle: string
-    perYear: string
+    period: 'month' | 'year'
+    monthlyLabel: string
+    yearlyLabel: string
     request: string
     popular: string
     currency: string
-    plans: Array<{ name: string; students: string; price: string; features: string[] }>
+    plans: Array<{ name: string; students: string; monthlyPrice: string; yearlyPrice: string; features: string[] }>
   }
   cta: {
     title: string
@@ -183,11 +185,15 @@ export function normalizeLandingContent(content: unknown): LandingContent {
     pricing: {
       ...defaultLang.pricing,
       ...c.pricing,
+      period: c.pricing?.period ?? defaultLang.pricing.period,
+      monthlyLabel: c.pricing?.monthlyLabel ?? defaultLang.pricing.monthlyLabel,
+      yearlyLabel: c.pricing?.yearlyLabel ?? defaultLang.pricing.yearlyLabel,
       currency: normalizeCurrencyCode(c.pricing?.currency ?? defaultLang.pricing.currency),
       plans: (c.pricing?.plans ?? defaultLang.pricing.plans).map((plan) => ({
         name: plan.name,
         students: plan.students,
-        price: plan.price,
+        monthlyPrice: plan.monthlyPrice ?? (plan as any).price ?? defaultLang.pricing.plans[0].monthlyPrice,
+        yearlyPrice: plan.yearlyPrice ?? (plan as any).price ?? defaultLang.pricing.plans[0].yearlyPrice,
         features: plan.features,
       })),
     },
@@ -269,14 +275,16 @@ export const defaultLandingContent: Record<"fr" | "en" | "ar", LandingContent> =
     pricing: {
       title: "Des tarifs adaptes a chaque ecole",
       subtitle: "Choisissez le plan qui correspond a la taille de votre etablissement",
-      perYear: "/an",
+      period: "year",
+      monthlyLabel: "mois",
+      yearlyLabel: "an",
       request: "Demander",
       popular: "Populaire",
       currency: "CAD",
       plans: [
-        { name: "Gratuit", students: "Jusqu'a 50 eleves", price: "0", features: ["Gestion des eleves", "2 enseignants", "1 halaqa", "Rapports basiques", "Support email"] },
-        { name: "Starter", students: "51 - 200 eleves", price: "49", features: ["Tout du plan Gratuit", "10 enseignants", "Halaqas illimitees", "Notifications push", "Exports PDF"] },
-        { name: "Pro", students: "201 - 500 eleves", price: "99", features: ["Tout du plan Starter", "Enseignants illimites", "Halaqa Online electronique", "Tableau de bord avance", "Support prioritaire"] },
+        { name: "Gratuit", students: "Jusqu'a 50 eleves", monthlyPrice: "0", yearlyPrice: "0", features: ["Gestion des eleves", "2 enseignants", "1 halaqa", "Rapports basiques", "Support email"] },
+        { name: "Starter", students: "51 - 200 eleves", monthlyPrice: "49", yearlyPrice: "490", features: ["Tout du plan Gratuit", "10 enseignants", "Halaqas illimitees", "Notifications push", "Exports PDF"] },
+        { name: "Pro", students: "201 - 500 eleves", monthlyPrice: "99", yearlyPrice: "990", features: ["Tout du plan Starter", "Enseignants illimites", "Halaqa Online electronique", "Tableau de bord avance", "Support prioritaire"] },
       ],
     },
     cta: {
@@ -376,14 +384,16 @@ export const defaultLandingContent: Record<"fr" | "en" | "ar", LandingContent> =
     pricing: {
       title: "Pricing for every school",
       subtitle: "Choose the plan that fits your institution size",
-      perYear: "/year",
+      period: "year",
+      monthlyLabel: "month",
+      yearlyLabel: "year",
       request: "Request",
       popular: "Popular",
       currency: "CAD",
       plans: [
-        { name: "Free", students: "Up to 50 students", price: "0", features: ["Student management", "2 teachers", "1 halaqa", "Basic reports", "Email support"] },
-        { name: "Starter", students: "51 - 200 students", price: "49", features: ["Everything in Free", "10 teachers", "Unlimited halaqas", "Push notifications", "PDF exports"] },
-        { name: "Pro", students: "201 - 500 students", price: "99", features: ["Everything in Starter", "Unlimited teachers", "Electronic Halaqa Online", "Advanced dashboard", "Priority support"] },
+        { name: "Free", students: "Up to 50 students", monthlyPrice: "0", yearlyPrice: "0", features: ["Student management", "2 teachers", "1 halaqa", "Basic reports", "Email support"] },
+        { name: "Starter", students: "51 - 200 students", monthlyPrice: "49", yearlyPrice: "490", features: ["Everything in Free", "10 teachers", "Unlimited halaqas", "Push notifications", "PDF exports"] },
+        { name: "Pro", students: "201 - 500 students", monthlyPrice: "99", yearlyPrice: "990", features: ["Everything in Starter", "Unlimited teachers", "Electronic Halaqa Online", "Advanced dashboard", "Priority support"] },
       ],
     },
     cta: {
@@ -483,14 +493,16 @@ export const defaultLandingContent: Record<"fr" | "en" | "ar", LandingContent> =
     pricing: {
       title: "أسعار مناسبة لكل مدرسة",
       subtitle: "اختر الخطة التي تناسب حجم مؤسستك",
-      perYear: "/سنة",
+      period: "year",
+      monthlyLabel: "شهر",
+      yearlyLabel: "سنة",
       request: "اطلب",
       popular: "الأكثر شيوعاً",
       currency: "CAD",
       plans: [
-        { name: "مجاني", students: "حتى 50 طالب", price: "0", features: ["إدارة الطلاب", "2 معلم", "1 حلقة", "تقارير أساسية", "دعم بالبريد"] },
-        { name: "Starter", students: "51 - 200 طالب", price: "49", features: ["كل شيء في المجاني", "10 معلمين", "حلقات غير محدودة", "إشعارات فورية", "تصدير PDF"] },
-        { name: "احترافي", students: "201 - 500 طالب", price: "99", features: ["كل شيء في Starter", "معلمين غير محدودين", "المقرأة الإلكترونية", "لوحة معلومات متقدمة", "دعم أولوي"] },
+        { name: "مجاني", students: "حتى 50 طالب", monthlyPrice: "0", yearlyPrice: "0", features: ["إدارة الطلاب", "2 معلم", "1 حلقة", "تقارير أساسية", "دعم بالبريد"] },
+        { name: "Starter", students: "51 - 200 طالب", monthlyPrice: "49", yearlyPrice: "490", features: ["كل شيء في المجاني", "10 معلمين", "حلقات غير محدودة", "إشعارات فورية", "تصدير PDF"] },
+        { name: "احترافي", students: "201 - 500 طالب", monthlyPrice: "99", yearlyPrice: "990", features: ["كل شيء في Starter", "معلمين غير محدودين", "المقرأة الإلكترونية", "لوحة معلومات متقدمة", "دعم أولوي"] },
       ],
     },
     cta: {

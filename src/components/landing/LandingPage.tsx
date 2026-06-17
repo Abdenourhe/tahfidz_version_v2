@@ -509,7 +509,15 @@ function TestimonialsSection({ t }: { t: LandingContent }) {
   )
 }
 
-function PricingSection({ t, lang }: { t: LandingContent; lang: "fr" | "en" | "ar" }) {
+function PricingSection({ t, lang }: { t: LandingContent; lang: Lang }) {
+  const [period, setPeriod] = useState<"month" | "year">(t.pricing.period ?? "year")
+
+  useEffect(() => {
+    setPeriod(t.pricing.period ?? "year")
+  }, [t.pricing.period])
+
+  const periodLabel = period === "month" ? t.pricing.monthlyLabel : t.pricing.yearlyLabel
+
   return (
     <section id="pricing" className="py-20 bg-gray-50 dark:bg-gray-900/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -518,7 +526,7 @@ function PricingSection({ t, lang }: { t: LandingContent; lang: "fr" | "en" | "a
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
           variants={staggerContainer}
-          className="text-center mb-16"
+          className="text-center mb-10"
         >
           <motion.h2 variants={fadeInUp} className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
             {t.pricing.title}
@@ -528,9 +536,44 @@ function PricingSection({ t, lang }: { t: LandingContent; lang: "fr" | "en" | "a
           </motion.p>
         </motion.div>
 
+        <div className="flex justify-center mb-12">
+          <div
+            className={cn(
+              "inline-flex items-center gap-1 p-1 rounded-full border bg-white dark:bg-gray-800 shadow-sm",
+              t.dir === "rtl" ? "flex-row-reverse" : "flex-row"
+            )}
+          >
+            <button
+              type="button"
+              onClick={() => setPeriod("month")}
+              className={cn(
+                "px-4 sm:px-5 py-1.5 text-sm font-medium rounded-full transition",
+                period === "month"
+                  ? "bg-tahfidz-green text-white shadow"
+                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              )}
+            >
+              {t.pricing.monthlyLabel}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPeriod("year")}
+              className={cn(
+                "px-4 sm:px-5 py-1.5 text-sm font-medium rounded-full transition",
+                period === "year"
+                  ? "bg-tahfidz-green text-white shadow"
+                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              )}
+            >
+              {t.pricing.yearlyLabel}
+            </button>
+          </div>
+        </div>
+
         <div className="grid md:grid-cols-3 gap-8 items-stretch">
           {t.pricing.plans.map((plan, index) => {
             const isPopular = index === 1
+            const price = period === "month" ? plan.monthlyPrice : plan.yearlyPrice
             return (
               <motion.div
                 key={index}
@@ -560,7 +603,7 @@ function PricingSection({ t, lang }: { t: LandingContent; lang: "fr" | "en" | "a
                     dir={t.dir === "rtl" ? "ltr" : undefined}
                   >
                     <span className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white">
-                      {plan.price}
+                      {price}
                     </span>
                     <span className="text-lg font-semibold text-gray-700 dark:text-gray-200">
                       {getCurrencyLabel(t.pricing.currency, lang)}
@@ -570,7 +613,7 @@ function PricingSection({ t, lang }: { t: LandingContent; lang: "fr" | "en" | "a
                     className="text-sm text-gray-500 dark:text-gray-400 mt-0.5"
                     dir={t.dir === "rtl" ? "ltr" : undefined}
                   >
-                    {t.pricing.perYear}
+                    /{periodLabel}
                   </div>
                 </div>
                 <ul className="space-y-3 mb-8 flex-1">
@@ -590,7 +633,7 @@ function PricingSection({ t, lang }: { t: LandingContent; lang: "fr" | "en" | "a
                       : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"
                   )}
                 >
-                  {plan.price === "0" ? t.pricing.request : t.pricing.request}
+                  {t.pricing.request}
                 </Link>
               </motion.div>
             )
