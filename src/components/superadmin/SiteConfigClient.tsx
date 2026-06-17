@@ -9,7 +9,7 @@ import {
   CheckCircle2, XCircle, AlertTriangle, Info, Flag, FileText,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { LandingContent } from '@/lib/landing/default-content'
+import { normalizeLandingContent, type LandingContent } from '@/lib/landing/default-content'
 import type {
   SitePageConfig,
   SitePageKey,
@@ -213,6 +213,90 @@ function StringArrayEditor({
       >
         <Plus className='w-3.5 h-3.5' />
         Ajouter un élément
+      </button>
+    </div>
+  )
+}
+
+function FooterLinksEditor({
+  label,
+  items,
+  onChange,
+}: {
+  label: string
+  items: { label: string; href: string; external?: boolean }[]
+  onChange: (items: { label: string; href: string; external?: boolean }[]) => void
+}) {
+  function update(index: number, value: { label: string; href: string; external?: boolean }) {
+    const next = [...items]
+    next[index] = value
+    onChange(next)
+  }
+
+  function add() {
+    onChange([...items, { label: '', href: '/' }])
+  }
+
+  function remove(index: number) {
+    onChange(items.filter((_, i) => i !== index))
+  }
+
+  const inputClass = cn(
+    'flex-1 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700',
+    'rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none',
+    'focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green'
+  )
+
+  return (
+    <div className='space-y-2'>
+      <label className='block text-xs font-medium text-gray-600 dark:text-gray-400'>{label}</label>
+      {items.map((item, index) => (
+        <div key={index} className='p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50/50 dark:bg-gray-800/50 space-y-3'>
+          <div className='flex items-center justify-between'>
+            <span className='text-xs font-semibold text-gray-500'>Lien {index + 1}</span>
+            <button
+              type='button'
+              onClick={() => remove(index)}
+              className='text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-1.5 rounded-lg transition-colors'
+              title='Supprimer'
+            >
+              <Trash2 className='w-3.5 h-3.5' />
+            </button>
+          </div>
+          <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+            <input
+              type='text'
+              value={item.label}
+              onChange={(e) => update(index, { ...item, label: e.target.value })}
+              placeholder='Label'
+              className={inputClass}
+            />
+            <input
+              type='text'
+              value={item.href}
+              onChange={(e) => update(index, { ...item, href: e.target.value })}
+              placeholder='/chemin ou https://...'
+              className={inputClass}
+            />
+          </div>
+          <label className='flex items-center gap-2 cursor-pointer'>
+            <input
+              type='checkbox'
+              checked={item.external ?? false}
+              onChange={(e) => update(index, { ...item, external: e.target.checked })}
+              className='w-4 h-4 rounded border-gray-300 accent-tahfidz-green focus:ring-tahfidz-green/50'
+            />
+            <span className='text-sm text-gray-700 dark:text-gray-200'>Lien externe</span>
+          </label>
+        </div>
+      ))}
+      <button
+        type='button'
+        onClick={add}
+        className='flex items-center gap-1.5 text-xs font-medium text-tahfidz-green hover:text-tahfidz-green/80 transition-colors'
+      >
+        <Plus className='w-3.5 h-3.5' />
+        Ajouter un lien
       </button>
     </div>
   )
@@ -737,9 +821,21 @@ function LandingEditor({
             <Field label='Titre colonne Support' value={content.footer.support} onChange={(v) => setSection('footer', { ...content.footer, support: v })} />
             <Field label='Titre colonne Légal' value={content.footer.legal} onChange={(v) => setSection('footer', { ...content.footer, legal: v })} />
           </div>
-          <StringArrayEditor label='Liens Produit' items={content.footer.linksProduct} onChange={(v) => setSection('footer', { ...content.footer, linksProduct: v })} />
-          <StringArrayEditor label='Liens Support' items={content.footer.linksSupport} onChange={(v) => setSection('footer', { ...content.footer, linksSupport: v })} />
-          <StringArrayEditor label='Liens Légal' items={content.footer.linksLegal} onChange={(v) => setSection('footer', { ...content.footer, linksLegal: v })} />
+          <FooterLinksEditor
+            label='Liens Produit'
+            items={content.footer.linksProduct}
+            onChange={(v) => setSection('footer', { ...content.footer, linksProduct: v })}
+          />
+          <FooterLinksEditor
+            label='Liens Support'
+            items={content.footer.linksSupport}
+            onChange={(v) => setSection('footer', { ...content.footer, linksSupport: v })}
+          />
+          <FooterLinksEditor
+            label='Liens Légal'
+            items={content.footer.linksLegal}
+            onChange={(v) => setSection('footer', { ...content.footer, linksLegal: v })}
+          />
           <Field label='Copyright' value={content.footer.copyright} onChange={(v) => setSection('footer', { ...content.footer, copyright: v })} />
         </div>
       </SectionCard>
@@ -1074,7 +1170,11 @@ const PAGE_LABELS: Record<SitePageKey, string> = {
 }
 
 export function SiteConfigClient({ initialLanding, initialGlobal, initialPages }: SiteConfigClientProps) {
-  const [landing, setLanding] = useState<Landing>(initialLanding)
+  const [landing, setLanding] = useState<Landing>({
+    fr: normalizeLandingContent(initialLanding.fr),
+    en: normalizeLandingContent(initialLanding.en),
+    ar: normalizeLandingContent(initialLanding.ar),
+  })
   const [global, setGlobal] = useState<GlobalContent>(normalizeGlobal(initialGlobal))
   const [pages, setPages] = useState<Record<SitePageKey, SitePageConfig>>(initialPages)
   const [activeTab, setActiveTab] = useState<'landing' | 'global' | 'pages'>('landing')

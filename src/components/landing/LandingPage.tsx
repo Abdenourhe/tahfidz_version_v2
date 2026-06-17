@@ -617,26 +617,6 @@ function CTASection({ t }: { t: LandingContent }) {
   )
 }
 
-const footerLinks = {
-  product: [
-    { href: "/#features", external: false },
-    { href: "/#pricing", external: false },
-    { href: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", external: true },
-    { href: "/updates", external: false },
-  ],
-  support: [
-    { href: "/help", external: false },
-    { href: "mailto:contact@tahfidz.com?subject=Contact%20TAHFIDZ", external: false },
-    { href: "/docs", external: false },
-    { href: "/api-docs", external: false },
-  ],
-  legal: [
-    { href: "/privacy", external: false },
-    { href: "/terms", external: false },
-    { href: "/security", external: false },
-  ],
-}
-
 function FooterLink({ href, external, children }: { href: string; external?: boolean; children: React.ReactNode }) {
   const baseClass = "group inline-flex items-center gap-1.5 hover:text-tahfidz-green transition"
 
@@ -678,7 +658,7 @@ function Footer({ t }: { t: LandingContent }) {
             <ul className="space-y-2.5 text-sm">
               {t.footer.linksProduct.map((link, i) => (
                 <li key={i}>
-                  <FooterLink {...footerLinks.product[i]}>{link}</FooterLink>
+                  <FooterLink href={link.href} external={link.external}>{link.label}</FooterLink>
                 </li>
               ))}
             </ul>
@@ -689,7 +669,7 @@ function Footer({ t }: { t: LandingContent }) {
             <ul className="space-y-2.5 text-sm">
               {t.footer.linksSupport.map((link, i) => (
                 <li key={i}>
-                  <FooterLink {...footerLinks.support[i]}>{link}</FooterLink>
+                  <FooterLink href={link.href} external={link.external}>{link.label}</FooterLink>
                 </li>
               ))}
             </ul>
@@ -700,7 +680,7 @@ function Footer({ t }: { t: LandingContent }) {
             <ul className="space-y-2.5 text-sm">
               {t.footer.linksLegal.map((link, i) => (
                 <li key={i}>
-                  <FooterLink {...footerLinks.legal[i]}>{link}</FooterLink>
+                  <FooterLink href={link.href} external={link.external}>{link.label}</FooterLink>
                 </li>
               ))}
             </ul>

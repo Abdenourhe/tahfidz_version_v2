@@ -40,6 +40,12 @@ const landingPricingPlanSchema = z.object({
   features: z.array(z.string().min(1)),
 })
 
+const footerLinkSchema = z.object({
+  label: z.string().min(1),
+  href: z.string().min(1),
+  external: z.boolean().optional(),
+})
+
 const landingContentSchema = z.object({
   dir: z.enum(["ltr", "rtl"]),
   nav: z.object({
@@ -101,11 +107,11 @@ const landingContentSchema = z.object({
   footer: z.object({
     desc: z.string().min(1),
     product: z.string().min(1),
-    linksProduct: z.array(z.string().min(1)),
+    linksProduct: z.array(footerLinkSchema),
     support: z.string().min(1),
-    linksSupport: z.array(z.string().min(1)),
+    linksSupport: z.array(footerLinkSchema),
     legal: z.string().min(1),
-    linksLegal: z.array(z.string().min(1)),
+    linksLegal: z.array(footerLinkSchema),
     copyright: z.string().min(1),
   }),
 })

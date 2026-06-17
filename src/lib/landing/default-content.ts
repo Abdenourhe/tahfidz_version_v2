@@ -3,6 +3,12 @@
 
 
 
+export type FooterLink = {
+  label: string
+  href: string
+  external?: boolean
+}
+
 export interface LandingContent {
   dir: "ltr" | "rtl"
   nav: {
@@ -64,12 +70,101 @@ export interface LandingContent {
   footer: {
     desc: string
     product: string
-    linksProduct: string[]
+    linksProduct: FooterLink[]
     support: string
-    linksSupport: string[]
+    linksSupport: FooterLink[]
     legal: string
-    linksLegal: string[]
+    linksLegal: FooterLink[]
     copyright: string
+  }
+}
+
+export function normalizeFooterLink(link: unknown): FooterLink {
+  if (typeof link === 'string') {
+    return { label: link, href: '/', external: false }
+  }
+  if (link && typeof link === 'object') {
+    const l = link as Record<string, unknown>
+    return {
+      label: typeof l.label === 'string' ? l.label : '',
+      href: typeof l.href === 'string' ? l.href : '/',
+      external: typeof l.external === 'boolean' ? l.external : false,
+    }
+  }
+  return { label: '', href: '/', external: false }
+}
+
+export function normalizeLandingContent(content: unknown): LandingContent {
+  const c = content as Partial<LandingContent>
+  const defaultLang = defaultLandingContent.fr
+
+  return {
+    dir: c.dir ?? defaultLang.dir,
+    nav: { ...defaultLang.nav, ...c.nav },
+    hero: { ...defaultLang.hero, ...c.hero },
+    features: {
+      ...defaultLang.features,
+      ...c.features,
+      items: (c.features?.items ?? defaultLang.features.items).map((item) => ({
+        icon: item.icon,
+        title: item.title,
+        desc: item.desc,
+      })),
+    },
+    how: {
+      ...defaultLang.how,
+      ...c.how,
+      steps: (c.how?.steps ?? defaultLang.how.steps).map((step) => ({
+        num: step.num,
+        title: step.title,
+        desc: step.desc,
+      })),
+    },
+    users: {
+      ...defaultLang.users,
+      ...c.users,
+      items: (c.users?.items ?? defaultLang.users.items).map((item) => ({
+        icon: item.icon,
+        role: item.role,
+        desc: item.desc,
+      })),
+    },
+    stats: {
+      ...defaultLang.stats,
+      ...c.stats,
+      items: (c.stats?.items ?? defaultLang.stats.items).map((item) => ({
+        value: item.value,
+        label: item.label,
+        suffix: item.suffix,
+      })),
+    },
+    testimonials: {
+      ...defaultLang.testimonials,
+      ...c.testimonials,
+      items: (c.testimonials?.items ?? defaultLang.testimonials.items).map((item) => ({
+        name: item.name,
+        role: item.role,
+        text: item.text,
+      })),
+    },
+    pricing: {
+      ...defaultLang.pricing,
+      ...c.pricing,
+      plans: (c.pricing?.plans ?? defaultLang.pricing.plans).map((plan) => ({
+        name: plan.name,
+        students: plan.students,
+        price: plan.price,
+        features: plan.features,
+      })),
+    },
+    cta: { ...defaultLang.cta, ...c.cta },
+    footer: {
+      ...defaultLang.footer,
+      ...c.footer,
+      linksProduct: (c.footer?.linksProduct ?? defaultLang.footer.linksProduct).map(normalizeFooterLink),
+      linksSupport: (c.footer?.linksSupport ?? defaultLang.footer.linksSupport).map(normalizeFooterLink),
+      linksLegal: (c.footer?.linksLegal ?? defaultLang.footer.linksLegal).map(normalizeFooterLink),
+    },
   }
 }
 
@@ -157,9 +252,26 @@ export const defaultLandingContent: Record<"fr" | "en" | "ar", LandingContent> =
     },
     footer: {
       desc: "La plateforme cloud complete pour la gestion des ecoles de memorisation du Coran.",
-      product: "Produit", linksProduct: ["Fonctionnalites", "Tarifs", "Demo", "Mises a jour"],
-      support: "Support", linksSupport: ["Centre d'aide", "Contact", "Documentation", "API"],
-      legal: "Legal", linksLegal: ["Confidentialite", "Conditions", "Securite"],
+      product: "Produit",
+      linksProduct: [
+        { label: "Fonctionnalites", href: "/#features" },
+        { label: "Tarifs", href: "/#pricing" },
+        { label: "Demo", href: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", external: true },
+        { label: "Mises a jour", href: "/updates" },
+      ],
+      support: "Support",
+      linksSupport: [
+        { label: "Centre d'aide", href: "/help" },
+        { label: "Contact", href: "/contact" },
+        { label: "Documentation", href: "/docs" },
+        { label: "API", href: "/api-docs" },
+      ],
+      legal: "Legal",
+      linksLegal: [
+        { label: "Confidentialite", href: "/privacy" },
+        { label: "Conditions", href: "/terms" },
+        { label: "Securite", href: "/security" },
+      ],
       copyright: " TAHFIDZ. Tous droits reserves.",
     },
   },
@@ -246,9 +358,26 @@ export const defaultLandingContent: Record<"fr" | "en" | "ar", LandingContent> =
     },
     footer: {
       desc: "The complete cloud platform for managing Quran memorization schools.",
-      product: "Product", linksProduct: ["Features", "Pricing", "Demo", "Updates"],
-      support: "Support", linksSupport: ["Help center", "Contact", "Documentation", "API"],
-      legal: "Legal", linksLegal: ["Privacy", "Terms", "Security"],
+      product: "Product",
+      linksProduct: [
+        { label: "Features", href: "/#features" },
+        { label: "Pricing", href: "/#pricing" },
+        { label: "Demo", href: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", external: true },
+        { label: "Updates", href: "/updates" },
+      ],
+      support: "Support",
+      linksSupport: [
+        { label: "Help center", href: "/help" },
+        { label: "Contact", href: "/contact" },
+        { label: "Documentation", href: "/docs" },
+        { label: "API", href: "/api-docs" },
+      ],
+      legal: "Legal",
+      linksLegal: [
+        { label: "Privacy", href: "/privacy" },
+        { label: "Terms", href: "/terms" },
+        { label: "Security", href: "/security" },
+      ],
       copyright: " TAHFIDZ. All rights reserved.",
     },
   },
@@ -335,9 +464,26 @@ export const defaultLandingContent: Record<"fr" | "en" | "ar", LandingContent> =
     },
     footer: {
       desc: "المنصة السحابية الشاملة لإدارة مدارس تحفيظ القرآن.",
-      product: "المنتج", linksProduct: ["المميزات", "الأسعار", "العرض", "التحديثات"],
-      support: "الدعم", linksSupport: ["مركز المساعدة", "اتصل بنا", "التوثيق", "API"],
-      legal: "قانوني", linksLegal: ["الخصوصية", "الشروط", "الأمان"],
+      product: "المنتج",
+      linksProduct: [
+        { label: "المميزات", href: "/#features" },
+        { label: "الأسعار", href: "/#pricing" },
+        { label: "العرض", href: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", external: true },
+        { label: "التحديثات", href: "/updates" },
+      ],
+      support: "الدعم",
+      linksSupport: [
+        { label: "مركز المساعدة", href: "/help" },
+        { label: "اتصل بنا", href: "/contact" },
+        { label: "التوثيق", href: "/docs" },
+        { label: "API", href: "/api-docs" },
+      ],
+      legal: "قانوني",
+      linksLegal: [
+        { label: "الخصوصية", href: "/privacy" },
+        { label: "الشروط", href: "/terms" },
+        { label: "الأمان", href: "/security" },
+      ],
       copyright: " تحفيظ. جميع الحقوق محفوظة.",
     },
   },
