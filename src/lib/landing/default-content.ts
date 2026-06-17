@@ -454,7 +454,7 @@ export const defaultLandingContent: Record<"fr" | "en" | "ar", LandingContent> =
       perYear: "/سنة",
       request: "اطلب",
       popular: "الأكثر شيوعاً",
-      currency: "دولار كندي",
+      currency: "CA$",
       plans: [
         { name: "مجاني", students: "حتى 50 طالب", price: "0", features: ["إدارة الطلاب", "2 معلم", "1 حلقة", "تقارير أساسية", "دعم بالبريد"] },
         { name: "Starter", students: "51 - 200 طالب", price: "49", features: ["كل شيء في المجاني", "10 معلمين", "حلقات غير محدودة", "إشعارات فورية", "تصدير PDF"] },
