@@ -509,6 +509,12 @@ function TestimonialsSection({ t }: { t: LandingContent }) {
   )
 }
 
+const periodLabels: Record<Lang, { monthly: string; yearly: string; month: string; year: string }> = {
+  fr: { monthly: "Mensuel", yearly: "Annuel", month: "mois", year: "an" },
+  en: { monthly: "Monthly", yearly: "Yearly", month: "month", year: "year" },
+  ar: { monthly: "شهري", yearly: "سنوي", month: "شهر", year: "سنة" },
+}
+
 function PricingSection({ t, lang }: { t: LandingContent; lang: Lang }) {
   const [period, setPeriod] = useState<"month" | "year">(t.pricing.period ?? "year")
 
@@ -516,7 +522,8 @@ function PricingSection({ t, lang }: { t: LandingContent; lang: Lang }) {
     setPeriod(t.pricing.period ?? "year")
   }, [t.pricing.period])
 
-  const periodLabel = period === "month" ? t.pricing.monthlyLabel : t.pricing.yearlyLabel
+  const labels = periodLabels[lang]
+  const periodLabel = period === "month" ? labels.month : labels.year
 
   return (
     <section id="pricing" className="py-20 bg-gray-50 dark:bg-gray-900/50">
@@ -553,7 +560,7 @@ function PricingSection({ t, lang }: { t: LandingContent; lang: Lang }) {
                   : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
               )}
             >
-              {t.pricing.monthlyLabel}
+              {labels.monthly}
             </button>
             <button
               type="button"
@@ -565,7 +572,7 @@ function PricingSection({ t, lang }: { t: LandingContent; lang: Lang }) {
                   : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
               )}
             >
-              {t.pricing.yearlyLabel}
+              {labels.yearly}
             </button>
           </div>
         </div>

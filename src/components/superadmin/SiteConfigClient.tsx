@@ -730,7 +730,7 @@ function LandingEditor({
         <div className='space-y-4'>
           <Field label='Titre de section' value={content.pricing.title} onChange={(v) => setSection('pricing', { ...content.pricing, title: v })} />
           <Field label='Sous-titre' value={content.pricing.subtitle} onChange={(v) => setSection('pricing', { ...content.pricing, subtitle: v })} />
-          <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4'>
+          <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4'>
             <div className='space-y-1.5'>
               <label className='block text-xs font-medium text-gray-600 dark:text-gray-400'>Période par défaut</label>
               <select
@@ -746,8 +746,6 @@ function LandingEditor({
                 <option value='year'>Annuel</option>
               </select>
             </div>
-            <Field label='Libellé mensuel (ex: mois / month / شهر)' value={content.pricing.monthlyLabel} onChange={(v) => setSection('pricing', { ...content.pricing, monthlyLabel: v })} />
-            <Field label='Libellé annuel (ex: an / year / سنة)' value={content.pricing.yearlyLabel} onChange={(v) => setSection('pricing', { ...content.pricing, yearlyLabel: v })} />
             <Field label='Libellé bouton' value={content.pricing.request} onChange={(v) => setSection('pricing', { ...content.pricing, request: v })} />
             <Field label='Libellé populaire' value={content.pricing.popular} onChange={(v) => setSection('pricing', { ...content.pricing, popular: v })} />
             <div className='space-y-1.5'>

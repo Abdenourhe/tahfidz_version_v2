@@ -57,8 +57,6 @@ export interface LandingContent {
     title: string
     subtitle: string
     period: 'month' | 'year'
-    monthlyLabel: string
-    yearlyLabel: string
     request: string
     popular: string
     currency: string
@@ -189,8 +187,6 @@ export function normalizeLandingContent(
       ...defaultLang.pricing,
       ...c.pricing,
       period: c.pricing?.period ?? defaultLang.pricing.period,
-      monthlyLabel: c.pricing?.monthlyLabel ?? defaultLang.pricing.monthlyLabel,
-      yearlyLabel: c.pricing?.yearlyLabel ?? defaultLang.pricing.yearlyLabel,
       currency: normalizeCurrencyCode(c.pricing?.currency ?? defaultLang.pricing.currency),
       plans: (c.pricing?.plans ?? defaultLang.pricing.plans).map((plan) => ({
         name: plan.name,
@@ -280,8 +276,6 @@ export const defaultLandingContent: Record<"fr" | "en" | "ar", LandingContent> =
       title: "Des tarifs adaptes a chaque ecole",
       subtitle: "Choisissez le plan qui correspond a la taille de votre etablissement",
       period: "year",
-      monthlyLabel: "mois",
-      yearlyLabel: "an",
       request: "Demander",
       popular: "Populaire",
       currency: "CAD",
@@ -389,8 +383,6 @@ export const defaultLandingContent: Record<"fr" | "en" | "ar", LandingContent> =
       title: "Pricing for every school",
       subtitle: "Choose the plan that fits your institution size",
       period: "year",
-      monthlyLabel: "month",
-      yearlyLabel: "year",
       request: "Request",
       popular: "Popular",
       currency: "CAD",
@@ -498,8 +490,6 @@ export const defaultLandingContent: Record<"fr" | "en" | "ar", LandingContent> =
       title: "أسعار مناسبة لكل مدرسة",
       subtitle: "اختر الخطة التي تناسب حجم مؤسستك",
       period: "year",
-      monthlyLabel: "شهر",
-      yearlyLabel: "سنة",
       request: "اطلب",
       popular: "الأكثر شيوعاً",
       currency: "CAD",

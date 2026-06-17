@@ -98,8 +98,6 @@ const landingContentSchema = z.object({
     title: z.string().min(1),
     subtitle: z.string().min(1),
     period: z.enum(["month", "year"]),
-    monthlyLabel: z.string().min(1),
-    yearlyLabel: z.string().min(1),
     request: z.string().min(1),
     popular: z.string().min(1),
     perYear: z.string().min(1).optional(),
