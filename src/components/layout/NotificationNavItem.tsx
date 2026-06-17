@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Bell } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useNotification } from "@/contexts/NotificationContext"
+import { useState, useEffect } from "react"
 
 interface Props {
   href: string
@@ -35,12 +36,14 @@ export function NotificationNavItem({
   responsiveLabel = false,
 }: Props) {
   const { unreadCount } = useNotification()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
 
   const iconSize = collapsed ? 22 : (iconContainerClass ? 16 : 18)
   const iconEl = (
     <>
       <Bell size={iconSize} className={cn(isActive ? iconActiveClass : iconInactiveClass)} />
-      {unreadCount > 0 && (
+      {mounted && unreadCount > 0 && (
         <span className={cn(
           "absolute min-w-[16px] h-4 px-1 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none",
           collapsed ? "-top-2 -right-2" : "-top-1.5 -right-1.5"

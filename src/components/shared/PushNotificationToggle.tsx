@@ -139,6 +139,18 @@ export default function PushNotificationToggle({ className, compact, labelClassN
   const t = useT("pushNotifications")
   const { supported, subscribed, loading, error, subscribe, unsubscribe } = usePushNotifications(t)
   const [busy, setBusy] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Éviter toute différence entre le HTML serveur et le premier rendu client :
+  // les APIs push sont navigateur-only, donc le composant ne s'affiche qu'après
+  // le montage côté client.
+  if (!mounted) {
+    return null
+  }
 
   // Si le navigateur ne supporte pas les notifications push (ou que le service
   // de push n'est pas disponible), on masque complètement le toggle.

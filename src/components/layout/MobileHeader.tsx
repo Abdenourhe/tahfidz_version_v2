@@ -139,6 +139,8 @@ export function MobileHeader({
   const pathname = usePathname() ?? ""
   const t = useT("nav")
   const { data: session } = useSession()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
 
   const displayName = schoolName || "TAHFIDZ"
   const logo = schoolLogo
@@ -214,7 +216,7 @@ export function MobileHeader({
 
           <Link href={`/${role}/notifications`} className="p-2 -mr-2 relative active:scale-95 tap-feedback">
             <Bell size={20} className="text-gray-600 dark:text-gray-400" />
-            {unreadCount > 0 && (
+            {mounted && unreadCount > 0 && (
               <span className="absolute top-1.5 right-1.5 min-w-[14px] h-[14px] px-0.5 bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">
                 {unreadCount > 99 ? "99+" : unreadCount}
               </span>
@@ -313,7 +315,7 @@ export function MobileHeader({
                                         isActive ? (item.color || "text-tahfidz-green") : (item.color || "text-gray-500 dark:text-gray-400")
                                       )}
                                     />
-                                    {isNotification && unreadCount > 0 && (
+                                    {isNotification && mounted && unreadCount > 0 && (
                                       <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-0.5 bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">
                                         {unreadCount > 99 ? "99+" : unreadCount}
                                       </span>
