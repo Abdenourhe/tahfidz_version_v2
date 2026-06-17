@@ -9,6 +9,7 @@ import { signOut } from "next-auth/react"
 import {
   LayoutDashboard, Building2, Clock, Library, Send,
   Eye, MessageCircleQuestion, Activity, LogOut, Shield, Layers,
+  FileText,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { SidebarToggle } from "@/components/layout/SidebarToggle"
@@ -37,6 +38,7 @@ export function SuperAdminSidebar({ user }: SuperAdminSidebarProps) {
     { label: tNav("globalLibrary"), href: "/admin/super/library", icon: Library },
     { label: tNav("globalCategories"), href: "/admin/super/library/categories", icon: Layers },
     { label: tNav("broadcast"), href: "/admin/super/broadcast", icon: Send },
+    { label: tNav("siteContent"), href: "/admin/super/site-config", icon: FileText },
     { label: tNav("audit"), href: "/admin/super/audit", icon: Eye },
     { label: tNav("feedbacks"), href: "/admin/super/feedbacks", icon: MessageCircleQuestion },
     { label: tNav("systemUpdates"), href: "/admin/super/school-updates", icon: Building2 },

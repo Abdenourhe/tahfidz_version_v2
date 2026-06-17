@@ -43,6 +43,7 @@ export const translations = {
     globalLibrary:  { fr: "Bibliothèque globale", en: "Global library", ar: "المكتبة العالمية" },
     globalCategories: { fr: "Catégories globales", en: "Global categories", ar: "التصنيفات العالمية" },
     broadcast:      { fr: "Broadcast",         en: "Broadcast",        ar: "البث" },
+    siteContent:    { fr: "Contenu du site",   en: "Site content",     ar: "محتوى الموقع" },
     feedbacks:      { fr: "Feedbacks",         en: "Feedbacks",        ar: "الملاحظات" },
     systemUpdates:  { fr: "Mises à jour",      en: "Updates",          ar: "التحديثات" },
     health:         { fr: "Santé",             en: "Health",           ar: "الصحة" },

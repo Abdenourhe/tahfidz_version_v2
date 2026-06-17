@@ -1,6 +1,7 @@
 // prisma/seed.ts — TAHFIDZ
 import { PrismaClient } from "@prisma/client"
 import bcrypt from "bcryptjs"
+import { seedSiteConfig } from "./seed-site-config"
 
 const prisma = new PrismaClient()
 
@@ -315,6 +316,9 @@ async function main() {
       createdBy:   adminUser.id,
     },
   })
+
+  // 9. Configurations globales du site
+  await seedSiteConfig()
 
   console.log("\n🎉 Seed terminé !\n")
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")

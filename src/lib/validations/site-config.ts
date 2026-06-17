@@ -1,0 +1,135 @@
+// src/lib/validations/site-config.ts
+// Schémas Zod de validation pour les configurations globales du site
+
+import { z } from "zod"
+
+const landingSectionItemSchema = z.object({
+  icon: z.string().min(1),
+  title: z.string().min(1),
+  desc: z.string().min(1),
+})
+
+const landingStepSchema = z.object({
+  num: z.string().min(1),
+  title: z.string().min(1),
+  desc: z.string().min(1),
+})
+
+const landingRoleSchema = z.object({
+  icon: z.string().min(1),
+  role: z.string().min(1),
+  desc: z.string().min(1),
+})
+
+const landingStatSchema = z.object({
+  value: z.number().int().min(0),
+  label: z.string().min(1),
+  suffix: z.string(),
+})
+
+const landingTestimonialSchema = z.object({
+  name: z.string().min(1),
+  role: z.string().min(1),
+  text: z.string().min(1),
+})
+
+const landingPricingPlanSchema = z.object({
+  name: z.string().min(1),
+  students: z.string().min(1),
+  price: z.string().min(1),
+  features: z.array(z.string().min(1)),
+})
+
+const landingContentSchema = z.object({
+  dir: z.enum(["ltr", "rtl"]),
+  nav: z.object({
+    home: z.string().min(1),
+    features: z.string().min(1),
+    pricing: z.string().min(1),
+    how: z.string().min(1),
+    login: z.string().min(1),
+    register: z.string().min(1),
+  }),
+  hero: z.object({
+    badge: z.string(),
+    title: z.string().min(1),
+    titleHighlight: z.string().min(1),
+    subtitle: z.string().min(1),
+    ctaPrimary: z.string().min(1),
+    ctaSecondary: z.string().min(1),
+    stat1: z.string().min(1),
+    stat2: z.string().min(1),
+    stat3: z.string().min(1),
+  }),
+  features: z.object({
+    title: z.string().min(1),
+    subtitle: z.string().min(1),
+    items: z.array(landingSectionItemSchema).min(1),
+  }),
+  how: z.object({
+    title: z.string().min(1),
+    subtitle: z.string().min(1),
+    steps: z.array(landingStepSchema).min(1),
+  }),
+  users: z.object({
+    title: z.string().min(1),
+    subtitle: z.string().min(1),
+    items: z.array(landingRoleSchema).min(1),
+  }),
+  stats: z.object({
+    title: z.string().min(1),
+    items: z.array(landingStatSchema).min(1),
+  }),
+  testimonials: z.object({
+    title: z.string().min(1),
+    items: z.array(landingTestimonialSchema).min(1),
+  }),
+  pricing: z.object({
+    title: z.string().min(1),
+    subtitle: z.string().min(1),
+    perYear: z.string().min(1),
+    request: z.string().min(1),
+    popular: z.string().min(1),
+    plans: z.array(landingPricingPlanSchema).min(1),
+  }),
+  cta: z.object({
+    title: z.string().min(1),
+    subtitle: z.string().min(1),
+    button: z.string().min(1),
+    sub: z.string().min(1),
+  }),
+  footer: z.object({
+    desc: z.string().min(1),
+    product: z.string().min(1),
+    linksProduct: z.array(z.string().min(1)),
+    support: z.string().min(1),
+    linksSupport: z.array(z.string().min(1)),
+    legal: z.string().min(1),
+    linksLegal: z.array(z.string().min(1)),
+    copyright: z.string().min(1),
+  }),
+})
+
+export const siteConfigLandingSchema = z.record(z.enum(["fr", "en", "ar"]), landingContentSchema)
+
+const emailTemplateSchema = z.object({
+  subject: z.string().min(1),
+  body: z.string().min(1),
+})
+
+export const siteConfigGlobalSchema = z.object({
+  emails: z.object({
+    welcome: emailTemplateSchema,
+    "reset-password": emailTemplateSchema,
+    "invite-parent": emailTemplateSchema,
+  }),
+  banner: z.object({
+    enabled: z.boolean(),
+    message: z.string().min(1),
+    link: z.string(),
+    type: z.enum(["info", "warning", "success", "error"]),
+  }),
+})
+
+export type SiteConfigLandingInput = z.infer<typeof siteConfigLandingSchema>
+export type SiteConfigGlobalInput = z.infer<typeof siteConfigGlobalSchema>

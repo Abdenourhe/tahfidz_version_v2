@@ -39,6 +39,7 @@
   "exclude": [
     "node_modules",
     "prisma/seed.ts",
+    "prisma/seed-site-config.ts",
     "src/**/*.test.ts",
     "src/**/*.test.tsx",
     "capacitor.config.ts",

@@ -1322,3 +1322,17 @@ model UploadedFile {
   @@index([schoolId, hash])
   @@map("uploaded_files")
 }
+
+// ==================== CONFIGURATION GLOBALE DU SITE ====================
+// Contenu éditable depuis le panneau superadmin : landing page,
+// templates d'emails, bannières et messages publics.
+
+model SiteConfig {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@map("site_configs")
+}
