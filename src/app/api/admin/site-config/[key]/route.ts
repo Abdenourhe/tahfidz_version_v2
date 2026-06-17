@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma"
 import {
   siteConfigLandingSchema,
   siteConfigGlobalSchema,
+  siteConfigPageSchema,
 } from "@/lib/validations/site-config"
 
 async function requireSuperAdmin() {
@@ -14,6 +15,8 @@ async function requireSuperAdmin() {
   if (!session?.user || session.user.role !== "SUPERADMIN") return null
   return session
 }
+
+const PAGE_KEYS = ['privacy', 'terms', 'security', 'contact', 'updates', 'help', 'docs', 'api-docs'] as const
 
 const VALIDATORS: Record<string, (data: unknown) => { success: boolean; data?: any; error?: any }> = {
   landing: (data) => {
@@ -24,6 +27,15 @@ const VALIDATORS: Record<string, (data: unknown) => { success: boolean; data?: a
     const result = siteConfigGlobalSchema.safeParse(data)
     return result.success ? { success: true, data: result.data } : { success: false, error: result.error.format() }
   },
+  ...Object.fromEntries(
+    PAGE_KEYS.map((key) => [
+      key,
+      (data: unknown) => {
+        const result = siteConfigPageSchema.safeParse(data)
+        return result.success ? { success: true, data: result.data } : { success: false, error: result.error.format() }
+      },
+    ])
+  ),
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ key: string }> }) {

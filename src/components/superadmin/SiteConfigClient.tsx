@@ -6,10 +6,19 @@ import { useState } from 'react'
 import {
   Layout, Globe, Save, Eye, Plus, Trash2, ChevronDown, ChevronUp,
   Star, Users, BookOpen, BarChart2, MessageSquare, Megaphone,
-  CheckCircle2, XCircle, AlertTriangle, Info, Flag,
+  CheckCircle2, XCircle, AlertTriangle, Info, Flag, FileText,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { LandingContent } from '@/lib/landing/default-content'
+import type {
+  SitePageConfig,
+  SitePageKey,
+  SitePageLang,
+  PageContent,
+  PageSection,
+  ContactCard,
+} from '@/lib/site-config/page-types'
+import { defaultPageContents } from '@/lib/site-config/page-defaults'
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -32,6 +41,7 @@ type GlobalContent = {
 interface SiteConfigClientProps {
   initialLanding: Record<'fr' | 'en' | 'ar', LandingContent>
   initialGlobal: any
+  initialPages: Record<SitePageKey, SitePageConfig>
 }
 
 // ── Helpers de normalisation ───────────────────────────────────────
@@ -863,18 +873,218 @@ function GlobalEditor({
   )
 }
 
+// ── Éditeur de pages statiques ─────────────────────────────────────
+
+function PageEditor({
+  content,
+  onChange,
+  isContact,
+}: {
+  content: PageContent
+  onChange: (content: PageContent) => void
+  isContact: boolean
+}) {
+  function update<K extends keyof PageContent>(field: K, value: PageContent[K]) {
+    onChange({ ...content, [field]: value } as PageContent)
+  }
+
+  function updateSection(index: number, section: PageSection) {
+    const next = [...content.sections]
+    next[index] = section
+    update('sections', next)
+  }
+
+  function addSection() {
+    update('sections', [...content.sections, { title: '', body: '' }])
+  }
+
+  function removeSection(index: number) {
+    update('sections', content.sections.filter((_, i) => i !== index))
+  }
+
+  function updateCard(index: number, card: ContactCard) {
+    const next = [...(content.contactCards ?? [])]
+    next[index] = card
+    update('contactCards', next)
+  }
+
+  function addCard() {
+    update('contactCards', [...(content.contactCards ?? []), { icon: 'Mail', title: '', value: '' }])
+  }
+
+  function removeCard(index: number) {
+    update('contactCards', (content.contactCards ?? []).filter((_, i) => i !== index))
+  }
+
+  return (
+    <div className='space-y-6'>
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+        <Field label='Titre de page' value={content.title} onChange={(v) => update('title', v)} />
+        <Field
+          label='Titre meta (optionnel)'
+          value={content.metaTitle ?? ''}
+          onChange={(v) => update('metaTitle', v || undefined)}
+        />
+      </div>
+
+      <Field
+        label='Description meta (optionnelle)'
+        value={content.metaDescription ?? ''}
+        onChange={(v) => update('metaDescription', v || undefined)}
+      />
+
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+        <Field
+          label="Date de dernière mise à jour (optionnelle)"
+          value={content.lastUpdated ?? ''}
+          onChange={(v) => update('lastUpdated', v || undefined)}
+        />
+        <Field
+          label='Introduction (optionnelle)'
+          value={content.intro ?? ''}
+          onChange={(v) => update('intro', v || undefined)}
+        />
+      </div>
+
+      {isContact && (
+        <div className='p-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800/50 space-y-4'>
+          <h3 className='text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2'>
+            <MessageSquare className='w-4 h-4 text-tahfidz-green' />
+            Cartes de contact
+          </h3>
+          {(content.contactCards ?? []).map((card, index) => (
+            <div
+              key={index}
+              className='p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50/50 dark:bg-gray-800/50 space-y-3'
+            >
+              <div className='flex items-center justify-between'>
+                <span className='text-xs font-semibold text-gray-500'>Carte {index + 1}</span>
+                <button
+                  type='button'
+                  onClick={() => removeCard(index)}
+                  className='text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-1.5 rounded-lg transition-colors'
+                >
+                  <Trash2 className='w-3.5 h-3.5' />
+                </button>
+              </div>
+              <div className='grid grid-cols-1 sm:grid-cols-3 gap-3'>
+                <Field
+                  label='Icône'
+                  value={card.icon}
+                  onChange={(v) => updateCard(index, { ...card, icon: v })}
+                />
+                <Field
+                  label='Titre'
+                  value={card.title}
+                  onChange={(v) => updateCard(index, { ...card, title: v })}
+                />
+                <Field
+                  label='Valeur'
+                  value={card.value}
+                  onChange={(v) => updateCard(index, { ...card, value: v })}
+                />
+              </div>
+              <Field
+                label='Lien (optionnel)'
+                value={card.href ?? ''}
+                onChange={(v) => updateCard(index, { ...card, href: v || undefined })}
+              />
+            </div>
+          ))}
+          <button
+            type='button'
+            onClick={addCard}
+            className='flex items-center gap-1.5 text-xs font-medium text-tahfidz-green hover:text-tahfidz-green/80 transition-colors'
+          >
+            <Plus className='w-3.5 h-3.5' />
+            Ajouter une carte
+          </button>
+        </div>
+      )}
+
+      <div className='space-y-4'>
+        <h3 className='text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2'>
+          <FileText className='w-4 h-4 text-tahfidz-green' />
+          Sections
+        </h3>
+        {content.sections.map((section, index) => (
+          <div
+            key={index}
+            className='p-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800/50 space-y-3'
+          >
+            <div className='flex items-center justify-between'>
+              <span className='text-xs font-semibold text-gray-500'>Section {index + 1}</span>
+              <button
+                type='button'
+                onClick={() => removeSection(index)}
+                className='text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-1.5 rounded-lg transition-colors'
+              >
+                <Trash2 className='w-3.5 h-3.5' />
+              </button>
+            </div>
+            <Field
+              label='Titre'
+              value={section.title}
+              onChange={(v) => updateSection(index, { ...section, title: v })}
+            />
+            <Field
+              label='Contenu (paragraphes séparés par une ligne vide ; listes avec "- ")'
+              value={section.body}
+              onChange={(v) => updateSection(index, { ...section, body: v })}
+              textarea
+              rows={8}
+            />
+          </div>
+        ))}
+        <button
+          type='button'
+          onClick={addSection}
+          className='flex items-center gap-1.5 text-xs font-medium text-tahfidz-green hover:text-tahfidz-green/80 transition-colors'
+        >
+          <Plus className='w-3.5 h-3.5' />
+          Ajouter une section
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ── Composant principal ────────────────────────────────────────────
 
-export function SiteConfigClient({ initialLanding, initialGlobal }: SiteConfigClientProps) {
+const PAGE_KEYS: SitePageKey[] = [
+  'privacy',
+  'terms',
+  'security',
+  'contact',
+  'updates',
+  'help',
+  'docs',
+  'api-docs',
+]
+
+const PAGE_LABELS: Record<SitePageKey, string> = {
+  privacy: 'Confidentialité',
+  terms: 'Conditions',
+  security: 'Sécurité',
+  contact: 'Contact',
+  updates: 'Mises à jour',
+  help: 'Aide',
+  docs: 'Documentation',
+  'api-docs': 'API',
+}
+
+export function SiteConfigClient({ initialLanding, initialGlobal, initialPages }: SiteConfigClientProps) {
   const [landing, setLanding] = useState<Landing>(initialLanding)
   const [global, setGlobal] = useState<GlobalContent>(normalizeGlobal(initialGlobal))
-  const [activeTab, setActiveTab] = useState<'landing' | 'global'>('landing')
+  const [pages, setPages] = useState<Record<SitePageKey, SitePageConfig>>(initialPages)
+  const [activeTab, setActiveTab] = useState<'landing' | 'global' | 'pages'>('landing')
   const [activeLang, setActiveLang] = useState<Lang>('fr')
+  const [activePageKey, setActivePageKey] = useState<SitePageKey>('privacy')
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({
     type: null,
     message: '',
   })
-  const [saving, setSaving] = useState<'landing' | 'global' | null>(null)
+  const [saving, setSaving] = useState<'landing' | 'global' | SitePageKey | null>(null)
 
   async function saveLanding() {
     setSaving('landing')
@@ -922,6 +1132,29 @@ export function SiteConfigClient({ initialLanding, initialGlobal }: SiteConfigCl
     }
   }
 
+  async function savePage(key: SitePageKey) {
+    setSaving(key)
+    setStatus({ type: null, message: '' })
+    try {
+      const res = await fetch(`/api/admin/site-config/${key}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pages[key]),
+      })
+      if (!res.ok) {
+        throw new Error(`Erreur ${res.status} lors de la sauvegarde.`)
+      }
+      setStatus({ type: 'success', message: `Page "${PAGE_LABELS[key]}" sauvegardée avec succès.` })
+    } catch (err) {
+      setStatus({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Erreur lors de la sauvegarde.',
+      })
+    } finally {
+      setSaving(null)
+    }
+  }
+
   const langLabel: Record<Lang, string> = { fr: 'FR', en: 'EN', ar: 'AR' }
 
   const primaryBtn = cn(
@@ -944,7 +1177,7 @@ export function SiteConfigClient({ initialLanding, initialGlobal }: SiteConfigCl
           <div>
             <h1 className='text-2xl font-bold text-gray-900 dark:text-white'>Contenu du site</h1>
             <p className='text-sm text-gray-500 dark:text-gray-400 mt-0.5'>
-              Éditez la landing page et les contenus globaux de TAHFIDZ.
+              Éditez la landing page, les contenus globaux et les pages statiques de TAHFIDZ.
             </p>
           </div>
           <div className='flex items-center gap-3'>
@@ -956,7 +1189,7 @@ export function SiteConfigClient({ initialLanding, initialGlobal }: SiteConfigCl
               <Eye className='w-4 h-4' />
               Aperçu
             </button>
-            {activeTab === 'landing' ? (
+            {activeTab === 'landing' && (
               <button
                 type='button'
                 onClick={saveLanding}
@@ -966,7 +1199,8 @@ export function SiteConfigClient({ initialLanding, initialGlobal }: SiteConfigCl
                 <Save className='w-4 h-4' />
                 {saving === 'landing' ? 'Sauvegarde…' : 'Sauvegarder'}
               </button>
-            ) : (
+            )}
+            {activeTab === 'global' && (
               <button
                 type='button'
                 onClick={saveGlobal}
@@ -975,6 +1209,17 @@ export function SiteConfigClient({ initialLanding, initialGlobal }: SiteConfigCl
               >
                 <Save className='w-4 h-4' />
                 {saving === 'global' ? 'Sauvegarde…' : 'Sauvegarder'}
+              </button>
+            )}
+            {activeTab === 'pages' && (
+              <button
+                type='button'
+                onClick={() => savePage(activePageKey)}
+                disabled={saving === activePageKey}
+                className={primaryBtn}
+              >
+                <Save className='w-4 h-4' />
+                {saving === activePageKey ? 'Sauvegarde…' : 'Sauvegarder'}
               </button>
             )}
           </div>
@@ -1005,6 +1250,18 @@ export function SiteConfigClient({ initialLanding, initialGlobal }: SiteConfigCl
             )}
           >
             Contenus globaux
+          </button>
+          <button
+            type='button'
+            onClick={() => setActiveTab('pages')}
+            className={cn(
+              'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
+              activeTab === 'pages'
+                ? 'border-tahfidz-green text-tahfidz-green'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+            )}
+          >
+            Pages statiques
           </button>
         </div>
 
@@ -1073,6 +1330,78 @@ export function SiteConfigClient({ initialLanding, initialGlobal }: SiteConfigCl
               >
                 <Save className='w-4 h-4' />
                 {saving === 'global' ? 'Sauvegarde…' : 'Sauvegarder'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Contenu Pages statiques */}
+        {activeTab === 'pages' && (
+          <div className='space-y-6'>
+            <div className='flex flex-col sm:flex-row items-start sm:items-center gap-4'>
+              <div className='flex items-center gap-2'>
+                {(['fr', 'en', 'ar'] as const).map((lang) => (
+                  <button
+                    key={lang}
+                    type='button'
+                    onClick={() => setActiveLang(lang)}
+                    className={cn(
+                      'px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors',
+                      activeLang === lang
+                        ? 'bg-tahfidz-green text-white border-tahfidz-green'
+                        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    )}
+                  >
+                    {langLabel[lang]}
+                  </button>
+                ))}
+              </div>
+
+              <select
+                value={activePageKey}
+                onChange={(e) => setActivePageKey(e.target.value as SitePageKey)}
+                className={cn(
+                  'px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700',
+                  'rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none',
+                  'focus:ring-2 focus:ring-tahfidz-green/50'
+                )}
+              >
+                {PAGE_KEYS.map((key) => (
+                  <option key={key} value={key}>
+                    {PAGE_LABELS[key]}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <PageEditor
+              content={pages[activePageKey][activeLang]}
+              onChange={(nextContent) =>
+                setPages((prev) => ({
+                  ...prev,
+                  [activePageKey]: { ...prev[activePageKey], [activeLang]: nextContent },
+                }))
+              }
+              isContact={activePageKey === 'contact'}
+            />
+
+            <div className='flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700'>
+              <button
+                type='button'
+                onClick={() => window.open(`/${activePageKey === 'api-docs' ? 'api-docs' : activePageKey}`, '_blank')}
+                className={secondaryBtn}
+              >
+                <Eye className='w-4 h-4' />
+                Aperçu
+              </button>
+              <button
+                type='button'
+                onClick={() => savePage(activePageKey)}
+                disabled={saving === activePageKey}
+                className={primaryBtn}
+              >
+                <Save className='w-4 h-4' />
+                {saving === activePageKey ? 'Sauvegarde…' : 'Sauvegarder'}
               </button>
             </div>
           </div>

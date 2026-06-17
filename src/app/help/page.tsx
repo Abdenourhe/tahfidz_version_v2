@@ -1,26 +1,30 @@
 // src/app/help/page.tsx
-// Centre d'aide (placeholder).
+// Centre d'aide (contenu éditable via SiteConfig).
 
-import { LegalPageLayout } from "@/components/layout/LegalPageLayout"
 import type { Metadata } from "next"
+import { LegalPageLayout } from "@/components/layout/LegalPageLayout"
+import { PageContentRenderer } from "@/components/site-config/PageContentRenderer"
+import { loadPageConfig, getPageLang } from "@/lib/site-config/page-utils"
 
-export const metadata: Metadata = {
-  title: "Centre d'aide",
-  description: "Trouvez des réponses à vos questions sur l'utilisation de TAHFIDZ.",
+export async function generateMetadata(): Promise<Metadata> {
+  const config = await loadPageConfig("help")
+  const lang = await getPageLang()
+  const content = config[lang]
+  return {
+    title: content.metaTitle ?? content.title,
+    description: content.metaDescription,
+  }
 }
 
-export default function HelpPage() {
+export default async function HelpPage() {
+  const config = await loadPageConfig("help")
+  const lang = await getPageLang()
+  const content = config[lang]
+
   return (
-    <LegalPageLayout title="Centre d'aide">
-      <p>
-        Le centre d&apos;aide est en cours de construction. Il contiendra prochainement des guides,
-        tutoriels et une foire aux questions pour vous accompagner dans l&apos;utilisation de TAHFIDZ.
-      </p>
-      <p>
-        En attendant, n&apos;hésitez pas à{" "}
-        <a href="/contact" className="text-tahfidz-green hover:underline">nous contacter</a>{" "}
-        directement pour obtenir de l&apos;assistance.
-      </p>
+    <LegalPageLayout title={content.title}>
+      {content.intro && <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-8">{content.intro}</p>}
+      <PageContentRenderer sections={content.sections} />
     </LegalPageLayout>
   )
 }

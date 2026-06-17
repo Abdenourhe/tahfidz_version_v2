@@ -1,25 +1,30 @@
 // src/app/docs/page.tsx
-// Documentation utilisateur (placeholder).
+// Documentation utilisateur (contenu éditable via SiteConfig).
 
-import { LegalPageLayout } from "@/components/layout/LegalPageLayout"
 import type { Metadata } from "next"
+import { LegalPageLayout } from "@/components/layout/LegalPageLayout"
+import { PageContentRenderer } from "@/components/site-config/PageContentRenderer"
+import { loadPageConfig, getPageLang } from "@/lib/site-config/page-utils"
 
-export const metadata: Metadata = {
-  title: "Documentation",
-  description: "Documentation complète de la plateforme TAHFIDZ.",
+export async function generateMetadata(): Promise<Metadata> {
+  const config = await loadPageConfig("docs")
+  const lang = await getPageLang()
+  const content = config[lang]
+  return {
+    title: content.metaTitle ?? content.title,
+    description: content.metaDescription,
+  }
 }
 
-export default function DocsPage() {
+export default async function DocsPage() {
+  const config = await loadPageConfig("docs")
+  const lang = await getPageLang()
+  const content = config[lang]
+
   return (
-    <LegalPageLayout title="Documentation">
-      <p>
-        La documentation complète de TAHFIDZ sera disponible prochainement. Elle couvrira la
-        prise en main, la gestion des écoles, des élèves, des enseignants et des parents.
-      </p>
-      <p>
-        Pour toute question urgente, contactez notre équipe via la{" "}
-        <a href="/contact" className="text-tahfidz-green hover:underline">page de contact</a>.
-      </p>
+    <LegalPageLayout title={content.title}>
+      {content.intro && <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-8">{content.intro}</p>}
+      <PageContentRenderer sections={content.sections} />
     </LegalPageLayout>
   )
 }

@@ -1,25 +1,30 @@
 // src/app/api-docs/page.tsx
-// Documentation API (placeholder).
+// Documentation API (contenu éditable via SiteConfig).
 
-import { LegalPageLayout } from "@/components/layout/LegalPageLayout"
 import type { Metadata } from "next"
+import { LegalPageLayout } from "@/components/layout/LegalPageLayout"
+import { PageContentRenderer } from "@/components/site-config/PageContentRenderer"
+import { loadPageConfig, getPageLang } from "@/lib/site-config/page-utils"
 
-export const metadata: Metadata = {
-  title: "Documentation API",
-  description: "Documentation technique de l'API TAHFIDZ.",
+export async function generateMetadata(): Promise<Metadata> {
+  const config = await loadPageConfig("api-docs")
+  const lang = await getPageLang()
+  const content = config[lang]
+  return {
+    title: content.metaTitle ?? content.title,
+    description: content.metaDescription,
+  }
 }
 
-export default function ApiDocsPage() {
+export default async function ApiDocsPage() {
+  const config = await loadPageConfig("api-docs")
+  const lang = await getPageLang()
+  const content = config[lang]
+
   return (
-    <LegalPageLayout title="Documentation API">
-      <p>
-        La documentation technique de l&apos;API TAHFIDZ est en cours de rédaction. Elle permettra
-        aux développeurs d&apos;intégrer la plateforme à leurs propres outils.
-      </p>
-      <p>
-        Pour être averti de la disponibilité de l&apos;API,{" "}
-        <a href="/contact" className="text-tahfidz-green hover:underline">contactez-nous</a>.
-      </p>
+    <LegalPageLayout title={content.title}>
+      {content.intro && <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-8">{content.intro}</p>}
+      <PageContentRenderer sections={content.sections} />
     </LegalPageLayout>
   )
 }

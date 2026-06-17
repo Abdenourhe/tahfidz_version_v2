@@ -133,3 +133,34 @@ export const siteConfigGlobalSchema = z.object({
 
 export type SiteConfigLandingInput = z.infer<typeof siteConfigLandingSchema>
 export type SiteConfigGlobalInput = z.infer<typeof siteConfigGlobalSchema>
+
+// ── Schémas pour les pages éditables (légales, contact, placeholders) ──
+
+const pageSectionSchema = z.object({
+  title: z.string().min(1),
+  body: z.string(),
+})
+
+const contactCardSchema = z.object({
+  icon: z.string(),
+  title: z.string().min(1),
+  value: z.string().min(1),
+  href: z.string().optional(),
+})
+
+const pageContentSchema = z.object({
+  title: z.string().min(1),
+  metaTitle: z.string().optional(),
+  metaDescription: z.string().optional(),
+  lastUpdated: z.string().optional(),
+  intro: z.string().optional(),
+  sections: z.array(pageSectionSchema),
+  contactCards: z.array(contactCardSchema).optional(),
+})
+
+export const siteConfigPageSchema = z.record(
+  z.enum(["fr", "en", "ar"]),
+  pageContentSchema
+)
+
+export type SiteConfigPageInput = z.infer<typeof siteConfigPageSchema>
