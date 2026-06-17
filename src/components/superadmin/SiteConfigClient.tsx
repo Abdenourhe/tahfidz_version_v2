@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { normalizeLandingContent, type LandingContent } from '@/lib/landing/default-content'
+import { SUPPORTED_CURRENCIES, getCurrencyLabel } from '@/lib/landing/currencies'
 import type {
   SitePageConfig,
   SitePageKey,
@@ -733,7 +734,24 @@ function LandingEditor({
             <Field label='Libellé /an' value={content.pricing.perYear} onChange={(v) => setSection('pricing', { ...content.pricing, perYear: v })} />
             <Field label='Libellé bouton' value={content.pricing.request} onChange={(v) => setSection('pricing', { ...content.pricing, request: v })} />
             <Field label='Libellé populaire' value={content.pricing.popular} onChange={(v) => setSection('pricing', { ...content.pricing, popular: v })} />
-            <Field label='Devise' value={content.pricing.currency} onChange={(v) => setSection('pricing', { ...content.pricing, currency: v })} />
+            <div className='space-y-1.5'>
+              <label className='block text-xs font-medium text-gray-600 dark:text-gray-400'>Devise</label>
+              <select
+                value={content.pricing.currency}
+                onChange={(e) => setSection('pricing', { ...content.pricing, currency: e.target.value })}
+                className={cn(
+                  'w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700',
+                  'rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none',
+                  'focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green'
+                )}
+              >
+                {SUPPORTED_CURRENCIES.map((currency) => (
+                  <option key={currency.code} value={currency.code}>
+                    {getCurrencyLabel(currency.code, lang)} ({currency.code})
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className='space-y-3'>
             <label className='block text-xs font-medium text-gray-600 dark:text-gray-400'>Plans</label>

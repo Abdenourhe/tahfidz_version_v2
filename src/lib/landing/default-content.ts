@@ -1,7 +1,7 @@
 // src/lib/landing/default-content.ts
 // Contenu par défaut de la landing page TAHFIDZ (éditable depuis le superadmin)
 
-
+import { SUPPORTED_CURRENCIES } from './currencies'
 
 export type FooterLink = {
   label: string
@@ -80,6 +80,38 @@ export interface LandingContent {
   }
 }
 
+export function normalizeCurrencyCode(value: unknown): string {
+  const str = String(value ?? '').trim()
+  if (SUPPORTED_CURRENCIES.some((c) => c.code === str)) return str
+
+  const cleanup = str.replace(/\$/g, '').replace(/£/g, '').replace(/€/g, '').trim()
+  if (SUPPORTED_CURRENCIES.some((c) => c.code === cleanup)) return cleanup
+
+  const map: Record<string, string> = {
+    '$ CAD': 'CAD',
+    'CAD': 'CAD',
+    '$ USD': 'USD',
+    'USD': 'USD',
+    '€': 'EUR',
+    'EUR': 'EUR',
+    '£ GBP': 'GBP',
+    'GBP': 'GBP',
+    'MAD': 'MAD',
+    'DZD': 'DZD',
+    'DA': 'DZD',
+    'TND': 'TND',
+    'DT': 'TND',
+    'دولار كندي': 'CAD',
+    'دولار أمريكي': 'USD',
+    'يورو': 'EUR',
+    'جنيه إسترليني': 'GBP',
+    'درهم': 'MAD',
+    'دينار': 'DZD',
+    'دينار تونسي': 'TND',
+  }
+  return map[str] ?? 'CAD'
+}
+
 export function normalizeFooterLink(link: unknown): FooterLink {
   if (typeof link === 'string') {
     return { label: link, href: '/', external: false }
@@ -151,7 +183,7 @@ export function normalizeLandingContent(content: unknown): LandingContent {
     pricing: {
       ...defaultLang.pricing,
       ...c.pricing,
-      currency: c.pricing?.currency ?? defaultLang.pricing.currency,
+      currency: normalizeCurrencyCode(c.pricing?.currency ?? defaultLang.pricing.currency),
       plans: (c.pricing?.plans ?? defaultLang.pricing.plans).map((plan) => ({
         name: plan.name,
         students: plan.students,
@@ -240,7 +272,7 @@ export const defaultLandingContent: Record<"fr" | "en" | "ar", LandingContent> =
       perYear: "/an",
       request: "Demander",
       popular: "Populaire",
-      currency: "$ CAD",
+      currency: "CAD",
       plans: [
         { name: "Gratuit", students: "Jusqu'a 50 eleves", price: "0", features: ["Gestion des eleves", "2 enseignants", "1 halaqa", "Rapports basiques", "Support email"] },
         { name: "Starter", students: "51 - 200 eleves", price: "49", features: ["Tout du plan Gratuit", "10 enseignants", "Halaqas illimitees", "Notifications push", "Exports PDF"] },
@@ -347,7 +379,7 @@ export const defaultLandingContent: Record<"fr" | "en" | "ar", LandingContent> =
       perYear: "/year",
       request: "Request",
       popular: "Popular",
-      currency: "$ CAD",
+      currency: "CAD",
       plans: [
         { name: "Free", students: "Up to 50 students", price: "0", features: ["Student management", "2 teachers", "1 halaqa", "Basic reports", "Email support"] },
         { name: "Starter", students: "51 - 200 students", price: "49", features: ["Everything in Free", "10 teachers", "Unlimited halaqas", "Push notifications", "PDF exports"] },
@@ -454,7 +486,7 @@ export const defaultLandingContent: Record<"fr" | "en" | "ar", LandingContent> =
       perYear: "/سنة",
       request: "اطلب",
       popular: "الأكثر شيوعاً",
-      currency: "CA$",
+      currency: "CAD",
       plans: [
         { name: "مجاني", students: "حتى 50 طالب", price: "0", features: ["إدارة الطلاب", "2 معلم", "1 حلقة", "تقارير أساسية", "دعم بالبريد"] },
         { name: "Starter", students: "51 - 200 طالب", price: "49", features: ["كل شيء في المجاني", "10 معلمين", "حلقات غير محدودة", "إشعارات فورية", "تصدير PDF"] },

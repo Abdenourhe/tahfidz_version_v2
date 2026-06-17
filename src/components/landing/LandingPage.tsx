@@ -11,6 +11,7 @@ import {
 import { cn } from "@/lib/utils"
 import { getIcon } from "@/lib/landing/icon-mapper"
 import { type LandingContent } from "@/lib/landing/default-content"
+import { getCurrencyLabel } from "@/lib/landing/currencies"
 import { HeroImage } from "./HeroImage"
 
 type Lang = "fr" | "en" | "ar"
@@ -508,7 +509,7 @@ function TestimonialsSection({ t }: { t: LandingContent }) {
   )
 }
 
-function PricingSection({ t }: { t: LandingContent }) {
+function PricingSection({ t, lang }: { t: LandingContent; lang: "fr" | "en" | "ar" }) {
   return (
     <section id="pricing" className="py-20 bg-gray-50 dark:bg-gray-900/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -555,7 +556,7 @@ function PricingSection({ t }: { t: LandingContent }) {
                 </div>
                 <div className="mb-6" dir={t.dir === "rtl" ? "ltr" : undefined}>
                   <span className="text-4xl font-bold text-gray-900 dark:text-white">{plan.price}</span>
-                  <span className="text-gray-500 dark:text-gray-400 text-sm">{" "}{t.pricing.currency}{" "}{t.pricing.perYear}</span>
+                  <span className="text-gray-500 dark:text-gray-400 text-sm">{" "}{getCurrencyLabel(t.pricing.currency, lang)}{" "}{t.pricing.perYear}</span>
                 </div>
                 <ul className="space-y-3 mb-8 flex-1">
                   {plan.features.map((feature, i) => (
@@ -721,7 +722,7 @@ export default function LandingPage({ content, initialLang = "fr" }: LandingPage
       <UsersSection t={t} />
       <StatsSection t={t} />
       <TestimonialsSection t={t} />
-      <PricingSection t={t} />
+      <PricingSection t={t} lang={lang} />
       <CTASection t={t} />
       <Footer t={t} />
     </div>
