@@ -554,9 +554,24 @@ function PricingSection({ t, lang }: { t: LandingContent; lang: "fr" | "en" | "a
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">{plan.name}</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400">{plan.students}</p>
                 </div>
-                <div className="mb-6" dir={t.dir === "rtl" ? "ltr" : undefined}>
-                  <span className="text-4xl font-bold text-gray-900 dark:text-white">{plan.price}</span>
-                  <span className="text-gray-500 dark:text-gray-400 text-sm">{" "}{getCurrencyLabel(t.pricing.currency, lang)}{" "}{t.pricing.perYear}</span>
+                <div className="mb-6 text-center">
+                  <div
+                    className="inline-flex items-baseline justify-center gap-1.5"
+                    dir={t.dir === "rtl" ? "ltr" : undefined}
+                  >
+                    <span className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white">
+                      {plan.price}
+                    </span>
+                    <span className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                      {getCurrencyLabel(t.pricing.currency, lang)}
+                    </span>
+                  </div>
+                  <div
+                    className="text-sm text-gray-500 dark:text-gray-400 mt-0.5"
+                    dir={t.dir === "rtl" ? "ltr" : undefined}
+                  >
+                    {t.pricing.perYear}
+                  </div>
                 </div>
                 <ul className="space-y-3 mb-8 flex-1">
                   {plan.features.map((feature, i) => (
