@@ -574,6 +574,7 @@ function PricingSection({ t, lang }: { t: LandingContent; lang: Lang }) {
           {t.pricing.plans.map((plan, index) => {
             const isPopular = index === 1
             const price = period === "month" ? plan.monthlyPrice : plan.yearlyPrice
+            const features = period === "month" ? plan.monthlyFeatures : plan.yearlyFeatures
             return (
               <motion.div
                 key={index}
@@ -617,7 +618,7 @@ function PricingSection({ t, lang }: { t: LandingContent; lang: Lang }) {
                   </div>
                 </div>
                 <ul className="space-y-3 mb-8 flex-1">
-                  {plan.features.map((feature, i) => (
+                  {features.map((feature, i) => (
                     <li key={i} className="flex items-start gap-3 text-sm text-gray-600 dark:text-gray-300">
                       <Check size={16} className="text-tahfidz-green mt-0.5 shrink-0" />
                       {feature}

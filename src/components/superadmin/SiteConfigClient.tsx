@@ -822,11 +822,20 @@ function LandingEditor({
                   />
                 </div>
                 <StringArrayEditor
-                  label='Avantages'
-                  items={plan.features}
-                  onChange={(features) => {
+                  label='Avantages mensuels'
+                  items={plan.monthlyFeatures}
+                  onChange={(monthlyFeatures) => {
                     const next = [...content.pricing.plans]
-                    next[index] = { ...plan, features }
+                    next[index] = { ...plan, monthlyFeatures }
+                    setSection('pricing', { ...content.pricing, plans: next })
+                  }}
+                />
+                <StringArrayEditor
+                  label='Avantages annuels'
+                  items={plan.yearlyFeatures}
+                  onChange={(yearlyFeatures) => {
+                    const next = [...content.pricing.plans]
+                    next[index] = { ...plan, yearlyFeatures }
                     setSection('pricing', { ...content.pricing, plans: next })
                   }}
                 />
@@ -834,7 +843,7 @@ function LandingEditor({
             ))}
             <button
               type='button'
-              onClick={() => setSection('pricing', { ...content.pricing, plans: [...content.pricing.plans, { name: '', students: '', monthlyPrice: '', yearlyPrice: '', features: [''] }] })}
+              onClick={() => setSection('pricing', { ...content.pricing, plans: [...content.pricing.plans, { name: '', students: '', monthlyPrice: '', yearlyPrice: '', monthlyFeatures: [''], yearlyFeatures: [''] }] })}
               className='flex items-center gap-1.5 text-xs font-medium text-tahfidz-green hover:text-tahfidz-green/80 transition-colors'
             >
               <Plus className='w-3.5 h-3.5' />

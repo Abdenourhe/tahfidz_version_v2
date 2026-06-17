@@ -39,7 +39,9 @@ const landingPricingPlanSchema = z.object({
   monthlyPrice: z.string().min(1),
   yearlyPrice: z.string().min(1),
   price: z.string().min(1).optional(),
-  features: z.array(z.string().min(1)),
+  monthlyFeatures: z.array(z.string().min(1)),
+  yearlyFeatures: z.array(z.string().min(1)),
+  features: z.array(z.string().min(1)).optional(),
 })
 
 const footerLinkSchema = z.object({
