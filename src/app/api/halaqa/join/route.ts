@@ -2,6 +2,7 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { joinMeetingUrl } from "@/lib/bigbluebutton"
+import { notifyHalaqaParticipants } from "@/lib/halaqa-notifications"
 import { NextResponse } from "next/server"
 import { z } from "zod"
 
@@ -40,7 +41,22 @@ export async function POST(req: Request) {
     const isStudent = halaqaSession.studentIds.includes(userId)
     const isAdmin = ["ADMIN", "SUPERADMIN"].includes(role)
 
-    if (!isTeacher && !isStudent && !isAdmin) {
+    let isParent = false
+    if (role === "PARENT") {
+      const parent = await prisma.parent.findUnique({
+        where: { userId },
+        include: {
+          childrenLinks: {
+            where: { isVerified: true },
+            include: { student: { select: { userId: true } } },
+          },
+        },
+      })
+      const childUserIds = parent?.childrenLinks.map((l) => l.student.userId) ?? []
+      isParent = childUserIds.some((childId) => halaqaSession.studentIds.includes(childId))
+    }
+
+    if (!isTeacher && !isStudent && !isAdmin && !isParent) {
       return NextResponse.json({ error: "Non invité à cette session" }, { status: 403 })
     }
 
@@ -52,18 +68,40 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Session terminée" }, { status: 400 })
     }
 
-    // Mettre à jour le statut si SCHEDULED
-    if (halaqaSession.status === "SCHEDULED") {
+    // Mettre à jour le statut si SCHEDULED (seul prof/admin/élève démarre la session)
+    // Un parent ne doit pas démarrer la session
+    let becameLive = false
+    if (halaqaSession.status === "SCHEDULED" && (isTeacher || isAdmin || isStudent)) {
       await prisma.halaqaSession.update({
         where: { id: sessionId },
         data: { status: "LIVE", startedAt: new Date() },
       })
+      becameLive = true
+    }
+
+    // Si un parent rejoint une session SCHEDULED, on refuse (elle n'est pas encore démarrée)
+    if (halaqaSession.status === "SCHEDULED" && isParent) {
+      return NextResponse.json(
+        { error: "La session n'a pas encore démarré. Revenez quand l'enseignant l'aura lancée." },
+        { status: 400 }
+      )
     }
 
     // Générer l'URL de join
     let joinUrl: string
     if (isTeacher || isAdmin) {
       joinUrl = halaqaSession.roomUrl
+    } else if (isParent) {
+      joinUrl =
+        halaqaSession.guestUrl ||
+        halaqaSession.attendeeUrl ||
+        joinMeetingUrl({
+          meetingID: halaqaSession.meetingID,
+          fullName: "Parent",
+          password: "",
+          role: "VIEWER",
+          guest: true,
+        })
     } else {
       // Élève: générer une URL personnalisée avec son nom
       const userName = session.user.name || "Élève"
@@ -76,11 +114,17 @@ export async function POST(req: Request) {
       })
     }
 
+    // Notifier les participants que la session est LIVE
+    if (becameLive) {
+      await notifyHalaqaParticipants(halaqaSession, "halaqa_live", [userId])
+    }
+
     return NextResponse.json({
       joinUrl,
       mode: halaqaSession.mode,
       status: "LIVE",
       isTeacher: isTeacher || isAdmin,
+      isParent,
     }, { status: 200 })
   } catch (error: any) {
     console.error("[HALAQA JOIN ERROR]", error?.message || String(error))

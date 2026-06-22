@@ -4,7 +4,7 @@ import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
-import { Video, Calendar, Users, Play, FileVideo, BarChart3, ArrowLeft, Eye } from "lucide-react"
+import { Video, Calendar, Users, Play, FileVideo, BarChart3, ArrowLeft, Eye, XCircle } from "lucide-react"
 import { DeleteSessionButton } from "@/components/admin/DeleteSessionButton"
 import { formatDate } from "@/lib/utils"
 
@@ -21,6 +21,27 @@ async function deleteSession(formData: FormData) {
 
   await prisma.halaqaSession.delete({
     where: { id, schoolId: session.user.schoolId },
+  })
+  revalidatePath("/admin/halaqa")
+}
+
+async function cancelSession(formData: FormData) {
+  "use server"
+  const session = await auth()
+  if (!session?.user?.schoolId) return
+  if (session.user.role !== "ADMIN" && session.user.role !== "SUPERADMIN") return
+
+  const id = formData.get("id") as string
+  if (!id) return
+
+  const halaqa = await prisma.halaqaSession.findFirst({
+    where: { id, schoolId: session.user.schoolId },
+  })
+  if (!halaqa || halaqa.status === "ENDED" || halaqa.status === "CANCELLED") return
+
+  await prisma.halaqaSession.update({
+    where: { id },
+    data: { status: "CANCELLED", endedAt: new Date() },
   })
   revalidatePath("/admin/halaqa")
 }
@@ -162,6 +183,18 @@ export default async function AdminHalaqaPage() {
                         >
                           <Eye size={15} />
                         </Link>
+                        {(s.status === "SCHEDULED" || s.status === "LIVE") && (
+                          <form action={cancelSession} className="inline">
+                            <input type="hidden" name="id" value={s.id} />
+                            <button
+                              type="submit"
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+                              title="Annuler"
+                            >
+                              <XCircle size={15} />
+                            </button>
+                          </form>
+                        )}
                         <form action={deleteSession} className="inline">
                           <input type="hidden" name="id" value={s.id} />
                           <DeleteSessionButton />

@@ -2452,6 +2452,18 @@ export const translations = {
     modeAudio:        { fr: "Mode audio",            en: "Audio mode",            ar: "وضع الصوت" },
     modeVideo:        { fr: "Mode vidéo",            en: "Video mode",            ar: "وضع الفيديو" },
     modeScreen:       { fr: "Partage d'écran",       en: "Screen share",          ar: "مشاركة الشاشة" },
+    // Annulation & actions
+    cancel:           { fr: "Annuler",               en: "Cancel",                ar: "إلغاء" },
+    confirmCancel:    { fr: "Voulez-vous vraiment annuler cette séance ?", en: "Are you sure you want to cancel this session?", ar: "هل أنت متأكد أنك تريد إلغاء هذه الجلسة؟" },
+    errorCancel:      { fr: "Erreur lors de l'annulation", en: "Error cancelling the session", ar: "خطأ أثناء الإلغاء" },
+    // Accès parent
+    observe:          { fr: "Observer",              en: "Observe",               ar: "مشاهدة" },
+    noLiveSession:    { fr: "Aucune séance en direct pour le moment", en: "No live session at the moment", ar: "لا توجد جلسات مباشرة حالياً" },
+    parentObserver:   { fr: "Mode observateur parent", en: "Parent observer mode", ar: "وضع مراقب الوالد" },
+    // Mode démo
+    demoMode:         { fr: "Mode démonstration",    en: "Demo mode",             ar: "وضع العرض التجريبي" },
+    bbbNotConfigured: { fr: "BigBlueButton n'est pas configuré", en: "BigBlueButton is not configured", ar: "لم يتم تكوين BigBlueButton" },
+    bbbConfigHint:    { fr: "Pour activer les visioconférences, configurez BBB_SERVER_URL et BBB_SECRET.", en: "To enable video conferencing, configure BBB_SERVER_URL and BBB_SECRET.", ar: "لتفعيل مؤتمرات الفيديو، قم بتكوين BBB_SERVER_URL و BBB_SECRET." },
     // Errors
     nameRequired:     { fr: "Nom requis",            en: "Name required",         ar: "الاسم مطلوب" },
     minOneStudent:    { fr: "Au moins un élève",     en: "At least one student",  ar: "طالب واحد على الأقل" },

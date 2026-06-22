@@ -7,7 +7,7 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import {
   Video, Plus, Calendar, Users, BookOpen,
-  Play, FileVideo, BarChart3
+  Play, FileVideo, BarChart3, X
 } from "lucide-react"
 
 interface HalaqaSession {
@@ -30,6 +30,7 @@ export default function TeacherHalaqaPage() {
   const isRTL = locale === "ar"
   const [sessions, setSessions] = useState<HalaqaSession[]>([])
   const [loading, setLoading] = useState(true)
+  const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [filter, setFilter] = useState<"all" | "scheduled" | "live" | "ended">("all")
 
   useEffect(() => {
@@ -53,6 +54,26 @@ export default function TeacherHalaqaPage() {
     if (filter === "all") return true
     return s.status.toLowerCase() === filter
   })
+
+  const cancelSession = async (sessionId: string) => {
+    if (!confirm(t("confirmCancel"))) return
+    setCancellingId(sessionId)
+    try {
+      const res = await fetch("/api/halaqa/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId }),
+      })
+      if (!res.ok) throw new Error("Erreur")
+      setSessions((prev) =>
+        prev.map((s) => (s.id === sessionId ? { ...s, status: "CANCELLED" } : s))
+      )
+    } catch {
+      alert(t("errorCancel"))
+    } finally {
+      setCancellingId(null)
+    }
+  }
 
   const now = new Date()
   const upcoming = filtered.filter((s) => new Date(s.scheduledAt) > now && s.status === "SCHEDULED")
@@ -207,6 +228,18 @@ export default function TeacherHalaqaPage() {
                           <Play size={16} className={`inline ${isRTL ? "ml-1" : "mr-1"}`} />
                           {t("start")}
                         </Link>
+                        <button
+                          onClick={() => cancelSession(session.id)}
+                          disabled={cancellingId === session.id}
+                          className="px-4 py-2 border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm font-medium rounded-lg transition disabled:opacity-60"
+                        >
+                          {cancellingId === session.id ? (
+                            <span className="inline-block w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <X size={16} className={`inline ${isRTL ? "ml-1" : "mr-1"}`} />
+                          )}
+                          {t("cancel")}
+                        </button>
                       </>
                     )}
                     {session.status === "LIVE" && (

@@ -2,6 +2,7 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { createMeeting, generateMeetingID, generatePassword, joinMeetingUrl } from "@/lib/bigbluebutton"
+import { notifyHalaqaParticipants } from "@/lib/halaqa-notifications"
 import { NextResponse } from "next/server"
 import { z } from "zod"
 
@@ -36,9 +37,35 @@ export async function POST(req: Request) {
     }
 
     const data = parsed.data
+
+    // ─── Vérification des élèves ──────────────────────────────────────
+    const validStudents = await prisma.user.findMany({
+      where: {
+        id: { in: data.studentIds },
+        schoolId,
+        role: "STUDENT",
+        isActive: true,
+      },
+      select: { id: true },
+    })
+
+    const validStudentIds = validStudents.map((s) => s.id)
+    const invalidStudentIds = data.studentIds.filter((id) => !validStudentIds.includes(id))
+
+    if (invalidStudentIds.length > 0) {
+      return NextResponse.json(
+        {
+          error: "Certains élèves sont invalides ou n'appartiennent pas à votre école.",
+          invalidStudentIds,
+        },
+        { status: 400 }
+      )
+    }
+
     const meetingID = generateMeetingID(teacherId)
     const moderatorPW = generatePassword()
     const attendeePW = generatePassword()
+    const guestPW = generatePassword()
 
     // Créer la réunion BBB
     await createMeeting({
@@ -55,7 +82,7 @@ export async function POST(req: Request) {
       lockSettingsDisableMic: false,
       welcome: `Bienvenue dans votre Halaqa Online. Préparez votre mushaf.`,
       duration: data.duration,
-      maxParticipants: data.type === "INDIVIDUAL" ? 3 : 30,
+      maxParticipants: data.type === "INDIVIDUAL" ? 5 : 30,
     })
 
     // Générer URLs
@@ -75,6 +102,14 @@ export async function POST(req: Request) {
       role: "ATTENDEE",
     })
 
+    const guestUrl = joinMeetingUrl({
+      meetingID,
+      fullName: "Parent",
+      password: guestPW,
+      role: "VIEWER",
+      guest: true,
+    })
+
     // Sauvegarder dans Prisma
     const halaqaSession = await prisma.halaqaSession.create({
       data: {
@@ -82,6 +117,7 @@ export async function POST(req: Request) {
         meetingName: data.meetingName,
         roomUrl,
         attendeeUrl,
+        guestUrl,
         schoolId,
         teacherId,
         studentIds: data.studentIds,
@@ -98,6 +134,9 @@ export async function POST(req: Request) {
         teacher: { select: { fullName: true, email: true } },
       },
     })
+
+    // Notifier les participants (élèves + parents)
+    await notifyHalaqaParticipants(halaqaSession, "halaqa_scheduled", [teacherId])
 
     return NextResponse.json({ session: halaqaSession }, { status: 201 })
   } catch (error: any) {

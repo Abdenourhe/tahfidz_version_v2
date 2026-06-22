@@ -2,6 +2,7 @@
 // Webhook appelé par BigBlueButton quand un enregistrement est prêt
 
 import { prisma } from "@/lib/prisma"
+import { notifyHalaqaParticipants } from "@/lib/halaqa-notifications"
 import { NextResponse } from "next/server"
 
 export async function POST(req: Request) {
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Session non trouvée" }, { status: 404 })
     }
 
-    await prisma.halaqaSession.update({
+    const updated = await prisma.halaqaSession.update({
       where: { meetingID },
       data: {
         recordingUrl,
@@ -40,6 +41,9 @@ export async function POST(req: Request) {
         status: "ENDED",
       },
     })
+
+    // Notifier les participants que l'enregistrement est disponible
+    await notifyHalaqaParticipants(updated, "halaqa_recording", [updated.teacherId])
 
     return NextResponse.json({ ok: true }, { status: 200 })
   } catch (error: any) {

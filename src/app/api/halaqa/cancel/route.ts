@@ -1,4 +1,4 @@
-// src/app/api/halaqa/end/route.ts
+// src/app/api/halaqa/cancel/route.ts
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { endMeeting } from "@/lib/bigbluebutton"
@@ -6,7 +6,7 @@ import { notifyHalaqaParticipants } from "@/lib/halaqa-notifications"
 import { NextResponse } from "next/server"
 import { z } from "zod"
 
-const endSchema = z.object({
+const cancelSchema = z.object({
   sessionId: z.string().min(1),
 })
 
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
 
     const { id: userId, role } = session.user
     const body = await req.json()
-    const parsed = endSchema.safeParse(body)
+    const parsed = cancelSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
     }
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Session non trouvée" }, { status: 404 })
     }
 
-    // Seul le prof ou un admin peut terminer
+    // Seul le prof ou un admin peut annuler
     const isTeacher = halaqaSession.teacherId === userId
     const isAdmin = ["ADMIN", "SUPERADMIN"].includes(role)
     if (!isTeacher && !isAdmin) {
@@ -41,36 +41,37 @@ export async function POST(req: Request) {
     }
 
     if (halaqaSession.status === "ENDED" || halaqaSession.status === "CANCELLED") {
-      return NextResponse.json({ error: "Session déjà terminée" }, { status: 400 })
+      return NextResponse.json({ error: "Session déjà terminée ou annulée" }, { status: 400 })
     }
 
-    // Appel BBB end (le mot de passe est dans l'URL roomUrl, on l'extrait)
-    try {
-      const url = new URL(halaqaSession.roomUrl)
-      const pw = url.searchParams.get("password")
-      if (pw) {
-        await endMeeting(halaqaSession.meetingID, pw)
+    // Si la session est en direct, tenter de la clôturer côté BBB
+    if (halaqaSession.status === "LIVE") {
+      try {
+        const url = new URL(halaqaSession.roomUrl)
+        const pw = url.searchParams.get("password")
+        if (pw) {
+          await endMeeting(halaqaSession.meetingID, pw)
+        }
+      } catch (bbbErr: any) {
+        console.warn("[HALAQA CANCEL BBB WARN]", bbbErr?.message)
       }
-    } catch (bbbErr: any) {
-      console.warn("[HALAQA END BBB WARN]", bbbErr?.message)
-      // On continue quand même pour marquer comme terminée dans Prisma
     }
 
     // Mettre à jour Prisma
     const updated = await prisma.halaqaSession.update({
       where: { id: sessionId },
       data: {
-        status: "ENDED",
+        status: "CANCELLED",
         endedAt: new Date(),
       },
     })
 
-    // Notifier les participants que la séance est terminée
-    await notifyHalaqaParticipants(updated, "halaqa_ended", [userId])
+    // Notifier les participants
+    await notifyHalaqaParticipants(updated, "halaqa_cancelled", [userId])
 
     return NextResponse.json({ session: updated }, { status: 200 })
   } catch (error: any) {
-    console.error("[HALAQA END ERROR]", error?.message || String(error))
+    console.error("[HALAQA CANCEL ERROR]", error?.message || String(error))
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
 }
