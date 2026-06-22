@@ -112,16 +112,23 @@ export function normalizeCurrencyCode(value: unknown): string {
   return map[str] ?? 'CAD'
 }
 
-export function normalizeFooterLink(link: unknown): FooterLink {
+export function normalizeFooterLink(link: unknown, defaultLinks: FooterLink[] = []): FooterLink {
   if (typeof link === 'string') {
+    const match = defaultLinks.find((d) => d.label.toLowerCase() === link.toLowerCase())
+    if (match) return { ...match }
     return { label: link, href: '/', external: false }
   }
   if (link && typeof link === 'object') {
     const l = link as Record<string, unknown>
+    let href = typeof l.href === 'string' ? l.href : '/'
+    const external = typeof l.external === 'boolean' ? l.external : false
+    if (!external && !href.startsWith('/') && !href.startsWith('mailto:') && !href.startsWith('#') && !href.startsWith('http')) {
+      href = '/' + href
+    }
     return {
       label: typeof l.label === 'string' ? l.label : '',
-      href: typeof l.href === 'string' ? l.href : '/',
-      external: typeof l.external === 'boolean' ? l.external : false,
+      href,
+      external,
     }
   }
   return { label: '', href: '/', external: false }
@@ -201,9 +208,15 @@ export function normalizeLandingContent(
     footer: {
       ...defaultLang.footer,
       ...c.footer,
-      linksProduct: (c.footer?.linksProduct ?? defaultLang.footer.linksProduct).map(normalizeFooterLink),
-      linksSupport: (c.footer?.linksSupport ?? defaultLang.footer.linksSupport).map(normalizeFooterLink),
-      linksLegal: (c.footer?.linksLegal ?? defaultLang.footer.linksLegal).map(normalizeFooterLink),
+      linksProduct: (c.footer?.linksProduct ?? defaultLang.footer.linksProduct).map((link) =>
+        normalizeFooterLink(link, defaultLang.footer.linksProduct)
+      ),
+      linksSupport: (c.footer?.linksSupport ?? defaultLang.footer.linksSupport).map((link) =>
+        normalizeFooterLink(link, defaultLang.footer.linksSupport)
+      ),
+      linksLegal: (c.footer?.linksLegal ?? defaultLang.footer.linksLegal).map((link) =>
+        normalizeFooterLink(link, defaultLang.footer.linksLegal)
+      ),
     },
   }
 }
