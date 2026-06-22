@@ -270,7 +270,7 @@ function LoginForm() {
           {/* Header */}
           <div className="flex-shrink-0 mb-2">
             <Link href="/" className="inline-flex items-center gap-3 group">
-              <Logo variant="full" width={95} height={24} darkMode="dark" priority className="h-6 w-auto" />
+              <Logo variant="full" width={80} height={20} darkMode="dark" priority className="h-5 w-auto" />
             </Link>
           </div>
 
@@ -350,7 +350,7 @@ function LoginForm() {
         {/* Mobile header */}
         <div className="lg:hidden flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-800">
           <Link href="/" className="flex items-center gap-2.5">
-            <Logo variant="full" width={90} height={24} priority className="h-6 w-auto" />
+            <Logo variant="full" width={75} height={20} priority className="h-5 w-auto" />
           </Link>
           <Link href="/" className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1">
             <ArrowLeft size={14} /> {t("back")}
