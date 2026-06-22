@@ -5,6 +5,7 @@ import type { Metadata } from "next"
 import { LegalPageLayout } from "@/components/layout/LegalPageLayout"
 import { PageContentRenderer } from "@/components/site-config/PageContentRenderer"
 import { loadPageConfig, getPageLang } from "@/lib/site-config/page-utils"
+import { requireAuth } from "@/lib/auth-page"
 
 export async function generateMetadata(): Promise<Metadata> {
   const config = await loadPageConfig("security")
@@ -17,6 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function SecurityPage() {
+  await requireAuth()
   const config = await loadPageConfig("security")
   const lang = await getPageLang()
   const content = config[lang]
