@@ -708,7 +708,7 @@ function Footer({ t }: { t: LandingContent }) {
         <div className="grid md:grid-cols-4 gap-10 mb-12">
           <div className="md:col-span-1">
             <Link href="/" className="flex items-center gap-2.5 mb-4 group">
-              <Logo variant="full" width={100} height={28} darkMode="dark" className="h-7 w-auto" />
+              <LogoHorizontal iconSize={40} textWidth={90} textHeight={21} gap={6} priority />
             </Link>
             <p className="text-sm text-gray-400 leading-relaxed">{t.footer.desc}</p>
           </div>
