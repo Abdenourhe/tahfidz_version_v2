@@ -78,7 +78,7 @@ function Navbar({ lang, setLang, t }: { lang: Lang; setLang: (l: Lang) => void; 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <LogoHorizontal iconSize={50} textWidth={100} textHeight={24} gap={6} priority />
+            <LogoHorizontal iconSize={36} textWidth={80} textHeight={19} gap={5} priority />
           </Link>
 
           <div className="hidden md:flex items-center gap-8">

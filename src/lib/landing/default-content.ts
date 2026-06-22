@@ -226,7 +226,7 @@ export const defaultLandingContent: Record<"fr" | "en" | "ar", LandingContent> =
     dir: "ltr",
     nav: {
       home: "Accueil", features: "Fonctionnalites", pricing: "Tarifs",
-      how: "Comment ca marche", login: "Connexion", register: "Inscrire mon ecole",
+      how: "Comment ça marche", login: "Connexion", register: "Inscrire mon ecole",
     },
     hero: {
       badge: "🎉 Nouveau · Halaqa Online electronique disponible",
@@ -250,7 +250,7 @@ export const defaultLandingContent: Record<"fr" | "en" | "ar", LandingContent> =
       ],
     },
     how: {
-      title: "Comment ca marche",
+      title: "Comment ça marche",
       subtitle: "Trois etapes simples pour transformer la gestion de votre ecole",
       steps: [
         { num: "01", title: "Inscrivez votre ecole", desc: "Creez votre compte en quelques minutes avec les informations de votre ecole coranique." },

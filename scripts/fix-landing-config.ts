@@ -27,6 +27,16 @@ async function main() {
         if (link.href === "/security") link.label = "Sécurité"
       }
     }
+
+    // Corrige les labels de navigation
+    if (langValue.nav?.how === "Comment ca marche") {
+      langValue.nav.how = "Comment ça marche"
+    }
+
+    // Corrige les titres de section
+    if (langValue.how?.title === "Comment ca marche") {
+      langValue.how.title = "Comment ça marche"
+    }
   }
 
   await prisma.siteConfig.update({
