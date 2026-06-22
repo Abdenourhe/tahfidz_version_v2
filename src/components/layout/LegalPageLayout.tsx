@@ -3,6 +3,7 @@
 
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
+import { Logo } from "@/components/ui/Logo"
 
 interface LegalPageLayoutProps {
   children: React.ReactNode
@@ -17,8 +18,7 @@ export function LegalPageLayout({ children, title, lastUpdated }: LegalPageLayou
       <header className="sticky top-0 z-40 bg-white/90 dark:bg-gray-950/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-tahfidz-green flex items-center justify-center text-white font-bold text-sm">ط</div>
-            <span className="font-bold text-gray-900 dark:text-white">TAHFIDZ</span>
+            <Logo variant="full" width={100} height={24} priority className="h-6 w-auto" />
           </Link>
           <Link
             href="/"
