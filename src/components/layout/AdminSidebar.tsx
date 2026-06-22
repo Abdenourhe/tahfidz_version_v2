@@ -15,6 +15,7 @@ import { NotificationNavItem } from "@/components/layout/NotificationNavItem"
 import { SidebarToggle } from "@/components/layout/SidebarToggle"
 import { useSidebarCollapsed } from "@/hooks/useSidebarCollapsed"
 import { useLanguage } from "@/contexts/LanguageContext"
+import { Logo } from "@/components/ui/Logo"
 
 interface AdminSidebarProps {
   user: {
@@ -83,7 +84,6 @@ export function AdminSidebar({ user, schoolName, schoolLogo, schoolSlug, schoolC
     .toUpperCase() ?? "??"
 
   const displayName = schoolName ?? "TAHFIDZ"
-  const firstLetter = displayName.charAt(0).toUpperCase()
 
   const getLabel = (key: string) => tNav(key)
 
@@ -109,8 +109,8 @@ export function AdminSidebar({ user, schoolName, schoolLogo, schoolSlug, schoolC
                   unoptimized
                 />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center">
-                  <span className="text-white font-bold text-base">{firstLetter}</span>
+                <div className="w-full h-full bg-white dark:bg-gray-900 flex items-center justify-center">
+                  <Logo variant="icon" size={36} priority />
                 </div>
               )}
             </div>

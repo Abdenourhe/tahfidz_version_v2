@@ -8,13 +8,14 @@ import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
 import {
   LayoutDashboard, Building2, Clock, Library, Send,
-  Eye, MessageCircleQuestion, Activity, LogOut, Shield, Layers,
+  Eye, MessageCircleQuestion, Activity, LogOut, Layers,
   FileText,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { SidebarToggle } from "@/components/layout/SidebarToggle"
 import { useSidebarCollapsed } from "@/hooks/useSidebarCollapsed"
 import { useLanguage } from "@/contexts/LanguageContext"
+import { Logo } from "@/components/ui/Logo"
 
 interface SuperAdminSidebarProps {
   user: {
@@ -63,8 +64,8 @@ export function SuperAdminSidebar({ user }: SuperAdminSidebarProps) {
       <div className="p-4 border-b border-gray-100">
         <div className={cn("flex items-center", collapsed ? "justify-center" : "justify-between gap-2")}>
           <Link href="/admin/super/dashboard" className="flex items-center gap-3 overflow-hidden">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center flex-shrink-0 shadow-md shadow-red-100">
-              <Shield size={20} className="text-white" />
+            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center flex-shrink-0 shadow-sm shadow-gray-100 overflow-hidden">
+              <Logo variant="icon" size={36} priority />
             </div>
             {!collapsed && (
               <div className="min-w-0">

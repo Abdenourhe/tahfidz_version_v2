@@ -9,6 +9,7 @@ import {
   ChevronRight, Check, Sparkles, ShieldCheck, Eye, EyeOff, ImagePlus, X
 } from "lucide-react"
 import Link from "next/link"
+import { Logo } from "@/components/ui/Logo"
 
 /* ─── Types ──────────────────────────────────────────────── */
 type Step = 1 | 2 | 3
@@ -185,10 +186,7 @@ export default function RegisterSchoolPage() {
       <div className="border-b border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-tahfidz-green flex items-center justify-center text-white font-bold text-sm">
-              ط
-            </div>
-            <span className="font-bold text-lg text-gray-900 dark:text-white">TAHFIDZ</span>
+            <Logo variant="full" width={90} height={24} priority className="h-6 w-auto" />
           </Link>
           <Link href="/login" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-tahfidz-green transition">
             <ArrowLeft size={14} /> Deja inscrit ? Se connecter

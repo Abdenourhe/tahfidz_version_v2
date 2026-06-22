@@ -19,6 +19,7 @@ import { useLanguage } from "@/contexts/LanguageContext"
 import { translations } from "@/lib/i18n/translations"
 import Image from "next/image"
 import Link from "next/link"
+import { Logo } from "@/components/ui/Logo"
 
 const schoolSchema = z.object({
   schoolSlug: z.string().min(2, "Identifiant ecole requis"),
@@ -269,10 +270,7 @@ function LoginForm() {
           {/* Header */}
           <div className="flex-shrink-0 mb-2">
             <Link href="/" className="inline-flex items-center gap-3 group">
-              <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm border border-white/15 flex items-center justify-center group-hover:bg-white/20 transition">
-                <span className="text-white font-bold text-xl">ط</span>
-              </div>
-              <span className="text-white font-bold text-xl tracking-tight">TAHFIDZ</span>
+              <Logo variant="full" width={95} height={24} darkMode="dark" priority className="h-6 w-auto" />
             </Link>
           </div>
 
@@ -352,8 +350,7 @@ function LoginForm() {
         {/* Mobile header */}
         <div className="lg:hidden flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-800">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-tahfidz-green flex items-center justify-center text-white font-bold">ط</div>
-            <span className="font-bold text-lg text-gray-900 dark:text-white">TAHFIDZ</span>
+            <Logo variant="full" width={90} height={24} priority className="h-6 w-auto" />
           </Link>
           <Link href="/" className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1">
             <ArrowLeft size={14} /> {t("back")}

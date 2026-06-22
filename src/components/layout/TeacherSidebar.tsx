@@ -17,6 +17,7 @@ import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { NotificationNavItem } from "@/components/layout/NotificationNavItem"
 import { SidebarToggle } from "@/components/layout/SidebarToggle"
 import { useSidebarCollapsed } from "@/hooks/useSidebarCollapsed"
+import { Logo } from "@/components/ui/Logo"
 
 const NAV_ITEMS = [
   { href: "/teacher/dashboard",     icon: LayoutDashboard,  key: "dashboard" },
@@ -65,7 +66,7 @@ export function TeacherSidebar({ user, schoolName, schoolLogo }: TeacherSidebarP
               {logo ? (
                 <Image src={logo} alt={displayName} width={40} height={40} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-white font-bold text-lg">{displayName.charAt(0).toUpperCase()}</span>
+                <Logo variant="icon" size={36} priority />
               )}
             </div>
             {!collapsed && (

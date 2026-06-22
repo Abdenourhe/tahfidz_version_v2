@@ -13,6 +13,7 @@ import { getIcon } from "@/lib/landing/icon-mapper"
 import { type LandingContent } from "@/lib/landing/default-content"
 import { getCurrencyLabel } from "@/lib/landing/currencies"
 import { HeroImage } from "./HeroImage"
+import { Logo, LogoHorizontal } from "@/components/ui/Logo"
 
 type Lang = "fr" | "en" | "ar"
 
@@ -77,10 +78,7 @@ function Navbar({ lang, setLang, t }: { lang: Lang; setLang: (l: Lang) => void; 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-tahfidz-green flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-tahfidz-green/25 group-hover:shadow-tahfidz-green/40 transition">
-              ط
-            </div>
-            <span className="font-bold text-lg tracking-tight text-gray-900 dark:text-white">TAHFIDZ</span>
+            <LogoHorizontal iconSize={50} textWidth={100} textHeight={24} gap={6} priority />
           </Link>
 
           <div className="hidden md:flex items-center gap-8">
@@ -710,8 +708,7 @@ function Footer({ t }: { t: LandingContent }) {
         <div className="grid md:grid-cols-4 gap-10 mb-12">
           <div className="md:col-span-1">
             <Link href="/" className="flex items-center gap-2.5 mb-4 group">
-              <div className="w-9 h-9 rounded-xl bg-tahfidz-green flex items-center justify-center text-white font-bold text-lg">ط</div>
-              <span className="font-bold text-lg text-white">TAHFIDZ</span>
+              <Logo variant="full" width={100} height={28} darkMode="dark" className="h-7 w-auto" />
             </Link>
             <p className="text-sm text-gray-400 leading-relaxed">{t.footer.desc}</p>
           </div>

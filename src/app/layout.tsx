@@ -23,6 +23,8 @@ const cormorant = Cormorant_Garamond({
   style: ["normal", "italic"],
 })
 
+
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -40,7 +42,13 @@ export const metadata: Metadata = {
     template: "%s | TAHFIDZ",
   },
   description: "Plateforme complète de suivi et gestion de la mémorisation du Saint Coran",
-  icons: { icon: "/favicon.ico" },
+  icons: {
+    icon: [
+      { url: "/images/logo_icon.png", type: "image/png", sizes: "192x192" },
+    ],
+    apple: "/images/logo_icon.png",
+    shortcut: "/images/logo_icon.png",
+  },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

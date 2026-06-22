@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import { TopBarControls } from "./TopBarControls"
 import { useT } from "@/contexts/LanguageContext"
+import { Logo } from "@/components/ui/Logo"
 import { cn } from "@/lib/utils"
 import { useLockBodyScroll } from "@/hooks/useLockBodyScroll"
 import { useSession, signOut } from "next-auth/react"
@@ -205,7 +206,7 @@ export function MobileHeader({
               {logo ? (
                 <Image src={logo} alt={displayName} width={32} height={32} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-white font-bold text-sm">{displayName.charAt(0).toUpperCase()}</span>
+                <Logo variant="icon" size={28} priority />
               )}
             </div>
             <div className="flex flex-col">

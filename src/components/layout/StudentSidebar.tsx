@@ -14,6 +14,7 @@ import { useLanguage } from "@/contexts/LanguageContext"
 import { NotificationNavItem } from "@/components/layout/NotificationNavItem"
 import { SidebarToggle } from "@/components/layout/SidebarToggle"
 import { useSidebarCollapsed } from "@/hooks/useSidebarCollapsed"
+import { Logo } from "@/components/ui/Logo"
 
 interface StudentSidebarProps {
   user: { name: string; email: string; avatar?: string }
@@ -69,7 +70,7 @@ export function StudentSidebar({ user, schoolName, schoolLogo }: StudentSidebarP
               {logo ? (
                 <Image src={logo} alt={displayName} width={40} height={40} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-white font-bold text-lg">{displayName.charAt(0).toUpperCase()}</span>
+                <Logo variant="icon" size={36} priority />
               )}
             </div>
             {!collapsed && (
