@@ -1,9 +1,7 @@
 // src/components/ui/Logo.tsx — Logo de marque TAHFIDZ réutilisable
 "use client"
 
-import { useState, useEffect } from "react"
 import Image from "next/image"
-import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
 import { LogoText } from "@/components/LogoText"
 
@@ -44,38 +42,72 @@ export function Logo({
   alt = "TAHFIDZ",
   priority = false,
 }: LogoProps) {
-  const { theme, resolvedTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  const isDark =
-    darkMode === "dark" ||
-    (darkMode === "auto" &&
-      (mounted ? resolvedTheme === "dark" || theme === "dark" : false))
-
-  const src = isDark ? LOGO_PATHS[variant].dark : LOGO_PATHS[variant].light
-
   const computedWidth = width ?? size ?? (variant === "icon" ? 36 : 140)
   const computedHeight = height ?? size ?? (variant === "icon" ? 36 : 40)
 
+  const baseClass = cn("object-contain", imgClassName)
+
+  // Mode forcé
+  if (darkMode === "dark") {
+    return (
+      <div
+        className={cn("relative inline-flex items-center justify-center shrink-0", className)}
+        style={{ width: computedWidth, height: computedHeight }}
+      >
+        <Image
+          src={LOGO_PATHS[variant].dark}
+          alt={alt}
+          width={computedWidth}
+          height={computedHeight}
+          priority={priority}
+          className={baseClass}
+          unoptimized
+        />
+      </div>
+    )
+  }
+
+  if (darkMode === "light") {
+    return (
+      <div
+        className={cn("relative inline-flex items-center justify-center shrink-0", className)}
+        style={{ width: computedWidth, height: computedHeight }}
+      >
+        <Image
+          src={LOGO_PATHS[variant].light}
+          alt={alt}
+          width={computedWidth}
+          height={computedHeight}
+          priority={priority}
+          className={baseClass}
+          unoptimized
+        />
+      </div>
+    )
+  }
+
+  // Mode auto : deux images avec classes dark: pour éviter le flash hydration
   return (
     <div
-      className={cn(
-        "relative inline-flex items-center justify-center shrink-0",
-        className
-      )}
+      className={cn("relative inline-flex items-center justify-center shrink-0", className)}
       style={{ width: computedWidth, height: computedHeight }}
     >
       <Image
-        src={src}
+        src={LOGO_PATHS[variant].light}
         alt={alt}
         width={computedWidth}
         height={computedHeight}
         priority={priority}
-        className={cn("object-contain", imgClassName)}
+        className={cn(baseClass, "dark:hidden")}
+        unoptimized
+      />
+      <Image
+        src={LOGO_PATHS[variant].dark}
+        alt={alt}
+        width={computedWidth}
+        height={computedHeight}
+        priority={priority}
+        className={cn(baseClass, "hidden dark:block")}
         unoptimized
       />
     </div>
@@ -113,23 +145,18 @@ export function LogoHorizontal({
   darkMode = "auto",
   priority = false,
 }: LogoHorizontalProps) {
-  const { theme, resolvedTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  const isDark =
-    darkMode === "dark" ||
-    (darkMode === "auto" &&
-      (mounted ? resolvedTheme === "dark" || theme === "dark" : false))
+  const colorClass =
+    darkMode === "dark"
+      ? "text-white"
+      : darkMode === "light"
+      ? "text-[#064E3B]"
+      : "text-[#064E3B] dark:text-white"
 
   return (
     <div
       className={cn(
         "inline-flex items-center shrink-0 group cursor-pointer",
-        isDark ? "text-white" : "text-[#064E3B]",
+        colorClass,
         "hover:text-tahfidz-green dark:hover:text-tahfidz-green",
         className
       )}
