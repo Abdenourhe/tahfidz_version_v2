@@ -698,7 +698,8 @@ function FooterLink({ href, external, children }: { href: string; external?: boo
     return <a href={href} className={baseClass}>{children}</a>
   }
 
-  return <Link href={href} className={baseClass}>{children}</Link>
+  // Désactive le prefetch pour que la navigation utilise toujours la locale du cookie courant.
+  return <Link href={href} prefetch={false} className={baseClass}>{children}</Link>
 }
 
 function Footer({ t }: { t: LandingContent }) {
