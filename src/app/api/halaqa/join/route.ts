@@ -72,9 +72,26 @@ export async function POST(req: Request) {
     // Un parent ne doit pas démarrer la session
     let becameLive = false
     if (halaqaSession.status === "SCHEDULED" && (isTeacher || isAdmin || isStudent)) {
-      await prisma.halaqaSession.update({
-        where: { id: sessionId },
-        data: { status: "LIVE", startedAt: new Date() },
+      await prisma.$transaction(async (tx) => {
+        await tx.halaqaSession.update({
+          where: { id: sessionId },
+          data: { status: "LIVE", startedAt: new Date() },
+        })
+        await tx.school.update({
+          where: { id: halaqaSession.schoolId },
+          data: {
+            halaqaPlannedCount: { decrement: 1 },
+            halaqaSessionsUsed: { increment: 1 },
+          },
+        })
+        // Sécurité anti-négatif
+        await tx.school.updateMany({
+          where: {
+            id: halaqaSession.schoolId,
+            halaqaPlannedCount: { lt: 0 },
+          },
+          data: { halaqaPlannedCount: 0 },
+        })
       })
       becameLive = true
     }

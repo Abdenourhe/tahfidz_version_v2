@@ -40,12 +40,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
     }
 
-    if (halaqaSession.status === "ENDED" || halaqaSession.status === "CANCELLED") {
+    const originalStatus = halaqaSession.status
+
+    if (originalStatus === "ENDED" || originalStatus === "CANCELLED") {
       return NextResponse.json({ error: "Session déjà terminée ou annulée" }, { status: 400 })
     }
 
     // Si la session est en direct, tenter de la clôturer côté BBB
-    if (halaqaSession.status === "LIVE") {
+    if (originalStatus === "LIVE") {
       try {
         const url = new URL(halaqaSession.roomUrl)
         const pw = url.searchParams.get("password")
@@ -57,13 +59,30 @@ export async function POST(req: Request) {
       }
     }
 
-    // Mettre à jour Prisma
-    const updated = await prisma.halaqaSession.update({
-      where: { id: sessionId },
-      data: {
-        status: "CANCELLED",
-        endedAt: new Date(),
-      },
+    // Mettre à jour Prisma + rembourser le quota
+    const [updated] = await prisma.$transaction(async (tx) => {
+      const session = await tx.halaqaSession.update({
+        where: { id: sessionId },
+        data: {
+          status: "CANCELLED",
+          endedAt: new Date(),
+        },
+      })
+
+      // Rembourser le quota selon le statut d'origine
+      if (originalStatus === "SCHEDULED") {
+        await tx.school.update({
+          where: { id: halaqaSession.schoolId },
+          data: { halaqaPlannedCount: { decrement: 1 } },
+        })
+      } else if (originalStatus === "LIVE") {
+        await tx.school.update({
+          where: { id: halaqaSession.schoolId },
+          data: { halaqaSessionsUsed: { decrement: 1 } },
+        })
+      }
+
+      return [session]
     })
 
     // Notifier les participants

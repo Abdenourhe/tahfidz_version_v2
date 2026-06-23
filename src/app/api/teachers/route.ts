@@ -1,5 +1,6 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { checkTeacherLimit } from "@/lib/halaqa-quota"
 import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 
@@ -93,6 +94,15 @@ export async function POST(req: Request) {
     })
     if (existing) {
       return NextResponse.json({ error: "Cet email est déjà utilisé dans cette école" }, { status: 409 })
+    }
+
+    // ─── Vérification de la limite d'enseignants ─────────────────────
+    const teacherCheck = await checkTeacherLimit(schoolId)
+    if (!teacherCheck.allowed) {
+      return NextResponse.json(
+        { error: `Limite de ${teacherCheck.limit} enseignants atteinte. Passez à un plan supérieur.` },
+        { status: 403 }
+      )
     }
 
     const hashedPassword = await bcrypt.hash(password, 12)

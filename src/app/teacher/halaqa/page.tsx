@@ -24,6 +24,18 @@ interface HalaqaSession {
   studentIds: string[]
 }
 
+interface QuotaStatus {
+  plan: string
+  monthlyLimit: number | null
+  bonusCredits: number
+  plannedCount: number
+  sessionsUsed: number
+  totalAllowed: number
+  totalConsumed: number
+  remaining: number
+  isUnlimited: boolean
+}
+
 export default function TeacherHalaqaPage() {
   const { locale } = useLanguage()
   const t = useT("halaqa")
@@ -32,10 +44,23 @@ export default function TeacherHalaqaPage() {
   const [loading, setLoading] = useState(true)
   const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [filter, setFilter] = useState<"all" | "scheduled" | "live" | "ended">("all")
+  const [quota, setQuota] = useState<QuotaStatus | null>(null)
 
   useEffect(() => {
     fetchSessions()
+    fetchQuota()
   }, [])
+
+  const fetchQuota = async () => {
+    try {
+      const res = await fetch("/api/halaqa/quota")
+      if (!res.ok) throw new Error("Erreur")
+      const data = await res.json()
+      setQuota(data.status || null)
+    } catch {
+      setQuota(null)
+    }
+  }
 
   const fetchSessions = async () => {
     try {
@@ -93,6 +118,45 @@ export default function TeacherHalaqaPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6">
       <div className="max-w-6xl mx-auto">
+        {/* Quota banner */}
+        {quota && (
+          <div className={`mb-6 rounded-xl p-4 border ${
+            quota.isUnlimited || quota.remaining > 0
+              ? "bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/20"
+              : "bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/20"
+          }`}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  {quota.isUnlimited
+                    ? "Halaqa Online illimitées"
+                    : `${quota.totalConsumed} / ${quota.totalAllowed} Halaqa utilisées ce mois`}
+                </p>
+                {!quota.isUnlimited && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    {quota.plannedCount} planifiée{quota.plannedCount > 1 ? "s" : ""} · {quota.sessionsUsed} effectuée{quota.sessionsUsed > 1 ? "s" : ""} · {quota.bonusCredits > 0 ? `+${quota.bonusCredits} bonus` : ""}
+                  </p>
+                )}
+              </div>
+              {!quota.isUnlimited && quota.remaining === 0 && (
+                <span className="text-xs font-semibold text-red-600 dark:text-red-400">
+                  Quota atteint — Passez à un plan supérieur
+                </span>
+              )}
+            </div>
+            {!quota.isUnlimited && (
+              <div className="mt-3 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  className={`h-full transition-all ${
+                    quota.remaining === 0 ? "bg-red-500" : "bg-tahfidz-green"
+                  }`}
+                  style={{ width: `${Math.min(100, (quota.totalConsumed / Math.max(1, quota.totalAllowed)) * 100)}%` }}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
@@ -105,8 +169,18 @@ export default function TeacherHalaqaPage() {
             </p>
           </div>
           <Link
-            href="/teacher/halaqa/new"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-tahfidz-green hover:bg-emerald-700 text-white font-semibold rounded-xl transition shadow-lg shadow-tahfidz-green/20"
+            href={quota && !quota.isUnlimited && quota.remaining === 0 ? "#" : "/teacher/halaqa/new"}
+            onClick={(e) => {
+              if (quota && !quota.isUnlimited && quota.remaining === 0) {
+                e.preventDefault()
+                alert("Quota de Halaqa atteint. Passez à un plan supérieur.")
+              }
+            }}
+            className={`inline-flex items-center gap-2 px-5 py-2.5 font-semibold rounded-xl transition shadow-lg shadow-tahfidz-green/20 ${
+              quota && !quota.isUnlimited && quota.remaining === 0
+                ? "bg-gray-400 cursor-not-allowed text-white"
+                : "bg-tahfidz-green hover:bg-emerald-700 text-white"
+            }`}
           >
             <Plus size={18} />
             {t("newSession")}

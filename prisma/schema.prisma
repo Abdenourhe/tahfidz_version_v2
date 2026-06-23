@@ -25,8 +25,14 @@ enum UserRole {
 enum SchoolPlan {
   FREE
   STARTER
+  ECONOMIQUE
   PRO
   ENTERPRISE
+}
+
+enum BillingCycle {
+  MONTHLY
+  YEARLY
 }
 
 enum Gender {
@@ -98,6 +104,24 @@ model School {
   teacherSignature  String?
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
+
+  // Abonnement
+  billingCycle      BillingCycle @default(MONTHLY)
+  subscriptionStart DateTime     @default(now())
+
+  // Quotas Halaqa
+  halaqaMonthlyLimit     Int?      // null = illimité
+  halaqaBonusCredits     Int       @default(0)
+  halaqaBonusExpiry      DateTime?
+  halaqaPlannedCount     Int       @default(0)
+  halaqaSessionsUsed     Int       @default(0)
+  halaqaUsagePeriodStart DateTime  @default(now())
+
+  // Limites liées
+  maxTeachers          Int       @default(1)
+  maxStudents          Int       @default(20)
+  halaqaMaxDuration    Int       @default(30)
+  halaqaAllowRecording Boolean   @default(false)
 
   users                User[]
   groups               Group[]

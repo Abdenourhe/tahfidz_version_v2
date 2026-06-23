@@ -2456,6 +2456,16 @@ export const translations = {
     cancel:           { fr: "Annuler",               en: "Cancel",                ar: "إلغاء" },
     confirmCancel:    { fr: "Voulez-vous vraiment annuler cette séance ?", en: "Are you sure you want to cancel this session?", ar: "هل أنت متأكد أنك تريد إلغاء هذه الجلسة؟" },
     errorCancel:      { fr: "Erreur lors de l'annulation", en: "Error cancelling the session", ar: "خطأ أثناء الإلغاء" },
+    // Quotas
+    quotaReached:     { fr: "Quota de Halaqa atteint", en: "Halaqa quota reached", ar: "تم الوصول إلى حصة الحلقة" },
+    upgradePlan:      { fr: "Passez à un plan supérieur", en: "Upgrade your plan", ar: "قم بترقية خطتك" },
+    quotaBanner:      { fr: "Halaqa utilisées ce mois", en: "Halaqa used this month", ar: "الحلقات المستخدمة هذا الشهر" },
+    unlimited:        { fr: "illimitées", en: "unlimited", ar: "غير محدود" },
+    plannedCount:     { fr: "planifiées", en: "planned", ar: "مجدولة" },
+    usedCount:        { fr: "effectuées", en: "used", ar: "منجزة" },
+    bonusCredits:     { fr: "bonus", en: "bonus", ar: "إضافية" },
+    maxDurationReached:{ fr: "Durée maximale atteinte", en: "Maximum duration reached", ar: "تم الوصول إلى المدة القصوى" },
+    maxTeachersReached:{ fr: "Limite d'enseignants atteinte", en: "Maximum teachers reached", ar: "تم الوصول إلى الحد الأقصى للمعلمين" },
     // Accès parent
     observe:          { fr: "Observer",              en: "Observe",               ar: "مشاهدة" },
     noLiveSession:    { fr: "Aucune séance en direct pour le moment", en: "No live session at the moment", ar: "لا توجد جلسات مباشرة حالياً" },

@@ -2,6 +2,7 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { createMeeting, generateMeetingID, generatePassword, joinMeetingUrl } from "@/lib/bigbluebutton"
+import { checkHalaqaCreationAllowed } from "@/lib/halaqa-quota"
 import { notifyHalaqaParticipants } from "@/lib/halaqa-notifications"
 import { NextResponse } from "next/server"
 import { z } from "zod"
@@ -62,6 +63,15 @@ export async function POST(req: Request) {
       )
     }
 
+    // ─── Vérification du quota Halaqa ─────────────────────────────────
+    const quotaCheck = await checkHalaqaCreationAllowed(schoolId, data.duration)
+    if (!quotaCheck.allowed) {
+      return NextResponse.json(
+        { error: quotaCheck.reason, quota: quotaCheck.status },
+        { status: 403 }
+      )
+    }
+
     const meetingID = generateMeetingID(teacherId)
     const moderatorPW = generatePassword()
     const attendeePW = generatePassword()
@@ -110,29 +120,38 @@ export async function POST(req: Request) {
       guest: true,
     })
 
-    // Sauvegarder dans Prisma
-    const halaqaSession = await prisma.halaqaSession.create({
-      data: {
-        meetingID,
-        meetingName: data.meetingName,
-        roomUrl,
-        attendeeUrl,
-        guestUrl,
-        schoolId,
-        teacherId,
-        studentIds: data.studentIds,
-        groupId: data.groupId || null,
-        type: data.type,
-        mode: data.mode,
-        status: "SCHEDULED",
-        scheduledAt: new Date(data.scheduledAt),
-        duration: data.duration,
-        sourah: data.sourah || null,
-        verses: data.verses || null,
-      },
-      include: {
-        teacher: { select: { fullName: true, email: true } },
-      },
+    // Sauvegarder dans Prisma + incrémenter le quota planned
+    const [halaqaSession] = await prisma.$transaction(async (tx) => {
+      const session = await tx.halaqaSession.create({
+        data: {
+          meetingID,
+          meetingName: data.meetingName,
+          roomUrl,
+          attendeeUrl,
+          guestUrl,
+          schoolId,
+          teacherId,
+          studentIds: data.studentIds,
+          groupId: data.groupId || null,
+          type: data.type,
+          mode: data.mode,
+          status: "SCHEDULED",
+          scheduledAt: new Date(data.scheduledAt),
+          duration: data.duration,
+          sourah: data.sourah || null,
+          verses: data.verses || null,
+        },
+        include: {
+          teacher: { select: { fullName: true, email: true } },
+        },
+      })
+
+      await tx.school.update({
+        where: { id: schoolId },
+        data: { halaqaPlannedCount: { increment: 1 } },
+      })
+
+      return [session]
     })
 
     // Notifier les participants (élèves + parents)
