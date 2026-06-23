@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { Logo } from "@/components/ui/Logo"
+import { PLAN_CONFIG } from "@/lib/halaqa-quota"
 
 /* ─── Types ──────────────────────────────────────────────── */
 type Step = 1 | 2 | 3
@@ -44,6 +45,23 @@ const planLabels: Record<string, string> = {
   ECONOMIQUE: "Économique",
   PRO: "Pro",
   ENTERPRISE: "Enterprise",
+}
+
+type SchoolPlanKey = keyof typeof PLAN_CONFIG
+const planOrder: SchoolPlanKey[] = ["FREE", "STARTER", "ECONOMIQUE", "PRO", "ENTERPRISE"]
+
+function getRecommendedPlan(totalStudents: number, teachersCount: number): SchoolPlanKey {
+  for (const plan of planOrder) {
+    const config = PLAN_CONFIG[plan]
+    const fitsStudents = config.maxStudents === null || totalStudents <= config.maxStudents
+    const fitsTeachers = config.maxTeachers === null || teachersCount <= config.maxTeachers
+    if (fitsStudents && fitsTeachers) return plan
+  }
+  return "ENTERPRISE"
+}
+
+function formatLimit(limit: number | null): string {
+  return limit === null ? "illimité" : String(limit)
 }
 
 /* ─── Component ──────────────────────────────────────────── */
@@ -584,6 +602,75 @@ export default function RegisterSchoolClient() {
                         </div>
                       </motion.div>
                     )}
+
+                    {/* Dépassement de capacité vs plan sélectionné */}
+                    {(() => {
+                      const currentPlan = form.plan as SchoolPlanKey
+                      const currentConfig = PLAN_CONFIG[currentPlan]
+                      const recommended = getRecommendedPlan(totalStudents, Number(form.teachersCount) || 0)
+                      const overStudents = currentConfig.maxStudents !== null && totalStudents > currentConfig.maxStudents
+                      const overTeachers = currentConfig.maxTeachers !== null && Number(form.teachersCount) > currentConfig.maxTeachers
+                      const overLimit = overStudents || overTeachers
+                      const recommendedIndex = planOrder.indexOf(recommended)
+                      const currentIndex = planOrder.indexOf(currentPlan)
+
+                      if (!overLimit || recommendedIndex <= currentIndex) return null
+
+                      return (
+                        <motion.div
+                          initial={{ opacity: 0, y: 5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800/30"
+                        >
+                          <div className="flex items-start gap-2 text-sm text-amber-800 dark:text-amber-200 mb-3">
+                            <span className="mt-0.5">⚠</span>
+                            <div>
+                              <p className="font-semibold">Capacité dépassée pour le plan {planLabels[currentPlan]}</p>
+                              {overStudents && (
+                                <p>Le plan {planLabels[currentPlan]} permet max {currentConfig.maxStudents} élèves, vous en avez estimé {totalStudents}.</p>
+                              )}
+                              {overTeachers && (
+                                <p>Le plan {planLabels[currentPlan]} permet max {currentConfig.maxTeachers} enseignants, vous en avez indiqué {form.teachersCount}.</p>
+                              )}
+                              <p className="mt-1 font-medium">Nous vous recommandons le plan {planLabels[recommended]} ou supérieur.</p>
+                            </div>
+                          </div>
+
+                          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Choisir une offre adaptée</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {planOrder.slice(recommendedIndex).map((plan) => {
+                              const config = PLAN_CONFIG[plan]
+                              const isRecommended = plan === recommended
+                              return (
+                                <button
+                                  key={plan}
+                                  type="button"
+                                  onClick={() => update("plan", plan)}
+                                  className={`text-left p-3 rounded-xl border transition relative ${
+                                    form.plan === plan
+                                      ? "border-tahfidz-green bg-tahfidz-green-light dark:bg-emerald-900/20"
+                                      : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-tahfidz-green/50"
+                                  }`}
+                                >
+                                  {isRecommended && (
+                                    <span className="absolute -top-2 left-3 px-2 py-0.5 bg-tahfidz-green text-white text-[10px] font-bold rounded-full">
+                                      Recommandé
+                                    </span>
+                                  )}
+                                  <p className="font-bold text-gray-900 dark:text-white text-sm">{planLabels[plan]}</p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    {formatLimit(config.maxStudents)} élèves · {formatLimit(config.maxTeachers)} enseignants
+                                  </p>
+                                  <p className="text-xs text-tahfidz-green mt-1 font-medium">
+                                    {config.monthlyHalaqas === null ? "Halaqas illimitées" : `${config.monthlyHalaqas} Halaqas/mois`}
+                                  </p>
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </motion.div>
+                      )
+                    })()}
                   </motion.div>
                 )}
               </AnimatePresence>
