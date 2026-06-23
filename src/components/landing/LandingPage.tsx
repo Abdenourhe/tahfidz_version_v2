@@ -9,6 +9,7 @@ import {
   Sparkles, Heart, ExternalLink,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/contexts/LanguageContext"
 import { getIcon } from "@/lib/landing/icon-mapper"
 import { type LandingContent } from "@/lib/landing/default-content"
 import { getCurrencyLabel } from "@/lib/landing/currencies"
@@ -765,17 +766,13 @@ interface LandingPageProps {
 }
 
 export default function LandingPage({ content, initialLang = "fr" }: LandingPageProps) {
-  const [lang, setLang] = useState<Lang>(initialLang)
+  const { locale, setLocale } = useLanguage()
+  const lang = (locale as Lang) ?? initialLang
   const t = content[lang] ?? content["fr"]
-
-  useEffect(() => {
-    document.documentElement.dir = t.dir
-    document.documentElement.lang = lang
-  }, [t.dir, lang])
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
-      <Navbar lang={lang} setLang={setLang} t={t} />
+      <Navbar lang={lang} setLang={setLocale as (l: Lang) => void} t={t} />
       <HeroSection t={t} />
       <FeaturesSection t={t} />
       <HowItWorksSection t={t} />
