@@ -32,6 +32,7 @@ export const translations = {
     linkChild:      { fr: "Lier un enfant",    en: "Link a child",     ar: "ربط طفل" },
     quickLinks:     { fr: "Accès rapide",      en: "Quick access",     ar: "وصول سريع" },
     halaqa:         { fr: "Halaqa Online",     en: "Halaqa Online",    ar: "حلقة أونلاين" },
+    halaqaQuotas:   { fr: "Quotas Halaqa",     en: "Halaqa Quotas",    ar: "حصص الحلقة" },
     statistics:     { fr: "Statistiques",      en: "Statistics",       ar: "الإحصائيات" },
     admins:         { fr: "Administrateurs",   en: "Administrators",   ar: "المدراء" },
     dailyLog:       { fr: "Carnet de suivi",   en: "Daily log",        ar: "سجل المتابعة" },
