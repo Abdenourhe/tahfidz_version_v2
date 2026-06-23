@@ -1,7 +1,8 @@
 "use client"
 // src/app/register-school/page.tsx — Inscription professionnelle d'ecole
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Loader2, CheckCircle2, School, ArrowLeft, Building2, User, Mail,
@@ -27,6 +28,7 @@ interface FormData {
   classCount:      string
   studentsPerClass:string
   teachersCount:   string
+  plan:            string
 }
 
 /* ─── Step config ────────────────────────────────────────── */
@@ -46,6 +48,17 @@ export default function RegisterSchoolPage() {
   const [showPwd, setShowPwd] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
 
+  const searchParams = useSearchParams()
+  const planParam = searchParams.get("plan") ?? "FREE"
+
+  const planLabels: Record<string, string> = {
+    FREE: "Gratuit",
+    STARTER: "Starter",
+    ECONOMIQUE: "Économique",
+    PRO: "Pro",
+    ENTERPRISE: "Enterprise",
+  }
+
   const [form, setForm] = useState<FormData>({
     schoolName:      "",
     address:         "",
@@ -59,6 +72,7 @@ export default function RegisterSchoolPage() {
     classCount:      "",
     studentsPerClass:"",
     teachersCount:   "",
+    plan:            planParam,
   })
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
@@ -130,6 +144,7 @@ export default function RegisterSchoolPage() {
           classCount:       Number(form.classCount),
           studentsPerClass: Number(form.studentsPerClass),
           teachersCount:    Number(form.teachersCount),
+          plan:             form.plan,
           logo,
         }),
       })
@@ -211,6 +226,13 @@ export default function RegisterSchoolPage() {
           <p className="text-gray-500 dark:text-gray-400 max-w-lg mx-auto">
             Remplissez le formulaire ci-dessous. Le Super-Admin validera votre demande sous 24h.
           </p>
+
+          {form.plan && (
+            <div className="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-tahfidz-green/10 to-emerald-500/10 dark:from-emerald-900/20 dark:to-emerald-800/20 border border-tahfidz-green/20 dark:border-emerald-800/30">
+              <span className="text-xs text-gray-500 dark:text-gray-400">Plan selectionne :</span>
+              <span className="text-sm font-bold text-tahfidz-green">{planLabels[form.plan] ?? form.plan}</span>
+            </div>
+          )}
         </motion.div>
 
         {/* Progress bar */}

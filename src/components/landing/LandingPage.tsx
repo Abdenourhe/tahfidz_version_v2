@@ -514,6 +514,16 @@ const periodLabels: Record<Lang, { monthly: string; yearly: string; month: strin
   ar: { monthly: "شهري", yearly: "سنوي", month: "شهر", year: "سنة" },
 }
 
+function planNameToEnum(name: string): string {
+  const normalized = name.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  if (normalized.includes("gratuit") || normalized.includes("free") || normalized.includes("مجاني")) return "FREE"
+  if (normalized.includes("economique") || normalized.includes("economy") || normalized.includes("اقتصادي")) return "ECONOMIQUE"
+  if (normalized.includes("enterprise") || normalized.includes("entreprise") || normalized.includes("مؤسسة")) return "ENTERPRISE"
+  if (normalized.includes("pro") || normalized.includes("professionnel") || normalized.includes("احترافي")) return "PRO"
+  if (normalized.includes("starter")) return "STARTER"
+  return "FREE"
+}
+
 function PricingSection({ t, lang }: { t: LandingContent; lang: Lang }) {
   const [period, setPeriod] = useState<"month" | "year">(t.pricing.period ?? "year")
 
@@ -628,7 +638,7 @@ function PricingSection({ t, lang }: { t: LandingContent; lang: Lang }) {
                   ))}
                 </ul>
                 <Link
-                  href="/register-school"
+                  href={`/register-school?plan=${encodeURIComponent(planNameToEnum(plan.name))}`}
                   className={cn(
                     "block w-full text-center py-2.5 rounded-xl font-semibold transition",
                     isPopular
