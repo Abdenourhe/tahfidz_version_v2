@@ -1,12 +1,20 @@
 // src/lib/site-config/page-utils.ts
 // Helpers de chargement et de détection de langue pour les pages éditables.
 
-import { headers } from 'next/headers'
+import { headers, cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import { defaultPageContents } from './page-defaults'
 import type { SitePageConfig, SitePageKey, SitePageLang, PageContent } from './page-types'
 
 export async function getPageLang(): Promise<SitePageLang> {
+  // Priorité au cookie de locale (synchronisé avec le sélecteur de langue côté client).
+  const cookieStore = await cookies()
+  const cookieLocale = cookieStore.get('locale')?.value
+  if (cookieLocale === 'ar') return 'ar'
+  if (cookieLocale === 'en') return 'en'
+  if (cookieLocale === 'fr') return 'fr'
+
+  // Fallback sur l'en-tête Accept-Language.
   const h = await headers()
   const accept = h.get('accept-language') ?? ''
   const code = accept.split(',')[0]?.trim().slice(0, 2).toLowerCase()

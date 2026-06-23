@@ -62,9 +62,12 @@ const localeInitScript = `
 (function() {
   try {
     var locale = localStorage.getItem('locale');
-    if (locale === 'ar') {
-      document.documentElement.setAttribute('dir', 'rtl');
-      document.documentElement.setAttribute('lang', 'ar');
+    if (locale === 'ar' || locale === 'en') {
+      document.documentElement.setAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
+      document.documentElement.setAttribute('lang', locale);
+    }
+    if (locale) {
+      document.cookie = 'locale=' + encodeURIComponent(locale) + '; path=/; max-age=31536000; SameSite=Lax';
     }
   } catch(e) {}
 })();

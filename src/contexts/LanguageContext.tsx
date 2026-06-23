@@ -4,6 +4,18 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react"
 import { Locale, SectionKey, translations } from "@/lib/i18n/translations"
 
+function getCookie(name: string): string | null {
+  if (typeof document === "undefined") return null
+  const match = document.cookie.match(new RegExp("(?:^|; )" + name.replace(/([$?*|{}\[\]\\/+,^])/g, "\\$1") + "=([^;]*)"))
+  return match ? decodeURIComponent(match[1]) : null
+}
+
+function setCookie(name: string, value: string, days = 365) {
+  if (typeof document === "undefined") return
+  const maxAge = days * 24 * 60 * 60
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax`
+}
+
 interface LanguageContextValue {
   locale: Locale
   setLocale: (locale: Locale) => void
@@ -23,12 +35,18 @@ const LanguageContext = createContext<LanguageContextValue>({
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>("fr")
 
-  // Lire la locale depuis localStorage au montage
+  // Lire la locale depuis localStorage ou le cookie au montage
   useEffect(() => {
     try {
       const saved = localStorage.getItem("locale") as Locale | null
       if (saved && ["fr", "en", "ar"].includes(saved)) {
         setLocaleState(saved)
+        setCookie("locale", saved)
+        return
+      }
+      const cookieLocale = getCookie("locale") as Locale | null
+      if (cookieLocale && ["fr", "en", "ar"].includes(cookieLocale)) {
+        setLocaleState(cookieLocale)
       }
     } catch {}
   }, [])
@@ -38,6 +56,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem("locale", newLocale)
     } catch {}
+    setCookie("locale", newLocale)
     // Appliquer direction et lang sur <html>
     document.documentElement.lang = newLocale
     document.documentElement.dir  = newLocale === "ar" ? "rtl" : "ltr"
