@@ -1,7 +1,7 @@
 "use client"
 // src/app/register-school/RegisterSchoolClient.tsx — Formulaire d'inscription d'école (client)
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -12,6 +12,7 @@ import {
 import Link from "next/link"
 import { Logo } from "@/components/ui/Logo"
 import { PLAN_CONFIG } from "@/lib/halaqa-quota"
+import { useLanguage } from "@/contexts/LanguageContext"
 
 /* ─── Types ──────────────────────────────────────────────── */
 type Step = 1 | 2 | 3
@@ -64,6 +65,36 @@ function formatLimit(limit: number | null): string {
   return limit === null ? "illimité" : String(limit)
 }
 
+interface LandingPlan {
+  name: string
+  students: string
+  monthlyPrice: string
+  yearlyPrice: string
+  monthlyFeatures: string[]
+  yearlyFeatures: string[]
+  features?: string[]
+}
+
+interface LandingPricing {
+  title: string
+  subtitle: string
+  period: "month" | "year"
+  request: string
+  popular: string
+  currency: string
+  plans: LandingPlan[]
+}
+
+function planNameToEnum(name: string): SchoolPlanKey | null {
+  const normalized = name.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  if (normalized.includes("gratuit") || normalized.includes("free") || normalized.includes("مجاني")) return "FREE"
+  if (normalized.includes("economique") || normalized.includes("economy") || normalized.includes("اقتصادي")) return "ECONOMIQUE"
+  if (normalized.includes("enterprise") || normalized.includes("entreprise") || normalized.includes("مؤسسة")) return "ENTERPRISE"
+  if (normalized.includes("pro") || normalized.includes("professionnel") || normalized.includes("احترافي")) return "PRO"
+  if (normalized.includes("starter")) return "STARTER"
+  return null
+}
+
 /* ─── Component ──────────────────────────────────────────── */
 export default function RegisterSchoolClient() {
   const [step, setStep]       = useState<Step>(1)
@@ -75,6 +106,25 @@ export default function RegisterSchoolClient() {
 
   const searchParams = useSearchParams()
   const planParam = searchParams.get("plan") ?? "FREE"
+  const { locale } = useLanguage()
+
+  const [landingPricing, setLandingPricing] = useState<LandingPricing | null>(null)
+  const [pricingPeriod, setPricingPeriod] = useState<"month" | "year">("year")
+
+  useEffect(() => {
+    fetch("/api/site-config/landing")
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.value) {
+          const langContent = data.value[locale] ?? data.value.fr ?? data.value.en
+          if (langContent?.pricing) {
+            setLandingPricing(langContent.pricing)
+            setPricingPeriod(langContent.pricing.period ?? "year")
+          }
+        }
+      })
+      .catch(() => {})
+  }, [locale])
 
   const [form, setForm] = useState<FormData>({
     schoolName:      "",
@@ -638,35 +688,93 @@ export default function RegisterSchoolClient() {
 
                           <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Choisir une offre adaptée</p>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {planOrder.slice(recommendedIndex).map((plan) => {
-                              const config = PLAN_CONFIG[plan]
-                              const isRecommended = plan === recommended
-                              return (
-                                <button
-                                  key={plan}
-                                  type="button"
-                                  onClick={() => update("plan", plan)}
-                                  className={`text-left p-3 rounded-xl border transition relative ${
-                                    form.plan === plan
-                                      ? "border-tahfidz-green bg-tahfidz-green-light dark:bg-emerald-900/20"
-                                      : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-tahfidz-green/50"
-                                  }`}
-                                >
-                                  {isRecommended && (
-                                    <span className="absolute -top-2 left-3 px-2 py-0.5 bg-tahfidz-green text-white text-[10px] font-bold rounded-full">
-                                      Recommandé
-                                    </span>
-                                  )}
-                                  <p className="font-bold text-gray-900 dark:text-white text-sm">{planLabels[plan]}</p>
-                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    {formatLimit(config.maxStudents)} élèves · {formatLimit(config.maxTeachers)} enseignants
-                                  </p>
-                                  <p className="text-xs text-tahfidz-green mt-1 font-medium">
-                                    {config.monthlyHalaqas === null ? "Halaqas illimitées" : `${config.monthlyHalaqas} Halaqas/mois`}
-                                  </p>
-                                </button>
-                              )
-                            })}
+                            {(() => {
+                              const landingPlans = landingPricing?.plans ?? []
+                              const suggestedLandingPlans = landingPlans
+                                .map((lp) => ({ lp, enum: planNameToEnum(lp.name) }))
+                                .filter((item): item is { lp: LandingPlan; enum: SchoolPlanKey } => {
+                                  if (!item.enum) return false
+                                  return planOrder.indexOf(item.enum) >= recommendedIndex
+                                })
+
+                              if (suggestedLandingPlans.length === 0) {
+                                // Fallback si la config landing n'est pas chargée
+                                return planOrder.slice(recommendedIndex).map((plan) => {
+                                  const config = PLAN_CONFIG[plan]
+                                  const isRecommended = plan === recommended
+                                  return (
+                                    <button
+                                      key={plan}
+                                      type="button"
+                                      onClick={() => update("plan", plan)}
+                                      className={`text-left p-3 rounded-xl border transition relative ${
+                                        form.plan === plan
+                                          ? "border-tahfidz-green bg-tahfidz-green-light dark:bg-emerald-900/20"
+                                          : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-tahfidz-green/50"
+                                      }`}
+                                    >
+                                      {isRecommended && (
+                                        <span className="absolute -top-2 left-3 px-2 py-0.5 bg-tahfidz-green text-white text-[10px] font-bold rounded-full">
+                                          Recommandé
+                                        </span>
+                                      )}
+                                      <p className="font-bold text-gray-900 dark:text-white text-sm">{planLabels[plan]}</p>
+                                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                        {formatLimit(config.maxStudents)} élèves · {formatLimit(config.maxTeachers)} enseignants
+                                      </p>
+                                      <p className="text-xs text-tahfidz-green mt-1 font-medium">
+                                        {config.monthlyHalaqas === null ? "Halaqas illimitées" : `${config.monthlyHalaqas} Halaqas/mois`}
+                                      </p>
+                                    </button>
+                                  )
+                                })
+                              }
+
+                              return suggestedLandingPlans.map(({ lp, enum: plan }) => {
+                                const config = PLAN_CONFIG[plan]
+                                const isRecommended = plan === recommended
+                                const price = pricingPeriod === "month" ? lp.monthlyPrice : lp.yearlyPrice
+                                const features = pricingPeriod === "month" ? lp.monthlyFeatures : lp.yearlyFeatures
+                                const currency = landingPricing?.currency ?? "CAD"
+                                const isSelected = form.plan === plan
+                                return (
+                                  <button
+                                    key={plan}
+                                    type="button"
+                                    onClick={() => update("plan", plan)}
+                                    className={`text-left p-4 rounded-xl border transition relative flex flex-col h-full ${
+                                      isSelected
+                                        ? "border-tahfidz-green bg-tahfidz-green-light dark:bg-emerald-900/20"
+                                        : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-tahfidz-green/50"
+                                    }`}
+                                  >
+                                    {isRecommended && (
+                                      <span className="absolute -top-2 left-3 px-2 py-0.5 bg-tahfidz-green text-white text-[10px] font-bold rounded-full">
+                                        Recommandé
+                                      </span>
+                                    )}
+                                    <div className="flex items-baseline justify-between gap-2 mb-1">
+                                      <p className="font-bold text-gray-900 dark:text-white text-sm">{lp.name}</p>
+                                      <p className="text-sm font-bold text-tahfidz-green">{price} {currency}</p>
+                                    </div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{lp.students}</p>
+                                    <ul className="space-y-1 mt-auto">
+                                      {features.slice(0, 4).map((feature, i) => (
+                                        <li key={i} className="flex items-start gap-1.5 text-xs text-gray-600 dark:text-gray-300">
+                                          <Check size={12} className="text-tahfidz-green mt-0.5 shrink-0" />
+                                          <span>{feature}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                    {isSelected && (
+                                      <div className="mt-3 text-xs font-semibold text-tahfidz-green">
+                                        Sélectionné
+                                      </div>
+                                    )}
+                                  </button>
+                                )
+                              })
+                            })()}
                           </div>
                         </motion.div>
                       )
