@@ -2606,6 +2606,37 @@ export const translations = {
     noResultsForFilter: { fr: "Aucun contenu ne correspond à votre filtre.", en: "No content matches your filter.", ar: "لا يوجد محتوى يطابق الفلتر الخاص بك." },
   },
 
+  // ─── Public contact form (src/app/contact/ContactForm.tsx) ──────────
+  contactForm: {
+    fullName:           { fr: "Nom complet",                                  en: "Full name",                              ar: "الاسم الكامل" },
+    fullNamePlaceholder:{ fr: "Votre nom",                                    en: "Your name",                              ar: "اسمك" },
+    fullNameRequired:   { fr: "Le nom est requis",                            en: "Name is required",                       ar: "الاسم مطلوب" },
+    email:              { fr: "Email",                                        en: "Email",                                  ar: "البريد الإلكتروني" },
+    emailPlaceholder:   { fr: "votre@email.com",                              en: "your@email.com",                         ar: "بريدك@email.com" },
+    emailInvalid:       { fr: "Adresse email invalide",                       en: "Invalid email address",                  ar: "عنوان بريد إلكتروني غير صالح" },
+    requestType:        { fr: "Type de demande",                              en: "Request type",                           ar: "نوع الطلب" },
+    schoolName:         { fr: "Nom de l'école",                               en: "School name",                            ar: "اسم المدرسة" },
+    schoolNamePlaceholder:{ fr: "Optionnel",                                  en: "Optional",                               ar: "اختياري" },
+    message:            { fr: "Message",                                      en: "Message",                                ar: "الرسالة" },
+    messagePlaceholder: { fr: "Décrivez votre demande...",                    en: "Describe your request...",               ar: "صف طلبك..." },
+    messageMin:         { fr: "Le message doit contenir au moins 10 caractères", en: "Message must be at least 10 characters", ar: "يجب أن تحتوي الرسالة على 10 أحرف على الأقل" },
+    messageMax:         { fr: "500 caractères maximum",                       en: "500 characters maximum",                 ar: "500 حرف كحد أقصى" },
+    acceptPrivacy:      { fr: "J'accepte la",                                 en: "I accept the",                           ar: "أوافق على" },
+    privacyPolicy:      { fr: "politique de confidentialité",                 en: "privacy policy",                         ar: "سياسة الخصوصية" },
+    privacyRequired:    { fr: "Vous devez accepter la politique de confidentialité", en: "You must accept the privacy policy", ar: "يجب أن توافق على سياسة الخصوصية" },
+    submit:             { fr: "Envoyer le message",                           en: "Send message",                           ar: "إرسال الرسالة" },
+    sending:            { fr: "Envoi en cours...",                            en: "Sending...",                             ar: "جارٍ الإرسال..." },
+    successTitle:       { fr: "Message envoyé",                               en: "Message sent",                           ar: "تم إرسال الرسالة" },
+    successMessage:     { fr: "Merci pour votre message. Notre équipe vous répondra dans les plus brefs délais.", en: "Thank you for your message. Our team will get back to you shortly.", ar: "شكرًا لرسالتك. سيجيبك فريقنا في أقرب وقت ممكن." },
+    sendAnother:        { fr: "Envoyer un autre message",                     en: "Send another message",                   ar: "إرسال رسالة أخرى" },
+    errorMessage:       { fr: "Une erreur est survenue lors de l'envoi. Veuillez réessayer.", en: "An error occurred while sending. Please try again.", ar: "حدث خطأ أثناء الإرسال. يرجى المحاولة مرة أخرى." },
+    typeGeneral:        { fr: "Question générale",                            en: "General question",                       ar: "سؤال عام" },
+    typeSupport:        { fr: "Support technique",                            en: "Technical support",                      ar: "دعم فني" },
+    typeDemo:           { fr: "Demande de démo",                              en: "Demo request",                           ar: "طلب عرض توضيحي" },
+    typePartnership:    { fr: "Partenariat",                                  en: "Partnership",                            ar: "شراكة" },
+    typeOther:          { fr: "Autre",                                        en: "Other",                                  ar: "أخرى" },
+  },
+
 } as const
 
 // Type helpers
