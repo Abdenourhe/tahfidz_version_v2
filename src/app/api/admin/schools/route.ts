@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { applyPlanConfig } from "@/lib/halaqa-quota"
+import { SchoolPlan } from "@prisma/client"
 import bcrypt from "bcryptjs"
 
 async function requireSuperAdmin() {
@@ -71,9 +72,13 @@ export async function POST(req: NextRequest) {
   }
 
   const hashed = await bcrypt.hash(adminPassword, 12)
+  const selectedPlan: SchoolPlan = (["FREE", "STARTER", "ECONOMIQUE", "PRO", "ENTERPRISE"] as SchoolPlan[]).includes(plan as SchoolPlan)
+    ? (plan as SchoolPlan)
+    : "FREE"
+
   const school = await prisma.school.create({
     data: {
-      name: schoolName, slug: schoolSlug, plan: plan ?? "FREE",
+      name: schoolName, slug: schoolSlug, plan: selectedPlan,
       isActive: true, settings: {},
       address: address || null, city: city || null,
       country: country || "DZ", phone: phone || null,
@@ -87,6 +92,8 @@ export async function POST(req: NextRequest) {
     },
     include: { _count: { select: { users: true } } },
   })
+
+  await applyPlanConfig(school.id, selectedPlan)
 
   return NextResponse.json({ school }, { status: 201 })
 }
@@ -121,13 +128,15 @@ export async function PATCH(req: NextRequest) {
     }
 
     const total = request.classCount * request.studentsPerClass
-    const plan  = autoPlan(total)
+    const requestedPlan = request.plan as SchoolPlan | null
+    const validPlans: SchoolPlan[] = ["FREE", "STARTER", "ECONOMIQUE", "PRO", "ENTERPRISE"]
+    const plan = requestedPlan && validPlans.includes(requestedPlan) ? requestedPlan : autoPlan(total)
 
     const school = await prisma.school.create({
       data: {
         name: request.schoolName,
         slug,
-        plan: plan as any,
+        plan,
         isActive: true,
         settings: {},
         address: request.address,
@@ -147,6 +156,9 @@ export async function PATCH(req: NextRequest) {
         },
       },
     })
+
+    // Appliquer la configuration du plan (quotas Halaqa, limites, etc.)
+    await applyPlanConfig(school.id, plan)
 
     await (prisma as any).schoolRequest.update({
       where: { id: body.requestId },
