@@ -120,13 +120,21 @@ export function normalizeFooterLink(link: unknown, defaultLinks: FooterLink[] = 
   }
   if (link && typeof link === 'object') {
     const l = link as Record<string, unknown>
+    const label = typeof l.label === 'string' ? l.label : ''
     let href = typeof l.href === 'string' ? l.href : '/'
     const external = typeof l.external === 'boolean' ? l.external : false
+
+    // Si le href est vide ou "/", tente de retrouver l'URL par défaut par label.
+    if (!external && (href === '/' || href === '')) {
+      const match = defaultLinks.find((d) => d.label.toLowerCase() === label.toLowerCase())
+      if (match) return { ...match }
+    }
+
     if (!external && !href.startsWith('/') && !href.startsWith('mailto:') && !href.startsWith('#') && !href.startsWith('http')) {
       href = '/' + href
     }
     return {
-      label: typeof l.label === 'string' ? l.label : '',
+      label,
       href,
       external,
     }
