@@ -4,7 +4,7 @@
 import { headers } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import { defaultPageContents } from './page-defaults'
-import type { SitePageConfig, SitePageKey, SitePageLang } from './page-types'
+import type { SitePageConfig, SitePageKey, SitePageLang, PageContent } from './page-types'
 
 export async function getPageLang(): Promise<SitePageLang> {
   const h = await headers()
@@ -15,6 +15,15 @@ export async function getPageLang(): Promise<SitePageLang> {
   return 'fr'
 }
 
+function mergePageContent(defaults: PageContent, value: Partial<PageContent> | undefined): PageContent {
+  return {
+    ...defaults,
+    ...value,
+    sections: value?.sections ?? defaults.sections,
+    contactCards: value?.contactCards ?? defaults.contactCards,
+  }
+}
+
 export async function loadPageConfig(key: SitePageKey): Promise<SitePageConfig> {
   const config = await prisma.siteConfig.findUnique({ where: { key } })
   if (!config?.value) return defaultPageContents[key]
@@ -23,8 +32,8 @@ export async function loadPageConfig(key: SitePageKey): Promise<SitePageConfig> 
   // Fusion avec les defaults pour garantir l'absence de champs manquants.
   const defaults = defaultPageContents[key]
   return {
-    fr: { ...defaults.fr, ...value.fr },
-    en: { ...defaults.en, ...value.en },
-    ar: { ...defaults.ar, ...value.ar },
+    fr: mergePageContent(defaults.fr, value.fr),
+    en: mergePageContent(defaults.en, value.en),
+    ar: mergePageContent(defaults.ar, value.ar),
   }
 }
