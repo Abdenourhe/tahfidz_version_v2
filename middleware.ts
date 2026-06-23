@@ -18,6 +18,8 @@ const PUBLIC_PATHS = [
   "/api/internal",
 ]
 
+const PROTECTED_PAGES = ["/privacy", "/terms", "/security", "/updates", "/docs"]
+
 const ROLE_ROUTES: Array<{ prefix: string; allowed: string[] }> = [
   { prefix: "/admin/super",       allowed: ["SUPERADMIN"] },
   { prefix: "/api/admin/schools", allowed: ["SUPERADMIN"] },
@@ -31,6 +33,12 @@ const ROLE_ROUTES: Array<{ prefix: string; allowed: string[] }> = [
 export default auth((req: NextRequest & { auth: { user?: { role?: string } } | null }) => {
   const { pathname } = req.nextUrl
   const session = req.auth
+
+  if (PROTECTED_PAGES.includes(pathname) && !session?.user) {
+    const url = new URL("/login", req.url)
+    url.searchParams.set("callbackUrl", pathname)
+    return NextResponse.redirect(url)
+  }
 
   if (PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
     return NextResponse.next()
