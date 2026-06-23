@@ -132,11 +132,16 @@ export async function PATCH(req: NextRequest) {
     const validPlans: SchoolPlan[] = ["FREE", "STARTER", "ECONOMIQUE", "PRO", "ENTERPRISE"]
     const plan = requestedPlan && validPlans.includes(requestedPlan) ? requestedPlan : autoPlan(total)
 
+    const requestedCycle = request.billingCycle as "MONTHLY" | "YEARLY" | null
+    const validCycles: ("MONTHLY" | "YEARLY")[] = ["MONTHLY", "YEARLY"]
+    const billingCycle = requestedCycle && validCycles.includes(requestedCycle) ? requestedCycle : "MONTHLY"
+
     const school = await prisma.school.create({
       data: {
         name: request.schoolName,
         slug,
         plan,
+        billingCycle,
         isActive: true,
         settings: {},
         address: request.address,

@@ -1,8 +1,21 @@
 "use client"
 import { Fragment, useState } from "react"
-import { CheckCircle2, X, ChevronDown, Check, Ban, Trash2, Loader2, Users, Phone, Mail, MapPin } from "lucide-react"
+import { CheckCircle2, X, ChevronDown, Check, Ban, Trash2, Loader2, Users, Phone, Mail, MapPin, CalendarDays } from "lucide-react"
 import { SchoolRequest } from "./types"
 import { formatPhone } from "./types"
+
+const planLabels: Record<string, string> = {
+  FREE: "Gratuit",
+  STARTER: "Starter",
+  ECONOMIQUE: "Économique",
+  PRO: "Pro",
+  ENTERPRISE: "Enterprise",
+}
+
+const cycleLabels: Record<string, string> = {
+  MONTHLY: "Mensuel",
+  YEARLY: "Annuel",
+}
 
 function RequestCard({
   r,
@@ -25,6 +38,12 @@ function RequestCard({
             <h3 className="font-semibold text-gray-900 dark:text-gray-100">{r.schoolName}</h3>
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${r.status === "PENDING" ? "bg-orange-100 text-orange-600" : r.status === "APPROVED" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-500"}`}>
               {r.status === "PENDING" ? "En attente" : r.status === "APPROVED" ? "Approuvee" : "Rejetee"}
+            </span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-tahfidz-green-light text-tahfidz-green font-semibold">
+              {planLabels[r.plan] ?? r.plan}
+            </span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-medium flex items-center gap-1">
+              <CalendarDays size={10} /> {cycleLabels[r.billingCycle] ?? r.billingCycle}
             </span>
             {r.slug && <span className="font-mono bg-tahfidz-green-light text-tahfidz-green px-2 py-0.5 rounded text-[10px]">🔑 {r.slug}</span>}
           </div>

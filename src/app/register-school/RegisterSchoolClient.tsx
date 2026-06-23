@@ -31,6 +31,7 @@ interface FormData {
   studentsPerClass:string
   teachersCount:   string
   plan:            string
+  billingCycle:    string
 }
 
 /* ─── Step config ────────────────────────────────────────── */
@@ -106,6 +107,8 @@ export default function RegisterSchoolClient() {
 
   const searchParams = useSearchParams()
   const planParam = searchParams.get("plan") ?? "FREE"
+  const periodParam = searchParams.get("period") ?? "year"
+  const billingCycleParam = periodParam === "month" ? "MONTHLY" : "YEARLY"
   const { locale } = useLanguage()
 
   const [landingPricing, setLandingPricing] = useState<LandingPricing | null>(null)
@@ -140,6 +143,7 @@ export default function RegisterSchoolClient() {
     studentsPerClass:"",
     teachersCount:   "",
     plan:            planParam,
+    billingCycle:    billingCycleParam,
   })
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
@@ -212,6 +216,7 @@ export default function RegisterSchoolClient() {
           studentsPerClass: Number(form.studentsPerClass),
           teachersCount:    Number(form.teachersCount),
           plan:             form.plan,
+          billingCycle:     form.billingCycle,
           logo,
         }),
       })
@@ -297,7 +302,9 @@ export default function RegisterSchoolClient() {
           {form.plan && (
             <div className="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-tahfidz-green/10 to-emerald-500/10 dark:from-emerald-900/20 dark:to-emerald-800/20 border border-tahfidz-green/20 dark:border-emerald-800/30">
               <span className="text-xs text-gray-500 dark:text-gray-400">Plan selectionne :</span>
-              <span className="text-sm font-bold text-tahfidz-green">{planLabels[form.plan] ?? form.plan}</span>
+              <span className="text-sm font-bold text-tahfidz-green">
+                {planLabels[form.plan] ?? form.plan} · {form.billingCycle === "MONTHLY" ? "Mensuel" : "Annuel"}
+              </span>
             </div>
           )}
         </motion.div>

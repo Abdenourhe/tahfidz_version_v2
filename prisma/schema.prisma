@@ -948,6 +948,7 @@ model SchoolRequest {
   city             String?
   country          String        @default("DZ")
   plan             SchoolPlan    @default(FREE)
+  billingCycle     BillingCycle  @default(MONTHLY)
   address          String?
   adminEmail       String
   adminPassword    String

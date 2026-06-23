@@ -638,7 +638,7 @@ function PricingSection({ t, lang }: { t: LandingContent; lang: Lang }) {
                   ))}
                 </ul>
                 <Link
-                  href={`/register-school?plan=${encodeURIComponent(planNameToEnum(plan.name))}`}
+                  href={`/register-school?plan=${encodeURIComponent(planNameToEnum(plan.name))}&period=${period}`}
                   className={cn(
                     "block w-full text-center py-2.5 rounded-xl font-semibold transition",
                     isPopular

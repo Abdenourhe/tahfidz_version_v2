@@ -17,6 +17,7 @@ const schema = z.object({
   studentsPerClass: z.coerce.number().int().min(1),
   teachersCount:    z.coerce.number().int().min(1),
   plan:             z.enum(["FREE", "STARTER", "ECONOMIQUE", "PRO", "ENTERPRISE"]).default("FREE"),
+  billingCycle:     z.enum(["MONTHLY", "YEARLY"]).default("MONTHLY"),
   logo:             z.string().optional(),
 })
 
@@ -60,6 +61,7 @@ export async function POST(req: NextRequest) {
         studentsPerClass: d.studentsPerClass,
         teachersCount:    d.teachersCount,
         plan:             d.plan,
+        billingCycle:     d.billingCycle,
         logo:             d.logo ?? null,
         status:           "PENDING",
       },
