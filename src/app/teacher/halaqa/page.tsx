@@ -22,6 +22,8 @@ interface HalaqaSession {
   startedAt?: string
   endedAt?: string
   recordingUrl?: string
+  duration?: number | null
+  teacher?: { fullName?: string | null } | null
   group?: { name: string }
   studentIds: string[]
 }

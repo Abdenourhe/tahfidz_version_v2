@@ -82,21 +82,38 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
   const formatTime = (d: Date) =>
     d.toLocaleTimeString(locale === "ar" ? "ar-DZ" : locale === "en" ? "en-US" : "fr-FR", { hour: "2-digit", minute: "2-digit" })
 
-  const SessionPill = ({ session, compact = false }: { session: Session & { scheduledAt: Date }; compact?: boolean }) => (
-    <button
-      type="button"
-      onClick={() => onSessionClick?.(session)}
-      className={cn(
-        "w-full text-left text-xs rounded-md border px-2 py-1 mb-1 truncate transition hover:opacity-90",
-        statusColors[session.status] || statusColors.SCHEDULED,
-        compact && "px-1.5 py-0.5 text-[10px]"
-      )}
-      title={`${session.meetingName} — ${formatTime(session.scheduledAt)}`}
-    >
-      <span className="font-medium">{formatTime(session.scheduledAt)}</span>{" "}
-      {session.meetingName}
-    </button>
-  )
+  const formatEndTime = (d: Date, durationMinutes?: number | null) => {
+    if (!durationMinutes) return ""
+    const end = new Date(d.getTime() + durationMinutes * 60 * 1000)
+    return formatTime(end)
+  }
+
+  const SessionPill = ({ session, compact = false }: { session: Session & { scheduledAt: Date }; compact?: boolean }) => {
+    const endTime = formatEndTime(session.scheduledAt, session.duration)
+    return (
+      <button
+        type="button"
+        onClick={() => onSessionClick?.(session)}
+        className={cn(
+          "w-full text-left rounded-md border px-2 transition hover:opacity-90 hover:shadow-sm",
+          compact ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-1.5 text-[11px] leading-tight",
+          statusColors[session.status] || statusColors.SCHEDULED
+        )}
+        title={`${session.meetingName} — ${formatTime(session.scheduledAt)}${endTime ? ` → ${endTime}` : ""}`}
+      >
+        <div className="font-semibold">
+          {formatTime(session.scheduledAt)}
+          {endTime && <span className="opacity-75"> → {endTime}</span>}
+        </div>
+        <div className={cn("font-medium", compact ? "truncate" : "line-clamp-2 whitespace-normal break-words")}>
+          {session.meetingName}
+        </div>
+        {!compact && session.teacher?.fullName && (
+          <div className="mt-0.5 text-[10px] opacity-75 truncate">{session.teacher.fullName}</div>
+        )}
+      </button>
+    )
+  }
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4">
@@ -206,12 +223,13 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
                     .map((s) => {
                       const start = new Date(s.scheduledAt)
                       const top = (start.getHours() + start.getMinutes() / 60 - 6) * 48
-                      const height = ((s.duration ?? 60) / 60) * 48
+                      const rawHeight = ((s.duration ?? 60) / 60) * 48
+                      const height = Math.max(rawHeight, 56)
                       return (
                         <div
                           key={s.id}
                           className="absolute left-1 right-1 z-10"
-                          style={{ top: `${top}px`, height: `${Math.max(height, 24)}px` }}
+                          style={{ top: `${top}px`, height: `${height}px` }}
                         >
                           <SessionPill session={s} />
                         </div>
