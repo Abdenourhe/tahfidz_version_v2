@@ -20,22 +20,40 @@ export async function GET(req: NextRequest) {
 
     const normalized = normalizeLandingContent(rawContent[lang], lang)
 
-    return NextResponse.json({
-      currency: normalized.pricing.currency,
-      period: normalized.pricing.period,
-      request: normalized.pricing.request,
-      popular: normalized.pricing.popular,
-      plans: normalized.pricing.plans,
-    })
+    return NextResponse.json(
+      {
+        currency: normalized.pricing.currency,
+        period: normalized.pricing.period,
+        request: normalized.pricing.request,
+        popular: normalized.pricing.popular,
+        plans: normalized.pricing.plans,
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      }
+    )
   } catch (error) {
     console.error("[SITE_CONFIG_LANDING_PLANS]", error)
     const fallback = normalizeLandingContent(defaultLandingContent[lang], lang)
-    return NextResponse.json({
-      currency: fallback.pricing.currency,
-      period: fallback.pricing.period,
-      request: fallback.pricing.request,
-      popular: fallback.pricing.popular,
-      plans: fallback.pricing.plans,
-    })
+    return NextResponse.json(
+      {
+        currency: fallback.pricing.currency,
+        period: fallback.pricing.period,
+        request: fallback.pricing.request,
+        popular: fallback.pricing.popular,
+        plans: fallback.pricing.plans,
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      }
+    )
   }
 }

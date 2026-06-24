@@ -8,7 +8,7 @@ import { defaultLandingContent, normalizeLandingContent, type LandingContent } f
 
 type Lang = "fr" | "en" | "ar"
 
-export const revalidate = 0
+export const dynamic = "force-dynamic"
 
 export default async function RootPage() {
   const session = await auth()
