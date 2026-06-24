@@ -4,7 +4,7 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, User, Users } from "lucide-react"
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface Session {
@@ -25,23 +25,23 @@ interface HalaqaCalendarViewProps {
 }
 
 const statusColors: Record<string, string> = {
-  SCHEDULED: "bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-200 dark:border-blue-700 shadow-blue-100 dark:shadow-none",
-  LIVE: "bg-red-50 text-red-800 border-red-300 dark:bg-red-900/40 dark:text-red-200 dark:border-red-700 animate-pulse shadow-red-100 dark:shadow-none",
-  ENDED: "bg-gray-50 text-gray-800 border-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 shadow-gray-100 dark:shadow-none",
-  CANCELLED: "bg-orange-50 text-orange-800 border-orange-300 dark:bg-orange-900/40 dark:text-orange-200 dark:border-orange-700 line-through opacity-60 shadow-orange-100 dark:shadow-none",
+  SCHEDULED: "bg-white dark:bg-gray-800 border-l-4 border-blue-500 text-gray-900 dark:text-gray-100 shadow-sm hover:shadow-md",
+  LIVE: "bg-white dark:bg-gray-800 border-l-4 border-red-500 text-gray-900 dark:text-gray-100 shadow-sm animate-pulse hover:shadow-md",
+  ENDED: "bg-gray-50 dark:bg-gray-800/60 border-l-4 border-gray-400 text-gray-600 dark:text-gray-400 shadow-sm hover:shadow-md",
+  CANCELLED: "bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-400 text-orange-800 dark:text-orange-300 line-through opacity-70 shadow-sm hover:shadow-md",
 }
 
 const accentPalette = [
-  "bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-200 dark:border-blue-700",
-  "bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-900/40 dark:text-emerald-200 dark:border-emerald-700",
-  "bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-900/40 dark:text-amber-200 dark:border-amber-700",
-  "bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-900/40 dark:text-rose-200 dark:border-rose-700",
-  "bg-violet-50 text-violet-800 border-violet-300 dark:bg-violet-900/40 dark:text-violet-200 dark:border-violet-700",
-  "bg-orange-50 text-orange-800 border-orange-300 dark:bg-orange-900/40 dark:text-orange-200 dark:border-orange-700",
-  "bg-cyan-50 text-cyan-800 border-cyan-300 dark:bg-cyan-900/40 dark:text-cyan-200 dark:border-cyan-700",
-  "bg-fuchsia-50 text-fuchsia-800 border-fuchsia-300 dark:bg-fuchsia-900/40 dark:text-fuchsia-200 dark:border-fuchsia-700",
-  "bg-lime-50 text-lime-800 border-lime-300 dark:bg-lime-900/40 dark:text-lime-200 dark:border-lime-700",
-  "bg-indigo-50 text-indigo-800 border-indigo-300 dark:bg-indigo-900/40 dark:text-indigo-200 dark:border-indigo-700",
+  "bg-white dark:bg-gray-800 border-l-4 border-blue-500 text-gray-900 dark:text-gray-100 shadow-sm hover:shadow-md",
+  "bg-white dark:bg-gray-800 border-l-4 border-emerald-500 text-gray-900 dark:text-gray-100 shadow-sm hover:shadow-md",
+  "bg-white dark:bg-gray-800 border-l-4 border-amber-500 text-gray-900 dark:text-gray-100 shadow-sm hover:shadow-md",
+  "bg-white dark:bg-gray-800 border-l-4 border-rose-500 text-gray-900 dark:text-gray-100 shadow-sm hover:shadow-md",
+  "bg-white dark:bg-gray-800 border-l-4 border-violet-500 text-gray-900 dark:text-gray-100 shadow-sm hover:shadow-md",
+  "bg-white dark:bg-gray-800 border-l-4 border-orange-500 text-gray-900 dark:text-gray-100 shadow-sm hover:shadow-md",
+  "bg-white dark:bg-gray-800 border-l-4 border-cyan-500 text-gray-900 dark:text-gray-100 shadow-sm hover:shadow-md",
+  "bg-white dark:bg-gray-800 border-l-4 border-fuchsia-500 text-gray-900 dark:text-gray-100 shadow-sm hover:shadow-md",
+  "bg-white dark:bg-gray-800 border-l-4 border-lime-500 text-gray-900 dark:text-gray-100 shadow-sm hover:shadow-md",
+  "bg-white dark:bg-gray-800 border-l-4 border-indigo-500 text-gray-900 dark:text-gray-100 shadow-sm hover:shadow-md",
 ]
 
 function hashToIndex(str: string, length: number): number {
@@ -202,15 +202,17 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
   const SessionPill = ({
     session,
     compact = false,
+    narrow = false,
   }: {
     session: Session & { scheduledAt: Date }
     compact?: boolean
+    narrow?: boolean
   }) => {
     const endTime = formatEndTime(session.scheduledAt, session.duration)
     const colorClasses = getSessionColor(session, colorBy)
     const titleParts = [
       session.meetingName,
-      `${formatTime(session.scheduledAt)}${endTime ? ` → ${endTime}` : ""}`,
+      `${formatTime(session.scheduledAt)}${endTime ? ` – ${endTime}` : ""}`,
       session.teacher?.fullName,
       session.group?.name,
       session.status,
@@ -221,34 +223,22 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
         type="button"
         onClick={() => onSessionClick?.(session)}
         className={cn(
-          "w-full h-full text-left rounded-lg border shadow-sm transition hover:shadow-md hover:scale-[1.02] overflow-hidden flex flex-col",
-          compact ? "px-1.5 py-0.5 text-[10px] gap-0.5" : "px-2 py-1.5 text-[11px] leading-tight gap-0.5",
+          "w-full h-full text-left rounded-md border border-gray-100 dark:border-gray-700 transition overflow-hidden flex flex-col justify-center",
+          compact ? "px-1.5 py-0.5 text-[10px]" : "px-2.5 py-1.5 text-[11px]",
           colorClasses
         )}
         title={titleParts.join(" · ")}
       >
-        <div className="font-bold flex items-center gap-1">
-          <Clock size={compact ? 9 : 10} />
-          {formatTime(session.scheduledAt)}
-          {endTime && <span className="opacity-75 font-medium">→ {endTime}</span>}
+        <div className="flex items-center justify-between gap-1 text-[10px] text-gray-500 dark:text-gray-400 font-medium">
+          <span>{formatTime(session.scheduledAt)}</span>
+          {endTime && !narrow && <span className="opacity-75">– {endTime}</span>}
         </div>
-        <div className={cn("font-semibold", compact ? "truncate" : "line-clamp-2 whitespace-normal break-words")}>
+        <div className={cn("font-semibold leading-tight mt-0.5", compact || narrow ? "truncate" : "line-clamp-2 whitespace-normal break-words")}>
           {session.meetingName}
         </div>
-        {!compact && (
-          <div className="mt-auto space-y-0.5">
-            {session.teacher?.fullName && (
-              <div className="flex items-center gap-1 text-[10px] opacity-80 truncate">
-                <User size={10} />
-                {session.teacher.fullName}
-              </div>
-            )}
-            {session.group?.name && (
-              <div className="flex items-center gap-1 text-[10px] opacity-80 truncate">
-                <Users size={10} />
-                {session.group.name}
-              </div>
-            )}
+        {!compact && !narrow && (
+          <div className="mt-1 text-[10px] text-gray-500 dark:text-gray-400 truncate">
+            {[session.teacher?.fullName, session.group?.name].filter(Boolean).join(" · ")}
           </div>
         )}
       </button>
@@ -338,7 +328,7 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
       {/* Vue semaine */}
       {view === "week" && (
         <div className="overflow-x-auto">
-          <div className="min-w-[900px]">
+          <div className="min-w-[1100px]">
             {/* Jours */}
             <div className="grid grid-cols-8 border-b border-gray-100 dark:border-gray-800 pb-2 mb-2">
               <div className="text-xs text-gray-400 px-2"></div>
@@ -374,7 +364,7 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
                   }}
                 >
                   <div className="flex items-center">
-                    <span className="absolute -left-1.5 -translate-x-full text-[10px] font-bold text-red-500 bg-white dark:bg-gray-900 px-1 rounded">
+                    <span className="absolute left-0 -translate-x-full text-[11px] font-bold text-white bg-red-500 px-1.5 py-0.5 rounded-l-md">
                       {formatTime(now)}
                     </span>
                     <div className="h-0.5 bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)] w-full rounded-full" />
@@ -413,7 +403,7 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
                       return (
                         <div
                           key={s.id}
-                          className="absolute z-10 px-0.5"
+                          className="absolute z-10 px-1"
                           style={{
                             top: `${top}px`,
                             height: `${height}px`,
@@ -421,7 +411,7 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
                             width: `${width}%`,
                           }}
                         >
-                          <SessionPill session={s} />
+                          <SessionPill session={s} narrow={pos.total > 1} />
                         </div>
                       )
                     })
