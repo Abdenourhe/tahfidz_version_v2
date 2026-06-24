@@ -575,7 +575,7 @@ function PricingSection({ t, lang }: { t: LandingContent; lang: Lang }) {
 
         <div className="grid md:grid-cols-3 gap-8 items-stretch">
           {t.pricing.plans
-            .filter((plan) => plan.key !== "FREE")
+            .filter((plan) => plan.enabled !== false && plan.key !== "FREE")
             .map((plan, index) => {
               const isPopular = PLANS[plan.key]?.popular ?? false
               const priceRaw = period === "month" ? plan.monthlyPrice : plan.yearlyPrice

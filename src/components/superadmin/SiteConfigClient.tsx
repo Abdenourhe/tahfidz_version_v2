@@ -771,9 +771,22 @@ function LandingEditor({
           <div className='space-y-3'>
             <label className='block text-xs font-medium text-gray-600 dark:text-gray-400'>Plans</label>
             {content.pricing.plans.map((plan, index) => (
-              <div key={index} className='p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50/50 dark:bg-gray-800/50 space-y-3'>
+              <div key={index} className={cn('p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50/50 dark:bg-gray-800/50 space-y-3', plan.enabled === false && 'opacity-60')}>
                 <div className='flex items-center justify-between'>
                   <span className='text-xs font-semibold text-gray-500'>Plan {plan.key}</span>
+                  <label className='flex items-center gap-2 cursor-pointer'>
+                    <span className='text-xs text-gray-500 dark:text-gray-400'>{plan.enabled === false ? 'Désactivé' : 'Activé'}</span>
+                    <input
+                      type='checkbox'
+                      checked={plan.enabled !== false}
+                      onChange={(e) => {
+                        const next = [...content.pricing.plans]
+                        next[index] = { ...plan, enabled: e.target.checked }
+                        setSection('pricing', { ...content.pricing, plans: next })
+                      }}
+                      className='rounded border-gray-300 dark:border-gray-600 text-tahfidz-green focus:ring-tahfidz-green'
+                    />
+                  </label>
                 </div>
                 <div className='grid grid-cols-1 sm:grid-cols-5 gap-3'>
                   <Field

@@ -685,7 +685,10 @@ export default function RegisterSchoolClient() {
 
                           <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Choisir une offre adaptee</p>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {planOrder.slice(recommendedIndex).map((plan) => {
+                            {planOrder
+                              .slice(recommendedIndex)
+                              .filter((plan) => landingPlans.find((p) => p.key === plan)?.enabled !== false)
+                              .map((plan) => {
                               const planDef = landingPlans.find((p) => p.key === plan)
                               const config = PLAN_CONFIG[plan]
                               const isRecommended = plan === recommended

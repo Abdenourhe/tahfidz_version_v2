@@ -8,6 +8,8 @@ import { defaultLandingContent, normalizeLandingContent, type LandingContent } f
 
 type Lang = "fr" | "en" | "ar"
 
+export const revalidate = 0
+
 export default async function RootPage() {
   const session = await auth()
 

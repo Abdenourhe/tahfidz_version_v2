@@ -533,10 +533,12 @@ export function SuperAdminSchoolsClient({ schools }: Props) {
       : "bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-300 ring-red-200 dark:ring-red-800"
 
   const planMeta: { key: PlanValue; label: string }[] = useMemo(() => {
-    return (["FREE", "STARTER", "ECONOMIQUE", "PRO", "ENTERPRISE"] as PlanValue[]).map((key) => ({
-      key,
-      label: landingPlans.find((p) => p.key === key)?.name ?? PLANS[key].name[planLocale] ?? PLANS[key].name.fr,
-    }))
+    return (["FREE", "STARTER", "ECONOMIQUE", "PRO", "ENTERPRISE"] as PlanValue[])
+      .filter((key) => landingPlans.find((p) => p.key === key)?.enabled !== false)
+      .map((key) => ({
+        key,
+        label: landingPlans.find((p) => p.key === key)?.name ?? PLANS[key].name[planLocale] ?? PLANS[key].name.fr,
+      }))
   }, [landingPlans, planLocale])
 
   const allFiltersEmpty = !hasActiveFilters()
