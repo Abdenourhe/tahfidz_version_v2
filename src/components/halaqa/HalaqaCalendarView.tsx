@@ -1,9 +1,9 @@
 // src/components/halaqa/HalaqaCalendarView.tsx
-// Vue calendrier simple (semaine / mois) pour les séances Halaqa
+// Calendrier Halaqa : Semaine (colonnes), Mois (grille + détail), Agenda (liste)
 
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -24,24 +24,24 @@ interface HalaqaCalendarViewProps {
   onSessionClick?: (session: Session) => void
 }
 
-const statusColors: Record<string, string> = {
-  SCHEDULED: "bg-white dark:bg-gray-800 border-l-4 border-blue-500 text-gray-900 dark:text-gray-100 shadow-sm hover:shadow-md",
-  LIVE: "bg-white dark:bg-gray-800 border-l-4 border-red-500 text-gray-900 dark:text-gray-100 shadow-sm animate-pulse hover:shadow-md",
-  ENDED: "bg-gray-50 dark:bg-gray-800/60 border-l-4 border-gray-400 text-gray-600 dark:text-gray-400 shadow-sm hover:shadow-md",
-  CANCELLED: "bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-400 text-orange-800 dark:text-orange-300 line-through opacity-70 shadow-sm hover:shadow-md",
+const statusDotColors: Record<string, string> = {
+  SCHEDULED: "bg-blue-500",
+  LIVE: "bg-red-500",
+  ENDED: "bg-gray-400",
+  CANCELLED: "bg-orange-400",
 }
 
-const accentPalette = [
-  "bg-white dark:bg-gray-800 border-l-4 border-blue-500 text-gray-900 dark:text-gray-100 shadow-sm hover:shadow-md",
-  "bg-white dark:bg-gray-800 border-l-4 border-emerald-500 text-gray-900 dark:text-gray-100 shadow-sm hover:shadow-md",
-  "bg-white dark:bg-gray-800 border-l-4 border-amber-500 text-gray-900 dark:text-gray-100 shadow-sm hover:shadow-md",
-  "bg-white dark:bg-gray-800 border-l-4 border-rose-500 text-gray-900 dark:text-gray-100 shadow-sm hover:shadow-md",
-  "bg-white dark:bg-gray-800 border-l-4 border-violet-500 text-gray-900 dark:text-gray-100 shadow-sm hover:shadow-md",
-  "bg-white dark:bg-gray-800 border-l-4 border-orange-500 text-gray-900 dark:text-gray-100 shadow-sm hover:shadow-md",
-  "bg-white dark:bg-gray-800 border-l-4 border-cyan-500 text-gray-900 dark:text-gray-100 shadow-sm hover:shadow-md",
-  "bg-white dark:bg-gray-800 border-l-4 border-fuchsia-500 text-gray-900 dark:text-gray-100 shadow-sm hover:shadow-md",
-  "bg-white dark:bg-gray-800 border-l-4 border-lime-500 text-gray-900 dark:text-gray-100 shadow-sm hover:shadow-md",
-  "bg-white dark:bg-gray-800 border-l-4 border-indigo-500 text-gray-900 dark:text-gray-100 shadow-sm hover:shadow-md",
+const dotPalette = [
+  "bg-blue-500",
+  "bg-emerald-500",
+  "bg-amber-500",
+  "bg-rose-500",
+  "bg-violet-500",
+  "bg-orange-500",
+  "bg-cyan-500",
+  "bg-fuchsia-500",
+  "bg-lime-500",
+  "bg-indigo-500",
 ]
 
 function hashToIndex(str: string, length: number): number {
@@ -52,25 +52,6 @@ function hashToIndex(str: string, length: number): number {
   return Math.abs(hash) % length
 }
 
-function getSessionColor(session: Session, colorBy: "status" | "teacher" | "group"): string {
-  if (colorBy === "status") return statusColors[session.status] || statusColors.SCHEDULED
-  const key = colorBy === "teacher" ? session.teacher?.id : session.group?.id
-  if (!key) return statusColors[session.status] || statusColors.SCHEDULED
-  return accentPalette[hashToIndex(key, accentPalette.length)]
-}
-
-const statusDotColors: Record<string, string> = {
-  SCHEDULED: "bg-blue-500",
-  LIVE: "bg-red-500",
-  ENDED: "bg-gray-400",
-  CANCELLED: "bg-orange-400",
-}
-
-const dotPalette = [
-  "bg-blue-500", "bg-emerald-500", "bg-amber-500", "bg-rose-500", "bg-violet-500",
-  "bg-orange-500", "bg-cyan-500", "bg-fuchsia-500", "bg-lime-500", "bg-indigo-500",
-]
-
 function getSessionDotColor(session: Session, colorBy: "status" | "teacher" | "group"): string {
   if (colorBy === "status") return statusDotColors[session.status] || statusDotColors.SCHEDULED
   const key = colorBy === "teacher" ? session.teacher?.id : session.group?.id
@@ -78,108 +59,45 @@ function getSessionDotColor(session: Session, colorBy: "status" | "teacher" | "g
   return dotPalette[hashToIndex(key, dotPalette.length)]
 }
 
-const hours = Array.from({ length: 17 }, (_, i) => i + 6) // 06:00 → 22:00
-
-function sessionEnd(s: Session & { scheduledAt: Date }): Date {
-  return new Date(s.scheduledAt.getTime() + (s.duration ?? 60) * 60 * 1000)
-}
-
-function sessionsOverlap(a: Session & { scheduledAt: Date }, b: Session & { scheduledAt: Date }): boolean {
-  return a.scheduledAt.getTime() < sessionEnd(b).getTime() && b.scheduledAt.getTime() < sessionEnd(a).getTime()
-}
-
-function computeOverlapLayout(sessions: (Session & { scheduledAt: Date })[]): Map<string, { column: number; total: number }> {
-  if (sessions.length === 0) return new Map()
-
-  // 1. Trouver les composantes connexes par chevauchement
-  const visited = new Set<string>()
-  const components: (Session & { scheduledAt: Date })[][] = []
-
-  for (const session of sessions) {
-    if (visited.has(session.id)) continue
-    const component: (Session & { scheduledAt: Date })[] = []
-    const queue = [session]
-    visited.add(session.id)
-    while (queue.length > 0) {
-      const current = queue.shift()!
-      component.push(current)
-      for (const other of sessions) {
-        if (!visited.has(other.id) && sessionsOverlap(current, other)) {
-          visited.add(other.id)
-          queue.push(other)
-        }
-      }
-    }
-    components.push(component)
-  }
-
-  const layout = new Map<string, { column: number; total: number }>()
-
-  for (const component of components) {
-    // 2. Calculer le nombre maximal de sessions simultanées dans la composante
-    const events: { time: number; delta: number }[] = []
-    for (const s of component) {
-      events.push({ time: s.scheduledAt.getTime(), delta: 1 })
-      events.push({ time: sessionEnd(s).getTime(), delta: -1 })
-    }
-    events.sort((a, b) => a.time - b.time || a.delta - b.delta)
-    let current = 0
-    let maxConcurrent = 0
-    for (const e of events) {
-      current += e.delta
-      maxConcurrent = Math.max(maxConcurrent, current)
-    }
-
-    // 3. Assigner les colonnes en ordre chronologique
-    const sorted = [...component].sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime())
-    const assigned: { start: number; end: number; column: number }[] = []
-
-    for (const s of sorted) {
-      const start = s.scheduledAt.getTime()
-      const end = sessionEnd(s).getTime()
-      const usedColumns = new Set<number>()
-      for (const a of assigned) {
-        if (start < a.end && a.start < end) {
-          usedColumns.add(a.column)
-        }
-      }
-      let column = 0
-      while (usedColumns.has(column)) column++
-      assigned.push({ start, end, column })
-      layout.set(s.id, { column, total: Math.max(maxConcurrent, 1) })
-    }
-  }
-
-  return layout
-}
-
 export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionClick }: HalaqaCalendarViewProps) {
   const [view, setView] = useState<"week" | "month" | "agenda">("agenda")
   const [currentDate, setCurrentDate] = useState(new Date())
   const [colorBy, setColorBy] = useState<"status" | "teacher" | "group">("status")
+  const [selectedMonthDay, setSelectedMonthDay] = useState<Date | null>(null)
   const [now, setNow] = useState(new Date())
-
-  const HOUR_HEIGHT = 56
+  const [initialScrollDone, setInitialScrollDone] = useState(false)
+  const dayRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60000)
     return () => clearInterval(timer)
   }, [])
 
+  useEffect(() => {
+    setSelectedMonthDay(null)
+  }, [currentDate, view])
+
+  useEffect(() => {
+    if (view === "agenda" && !initialScrollDone) {
+      const key = dateKey(now)
+      const el = dayRefs.current[key]
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" })
+        setInitialScrollDone(true)
+      }
+    }
+  }, [view, currentDate, initialScrollDone, now])
+
   const parsedSessions = useMemo(() => {
     return sessions.map((s) => ({ ...s, scheduledAt: new Date(s.scheduledAt) }))
   }, [sessions])
 
-  // ─── Vue semaine ──────────────────────────────────────────────────
   const weekStart = useMemo(() => {
     const d = new Date(currentDate)
     const day = d.getDay()
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1) // Lundi comme premier jour
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1)
     return new Date(d.setDate(diff))
   }, [currentDate])
-
-  const dateKey = (d: Date) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
 
   const weekDays = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => {
@@ -188,6 +106,9 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
       return d
     })
   }, [weekStart])
+
+  const dateKey = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
 
   const agendaDays = useMemo(() => {
     const map = new Map<string, (Session & { scheduledAt: Date })[]>()
@@ -211,7 +132,6 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
     })
   }, [parsedSessions, weekStart])
 
-  // ─── Vue mois ─────────────────────────────────────────────────────
   const monthStart = useMemo(() => new Date(currentDate.getFullYear(), currentDate.getMonth(), 1), [currentDate])
   const monthEnd = useMemo(() => new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0), [currentDate])
   const startDayOfWeek = monthStart.getDay() === 0 ? 6 : monthStart.getDay() - 1
@@ -230,6 +150,12 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
   const formatTime = (d: Date) =>
     d.toLocaleTimeString(locale === "ar" ? "ar-DZ" : locale === "en" ? "en-US" : "fr-FR", { hour: "2-digit", minute: "2-digit" })
 
+  const formatEndTime = (d: Date, durationMinutes?: number | null) => {
+    if (!durationMinutes) return ""
+    const end = new Date(d.getTime() + durationMinutes * 60 * 1000)
+    return formatTime(end)
+  }
+
   const statusBadgeClasses = (status: string) => {
     const map: Record<string, string> = {
       SCHEDULED: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
@@ -240,61 +166,81 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
     return map[status] || "bg-gray-100 text-gray-700"
   }
 
-  const formatEndTime = (d: Date, durationMinutes?: number | null) => {
-    if (!durationMinutes) return ""
-    const end = new Date(d.getTime() + durationMinutes * 60 * 1000)
-    return formatTime(end)
-  }
-
-  const SessionPill = ({
+  const SessionCard = ({
     session,
     compact = false,
-    narrow = false,
   }: {
     session: Session & { scheduledAt: Date }
     compact?: boolean
-    narrow?: boolean
   }) => {
     const endTime = formatEndTime(session.scheduledAt, session.duration)
-    const colorClasses = getSessionColor(session, colorBy)
-    const titleParts = [
-      session.meetingName,
-      `${formatTime(session.scheduledAt)}${endTime ? ` – ${endTime}` : ""}`,
-      session.teacher?.fullName,
-      session.group?.name,
-      session.status,
-    ].filter(Boolean)
+    const dotColor = getSessionDotColor(session, colorBy)
+    const duration = session.duration ? `${session.duration} min` : null
+    const subtitle = [session.teacher?.fullName, session.group?.name].filter(Boolean).join(" · ")
 
     return (
       <button
         type="button"
         onClick={() => onSessionClick?.(session)}
         className={cn(
-          "w-full h-full text-left rounded-md border border-gray-100 dark:border-gray-700 transition overflow-hidden flex flex-col justify-center",
-          compact ? "px-1.5 py-0.5 text-[10px]" : "px-2.5 py-1.5 text-[11px]",
-          colorClasses
+          "w-full flex items-start gap-3 rounded-xl border text-left transition hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600",
+          compact ? "p-2" : "p-3",
+          "bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700"
         )}
-        title={titleParts.join(" · ")}
       >
-        <div className="flex items-center justify-between gap-1 text-[10px] text-gray-500 dark:text-gray-400 font-medium">
-          <span>{formatTime(session.scheduledAt)}</span>
-          {endTime && !narrow && <span className="opacity-75">– {endTime}</span>}
-        </div>
-        <div className={cn("font-semibold leading-tight mt-0.5", compact || narrow ? "truncate" : "line-clamp-2 whitespace-normal break-words")}>
-          {session.meetingName}
-        </div>
-        {!compact && !narrow && (
-          <div className="mt-1 text-[10px] text-gray-500 dark:text-gray-400 truncate">
-            {[session.teacher?.fullName, session.group?.name].filter(Boolean).join(" · ")}
+        <div className={cn("mt-1.5 h-2.5 w-2.5 rounded-full shrink-0", dotColor)} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <span className="text-sm font-bold text-gray-900 dark:text-white">
+              {formatTime(session.scheduledAt)}
+              {endTime && <span className="text-gray-400 font-medium"> – {endTime}</span>}
+              {duration && !compact && (
+                <span className="ml-2 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                  {duration}
+                </span>
+              )}
+            </span>
+            {!compact && (
+              <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold uppercase", statusBadgeClasses(session.status))}>
+                {session.status}
+              </span>
+            )}
           </div>
-        )}
+          <div
+            className={cn(
+              "font-semibold text-gray-800 dark:text-gray-100 mt-0.5",
+              compact ? "truncate text-xs" : "truncate"
+            )}
+          >
+            {session.meetingName}
+          </div>
+          {!compact && subtitle && (
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">{subtitle}</div>
+          )}
+        </div>
       </button>
     )
   }
 
+  const isToday = (d: Date) => now.toDateString() === d.toDateString()
+
+  const handlePrev = () => {
+    const d = new Date(currentDate)
+    if (view === "month") d.setMonth(d.getMonth() - 1)
+    else d.setDate(d.getDate() - 7)
+    setCurrentDate(d)
+  }
+
+  const handleNext = () => {
+    const d = new Date(currentDate)
+    if (view === "month") d.setMonth(d.getMonth() + 1)
+    else d.setDate(d.getDate() + 7)
+    setCurrentDate(d)
+  }
+
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4">
-      {/* Header calendrier */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
           <CalendarIcon size={20} className="text-tahfidz-green" />
@@ -302,36 +248,21 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <div className="inline-flex items-center p-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-            <button
-              type="button"
-              onClick={() => setView("week")}
-              className={cn(
-                "px-3 py-1 text-xs font-medium rounded-md transition",
-                view === "week" ? "bg-white dark:bg-gray-700 text-tahfidz-green shadow-sm" : "text-gray-600 dark:text-gray-400"
-              )}
-            >
-              Semaine
-            </button>
-            <button
-              type="button"
-              onClick={() => setView("month")}
-              className={cn(
-                "px-3 py-1 text-xs font-medium rounded-md transition",
-                view === "month" ? "bg-white dark:bg-gray-700 text-tahfidz-green shadow-sm" : "text-gray-600 dark:text-gray-400"
-              )}
-            >
-              Mois
-            </button>
-            <button
-              type="button"
-              onClick={() => setView("agenda")}
-              className={cn(
-                "px-3 py-1 text-xs font-medium rounded-md transition",
-                view === "agenda" ? "bg-white dark:bg-gray-700 text-tahfidz-green shadow-sm" : "text-gray-600 dark:text-gray-400"
-              )}
-            >
-              Agenda
-            </button>
+            {(["week", "month", "agenda"] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setView(v)}
+                className={cn(
+                  "px-3 py-1 text-xs font-medium rounded-md transition capitalize",
+                  view === v
+                    ? "bg-white dark:bg-gray-700 text-tahfidz-green shadow-sm"
+                    : "text-gray-600 dark:text-gray-400"
+                )}
+              >
+                {v === "week" ? "Semaine" : v === "month" ? "Mois" : "Agenda"}
+              </button>
+            ))}
           </div>
           <div className="inline-flex items-center p-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
             {(["status", "teacher", "group"] as const).map((mode) => (
@@ -352,29 +283,22 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
           </div>
           <button
             type="button"
-            onClick={() => {
-              const d = new Date(currentDate)
-              if (view === "week") d.setDate(d.getDate() - 7)
-              else d.setMonth(d.getMonth() - 1)
-              setCurrentDate(d)
-            }}
+            onClick={handlePrev}
             className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400"
           >
             <ChevronLeft size={18} className={isRTL ? "rotate-180" : ""} />
           </button>
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[120px] text-center">
-            {view === "week"
-              ? `${formatDay(weekDays[0])} – ${formatDay(weekDays[6])}`
-              : currentDate.toLocaleDateString(locale === "ar" ? "ar-DZ" : locale === "en" ? "en-US" : "fr-FR", { month: "long", year: "numeric" })}
+            {view === "month"
+              ? currentDate.toLocaleDateString(locale === "ar" ? "ar-DZ" : locale === "en" ? "en-US" : "fr-FR", {
+                  month: "long",
+                  year: "numeric",
+                })
+              : `${formatDay(weekDays[0])} – ${formatDay(weekDays[6])}`}
           </span>
           <button
             type="button"
-            onClick={() => {
-              const d = new Date(currentDate)
-              if (view === "week") d.setDate(d.getDate() + 7)
-              else d.setMonth(d.getMonth() + 1)
-              setCurrentDate(d)
-            }}
+            onClick={handleNext}
             className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400"
           >
             <ChevronRight size={18} className={isRTL ? "rotate-180" : ""} />
@@ -382,227 +306,188 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
         </div>
       </div>
 
-      {/* Vue semaine */}
+      {/* Vue Semaine */}
       {view === "week" && (
         <div className="overflow-x-auto">
-          <div className="min-w-[1100px]">
-            {/* Jours */}
-            <div className="grid grid-cols-8 border-b border-gray-100 dark:border-gray-800 pb-2 mb-2">
-              <div className="text-xs text-gray-400 px-2"></div>
-              {weekDays.map((d, i) => {
-                const isToday = now.toDateString() === d.toDateString()
-                return (
+          <div className="min-w-[900px] grid grid-cols-7 gap-3">
+            {weekDays.map((day) => {
+              const daySessions = weekSessions
+                .filter((s) => dateKey(s.scheduledAt) === dateKey(day))
+                .sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime())
+              return (
+                <div
+                  key={dateKey(day)}
+                  className="flex flex-col rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 overflow-hidden min-h-[360px]"
+                >
                   <div
-                    key={i}
                     className={cn(
-                      "text-center text-xs font-medium px-1 py-2 rounded-xl transition",
-                      isToday
-                        ? "bg-tahfidz-green text-white shadow-sm"
-                        : "text-gray-600 dark:text-gray-400"
+                      "text-center py-3 border-b border-gray-100 dark:border-gray-800",
+                      isToday(day) ? "bg-tahfidz-green text-white" : "bg-white dark:bg-gray-900"
                     )}
                   >
-                    {d.toLocaleDateString(locale === "ar" ? "ar-DZ" : locale === "en" ? "en-US" : "fr-FR", { weekday: "short" })}
-                    <div className="text-lg font-bold">{d.getDate()}</div>
+                    <div className="text-[10px] font-semibold uppercase tracking-wide opacity-90">
+                      {day.toLocaleDateString(locale === "ar" ? "ar-DZ" : locale === "en" ? "en-US" : "fr-FR", {
+                        weekday: "short",
+                      })}
+                    </div>
+                    <div className="text-xl font-bold">{day.getDate()}</div>
                   </div>
-                )
-              })}
-            </div>
-
-            {/* Grille horaire */}
-            <div className="grid grid-cols-8 relative" style={{ minHeight: "700px" }}>
-              {/* Ligne "maintenant" */}
-              {weekDays.some((d) => d.toDateString() === now.toDateString()) && (
-                <div
-                  className="absolute z-20 pointer-events-none"
-                  style={{
-                    top: `${(now.getHours() + now.getMinutes() / 60 - 6) * HOUR_HEIGHT}px`,
-                    left: "12.5%",
-                    right: 0,
-                  }}
-                >
-                  <div className="flex items-center">
-                    <span className="absolute left-0 -translate-x-full text-[11px] font-bold text-white bg-red-500 px-1.5 py-0.5 rounded-l-md">
-                      {formatTime(now)}
-                    </span>
-                    <div className="h-0.5 bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)] w-full rounded-full" />
+                  <div className="flex-1 p-2 space-y-2">
+                    {daySessions.length === 0 ? (
+                      <p className="text-xs text-gray-400 text-center py-6 italic">Aucune séance</p>
+                    ) : (
+                      daySessions.map((s) => <SessionCard key={s.id} session={s} compact />)
+                    )}
                   </div>
                 </div>
-              )}
-
-              {/* Colonne heures */}
-              <div className="text-xs text-gray-400">
-                {hours.map((h) => (
-                  <div key={h} className="h-[56px] flex items-start justify-end pr-2 -mt-2">
-                    {String(h).padStart(2, "0")}:00
-                  </div>
-                ))}
-              </div>
-
-              {/* Colonnes jours */}
-              {weekDays.map((day, dayIndex) => (
-                <div key={dayIndex} className="relative border-l border-gray-100 dark:border-gray-800">
-                  {hours.map((h) => (
-                    <div key={h} className="h-[56px] border-b border-gray-50 dark:border-gray-800/50"></div>
-                  ))}
-                  {(() => {
-                    const daySessions = weekSessions.filter(
-                      (s) => new Date(s.scheduledAt).toDateString() === day.toDateString()
-                    )
-                    const layout = computeOverlapLayout(daySessions)
-                    return daySessions.map((s) => {
-                      const start = new Date(s.scheduledAt)
-                      const top = (start.getHours() + start.getMinutes() / 60 - 6) * HOUR_HEIGHT
-                      const rawHeight = ((s.duration ?? 60) / 60) * HOUR_HEIGHT
-                      const height = Math.max(rawHeight, 64)
-                      const pos = layout.get(s.id) ?? { column: 0, total: 1 }
-                      const width = 100 / pos.total
-                      const left = pos.column * width
-                      return (
-                        <div
-                          key={s.id}
-                          className="absolute z-10 px-1"
-                          style={{
-                            top: `${top}px`,
-                            height: `${height}px`,
-                            left: `${left}%`,
-                            width: `${width}%`,
-                          }}
-                        >
-                          <SessionPill session={s} narrow={pos.total > 1} />
-                        </div>
-                      )
-                    })
-                  })()}
-                </div>
-              ))}
-            </div>
+              )
+            })}
           </div>
         </div>
       )}
 
-      {/* Vue agenda */}
-      {view === "agenda" && (
-        <div className="space-y-6">
-          {agendaDays.map(({ date, sessions: daySessions }) => {
-            const isToday = now.toDateString() === date.toDateString()
-            return (
-              <div
-                key={dateKey(date)}
-                className={cn(
-                  "rounded-2xl border p-4 transition",
-                  isToday
-                    ? "border-tahfidz-green bg-tahfidz-green/5"
-                    : "border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900"
-                )}
-              >
-                <div className="flex items-center gap-3 mb-3">
+      {/* Vue Mois */}
+      {view === "month" && (
+        <div>
+          <div className="grid grid-cols-7 gap-2">
+            {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((d) => (
+              <div key={d} className="text-center text-xs font-semibold text-gray-500 dark:text-gray-400 py-2">
+                {d}
+              </div>
+            ))}
+            {Array.from({ length: startDayOfWeek }).map((_, i) => (
+              <div key={`empty-${i}`} className="min-h-[110px] rounded-xl bg-gray-50/50 dark:bg-gray-800/30"></div>
+            ))}
+            {Array.from({ length: daysInMonth }).map((_, i) => {
+              const day = i + 1
+              const dayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
+              const daySessions = monthSessions.filter((s) => new Date(s.scheduledAt).getDate() === day)
+              const selected = selectedMonthDay && dateKey(selectedMonthDay) === dateKey(dayDate)
+              return (
+                <button
+                  key={day}
+                  type="button"
+                  onClick={() => setSelectedMonthDay(dayDate)}
+                  className={cn(
+                    "min-h-[110px] p-2 rounded-xl border text-left transition flex flex-col",
+                    selected
+                      ? "border-tahfidz-green ring-2 ring-tahfidz-green/20 bg-tahfidz-green/5"
+                      : "border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                  )}
+                >
                   <div
                     className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold",
-                      isToday
-                        ? "bg-tahfidz-green text-white"
-                        : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                      "w-7 h-7 flex items-center justify-center rounded-full text-sm font-semibold",
+                      isToday(dayDate) ? "bg-tahfidz-green text-white" : "text-gray-700 dark:text-gray-300"
                     )}
                   >
-                    {date.getDate()}
+                    {day}
                   </div>
-                  <div>
-                    <h3
-                      className={cn(
-                        "text-sm font-bold",
-                        isToday ? "text-tahfidz-green" : "text-gray-900 dark:text-white"
-                      )}
-                    >
-                      {date.toLocaleDateString(locale === "ar" ? "ar-DZ" : locale === "en" ? "en-US" : "fr-FR", { weekday: "long" })}
-                    </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {date.toLocaleDateString(locale === "ar" ? "ar-DZ" : locale === "en" ? "en-US" : "fr-FR", { day: "numeric", month: "long", year: "numeric" })}
-                    </p>
+                  <div className="flex flex-wrap gap-1.5 mt-auto content-end">
+                    {daySessions.slice(0, 4).map((s) => (
+                      <div key={s.id} className={cn("h-2 w-2 rounded-full", getSessionDotColor(s, colorBy))} />
+                    ))}
+                    {daySessions.length > 4 && (
+                      <span className="text-[10px] text-gray-400 font-medium">+{daySessions.length - 4}</span>
+                    )}
                   </div>
-                </div>
-                {daySessions.length === 0 ? (
-                  <p className="text-sm text-gray-400 italic py-2">Aucune séance</p>
-                ) : (
-                  <div className="space-y-2">
-                    {daySessions.map((s) => {
-                      const endTime = formatEndTime(s.scheduledAt, s.duration)
-                      const dotColor = getSessionDotColor(s, colorBy)
-                      return (
-                        <button
-                          key={s.id}
-                          type="button"
-                          onClick={() => onSessionClick?.(s)}
-                          className="w-full flex items-start gap-3 p-3 rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-md transition text-left"
-                        >
-                          <div className={cn("mt-1.5 h-2.5 w-2.5 rounded-full shrink-0", dotColor)} />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-sm font-bold text-gray-900 dark:text-white">
-                                {formatTime(s.scheduledAt)}
-                                {endTime && <span className="text-gray-400 font-medium"> – {endTime}</span>}
-                              </span>
-                              <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold uppercase", statusBadgeClasses(s.status))}>
-                                {s.status}
-                              </span>
-                            </div>
-                            <div className="font-semibold text-gray-800 dark:text-gray-100 truncate mt-0.5">
-                              {s.meetingName}
-                            </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
-                              {[s.teacher?.fullName, s.group?.name].filter(Boolean).join(" · ")}
-                            </div>
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
+                </button>
+              )
+            })}
+          </div>
+          {selectedMonthDay && (
+            <div className="mt-6 rounded-2xl border border-gray-100 dark:border-gray-800 p-4 bg-gray-50/50 dark:bg-gray-900/50">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                  {selectedMonthDay.toLocaleDateString(locale === "ar" ? "ar-DZ" : locale === "en" ? "en-US" : "fr-FR", {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setSelectedMonthDay(null)}
+                  className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                >
+                  Fermer
+                </button>
+              </div>
+              <div className="space-y-2">
+                {monthSessions
+                  .filter((s) => dateKey(new Date(s.scheduledAt)) === dateKey(selectedMonthDay))
+                  .sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime())
+                  .map((s) => (
+                    <SessionCard key={s.id} session={s} />
+                  ))}
+                {monthSessions.filter((s) => dateKey(new Date(s.scheduledAt)) === dateKey(selectedMonthDay)).length === 0 && (
+                  <p className="text-sm text-gray-400 italic">Aucune séance ce jour</p>
                 )}
               </div>
-            )
-          })}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Vue mois */}
-      {view === "month" && (
-        <div className="grid grid-cols-7 gap-1">
-          {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((d) => (
-            <div key={d} className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 py-2">
-              {d}
-            </div>
-          ))}
-          {Array.from({ length: startDayOfWeek }).map((_, i) => (
-            <div key={`empty-${i}`} className="min-h-[100px] bg-gray-50/50 dark:bg-gray-800/30 rounded-lg"></div>
-          ))}
-          {Array.from({ length: daysInMonth }).map((_, i) => {
-            const day = i + 1
-            const daySessions = monthSessions.filter((s) => new Date(s.scheduledAt).getDate() === day)
-            const isToday =
-              new Date().getDate() === day &&
-              new Date().getMonth() === currentDate.getMonth() &&
-              new Date().getFullYear() === currentDate.getFullYear()
-
-            return (
-              <div
-                key={day}
-                className={cn(
-                  "min-h-[100px] p-1.5 rounded-lg border transition",
-                  isToday
-                    ? "border-tahfidz-green bg-tahfidz-green/5"
-                    : "border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                )}
-              >
-                <div className={cn("text-xs font-semibold mb-1", isToday ? "text-tahfidz-green" : "text-gray-600 dark:text-gray-400")}>
-                  {day}
+      {/* Vue Agenda */}
+      {view === "agenda" && (
+        <div className="space-y-4">
+          {agendaDays.map(({ date, sessions: daySessions }) => (
+            <div
+              key={dateKey(date)}
+              ref={(el) => {
+                dayRefs.current[dateKey(date)] = el
+              }}
+              className={cn(
+                "rounded-2xl border p-4 transition",
+                isToday(date)
+                  ? "border-tahfidz-green bg-tahfidz-green/5"
+                  : "border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900"
+              )}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div
+                  className={cn(
+                    "w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold",
+                    isToday(date)
+                      ? "bg-tahfidz-green text-white"
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                  )}
+                >
+                  {date.getDate()}
                 </div>
-                <div className="space-y-1">
-                  {daySessions.map((s) => (
-                    <SessionPill key={s.id} session={s} compact />
-                  ))}
+                <div>
+                  <h3
+                    className={cn(
+                      "text-sm font-bold",
+                      isToday(date) ? "text-tahfidz-green" : "text-gray-900 dark:text-white"
+                    )}
+                  >
+                    {date.toLocaleDateString(locale === "ar" ? "ar-DZ" : locale === "en" ? "en-US" : "fr-FR", {
+                      weekday: "long",
+                    })}
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {date.toLocaleDateString(locale === "ar" ? "ar-DZ" : locale === "en" ? "en-US" : "fr-FR", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </p>
                 </div>
               </div>
-            )
-          })}
+              {daySessions.length === 0 ? (
+                <p className="text-sm text-gray-400 italic py-2">Aucune séance</p>
+              ) : (
+                <div className="space-y-2">
+                  {daySessions.map((s) => (
+                    <SessionCard key={s.id} session={s} />
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </div>
