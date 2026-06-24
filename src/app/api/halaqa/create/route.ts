@@ -17,6 +17,7 @@ const createSchema = z.object({
   sourah: z.string().optional(),
   verses: z.string().optional(),
   duration: z.number().min(15).max(180).optional().default(60),
+  teacherId: z.string().optional(),
 })
 
 export async function POST(req: Request) {
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
     }
 
-    const { schoolId, id: teacherId, role } = session.user
+    const { schoolId, id: callerId, role } = session.user
     if (!["ADMIN", "TEACHER", "SUPERADMIN"].includes(role)) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
     }
@@ -38,6 +39,24 @@ export async function POST(req: Request) {
     }
 
     const data = parsed.data
+
+    // ─── Résolution de l'enseignant assigné ───────────────────────────
+    let teacherId = callerId
+    let teacherName = session.user.name || "Enseignant"
+    if (data.teacherId) {
+      if (!["ADMIN", "SUPERADMIN"].includes(role)) {
+        return NextResponse.json({ error: "Non autorisé à assigner un autre enseignant" }, { status: 403 })
+      }
+      const assignedTeacher = await prisma.user.findFirst({
+        where: { id: data.teacherId, schoolId, role: "TEACHER", isActive: true },
+        select: { id: true, fullName: true },
+      })
+      if (!assignedTeacher) {
+        return NextResponse.json({ error: "Enseignant invalide ou inactif" }, { status: 400 })
+      }
+      teacherId = assignedTeacher.id
+      teacherName = assignedTeacher.fullName || "Enseignant"
+    }
 
     // ─── Vérification des élèves ──────────────────────────────────────
     const validStudents = await prisma.user.findMany({
@@ -96,7 +115,6 @@ export async function POST(req: Request) {
     })
 
     // Générer URLs
-    const teacherName = session.user.name || "Enseignant"
     const roomUrl = joinMeetingUrl({
       meetingID,
       fullName: teacherName,

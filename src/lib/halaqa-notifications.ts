@@ -10,6 +10,7 @@ export type HalaqaNotificationType =
   | "halaqa_ended"
   | "halaqa_recording"
   | "halaqa_cancelled"
+  | "halaqa_updated"
 
 interface NotificationPayload {
   title: string
@@ -48,6 +49,12 @@ const MESSAGES: Record<HalaqaNotificationType, (session: HalaqaSession) => Notif
     titleAr: "حلقة أونلاين ملغاة",
     message: `La séance "${session.meetingName}" prévue le ${formatDate(session.scheduledAt)} a été annulée.`,
     messageAr: `الجلسة "${session.meetingName}" المقررة في ${formatDate(session.scheduledAt)} تم إلغاؤها.`,
+  }),
+  halaqa_updated: (session) => ({
+    title: "Halaqa Online modifiée",
+    titleAr: "حلقة أونلاين معدلة",
+    message: `La séance "${session.meetingName}" prévue le ${formatDate(session.scheduledAt)} a été modifiée.`,
+    messageAr: `الجلسة "${session.meetingName}" المقررة في ${formatDate(session.scheduledAt)} تم تعديلها.`,
   }),
 }
 

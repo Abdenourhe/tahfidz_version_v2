@@ -4,7 +4,7 @@ import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
-import { Video, Calendar, Users, Play, FileVideo, BarChart3, ArrowLeft, Eye, XCircle } from "lucide-react"
+import { Video, Calendar, Users, Play, FileVideo, BarChart3, ArrowLeft, Eye, XCircle, Plus, Pencil } from "lucide-react"
 import { DeleteSessionButton } from "@/components/admin/DeleteSessionButton"
 import { formatDate } from "@/lib/utils"
 
@@ -93,13 +93,22 @@ export default async function AdminHalaqaPage() {
               Toutes les séances de récitation en ligne de l&apos;école
             </p>
           </div>
-          <Link
-            href="/admin/dashboard"
-            className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition"
-          >
-            <ArrowLeft size={16} />
-            Retour au tableau de bord
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/admin/halaqa/new"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-tahfidz-green hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition"
+            >
+              <Plus size={16} />
+              Planifier une séance
+            </Link>
+            <Link
+              href="/admin/dashboard"
+              className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition"
+            >
+              <ArrowLeft size={16} />
+              Retour au tableau de bord
+            </Link>
+          </div>
         </div>
 
         {/* Stats */}
@@ -183,6 +192,15 @@ export default async function AdminHalaqaPage() {
                         >
                           <Eye size={15} />
                         </Link>
+                        {s.status === "SCHEDULED" && (
+                          <Link
+                            href={`/admin/halaqa/${s.id}/edit`}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition"
+                            title="Modifier"
+                          >
+                            <Pencil size={15} />
+                          </Link>
+                        )}
                         {(s.status === "SCHEDULED" || s.status === "LIVE") && (
                           <form action={cancelSession} className="inline">
                             <input type="hidden" name="id" value={s.id} />

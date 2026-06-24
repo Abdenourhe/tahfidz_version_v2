@@ -2464,6 +2464,7 @@ export const translations = {
     cancel:           { fr: "Annuler",               en: "Cancel",                ar: "إلغاء" },
     confirmCancel:    { fr: "Voulez-vous vraiment annuler cette séance ?", en: "Are you sure you want to cancel this session?", ar: "هل أنت متأكد أنك تريد إلغاء هذه الجلسة؟" },
     errorCancel:      { fr: "Erreur lors de l'annulation", en: "Error cancelling the session", ar: "خطأ أثناء الإلغاء" },
+    edit:             { fr: "Modifier",              en: "Edit",                  ar: "تعديل" },
     // Quotas
     quotaReached:     { fr: "Quota de Halaqa atteint", en: "Halaqa quota reached", ar: "تم الوصول إلى حصة الحلقة" },
     upgradePlan:      { fr: "Passez à un plan supérieur", en: "Upgrade your plan", ar: "قم بترقية خطتك" },
