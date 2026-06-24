@@ -100,8 +100,13 @@ export async function notifyHalaqaParticipants(
 
     const parentUserIds = parentLinks.map((l) => l.parent.userId)
 
-    // 2. Construire la liste unique des destinataires
-    const targetUserIds = [...new Set([...studentUserIds, ...parentUserIds])].filter(
+    // 2. Inclure l'enseignant assigné (sauf s'il est explicitement exclu)
+    const teacherUserIds = session.teacherId && !excludeUserIds.includes(session.teacherId)
+      ? [session.teacherId]
+      : []
+
+    // 3. Construire la liste unique des destinataires
+    const targetUserIds = [...new Set([...studentUserIds, ...parentUserIds, ...teacherUserIds])].filter(
       (id) => !excludeUserIds.includes(id)
     )
 

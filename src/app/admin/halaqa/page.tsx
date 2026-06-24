@@ -7,10 +7,11 @@ import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import {
   Video, Calendar, Users, Play, FileVideo, BarChart3, ArrowLeft, Eye, XCircle,
-  Plus, Pencil, LayoutList, CalendarDays, Copy
+  Plus, Pencil, LayoutList, CalendarDays, Copy, PieChart
 } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import HalaqaCalendarView from "@/components/halaqa/HalaqaCalendarView"
+import HalaqaStats from "@/components/halaqa/HalaqaStats"
 import { cancelSession, deleteSession } from "./actions"
 
 interface HalaqaSession {
@@ -43,7 +44,7 @@ export default function AdminHalaqaPage() {
   const [sessions, setSessions] = useState<HalaqaSession[]>([])
   const [quota, setQuota] = useState<QuotaStatus | null>(null)
   const [loading, setLoading] = useState(true)
-  const [view, setView] = useState<"list" | "calendar">("list")
+  const [view, setView] = useState<"list" | "calendar" | "stats">("list")
   const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
@@ -247,12 +248,26 @@ export default function AdminHalaqaPage() {
               <CalendarDays size={14} />
               Calendrier
             </button>
+            <button
+              type="button"
+              onClick={() => setView("stats")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition ${
+                view === "stats"
+                  ? "bg-tahfidz-green text-white"
+                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+              }`}
+            >
+              <PieChart size={14} />
+              Stats
+            </button>
           </div>
         </div>
 
         {/* Contenu */}
         {loading ? (
           <div className="text-center py-20 text-gray-400">Chargement…</div>
+        ) : view === "stats" ? (
+          <HalaqaStats />
         ) : view === "calendar" ? (
           <HalaqaCalendarView
             sessions={sessions}
