@@ -34,6 +34,7 @@ const landingTestimonialSchema = z.object({
 })
 
 const landingPricingPlanSchema = z.object({
+  key: z.enum(["FREE", "STARTER", "ECONOMIQUE", "PRO", "ENTERPRISE"]),
   name: z.string().min(1),
   students: z.string().min(1),
   monthlyPrice: z.string().min(1),
@@ -42,6 +43,7 @@ const landingPricingPlanSchema = z.object({
   monthlyFeatures: z.array(z.string().min(1)),
   yearlyFeatures: z.array(z.string().min(1)),
   features: z.array(z.string().min(1)).optional(),
+  enabled: z.boolean().optional(),
 })
 
 const footerLinkSchema = z.object({
