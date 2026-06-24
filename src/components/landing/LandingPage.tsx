@@ -517,6 +517,23 @@ const periodLabels: Record<Lang, { monthly: string; yearly: string; month: strin
 
 function PricingSection({ t, lang }: { t: LandingContent; lang: Lang }) {
   const [period, setPeriod] = useState<"month" | "year">(t.pricing.period ?? "year")
+  const [livePlans, setLivePlans] = useState<LandingContent["pricing"]["plans"] | null>(null)
+  const [liveCurrency, setLiveCurrency] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch(`/api/site-config/landing/plans?lang=${lang}&_=${Date.now()}`)
+      .then((res) => res.json())
+      .then((data: { plans?: LandingContent["pricing"]["plans"]; currency?: string }) => {
+        if (Array.isArray(data.plans)) {
+          setLivePlans(data.plans)
+          setLiveCurrency(data.currency ?? null)
+        }
+      })
+      .catch(() => {})
+  }, [lang])
+
+  const plans = livePlans ?? t.pricing.plans
+  const currency = liveCurrency ?? t.pricing.currency
 
   const labels = periodLabels[lang]
   const periodLabel = period === "month" ? labels.month : labels.year
@@ -574,7 +591,7 @@ function PricingSection({ t, lang }: { t: LandingContent; lang: Lang }) {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 items-stretch">
-          {t.pricing.plans
+          {plans
             .filter((plan) => plan.enabled !== false && plan.key !== "FREE")
             .map((plan, index) => {
               const isPopular = PLANS[plan.key]?.popular ?? false
@@ -613,7 +630,7 @@ function PricingSection({ t, lang }: { t: LandingContent; lang: Lang }) {
                         {Number.isFinite(price) ? price : priceRaw}
                       </span>
                       <span className="text-lg font-semibold text-gray-700 dark:text-gray-200">
-                        {getCurrencyLabel(t.pricing.currency, lang)}
+                        {getCurrencyLabel(currency, lang)}
                       </span>
                     </div>
                     <div
