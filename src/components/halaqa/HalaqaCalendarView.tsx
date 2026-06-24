@@ -59,6 +59,25 @@ function getSessionColor(session: Session, colorBy: "status" | "teacher" | "grou
   return accentPalette[hashToIndex(key, accentPalette.length)]
 }
 
+const statusDotColors: Record<string, string> = {
+  SCHEDULED: "bg-blue-500",
+  LIVE: "bg-red-500",
+  ENDED: "bg-gray-400",
+  CANCELLED: "bg-orange-400",
+}
+
+const dotPalette = [
+  "bg-blue-500", "bg-emerald-500", "bg-amber-500", "bg-rose-500", "bg-violet-500",
+  "bg-orange-500", "bg-cyan-500", "bg-fuchsia-500", "bg-lime-500", "bg-indigo-500",
+]
+
+function getSessionDotColor(session: Session, colorBy: "status" | "teacher" | "group"): string {
+  if (colorBy === "status") return statusDotColors[session.status] || statusDotColors.SCHEDULED
+  const key = colorBy === "teacher" ? session.teacher?.id : session.group?.id
+  if (!key) return statusDotColors[session.status] || statusDotColors.SCHEDULED
+  return dotPalette[hashToIndex(key, dotPalette.length)]
+}
+
 const hours = Array.from({ length: 17 }, (_, i) => i + 6) // 06:00 → 22:00
 
 function sessionEnd(s: Session & { scheduledAt: Date }): Date {
@@ -135,7 +154,7 @@ function computeOverlapLayout(sessions: (Session & { scheduledAt: Date })[]): Ma
 }
 
 export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionClick }: HalaqaCalendarViewProps) {
-  const [view, setView] = useState<"week" | "month">("week")
+  const [view, setView] = useState<"week" | "month" | "agenda">("agenda")
   const [currentDate, setCurrentDate] = useState(new Date())
   const [colorBy, setColorBy] = useState<"status" | "teacher" | "group">("status")
   const [now, setNow] = useState(new Date())
@@ -159,6 +178,9 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
     return new Date(d.setDate(diff))
   }, [currentDate])
 
+  const dateKey = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+
   const weekDays = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(weekStart)
@@ -166,6 +188,21 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
       return d
     })
   }, [weekStart])
+
+  const agendaDays = useMemo(() => {
+    const map = new Map<string, (Session & { scheduledAt: Date })[]>()
+    weekDays.forEach((d) => map.set(dateKey(d), []))
+    parsedSessions.forEach((s) => {
+      const key = dateKey(s.scheduledAt)
+      if (map.has(key)) {
+        map.get(key)!.push(s)
+      }
+    })
+    return weekDays.map((d) => ({
+      date: d,
+      sessions: (map.get(dateKey(d)) || []).sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime()),
+    }))
+  }, [weekDays, parsedSessions])
 
   const weekSessions = useMemo(() => {
     return parsedSessions.filter((s) => {
@@ -192,6 +229,16 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
 
   const formatTime = (d: Date) =>
     d.toLocaleTimeString(locale === "ar" ? "ar-DZ" : locale === "en" ? "en-US" : "fr-FR", { hour: "2-digit", minute: "2-digit" })
+
+  const statusBadgeClasses = (status: string) => {
+    const map: Record<string, string> = {
+      SCHEDULED: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+      LIVE: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+      ENDED: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400",
+      CANCELLED: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
+    }
+    return map[status] || "bg-gray-100 text-gray-700"
+  }
 
   const formatEndTime = (d: Date, durationMinutes?: number | null) => {
     if (!durationMinutes) return ""
@@ -274,6 +321,16 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
               )}
             >
               Mois
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("agenda")}
+              className={cn(
+                "px-3 py-1 text-xs font-medium rounded-md transition",
+                view === "agenda" ? "bg-white dark:bg-gray-700 text-tahfidz-green shadow-sm" : "text-gray-600 dark:text-gray-400"
+              )}
+            >
+              Agenda
             </button>
           </div>
           <div className="inline-flex items-center p-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
@@ -420,6 +477,89 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
               ))}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Vue agenda */}
+      {view === "agenda" && (
+        <div className="space-y-6">
+          {agendaDays.map(({ date, sessions: daySessions }) => {
+            const isToday = now.toDateString() === date.toDateString()
+            return (
+              <div
+                key={dateKey(date)}
+                className={cn(
+                  "rounded-2xl border p-4 transition",
+                  isToday
+                    ? "border-tahfidz-green bg-tahfidz-green/5"
+                    : "border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900"
+                )}
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div
+                    className={cn(
+                      "w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold",
+                      isToday
+                        ? "bg-tahfidz-green text-white"
+                        : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                    )}
+                  >
+                    {date.getDate()}
+                  </div>
+                  <div>
+                    <h3
+                      className={cn(
+                        "text-sm font-bold",
+                        isToday ? "text-tahfidz-green" : "text-gray-900 dark:text-white"
+                      )}
+                    >
+                      {date.toLocaleDateString(locale === "ar" ? "ar-DZ" : locale === "en" ? "en-US" : "fr-FR", { weekday: "long" })}
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {date.toLocaleDateString(locale === "ar" ? "ar-DZ" : locale === "en" ? "en-US" : "fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+                    </p>
+                  </div>
+                </div>
+                {daySessions.length === 0 ? (
+                  <p className="text-sm text-gray-400 italic py-2">Aucune séance</p>
+                ) : (
+                  <div className="space-y-2">
+                    {daySessions.map((s) => {
+                      const endTime = formatEndTime(s.scheduledAt, s.duration)
+                      const dotColor = getSessionDotColor(s, colorBy)
+                      return (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => onSessionClick?.(s)}
+                          className="w-full flex items-start gap-3 p-3 rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-md transition text-left"
+                        >
+                          <div className={cn("mt-1.5 h-2.5 w-2.5 rounded-full shrink-0", dotColor)} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-sm font-bold text-gray-900 dark:text-white">
+                                {formatTime(s.scheduledAt)}
+                                {endTime && <span className="text-gray-400 font-medium"> – {endTime}</span>}
+                              </span>
+                              <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold uppercase", statusBadgeClasses(s.status))}>
+                                {s.status}
+                              </span>
+                            </div>
+                            <div className="font-semibold text-gray-800 dark:text-gray-100 truncate mt-0.5">
+                              {s.meetingName}
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
+                              {[s.teacher?.fullName, s.group?.name].filter(Boolean).join(" · ")}
+                            </div>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
 
