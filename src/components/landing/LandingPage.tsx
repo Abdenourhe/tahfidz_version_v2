@@ -592,7 +592,7 @@ function PricingSection({ t, lang }: { t: LandingContent; lang: Lang }) {
 
         <div className="grid md:grid-cols-3 gap-8 items-stretch">
           {plans
-            .filter((plan) => plan.enabled !== false && plan.key !== "FREE")
+            .filter((plan) => plan.enabled !== false)
             .map((plan, index) => {
               const isPopular = PLANS[plan.key]?.popular ?? false
               const priceRaw = period === "month" ? plan.monthlyPrice : plan.yearlyPrice
@@ -657,7 +657,7 @@ function PricingSection({ t, lang }: { t: LandingContent; lang: Lang }) {
                         : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"
                     )}
                   >
-                    {t.pricing.request}
+                    {plan.key === "FREE" ? t.nav.register : t.pricing.request}
                   </Link>
                 </motion.div>
               )
