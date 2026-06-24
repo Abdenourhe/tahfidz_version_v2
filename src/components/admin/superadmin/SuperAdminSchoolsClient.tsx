@@ -21,7 +21,7 @@ interface Props {
   schools: School[]
 }
 
-type PlanValue = "FREE" | "STARTER" | "PRO" | "ENTERPRISE"
+type PlanValue = "FREE" | "STARTER" | "ECONOMIQUE" | "PRO" | "ENTERPRISE"
 type TimeRange = "7d" | "30d" | "90d" | "1y"
 
 interface CreateForm {
@@ -155,6 +155,7 @@ export function SuperAdminSchoolsClient({ schools }: Props) {
     const byPlan = {
       FREE: schools.filter((s) => s.plan === "FREE").length,
       STARTER: schools.filter((s) => s.plan === "STARTER").length,
+      ECONOMIQUE: schools.filter((s) => s.plan === "ECONOMIQUE").length,
       PRO: schools.filter((s) => s.plan === "PRO").length,
       ENTERPRISE: schools.filter((s) => s.plan === "ENTERPRISE").length,
     }
@@ -486,6 +487,8 @@ export function SuperAdminSchoolsClient({ schools }: Props) {
         return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 ring-amber-200 dark:ring-amber-800"
       case "PRO":
         return "bg-tahfidz-purple-light text-tahfidz-purple dark:bg-tahfidz-purple/20 dark:text-tahfidz-purple-light ring-tahfidz-purple/20 dark:ring-tahfidz-purple/30"
+      case "ECONOMIQUE":
+        return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 ring-emerald-200 dark:ring-emerald-800"
       case "STARTER":
         return "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300 ring-blue-200 dark:ring-blue-800"
       default:
@@ -499,6 +502,8 @@ export function SuperAdminSchoolsClient({ schools }: Props) {
         return "bg-amber-500"
       case "PRO":
         return "bg-tahfidz-purple"
+      case "ECONOMIQUE":
+        return "bg-emerald-500"
       case "STARTER":
         return "bg-blue-500"
       default:
@@ -514,6 +519,7 @@ export function SuperAdminSchoolsClient({ schools }: Props) {
   const planMeta: { key: PlanValue; label: string }[] = [
     { key: "FREE", label: t("planFree") },
     { key: "STARTER", label: t("planStarter") },
+    { key: "ECONOMIQUE", label: t("planEconomique") },
     { key: "PRO", label: t("planPro") },
     { key: "ENTERPRISE", label: t("planEnterprise") },
   ]
@@ -690,6 +696,7 @@ export function SuperAdminSchoolsClient({ schools }: Props) {
                 <option value="ALL">{t("allPlans")}</option>
                 <option value="FREE">{t("planFree")}</option>
                 <option value="STARTER">{t("planStarter")}</option>
+                <option value="ECONOMIQUE">{t("planEconomique")}</option>
                 <option value="PRO">{t("planPro")}</option>
                 <option value="ENTERPRISE">{t("planEnterprise")}</option>
               </select>
@@ -1399,6 +1406,7 @@ export function SuperAdminSchoolsClient({ schools }: Props) {
                   >
                     <option value="FREE">{t("planFree")}</option>
                     <option value="STARTER">{t("planStarter")}</option>
+                    <option value="ECONOMIQUE">{t("planEconomique")}</option>
                     <option value="PRO">{t("planPro")}</option>
                     <option value="ENTERPRISE">{t("planEnterprise")}</option>
                   </select>
@@ -1606,6 +1614,7 @@ export function SuperAdminSchoolsClient({ schools }: Props) {
                 >
                   <option value="FREE">{t("planFree")}</option>
                   <option value="STARTER">{t("planStarter")}</option>
+                  <option value="ECONOMIQUE">{t("planEconomique")}</option>
                   <option value="PRO">{t("planPro")}</option>
                   <option value="ENTERPRISE">{t("planEnterprise")}</option>
                 </select>
