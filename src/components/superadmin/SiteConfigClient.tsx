@@ -2,7 +2,7 @@
 // src/components/superadmin/SiteConfigClient.tsx
 // Interface superadmin d'édition du contenu du site (landing + contenus globaux)
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Layout, Globe, Save, Eye, Plus, Trash2, ChevronDown, ChevronUp,
   Star, Users, BookOpen, BarChart2, MessageSquare, Megaphone,
@@ -1235,6 +1235,23 @@ export function SiteConfigClient({ initialLanding, initialGlobal, initialPages }
     message: '',
   })
   const [saving, setSaving] = useState<'landing' | 'global' | SitePageKey | null>(null)
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isFirstLandingRender = useRef(true)
+
+  // Auto-save landing avec debounce de 1s
+  useEffect(() => {
+    if (isFirstLandingRender.current) {
+      isFirstLandingRender.current = false
+      return
+    }
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
+    autoSaveTimer.current = setTimeout(() => {
+      void saveLanding()
+    }, 1000)
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
+    }
+  }, [landing])
 
   async function saveLanding() {
     setSaving('landing')
