@@ -339,16 +339,16 @@ function LandingEditor({
   onChange: (content: LandingContent) => void
 }) {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    nav: true,
-    hero: true,
-    features: true,
-    how: true,
-    users: true,
-    stats: true,
-    testimonials: true,
-    pricing: true,
-    cta: true,
-    footer: true,
+    nav: false,
+    hero: false,
+    features: false,
+    how: false,
+    users: false,
+    stats: false,
+    testimonials: false,
+    pricing: false,
+    cta: false,
+    footer: false,
   })
 
   function toggle(key: string) {
