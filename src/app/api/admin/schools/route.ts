@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
-import { applyPlanConfig } from "@/lib/halaqa-quota"
+import { applyPlanConfig, PLAN_CONFIG } from "@/lib/halaqa-quota"
 import { SchoolPlan } from "@prisma/client"
 import bcrypt from "bcryptjs"
 
@@ -164,6 +164,16 @@ export async function PATCH(req: NextRequest) {
 
     // Appliquer la configuration du plan (quotas Halaqa, limites, etc.)
     await applyPlanConfig(school.id, plan)
+
+    // Appliquer la durée de séance demandée si elle respecte la limite du plan
+    const requestedDuration = request.halaqaSessionDuration
+    const planMaxDuration = PLAN_CONFIG[plan].halaqaMaxDuration
+    if (requestedDuration && requestedDuration >= 15 && requestedDuration <= planMaxDuration) {
+      await prisma.school.update({
+        where: { id: school.id },
+        data: { halaqaMaxDuration: requestedDuration },
+      })
+    }
 
     await (prisma as any).schoolRequest.update({
       where: { id: body.requestId },

@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import {
   Loader2, CheckCircle2, School, ArrowLeft, Building2, User, Mail,
   Phone, Lock, MapPin, Globe, Users, GraduationCap, BookOpen,
-  ChevronRight, Check, Sparkles, ShieldCheck, Eye, EyeOff, ImagePlus, X
+  ChevronRight, Check, Sparkles, ShieldCheck, Eye, EyeOff, ImagePlus, X, Clock
 } from "lucide-react"
 import Link from "next/link"
 import { Logo } from "@/components/ui/Logo"
@@ -32,6 +32,7 @@ interface FormData {
   teachersCount:   string
   plan:            string
   billingCycle:    string
+  halaqaSessionDuration: string
 }
 
 /* ─── Step config ────────────────────────────────────────── */
@@ -144,6 +145,7 @@ export default function RegisterSchoolClient() {
     teachersCount:   "",
     plan:            planParam,
     billingCycle:    billingCycleParam,
+    halaqaSessionDuration: "45",
   })
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
@@ -217,6 +219,7 @@ export default function RegisterSchoolClient() {
           teachersCount:    Number(form.teachersCount),
           plan:             form.plan,
           billingCycle:     form.billingCycle,
+          halaqaSessionDuration: Number(form.halaqaSessionDuration),
           logo,
         }),
       })
@@ -300,11 +303,19 @@ export default function RegisterSchoolClient() {
           </p>
 
           {form.plan && (
-            <div className="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-tahfidz-green/10 to-emerald-500/10 dark:from-emerald-900/20 dark:to-emerald-800/20 border border-tahfidz-green/20 dark:border-emerald-800/30">
-              <span className="text-xs text-gray-500 dark:text-gray-400">Plan selectionne :</span>
-              <span className="text-sm font-bold text-tahfidz-green">
-                {planLabels[form.plan] ?? form.plan} · {form.billingCycle === "MONTHLY" ? "Mensuel" : "Annuel"}
-              </span>
+            <div className="mt-5 inline-flex flex-wrap items-center justify-center gap-2">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-tahfidz-green/10 to-emerald-500/10 dark:from-emerald-900/20 dark:to-emerald-800/20 border border-tahfidz-green/20 dark:border-emerald-800/30">
+                <span className="text-xs text-gray-500 dark:text-gray-400">Plan selectionne :</span>
+                <span className="text-sm font-bold text-tahfidz-green">
+                  {planLabels[form.plan] ?? form.plan} · {form.billingCycle === "MONTHLY" ? "Mensuel" : "Annuel"}
+                </span>
+              </div>
+              {form.halaqaSessionDuration && (
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/30 text-blue-700 dark:text-blue-300">
+                  <Clock size={12} />
+                  <span className="text-xs font-medium">Durée de seance : {form.halaqaSessionDuration} min</span>
+                </div>
+              )}
             </div>
           )}
         </motion.div>
@@ -645,6 +656,25 @@ export default function RegisterSchoolClient() {
                           className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white"
                         />
                       </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        <Clock size={14} className="inline mr-1" />
+                        Duree moyenne d&apos;une seance Halaqa (min) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        min={15}
+                        max={180}
+                        value={form.halaqaSessionDuration}
+                        onChange={(e) => update("halaqaSessionDuration", e.target.value)}
+                        placeholder="45"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white"
+                      />
+                      <p className="text-xs text-gray-400 mt-1.5">
+                        Indiquez la duree moyenne souhaitee pour vos seances Halaqa. Le Super-Admin pourra l&apos;ajuster a la validation.
+                      </p>
                     </div>
 
                     {totalStudents > 0 && (

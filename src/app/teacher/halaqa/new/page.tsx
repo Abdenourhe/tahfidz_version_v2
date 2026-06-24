@@ -26,6 +26,7 @@ type FormData = z.infer<typeof schema>
   const [groups, setGroups] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(true)
+  const [quotaStatus, setQuotaStatus] = useState<{ halaqaMaxDuration: number; plan: string } | null>(null)
 
   const schema = z.object({
     meetingName: z.string().min(2, t("nameRequired")),
@@ -36,7 +37,7 @@ type FormData = z.infer<typeof schema>
     mode: z.enum(["AUDIO_ONLY", "VIDEO", "SCREEN_SHARE"]),
     sourah: z.string().optional(),
     verses: z.string().optional(),
-    duration: z.number().min(15).max(180),
+    duration: z.number().min(15).max(quotaStatus?.halaqaMaxDuration ?? 180),
   })
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
@@ -55,9 +56,10 @@ type FormData = z.infer<typeof schema>
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [sRes, gRes] = await Promise.all([
+        const [sRes, gRes, qRes] = await Promise.all([
           fetch("/api/students"),
           fetch("/api/groups"),
+          fetch("/api/halaqa/quota"),
         ])
         if (sRes.ok) {
           const sData = await sRes.json()
@@ -66,6 +68,15 @@ type FormData = z.infer<typeof schema>
         if (gRes.ok) {
           const gData = await gRes.json()
           setGroups(gData.groups || [])
+        }
+        if (qRes.ok) {
+          const qData = await qRes.json()
+          if (qData.status) {
+            setQuotaStatus({
+              halaqaMaxDuration: qData.status.halaqaMaxDuration,
+              plan: qData.status.plan,
+            })
+          }
         }
       } catch (err) {
         console.error(err)
@@ -212,9 +223,14 @@ type FormData = z.infer<typeof schema>
                   type="number"
                   {...register("duration", { valueAsNumber: true })}
                   min={15}
-                  max={180}
+                  max={quotaStatus?.halaqaMaxDuration ?? 180}
                   className="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm"
                 />
+                {quotaStatus && (
+                  <p className="text-xs text-gray-400 mt-1.5">
+                    Duree maximum autorisee par votre plan ({quotaStatus.plan}) : {quotaStatus.halaqaMaxDuration} minutes.
+                  </p>
+                )}
               </div>
             </div>
 

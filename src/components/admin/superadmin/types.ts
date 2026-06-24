@@ -40,6 +40,7 @@ export interface SchoolRequest {
   teachersCount: number
   plan: string
   billingCycle: string
+  halaqaSessionDuration: number | null
   status: "PENDING" | "APPROVED" | "REJECTED"
   slug: string | null
   createdAt: string

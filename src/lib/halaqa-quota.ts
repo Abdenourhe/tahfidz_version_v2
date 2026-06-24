@@ -63,6 +63,9 @@ export interface QuotaStatus {
   totalConsumed: number
   remaining: number
   isUnlimited: boolean
+  halaqaMaxDuration: number
+  maxTeachers: number
+  maxStudents: number
 }
 
 /**
@@ -186,6 +189,9 @@ export async function getHalaqaQuotaStatus(schoolId: string): Promise<QuotaStatu
     totalConsumed,
     remaining,
     isUnlimited: totalAllowed === Number.MAX_SAFE_INTEGER,
+    halaqaMaxDuration: school.halaqaMaxDuration,
+    maxTeachers: school.maxTeachers,
+    maxStudents: school.maxStudents,
   }
 }
 

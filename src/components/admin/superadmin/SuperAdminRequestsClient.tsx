@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Check, Ban, Trash2, Loader2, CheckCircle2, Users, Phone, Mail, MapPin, Clock, CalendarDays } from "lucide-react"
+import { Check, Ban, Trash2, Loader2, CheckCircle2, Users, Phone, Mail, MapPin, Clock, CalendarDays, Timer } from "lucide-react"
 import { formatPhone } from "./types"
 
 interface SchoolRequest {
@@ -16,6 +16,7 @@ interface SchoolRequest {
   country: string
   plan: string
   billingCycle: string
+  halaqaSessionDuration: number | null
   status: "PENDING" | "APPROVED" | "REJECTED"
   createdAt: string | Date
 }
@@ -111,6 +112,11 @@ export function SuperAdminRequestsClient({ requests }: Props) {
                     <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-medium flex items-center gap-1">
                       <CalendarDays size={10} /> {cycleLabels[r.billingCycle] ?? r.billingCycle}
                     </span>
+                    {r.halaqaSessionDuration && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 font-medium flex items-center gap-1">
+                        <Timer size={10} /> {r.halaqaSessionDuration} min
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-gray-400 flex items-center gap-1"><MapPin size={11} />{r.city ? `${r.city}, ` : ""}{r.country}</p>
                   <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">

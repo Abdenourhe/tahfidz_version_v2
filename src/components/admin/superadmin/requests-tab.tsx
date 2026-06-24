@@ -1,6 +1,6 @@
 "use client"
 import { Fragment, useState } from "react"
-import { CheckCircle2, X, ChevronDown, Check, Ban, Trash2, Loader2, Users, Phone, Mail, MapPin, CalendarDays } from "lucide-react"
+import { CheckCircle2, X, ChevronDown, Check, Ban, Trash2, Loader2, Users, Phone, Mail, MapPin, CalendarDays, Timer } from "lucide-react"
 import { SchoolRequest } from "./types"
 import { formatPhone } from "./types"
 
@@ -45,6 +45,11 @@ function RequestCard({
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-medium flex items-center gap-1">
               <CalendarDays size={10} /> {cycleLabels[r.billingCycle] ?? r.billingCycle}
             </span>
+            {r.halaqaSessionDuration && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 font-medium flex items-center gap-1">
+                <Timer size={10} /> {r.halaqaSessionDuration} min
+              </span>
+            )}
             {r.slug && <span className="font-mono bg-tahfidz-green-light text-tahfidz-green px-2 py-0.5 rounded text-[10px]">🔑 {r.slug}</span>}
           </div>
           <p className="text-xs text-gray-400 flex items-center gap-1"><MapPin size={11} />{r.city ? `${r.city}, ` : ""}{r.country}</p>

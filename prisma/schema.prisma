@@ -947,10 +947,11 @@ model SchoolRequest {
   schoolName       String
   city             String?
   country          String        @default("DZ")
-  plan             SchoolPlan    @default(FREE)
-  billingCycle     BillingCycle  @default(MONTHLY)
-  address          String?
-  adminEmail       String
+  plan                  SchoolPlan    @default(FREE)
+  billingCycle          BillingCycle  @default(MONTHLY)
+  halaqaSessionDuration Int?
+  address               String?
+  adminEmail            String
   adminPassword    String
   adminName        String
   classCount       Int

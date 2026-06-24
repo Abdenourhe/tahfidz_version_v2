@@ -18,6 +18,7 @@ const schema = z.object({
   teachersCount:    z.coerce.number().int().min(1),
   plan:             z.enum(["FREE", "STARTER", "ECONOMIQUE", "PRO", "ENTERPRISE"]).default("FREE"),
   billingCycle:     z.enum(["MONTHLY", "YEARLY"]).default("MONTHLY"),
+  halaqaSessionDuration: z.coerce.number().int().min(15).max(180).optional(),
   logo:             z.string().optional(),
 })
 
@@ -62,6 +63,7 @@ export async function POST(req: NextRequest) {
         teachersCount:    d.teachersCount,
         plan:             d.plan,
         billingCycle:     d.billingCycle,
+        halaqaSessionDuration: d.halaqaSessionDuration ?? null,
         logo:             d.logo ?? null,
         status:           "PENDING",
       },
