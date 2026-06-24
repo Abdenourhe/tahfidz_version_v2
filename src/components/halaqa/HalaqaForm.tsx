@@ -34,7 +34,7 @@ interface HalaqaSession {
   studentIds: string[]
   groupId?: string | null
   teacherId?: string
-  status: string
+  status?: string
 }
 
 interface HalaqaFormProps {
@@ -73,6 +73,12 @@ export default function HalaqaForm({
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(true)
   const [quotaStatus, setQuotaStatus] = useState<{ halaqaMaxDuration: number; plan: string } | null>(null)
+  const [recurrenceOpen, setRecurrenceOpen] = useState(false)
+  const [recurrence, setRecurrence] = useState<{ enabled: boolean; frequency: "DAILY" | "WEEKLY"; occurrences: number }>({
+    enabled: false,
+    frequency: "WEEKLY",
+    occurrences: 4,
+  })
 
   const schema = z.object({
     meetingName: z.string().min(2, t("nameRequired")),
@@ -189,9 +195,15 @@ export default function HalaqaForm({
   const onSubmit = async (data: FormData) => {
     setLoading(true)
     try {
-      const payload = {
+      const payload: any = {
         ...data,
         scheduledAt: new Date(data.scheduledAt).toISOString(),
+      }
+      if (mode === "create" && recurrence.enabled) {
+        payload.recurrence = {
+          frequency: recurrence.frequency,
+          occurrences: recurrence.occurrences,
+        }
       }
 
       let res: Response

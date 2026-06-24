@@ -2465,6 +2465,11 @@ export const translations = {
     confirmCancel:    { fr: "Voulez-vous vraiment annuler cette séance ?", en: "Are you sure you want to cancel this session?", ar: "هل أنت متأكد أنك تريد إلغاء هذه الجلسة؟" },
     errorCancel:      { fr: "Erreur lors de l'annulation", en: "Error cancelling the session", ar: "خطأ أثناء الإلغاء" },
     edit:             { fr: "Modifier",              en: "Edit",                  ar: "تعديل" },
+    duplicate:        { fr: "Dupliquer",             en: "Duplicate",             ar: "استنساخ" },
+    duplicateSession: { fr: "Dupliquer la séance",   en: "Duplicate session",     ar: "استنساخ الجلسة" },
+    duplicateSubtitle:{ fr: "Créez une copie de la séance avec une nouvelle date.", en: "Create a copy of the session with a new date.", ar: "أنشئ نسخة من الجلسة بتاريخ جديد." },
+    list:             { fr: "Liste",                 en: "List",                  ar: "قائمة" },
+    calendar:         { fr: "Calendrier",            en: "Calendar",              ar: "تقويم" },
     // Quotas
     quotaReached:     { fr: "Quota de Halaqa atteint", en: "Halaqa quota reached", ar: "تم الوصول إلى حصة الحلقة" },
     upgradePlan:      { fr: "Passez à un plan supérieur", en: "Upgrade your plan", ar: "قم بترقية خطتك" },

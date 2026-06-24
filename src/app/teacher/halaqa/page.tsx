@@ -2,12 +2,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import Link from "next/link"
+import HalaqaCalendarView from "@/components/halaqa/HalaqaCalendarView"
 import { motion } from "framer-motion"
 import {
   Video, Plus, Calendar, Users, BookOpen,
-  Play, FileVideo, BarChart3, X
+  Play, FileVideo, BarChart3, X, LayoutList, CalendarDays, Copy
 } from "lucide-react"
 
 interface HalaqaSession {
@@ -37,6 +39,7 @@ interface QuotaStatus {
 }
 
 export default function TeacherHalaqaPage() {
+  const router = useRouter()
   const { locale } = useLanguage()
   const t = useT("halaqa")
   const isRTL = locale === "ar"
@@ -44,6 +47,7 @@ export default function TeacherHalaqaPage() {
   const [loading, setLoading] = useState(true)
   const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [filter, setFilter] = useState<"all" | "scheduled" | "live" | "ended">("all")
+  const [view, setView] = useState<"list" | "calendar">("list")
   const [quota, setQuota] = useState<QuotaStatus | null>(null)
 
   useEffect(() => {
@@ -219,25 +223,60 @@ export default function TeacherHalaqaPage() {
           ))}
         </div>
 
-        {/* Filtres */}
-        <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-          {(["all", "scheduled", "live", "ended"] as const).map((f) => (
+        {/* Filtres + toggle */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {(["all", "scheduled", "live", "ended"] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  filter === f
+                    ? "bg-tahfidz-green text-white"
+                    : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                }`}
+              >
+                {f === "all" ? t("all") : f === "scheduled" ? t("planned") : f === "live" ? t("liveNow") : t("endedSessions")}
+              </button>
+            ))}
+          </div>
+          <div className="inline-flex items-center p-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
             <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                filter === f
+              type="button"
+              onClick={() => setView("list")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition ${
+                view === "list"
                   ? "bg-tahfidz-green text-white"
-                  : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
               }`}
             >
-              {f === "all" ? t("all") : f === "scheduled" ? t("planned") : f === "live" ? t("liveNow") : t("endedSessions")}
+              <LayoutList size={14} />
+              {t("list") || "Liste"}
             </button>
-          ))}
+            <button
+              type="button"
+              onClick={() => setView("calendar")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition ${
+                view === "calendar"
+                  ? "bg-tahfidz-green text-white"
+                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+              }`}
+            >
+              <CalendarDays size={14} />
+              {t("calendar") || "Calendrier"}
+            </button>
+          </div>
         </div>
 
-        {/* Liste */}
-        {loading ? (
+        {/* Contenu */}
+        {view === "calendar" ? (
+          <HalaqaCalendarView
+            sessions={sessions}
+            locale={locale}
+            isRTL={isRTL}
+            onSessionClick={(session) => router.push(`/teacher/halaqa/${session.id}`)}
+          />
+        ) : loading ? (
           <div className="text-center py-20 text-gray-400">{t("loading")}</div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20">
@@ -302,6 +341,13 @@ export default function TeacherHalaqaPage() {
                           {t("edit") || "Modifier"}
                         </Link>
                         <Link
+                          href={`/teacher/halaqa/new?duplicate=${session.id}`}
+                          className="px-4 py-2 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium rounded-lg transition"
+                        >
+                          <Copy size={16} className={`inline ${isRTL ? "ml-1" : "mr-1"}`} />
+                          {t("duplicate") || "Dupliquer"}
+                        </Link>
+                        <Link
                           href={`/teacher/halaqa/${session.id}`}
                           className="px-4 py-2 bg-tahfidz-green hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition"
                         >
@@ -333,6 +379,13 @@ export default function TeacherHalaqaPage() {
                     )}
                     {session.status === "ENDED" && (
                       <>
+                        <Link
+                          href={`/teacher/halaqa/new?duplicate=${session.id}`}
+                          className="px-4 py-2 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium rounded-lg transition"
+                        >
+                          <Copy size={16} className={`inline ${isRTL ? "ml-1" : "mr-1"}`} />
+                          {t("duplicate") || "Dupliquer"}
+                        </Link>
                         {session.recordingUrl && (
                           <a
                             href={session.recordingUrl}
