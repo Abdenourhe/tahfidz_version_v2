@@ -60,7 +60,7 @@ export interface LandingContent {
     request: string
     popular: string
     currency: string
-    plans: Array<{ name: string; students: string; monthlyPrice: string; yearlyPrice: string; monthlyFeatures: string[]; yearlyFeatures: string[]; features?: string[] }>
+    plans: Array<{ key: 'FREE' | 'STARTER' | 'ECONOMIQUE' | 'PRO' | 'ENTERPRISE'; name: string; students: string; monthlyPrice: string; yearlyPrice: string; monthlyFeatures: string[]; yearlyFeatures: string[]; features?: string[] }>
   }
   cta: {
     title: string
@@ -110,6 +110,31 @@ export function normalizeCurrencyCode(value: unknown): string {
     'دينار تونسي': 'TND',
   }
   return map[str] ?? 'CAD'
+}
+
+function normalizePlan(
+  plan: Partial<LandingContent['pricing']['plans'][number]>,
+  defaults: LandingContent['pricing']['plans']
+): LandingContent['pricing']['plans'][number] {
+  const fallback = defaults.find((d) => d.key === plan.key) ?? defaults[0]
+  return {
+    key: (plan.key as LandingContent['pricing']['plans'][number]['key']) ?? fallback.key,
+    name: plan.name ?? fallback.name,
+    students: plan.students ?? fallback.students,
+    monthlyPrice: plan.monthlyPrice ?? (plan as any).price ?? fallback.monthlyPrice,
+    yearlyPrice: plan.yearlyPrice ?? (plan as any).price ?? fallback.yearlyPrice,
+    monthlyFeatures: plan.monthlyFeatures ?? plan.features ?? fallback.monthlyFeatures,
+    yearlyFeatures: plan.yearlyFeatures ?? plan.features ?? fallback.yearlyFeatures,
+  }
+}
+
+function normalizePlans(
+  plans: Partial<LandingContent['pricing']['plans'][number]>[],
+  defaults: LandingContent['pricing']['plans']
+): LandingContent['pricing']['plans'] {
+  // Conserve l'ordre et complète avec les plans par défaut si des clés manquent
+  const byKey = new Map(plans.map((p) => [p.key, normalizePlan(p, defaults)]))
+  return defaults.map((d) => byKey.get(d.key) ?? d)
 }
 
 export function normalizeFooterLink(link: unknown, defaultLinks: FooterLink[] = []): FooterLink {
@@ -203,14 +228,7 @@ export function normalizeLandingContent(
       ...c.pricing,
       period: c.pricing?.period ?? defaultLang.pricing.period,
       currency: normalizeCurrencyCode(c.pricing?.currency ?? defaultLang.pricing.currency),
-      plans: (c.pricing?.plans ?? defaultLang.pricing.plans).map((plan) => ({
-        name: plan.name,
-        students: plan.students,
-        monthlyPrice: plan.monthlyPrice ?? (plan as any).price ?? defaultLang.pricing.plans[0].monthlyPrice,
-        yearlyPrice: plan.yearlyPrice ?? (plan as any).price ?? defaultLang.pricing.plans[0].yearlyPrice,
-        monthlyFeatures: plan.monthlyFeatures ?? plan.features ?? defaultLang.pricing.plans[0].monthlyFeatures,
-        yearlyFeatures: plan.yearlyFeatures ?? plan.features ?? defaultLang.pricing.plans[0].yearlyFeatures,
-      })),
+      plans: normalizePlans(c.pricing?.plans ?? defaultLang.pricing.plans, defaultLang.pricing.plans),
     },
     cta: { ...defaultLang.cta, ...c.cta },
     footer: {
@@ -301,9 +319,11 @@ export const defaultLandingContent: Record<"fr" | "en" | "ar", LandingContent> =
       popular: "Populaire",
       currency: "CAD",
       plans: [
-        { name: "Gratuit", students: "Jusqu'a 50 eleves", monthlyPrice: "0", yearlyPrice: "0", monthlyFeatures: ["Gestion des eleves", "2 enseignants", "1 halaqa", "Rapports basiques", "Support email"], yearlyFeatures: ["Gestion des eleves", "2 enseignants", "1 halaqa", "Rapports basiques", "Support email"] },
-        { name: "Starter", students: "51 - 200 eleves", monthlyPrice: "49", yearlyPrice: "490", monthlyFeatures: ["Tout du plan Gratuit", "10 enseignants", "Halaqas illimitees", "Notifications push", "Exports PDF"], yearlyFeatures: ["Tout du plan Gratuit", "10 enseignants", "Halaqas illimitees", "Notifications push", "Exports PDF"] },
-        { name: "Pro", students: "201 - 500 eleves", monthlyPrice: "99", yearlyPrice: "990", monthlyFeatures: ["Tout du plan Starter", "Enseignants illimites", "Halaqa Online electronique", "Tableau de bord avance", "Support prioritaire"], yearlyFeatures: ["Tout du plan Starter", "Enseignants illimites", "Halaqa Online electronique", "Tableau de bord avance", "Support prioritaire"] },
+        { key: "FREE", name: "Gratuit", students: "Jusqu'à 20 élèves", monthlyPrice: "0", yearlyPrice: "0", monthlyFeatures: ["Gestion des élèves", "1 enseignant", "1 Halaqa/mois", "Durée max 15 min", "Support email"], yearlyFeatures: ["Gestion des élèves", "1 enseignant", "1 Halaqa/mois", "Durée max 15 min", "Support email"] },
+        { key: "STARTER", name: "Starter", students: "21 - 49 élèves", monthlyPrice: "49", yearlyPrice: "675", monthlyFeatures: ["Gestion des élèves et enseignants", "2 enseignants", "2 Halaqas/mois", "Durée max 45 min", "Rapports basiques"], yearlyFeatures: ["Gestion des élèves et enseignants", "2 enseignants", "2 Halaqas/mois", "Durée max 45 min", "Rapports basiques"] },
+        { key: "ECONOMIQUE", name: "Économique", students: "50 - 199 élèves", monthlyPrice: "79", yearlyPrice: "875", monthlyFeatures: ["Tout du plan Starter", "10 enseignants", "10 Halaqas/mois", "Durée max 60 min", "Notifications push", "Exports PDF"], yearlyFeatures: ["Tout du plan Starter", "10 enseignants", "10 Halaqas/mois", "Durée max 60 min", "Notifications push", "Exports PDF"] },
+        { key: "PRO", name: "Pro", students: "200 - 500 élèves", monthlyPrice: "99", yearlyPrice: "1099", monthlyFeatures: ["Tout du plan Économique", "Enseignants illimités", "Halaqas illimitées", "Durée max 120 min", "Tableau de bord avancé", "Support prioritaire"], yearlyFeatures: ["Tout du plan Économique", "Enseignants illimités", "Halaqas illimitées", "Durée max 120 min", "Tableau de bord avancé", "Support prioritaire"] },
+        { key: "ENTERPRISE", name: "Entreprise", students: "500+ élèves", monthlyPrice: "199", yearlyPrice: "2199", monthlyFeatures: ["Tout du plan Pro", "Élèves illimités", "Enseignants illimités", "Halaqas illimitées", "Durée max 180 min", "Support dédié"], yearlyFeatures: ["Tout du plan Pro", "Élèves illimités", "Enseignants illimités", "Halaqas illimitées", "Durée max 180 min", "Support dédié"] },
       ],
     },
     cta: {
@@ -408,9 +428,11 @@ export const defaultLandingContent: Record<"fr" | "en" | "ar", LandingContent> =
       popular: "Popular",
       currency: "CAD",
       plans: [
-        { name: "Free", students: "Up to 50 students", monthlyPrice: "0", yearlyPrice: "0", monthlyFeatures: ["Student management", "2 teachers", "1 halaqa", "Basic reports", "Email support"], yearlyFeatures: ["Student management", "2 teachers", "1 halaqa", "Basic reports", "Email support"] },
-        { name: "Starter", students: "51 - 200 students", monthlyPrice: "49", yearlyPrice: "490", monthlyFeatures: ["Everything in Free", "10 teachers", "Unlimited halaqas", "Push notifications", "PDF exports"], yearlyFeatures: ["Everything in Free", "10 teachers", "Unlimited halaqas", "Push notifications", "PDF exports"] },
-        { name: "Pro", students: "201 - 500 students", monthlyPrice: "99", yearlyPrice: "990", monthlyFeatures: ["Everything in Starter", "Unlimited teachers", "Electronic Halaqa Online", "Advanced dashboard", "Priority support"], yearlyFeatures: ["Everything in Starter", "Unlimited teachers", "Electronic Halaqa Online", "Advanced dashboard", "Priority support"] },
+        { key: "FREE", name: "Free", students: "Up to 20 students", monthlyPrice: "0", yearlyPrice: "0", monthlyFeatures: ["Student management", "1 teacher", "1 Halaqa/month", "Max duration 15 min", "Email support"], yearlyFeatures: ["Student management", "1 teacher", "1 Halaqa/month", "Max duration 15 min", "Email support"] },
+        { key: "STARTER", name: "Starter", students: "21 - 49 students", monthlyPrice: "49", yearlyPrice: "675", monthlyFeatures: ["Student & teacher management", "2 teachers", "2 Halaqas/month", "Max duration 45 min", "Basic reports"], yearlyFeatures: ["Student & teacher management", "2 teachers", "2 Halaqas/month", "Max duration 45 min", "Basic reports"] },
+        { key: "ECONOMIQUE", name: "Economique", students: "50 - 199 students", monthlyPrice: "79", yearlyPrice: "875", monthlyFeatures: ["Everything in Starter", "10 teachers", "10 Halaqas/month", "Max duration 60 min", "Push notifications", "PDF exports"], yearlyFeatures: ["Everything in Starter", "10 teachers", "10 Halaqas/month", "Max duration 60 min", "Push notifications", "PDF exports"] },
+        { key: "PRO", name: "Pro", students: "200 - 500 students", monthlyPrice: "99", yearlyPrice: "1099", monthlyFeatures: ["Everything in Economique", "Unlimited teachers", "Unlimited Halaqas", "Max duration 120 min", "Advanced dashboard", "Priority support"], yearlyFeatures: ["Everything in Economique", "Unlimited teachers", "Unlimited Halaqas", "Max duration 120 min", "Advanced dashboard", "Priority support"] },
+        { key: "ENTERPRISE", name: "Enterprise", students: "500+ students", monthlyPrice: "199", yearlyPrice: "2199", monthlyFeatures: ["Everything in Pro", "Unlimited students", "Unlimited teachers", "Unlimited Halaqas", "Max duration 180 min", "Dedicated support"], yearlyFeatures: ["Everything in Pro", "Unlimited students", "Unlimited teachers", "Unlimited Halaqas", "Max duration 180 min", "Dedicated support"] },
       ],
     },
     cta: {
@@ -515,9 +537,11 @@ export const defaultLandingContent: Record<"fr" | "en" | "ar", LandingContent> =
       popular: "الأكثر شيوعاً",
       currency: "CAD",
       plans: [
-        { name: "مجاني", students: "حتى 50 طالب", monthlyPrice: "0", yearlyPrice: "0", monthlyFeatures: ["إدارة الطلاب", "2 معلم", "1 حلقة", "تقارير أساسية", "دعم بالبريد"], yearlyFeatures: ["إدارة الطلاب", "2 معلم", "1 حلقة", "تقارير أساسية", "دعم بالبريد"] },
-        { name: "Starter", students: "51 - 200 طالب", monthlyPrice: "49", yearlyPrice: "490", monthlyFeatures: ["كل شيء في المجاني", "10 معلمين", "حلقات غير محدودة", "إشعارات فورية", "تصدير PDF"], yearlyFeatures: ["كل شيء في المجاني", "10 معلمين", "حلقات غير محدودة", "إشعارات فورية", "تصدير PDF"] },
-        { name: "احترافي", students: "201 - 500 طالب", monthlyPrice: "99", yearlyPrice: "990", monthlyFeatures: ["كل شيء في Starter", "معلمين غير محدودين", "المقرأة الإلكترونية", "لوحة معلومات متقدمة", "دعم أولوي"], yearlyFeatures: ["كل شيء في Starter", "معلمين غير محدودين", "المقرأة الإلكترونية", "لوحة معلومات متقدمة", "دعم أولوي"] },
+        { key: "FREE", name: "مجاني", students: "حتى 20 طالب", monthlyPrice: "0", yearlyPrice: "0", monthlyFeatures: ["إدارة الطلاب", "1 معلم", "1 حلقة/شهر", "المدة القصوى 15 دقيقة", "دعم بالبريد"], yearlyFeatures: ["إدارة الطلاب", "1 معلم", "1 حلقة/شهر", "المدة القصوى 15 دقيقة", "دعم بالبريد"] },
+        { key: "STARTER", name: "بداية", students: "21 - 49 طالب", monthlyPrice: "49", yearlyPrice: "675", monthlyFeatures: ["إدارة الطلاب والمعلمين", "2 معلم", "2 حلقة/شهر", "المدة القصوى 45 دقيقة", "تقارير أساسية"], yearlyFeatures: ["إدارة الطلاب والمعلمين", "2 معلم", "2 حلقة/شهر", "المدة القصوى 45 دقيقة", "تقارير أساسية"] },
+        { key: "ECONOMIQUE", name: "اقتصادي", students: "50 - 199 طالب", monthlyPrice: "79", yearlyPrice: "875", monthlyFeatures: ["كل مميزات Starter", "10 معلمين", "10 حلقات/شهر", "المدة القصوى 60 دقيقة", "إشعارات فورية", "تصدير PDF"], yearlyFeatures: ["كل مميزات Starter", "10 معلمين", "10 حلقات/شهر", "المدة القصوى 60 دقيقة", "إشعارات فورية", "تصدير PDF"] },
+        { key: "PRO", name: "احترافي", students: "200 - 500 طالب", monthlyPrice: "99", yearlyPrice: "1099", monthlyFeatures: ["كل مميزات Economique", "معلمين غير محدودين", "حلقات غير محدودة", "المدة القصوى 120 دقيقة", "لوحة معلومات متقدمة", "دعم أولوي"], yearlyFeatures: ["كل مميزات Economique", "معلمين غير محدودين", "حلقات غير محدودة", "المدة القصوى 120 دقيقة", "لوحة معلومات متقدمة", "دعم أولوي"] },
+        { key: "ENTERPRISE", name: "مؤسسي", students: "500+ طالب", monthlyPrice: "199", yearlyPrice: "2199", monthlyFeatures: ["كل مميزات Pro", "طلاب غير محدودين", "معلمين غير محدودين", "حلقات غير محدودة", "المدة القصوى 180 دقيقة", "دعم مخصص"], yearlyFeatures: ["كل مميزات Pro", "طلاب غير محدودين", "معلمين غير محدودين", "حلقات غير محدودة", "المدة القصوى 180 دقيقة", "دعم مخصص"] },
       ],
     },
     cta: {

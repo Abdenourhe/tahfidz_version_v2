@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useMemo, useRef, useState } from "react"
+import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { motion } from "framer-motion"
@@ -10,18 +10,21 @@ import {
   Copy, TrendingUp, Zap, MapPin, Phone, Mail, Building2,
   Users, UserCog, BookOpen, GraduationCap, KeyRound,
   Loader2, AlertTriangle, ImagePlus, Activity, BarChart3,
-  SlidersHorizontal, FilterX, LayoutGrid,
+  SlidersHorizontal, FilterX, LayoutGrid, Clock, Video, Infinity,
 } from "lucide-react"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { cn } from "@/lib/utils"
 import type { School } from "./types"
 import { formatPhone, COUNTRIES } from "./types"
+import { PLANS } from "@/lib/halaqa-quota"
+import type { LandingContent } from "@/lib/landing/default-content"
 
 interface Props {
   schools: School[]
 }
 
 type PlanValue = "FREE" | "STARTER" | "ECONOMIQUE" | "PRO" | "ENTERPRISE"
+type LandingPlan = LandingContent["pricing"]["plans"][number]
 type TimeRange = "7d" | "30d" | "90d" | "1y"
 
 interface CreateForm {
@@ -82,9 +85,22 @@ function serializeForCsv(value: string | null | undefined): string {
 
 export function SuperAdminSchoolsClient({ schools }: Props) {
   const router = useRouter()
-  const { useT } = useLanguage()
+  const { useT, locale } = useLanguage()
   const t = (k: string) => useT("superadmin", k)
   const tc = (k: string) => useT("common", k)
+  const planLocale = (locale === "ar" ? "ar" : locale === "en" ? "en" : "fr") as keyof typeof PLANS.FREE.name
+  const [landingPlans, setLandingPlans] = useState<LandingPlan[]>([])
+  const [landingCurrency, setLandingCurrency] = useState("CAD")
+
+  useEffect(() => {
+    fetch(`/api/site-config/landing/plans?lang=${planLocale}`)
+      .then((res) => res.json())
+      .then((data: { plans?: LandingPlan[]; currency?: string }) => {
+        setLandingPlans(data.plans ?? [])
+        setLandingCurrency(data.currency ?? "CAD")
+      })
+      .catch(() => setLandingPlans([]))
+  }, [planLocale])
 
   // ─── Filters & pagination ─────────────────────────────────────────
   const [search, setSearch] = useState("")
@@ -516,13 +532,12 @@ export function SuperAdminSchoolsClient({ schools }: Props) {
       ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 ring-emerald-200 dark:ring-emerald-800"
       : "bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-300 ring-red-200 dark:ring-red-800"
 
-  const planMeta: { key: PlanValue; label: string }[] = [
-    { key: "FREE", label: t("planFree") },
-    { key: "STARTER", label: t("planStarter") },
-    { key: "ECONOMIQUE", label: t("planEconomique") },
-    { key: "PRO", label: t("planPro") },
-    { key: "ENTERPRISE", label: t("planEnterprise") },
-  ]
+  const planMeta: { key: PlanValue; label: string }[] = useMemo(() => {
+    return (["FREE", "STARTER", "ECONOMIQUE", "PRO", "ENTERPRISE"] as PlanValue[]).map((key) => ({
+      key,
+      label: landingPlans.find((p) => p.key === key)?.name ?? PLANS[key].name[planLocale] ?? PLANS[key].name.fr,
+    }))
+  }, [landingPlans, planLocale])
 
   const allFiltersEmpty = !hasActiveFilters()
 
@@ -694,11 +709,9 @@ export function SuperAdminSchoolsClient({ schools }: Props) {
                 className="text-xs px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 bg-white focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50"
               >
                 <option value="ALL">{t("allPlans")}</option>
-                <option value="FREE">{t("planFree")}</option>
-                <option value="STARTER">{t("planStarter")}</option>
-                <option value="ECONOMIQUE">{t("planEconomique")}</option>
-                <option value="PRO">{t("planPro")}</option>
-                <option value="ENTERPRISE">{t("planEnterprise")}</option>
+                {planMeta.map((p) => (
+                  <option key={p.key} value={p.key}>{p.label}</option>
+                ))}
               </select>
               <select
                 value={filterStatus}
@@ -1217,6 +1230,52 @@ export function SuperAdminSchoolsClient({ schools }: Props) {
                                   </div>
                                 </div>
                               </div>
+
+                              {/* Plan quotas */}
+                              <div className="bg-white dark:bg-gray-800/60 rounded-2xl border border-gray-100 dark:border-gray-700 p-4">
+                                <p className="text-[10px] font-bold uppercase text-gray-400 tracking-wider flex items-center gap-1.5 mb-3">
+                                  <Zap size={11} /> {t("planQuotas")}
+                                </p>
+                                {(() => {
+                                  const planDef = PLANS[s.plan as PlanValue]
+                                  const limits = planDef?.limits
+                                  const landingPlan = landingPlans.find((p) => p.key === s.plan)
+                                  if (!planDef || !limits) {
+                                    return <p className="text-xs text-gray-400 italic">{t("noPlanData")}</p>
+                                  }
+                                  const maxStudents = limits.maxStudents
+                                  const maxTeachers = limits.maxTeachers
+                                  const monthlyHalaqas = limits.monthlyHalaqas
+                                  return (
+                                    <div className="space-y-2.5">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-[10px] text-gray-400">{t("planLabel")}</span>
+                                        <span className="text-xs font-semibold text-tahfidz-green">{landingPlan?.name ?? planDef.name[planLocale] ?? planDef.name.fr}</span>
+                                      </div>
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-[10px] text-gray-400 flex items-center gap-1"><Users size={10} /> {tc("maxStudents")}</span>
+                                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{maxStudents === null ? <Infinity size={12} /> : maxStudents}</span>
+                                      </div>
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-[10px] text-gray-400 flex items-center gap-1"><UserCog size={10} /> {tc("maxTeachers")}</span>
+                                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{maxTeachers === null ? <Infinity size={12} /> : maxTeachers}</span>
+                                      </div>
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-[10px] text-gray-400 flex items-center gap-1"><BookOpen size={10} /> {tc("monthlyHalaqas")}</span>
+                                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{monthlyHalaqas === null ? <Infinity size={12} /> : monthlyHalaqas}</span>
+                                      </div>
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-[10px] text-gray-400 flex items-center gap-1"><Clock size={10} /> {tc("maxDuration")}</span>
+                                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{limits.halaqaMaxDuration} min</span>
+                                      </div>
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-[10px] text-gray-400 flex items-center gap-1"><Video size={10} /> {tc("recordingAllowed")}</span>
+                                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{limits.halaqaAllowRecording ? tc("yes") : tc("no")}</span>
+                                      </div>
+                                    </div>
+                                  )
+                                })()}
+                              </div>
                             </div>
                           </td>
                         </tr>
@@ -1404,11 +1463,9 @@ export function SuperAdminSchoolsClient({ schools }: Props) {
                     onChange={(e) => updateCreateForm("plan", e.target.value as PlanValue)}
                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 text-sm bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition"
                   >
-                    <option value="FREE">{t("planFree")}</option>
-                    <option value="STARTER">{t("planStarter")}</option>
-                    <option value="ECONOMIQUE">{t("planEconomique")}</option>
-                    <option value="PRO">{t("planPro")}</option>
-                    <option value="ENTERPRISE">{t("planEnterprise")}</option>
+                    {planMeta.map((p) => (
+                      <option key={p.key} value={p.key}>{p.label}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="grid grid-cols-2 gap-3">

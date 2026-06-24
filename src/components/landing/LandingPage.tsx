@@ -13,8 +13,9 @@ import { useLanguage } from "@/contexts/LanguageContext"
 import { getIcon } from "@/lib/landing/icon-mapper"
 import { type LandingContent } from "@/lib/landing/default-content"
 import { getCurrencyLabel } from "@/lib/landing/currencies"
+import { PLANS } from "@/lib/halaqa-quota"
 import { HeroImage } from "./HeroImage"
-import { Logo, LogoHorizontal } from "@/components/ui/Logo"
+import { LogoHorizontal } from "@/components/ui/Logo"
 
 type Lang = "fr" | "en" | "ar"
 
@@ -514,16 +515,6 @@ const periodLabels: Record<Lang, { monthly: string; yearly: string; month: strin
   ar: { monthly: "شهري", yearly: "سنوي", month: "شهر", year: "سنة" },
 }
 
-function planNameToEnum(name: string): string {
-  const normalized = name.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-  if (normalized.includes("gratuit") || normalized.includes("free") || normalized.includes("مجاني")) return "FREE"
-  if (normalized.includes("economique") || normalized.includes("economy") || normalized.includes("اقتصادي")) return "ECONOMIQUE"
-  if (normalized.includes("enterprise") || normalized.includes("entreprise") || normalized.includes("مؤسسة")) return "ENTERPRISE"
-  if (normalized.includes("pro") || normalized.includes("professionnel") || normalized.includes("احترافي")) return "PRO"
-  if (normalized.includes("starter")) return "STARTER"
-  return "FREE"
-}
-
 function PricingSection({ t, lang }: { t: LandingContent; lang: Lang }) {
   const [period, setPeriod] = useState<"month" | "year">(t.pricing.period ?? "year")
 
@@ -583,74 +574,77 @@ function PricingSection({ t, lang }: { t: LandingContent; lang: Lang }) {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 items-stretch">
-          {t.pricing.plans.map((plan, index) => {
-            const isPopular = index === 1
-            const price = period === "month" ? plan.monthlyPrice : plan.yearlyPrice
-            const features = period === "month" ? plan.monthlyFeatures : plan.yearlyFeatures
-            return (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className={cn(
-                  "relative rounded-2xl p-6 flex flex-col",
-                  isPopular
-                    ? "bg-white dark:bg-gray-800 border-2 border-tahfidz-green shadow-xl shadow-tahfidz-green/10 scale-105 z-10"
-                    : "bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700"
-                )}
-              >
-                {isPopular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-tahfidz-green text-white text-xs font-bold rounded-full">
-                    {t.pricing.popular}
-                  </div>
-                )}
-                <div className="mb-6">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">{plan.name}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{plan.students}</p>
-                </div>
-                <div className="mb-6 text-center">
-                  <div
-                    className="inline-flex items-baseline justify-center gap-1.5"
-                    dir={t.dir === "rtl" ? "ltr" : undefined}
-                  >
-                    <span className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white">
-                      {price}
-                    </span>
-                    <span className="text-lg font-semibold text-gray-700 dark:text-gray-200">
-                      {getCurrencyLabel(t.pricing.currency, lang)}
-                    </span>
-                  </div>
-                  <div
-                    className="text-sm text-gray-500 dark:text-gray-400 mt-0.5"
-                    dir={t.dir === "rtl" ? "ltr" : undefined}
-                  >
-                    /{periodLabel}
-                  </div>
-                </div>
-                <ul className="space-y-3 mb-8 flex-1">
-                  {features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-3 text-sm text-gray-600 dark:text-gray-300">
-                      <Check size={16} className="text-tahfidz-green mt-0.5 shrink-0" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href={`/register-school?plan=${encodeURIComponent(planNameToEnum(plan.name))}&period=${period}`}
+          {t.pricing.plans
+            .filter((plan) => plan.key !== "FREE")
+            .map((plan, index) => {
+              const isPopular = PLANS[plan.key]?.popular ?? false
+              const priceRaw = period === "month" ? plan.monthlyPrice : plan.yearlyPrice
+              const price = Number(priceRaw)
+              const features = period === "month" ? plan.monthlyFeatures : plan.yearlyFeatures
+              return (
+                <motion.div
+                  key={plan.key}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
                   className={cn(
-                    "block w-full text-center py-2.5 rounded-xl font-semibold transition",
+                    "relative rounded-2xl p-6 flex flex-col",
                     isPopular
-                      ? "bg-tahfidz-green text-white hover:bg-tahfidz-green/90"
-                      : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"
+                      ? "bg-white dark:bg-gray-800 border-2 border-tahfidz-green shadow-xl shadow-tahfidz-green/10 scale-105 z-10"
+                      : "bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700"
                   )}
                 >
-                  {t.pricing.request}
-                </Link>
-              </motion.div>
-            )
-          })}
+                  {isPopular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-tahfidz-green text-white text-xs font-bold rounded-full">
+                      {t.pricing.popular}
+                    </div>
+                  )}
+                  <div className="mb-6">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">{plan.name}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{plan.students}</p>
+                  </div>
+                  <div className="mb-6 text-center">
+                    <div
+                      className="inline-flex items-baseline justify-center gap-1.5"
+                      dir={t.dir === "rtl" ? "ltr" : undefined}
+                    >
+                      <span className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white">
+                        {Number.isFinite(price) ? price : priceRaw}
+                      </span>
+                      <span className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                        {getCurrencyLabel(t.pricing.currency, lang)}
+                      </span>
+                    </div>
+                    <div
+                      className="text-sm text-gray-500 dark:text-gray-400 mt-0.5"
+                      dir={t.dir === "rtl" ? "ltr" : undefined}
+                    >
+                      /{periodLabel}
+                    </div>
+                  </div>
+                  <ul className="space-y-3 mb-8 flex-1">
+                    {features.map((feature, i) => (
+                      <li key={i} className="flex items-start gap-3 text-sm text-gray-600 dark:text-gray-300">
+                        <Check size={16} className="text-tahfidz-green mt-0.5 shrink-0" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href={`/register-school?plan=${encodeURIComponent(plan.key)}&period=${period}`}
+                    className={cn(
+                      "block w-full text-center py-2.5 rounded-xl font-semibold transition",
+                      isPopular
+                        ? "bg-tahfidz-green text-white hover:bg-tahfidz-green/90"
+                        : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"
+                    )}
+                  >
+                    {t.pricing.request}
+                  </Link>
+                </motion.div>
+              )
+            })}
         </div>
       </div>
     </section>

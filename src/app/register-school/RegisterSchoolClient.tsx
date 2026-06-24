@@ -11,8 +11,9 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { Logo } from "@/components/ui/Logo"
-import { PLAN_CONFIG } from "@/lib/halaqa-quota"
+import { PLAN_CONFIG, PLANS, PlanLocale } from "@/lib/halaqa-quota"
 import { useLanguage } from "@/contexts/LanguageContext"
+import type { LandingContent } from "@/lib/landing/default-content"
 
 /* ─── Types ──────────────────────────────────────────────── */
 type Step = 1 | 2 | 3
@@ -35,6 +36,8 @@ interface FormData {
   halaqaSessionDuration: string
 }
 
+type LandingPlan = LandingContent["pricing"]["plans"][number]
+
 /* ─── Step config ────────────────────────────────────────── */
 const steps = [
   { num: 1, label: "Ecole", icon: Building2 },
@@ -42,16 +45,12 @@ const steps = [
   { num: 3, label: "Capacite", icon: Users },
 ]
 
-const planLabels: Record<string, string> = {
-  FREE: "Gratuit",
-  STARTER: "Starter",
-  ECONOMIQUE: "Économique",
-  PRO: "Pro",
-  ENTERPRISE: "Enterprise",
-}
-
-type SchoolPlanKey = keyof typeof PLAN_CONFIG
+type SchoolPlanKey = keyof typeof PLANS
 const planOrder: SchoolPlanKey[] = ["FREE", "STARTER", "ECONOMIQUE", "PRO", "ENTERPRISE"]
+
+function planLabel(plan: SchoolPlanKey, plans: LandingPlan[], lang: PlanLocale): string {
+  return plans.find((p) => p.key === plan)?.name ?? PLANS[plan].name[lang] ?? PLANS[plan].name.fr
+}
 
 function getRecommendedPlan(totalStudents: number, teachersCount: number): SchoolPlanKey {
   for (const plan of planOrder) {
@@ -63,40 +62,6 @@ function getRecommendedPlan(totalStudents: number, teachersCount: number): Schoo
   return "ENTERPRISE"
 }
 
-function formatLimit(limit: number | null): string {
-  return limit === null ? "illimité" : String(limit)
-}
-
-interface LandingPlan {
-  name: string
-  students: string
-  monthlyPrice: string
-  yearlyPrice: string
-  monthlyFeatures: string[]
-  yearlyFeatures: string[]
-  features?: string[]
-}
-
-interface LandingPricing {
-  title: string
-  subtitle: string
-  period: "month" | "year"
-  request: string
-  popular: string
-  currency: string
-  plans: LandingPlan[]
-}
-
-function planNameToEnum(name: string): SchoolPlanKey | null {
-  const normalized = name.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-  if (normalized.includes("gratuit") || normalized.includes("free") || normalized.includes("مجاني")) return "FREE"
-  if (normalized.includes("economique") || normalized.includes("economy") || normalized.includes("اقتصادي")) return "ECONOMIQUE"
-  if (normalized.includes("enterprise") || normalized.includes("entreprise") || normalized.includes("مؤسسة")) return "ENTERPRISE"
-  if (normalized.includes("pro") || normalized.includes("professionnel") || normalized.includes("احترافي")) return "PRO"
-  if (normalized.includes("starter")) return "STARTER"
-  return null
-}
-
 /* ─── Component ──────────────────────────────────────────── */
 export default function RegisterSchoolClient() {
   const [step, setStep]       = useState<Step>(1)
@@ -105,30 +70,25 @@ export default function RegisterSchoolClient() {
   const [success, setSuccess] = useState(false)
   const [showPwd, setShowPwd] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
-
   const searchParams = useSearchParams()
   const planParam = searchParams.get("plan") ?? "FREE"
   const periodParam = searchParams.get("period") ?? "year"
   const billingCycleParam = periodParam === "month" ? "MONTHLY" : "YEARLY"
   const { locale } = useLanguage()
+  const lang: PlanLocale = (locale === "ar" ? "ar" : locale === "en" ? "en" : "fr") as PlanLocale
 
-  const [landingPricing, setLandingPricing] = useState<LandingPricing | null>(null)
-  const [pricingPeriod, setPricingPeriod] = useState<"month" | "year">("year")
+  const [landingPlans, setLandingPlans] = useState<LandingPlan[]>([])
+  const [landingCurrency, setLandingCurrency] = useState("CAD")
 
   useEffect(() => {
-    fetch("/api/site-config/landing")
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data?.value) {
-          const langContent = data.value[locale] ?? data.value.fr ?? data.value.en
-          if (langContent?.pricing) {
-            setLandingPricing(langContent.pricing)
-            setPricingPeriod(langContent.pricing.period ?? "year")
-          }
-        }
+    fetch(`/api/site-config/landing/plans?lang=${lang}`)
+      .then((res) => res.json())
+      .then((data: { plans?: LandingPlan[]; currency?: string }) => {
+        setLandingPlans(data.plans ?? [])
+        setLandingCurrency(data.currency ?? "CAD")
       })
-      .catch(() => {})
-  }, [locale])
+      .catch(() => setLandingPlans([]))
+  }, [lang])
 
   const [form, setForm] = useState<FormData>({
     schoolName:      "",
@@ -307,7 +267,7 @@ export default function RegisterSchoolClient() {
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-tahfidz-green/10 to-emerald-500/10 dark:from-emerald-900/20 dark:to-emerald-800/20 border border-tahfidz-green/20 dark:border-emerald-800/30">
                 <span className="text-xs text-gray-500 dark:text-gray-400">Plan selectionne :</span>
                 <span className="text-sm font-bold text-tahfidz-green">
-                  {planLabels[form.plan] ?? form.plan} · {form.billingCycle === "MONTHLY" ? "Mensuel" : "Annuel"}
+                  {form.plan ? planLabel(form.plan as SchoolPlanKey, landingPlans, lang) : form.plan} · {form.billingCycle === "MONTHLY" ? "Mensuel" : "Annuel"}
                 </span>
               </div>
               {form.halaqaSessionDuration && (
@@ -712,106 +672,68 @@ export default function RegisterSchoolClient() {
                           <div className="flex items-start gap-2 text-sm text-amber-800 dark:text-amber-200 mb-3">
                             <span className="mt-0.5">⚠</span>
                             <div>
-                              <p className="font-semibold">Capacité dépassée pour le plan {planLabels[currentPlan]}</p>
+                              <p className="font-semibold">Capacité dépassée pour le plan {planLabel(currentPlan, landingPlans, lang)}</p>
                               {overStudents && (
-                                <p>Le plan {planLabels[currentPlan]} permet max {currentConfig.maxStudents} élèves, vous en avez estimé {totalStudents}.</p>
+                                <p>Le plan {planLabel(currentPlan, landingPlans, lang)} permet max {currentConfig.maxStudents} élèves, vous en avez estimé {totalStudents}.</p>
                               )}
                               {overTeachers && (
-                                <p>Le plan {planLabels[currentPlan]} permet max {currentConfig.maxTeachers} enseignants, vous en avez indiqué {form.teachersCount}.</p>
+                                <p>Le plan {planLabel(currentPlan, landingPlans, lang)} permet max {currentConfig.maxTeachers} enseignants, vous en avez indiqué {form.teachersCount}.</p>
                               )}
-                              <p className="mt-1 font-medium">Nous vous recommandons le plan {planLabels[recommended]} ou supérieur.</p>
+                              <p className="mt-1 font-medium">Nous vous recommandons le plan {planLabel(recommended, landingPlans, lang)} ou supérieur.</p>
                             </div>
                           </div>
 
-                          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Choisir une offre adaptée</p>
+                          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Choisir une offre adaptee</p>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {(() => {
-                              const landingPlans = landingPricing?.plans ?? []
-                              const suggestedLandingPlans = landingPlans
-                                .map((lp) => ({ lp, enum: planNameToEnum(lp.name) }))
-                                .filter((item): item is { lp: LandingPlan; enum: SchoolPlanKey } => {
-                                  if (!item.enum) return false
-                                  return planOrder.indexOf(item.enum) >= recommendedIndex
-                                })
-
-                              if (suggestedLandingPlans.length === 0) {
-                                // Fallback si la config landing n'est pas chargée
-                                return planOrder.slice(recommendedIndex).map((plan) => {
-                                  const config = PLAN_CONFIG[plan]
-                                  const isRecommended = plan === recommended
-                                  return (
-                                    <button
-                                      key={plan}
-                                      type="button"
-                                      onClick={() => update("plan", plan)}
-                                      className={`text-left p-3 rounded-xl border transition relative ${
-                                        form.plan === plan
-                                          ? "border-tahfidz-green bg-tahfidz-green-light dark:bg-emerald-900/20"
-                                          : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-tahfidz-green/50"
-                                      }`}
-                                    >
-                                      {isRecommended && (
-                                        <span className="absolute -top-2 left-3 px-2 py-0.5 bg-tahfidz-green text-white text-[10px] font-bold rounded-full">
-                                          Recommandé
-                                        </span>
-                                      )}
-                                      <p className="font-bold text-gray-900 dark:text-white text-sm">{planLabels[plan]}</p>
-                                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                        {formatLimit(config.maxStudents)} élèves · {formatLimit(config.maxTeachers)} enseignants
-                                      </p>
-                                      <p className="text-xs text-tahfidz-green mt-1 font-medium">
-                                        {config.monthlyHalaqas === null ? "Halaqas illimitées" : `${config.monthlyHalaqas} Halaqas/mois`}
-                                      </p>
-                                    </button>
-                                  )
-                                })
-                              }
-
-                              return suggestedLandingPlans.map(({ lp, enum: plan }) => {
-                                const config = PLAN_CONFIG[plan]
-                                const isRecommended = plan === recommended
-                                const price = pricingPeriod === "month" ? lp.monthlyPrice : lp.yearlyPrice
-                                const features = pricingPeriod === "month" ? lp.monthlyFeatures : lp.yearlyFeatures
-                                const currency = landingPricing?.currency ?? "CAD"
-                                const isSelected = form.plan === plan
-                                return (
-                                  <button
-                                    key={plan}
-                                    type="button"
-                                    onClick={() => update("plan", plan)}
-                                    className={`text-left p-4 rounded-xl border transition relative flex flex-col h-full ${
-                                      isSelected
-                                        ? "border-tahfidz-green bg-tahfidz-green-light dark:bg-emerald-900/20"
-                                        : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-tahfidz-green/50"
-                                    }`}
-                                  >
-                                    {isRecommended && (
-                                      <span className="absolute -top-2 left-3 px-2 py-0.5 bg-tahfidz-green text-white text-[10px] font-bold rounded-full">
-                                        Recommandé
-                                      </span>
-                                    )}
-                                    <div className="flex items-baseline justify-between gap-2 mb-1">
-                                      <p className="font-bold text-gray-900 dark:text-white text-sm">{lp.name}</p>
-                                      <p className="text-sm font-bold text-tahfidz-green">{price} {currency}</p>
+                            {planOrder.slice(recommendedIndex).map((plan) => {
+                              const planDef = landingPlans.find((p) => p.key === plan)
+                              const config = PLAN_CONFIG[plan]
+                              const isRecommended = plan === recommended
+                              const priceRaw = form.billingCycle === "MONTHLY" ? planDef?.monthlyPrice : planDef?.yearlyPrice
+                              const price = Number(priceRaw)
+                              const features = form.billingCycle === "MONTHLY" ? planDef?.monthlyFeatures : planDef?.yearlyFeatures
+                              const isSelected = form.plan === plan
+                              if (!planDef) return null
+                              return (
+                                <button
+                                  key={plan}
+                                  type="button"
+                                  onClick={() => update("plan", plan)}
+                                  className={`text-left p-4 rounded-xl border transition relative flex flex-col h-full ${
+                                    isSelected
+                                      ? "border-tahfidz-green bg-tahfidz-green-light dark:bg-emerald-900/20"
+                                      : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-tahfidz-green/50"
+                                  }`}
+                                >
+                                  {isRecommended && (
+                                    <span className="absolute -top-2 left-3 px-2 py-0.5 bg-tahfidz-green text-white text-[10px] font-bold rounded-full">
+                                      Recommande
+                                    </span>
+                                  )}
+                                  <div className="flex items-baseline justify-between gap-2 mb-1">
+                                    <p className="font-bold text-gray-900 dark:text-white text-sm">{planDef.name}</p>
+                                    <p className="text-sm font-bold text-tahfidz-green">{Number.isFinite(price) ? price : priceRaw} {landingCurrency}</p>
+                                  </div>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{planDef.students}</p>
+                                  <ul className="space-y-1 mt-auto">
+                                    {(features ?? []).slice(0, 4).map((feature, i) => (
+                                      <li key={i} className="flex items-start gap-1.5 text-xs text-gray-600 dark:text-gray-300">
+                                        <Check size={12} className="text-tahfidz-green mt-0.5 shrink-0" />
+                                        <span>{feature}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                  <p className="text-xs text-tahfidz-green mt-2 font-medium">
+                                    {config.monthlyHalaqas === null ? "Halaqas illimitees" : `${config.monthlyHalaqas} Halaqas/mois`} · {config.halaqaMaxDuration} min max
+                                  </p>
+                                  {isSelected && (
+                                    <div className="mt-2 text-xs font-semibold text-tahfidz-green">
+                                      Selectionne
                                     </div>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{lp.students}</p>
-                                    <ul className="space-y-1 mt-auto">
-                                      {features.slice(0, 4).map((feature, i) => (
-                                        <li key={i} className="flex items-start gap-1.5 text-xs text-gray-600 dark:text-gray-300">
-                                          <Check size={12} className="text-tahfidz-green mt-0.5 shrink-0" />
-                                          <span>{feature}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                    {isSelected && (
-                                      <div className="mt-3 text-xs font-semibold text-tahfidz-green">
-                                        Sélectionné
-                                      </div>
-                                    )}
-                                  </button>
-                                )
-                              })
-                            })()}
+                                  )}
+                                </button>
+                              )
+                            })}
                           </div>
                         </motion.div>
                       )

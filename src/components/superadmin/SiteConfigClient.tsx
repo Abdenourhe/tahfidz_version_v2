@@ -157,6 +157,7 @@ function SectionCard({
   )
 }
 
+
 function StringArrayEditor({
   label,
   items,
@@ -772,14 +773,7 @@ function LandingEditor({
             {content.pricing.plans.map((plan, index) => (
               <div key={index} className='p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50/50 dark:bg-gray-800/50 space-y-3'>
                 <div className='flex items-center justify-between'>
-                  <span className='text-xs font-semibold text-gray-500'>Plan {index + 1}</span>
-                  <button
-                    type='button'
-                    onClick={() => setSection('pricing', { ...content.pricing, plans: content.pricing.plans.filter((_, i) => i !== index) })}
-                    className='text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-1.5 rounded-lg transition-colors'
-                  >
-                    <Trash2 className='w-3.5 h-3.5' />
-                  </button>
+                  <span className='text-xs font-semibold text-gray-500'>Plan {plan.key}</span>
                 </div>
                 <div className='grid grid-cols-1 sm:grid-cols-5 gap-3'>
                   <Field
@@ -839,14 +833,6 @@ function LandingEditor({
                 />
               </div>
             ))}
-            <button
-              type='button'
-              onClick={() => setSection('pricing', { ...content.pricing, plans: [...content.pricing.plans, { name: '', students: '', monthlyPrice: '', yearlyPrice: '', monthlyFeatures: [''], yearlyFeatures: [''] }] })}
-              className='flex items-center gap-1.5 text-xs font-medium text-tahfidz-green hover:text-tahfidz-green/80 transition-colors'
-            >
-              <Plus className='w-3.5 h-3.5' />
-              Ajouter un plan
-            </button>
           </div>
         </div>
       </SectionCard>

@@ -50,6 +50,92 @@ export const PLAN_CONFIG: Record<SchoolPlan, HalaqaPlanConfig> = {
   },
 }
 
+export type PlanLocale = "fr" | "en" | "ar"
+
+export interface PlanDefinition {
+  name: Record<PlanLocale, string>
+  students: Record<PlanLocale, string>
+  monthlyPrice: number
+  yearlyPrice: number
+  currency: string
+  features: Record<PlanLocale, string[]>
+  popular: boolean
+  limits: HalaqaPlanConfig
+}
+
+export const PLANS: Record<SchoolPlan, PlanDefinition> = {
+  FREE: {
+    name: { fr: "Gratuit", en: "Free", ar: "مجاني" },
+    students: { fr: "Jusqu'à 20 élèves", en: "Up to 20 students", ar: "حتى 20 طالب" },
+    monthlyPrice: 0,
+    yearlyPrice: 0,
+    currency: "CAD",
+    features: {
+      fr: ["Gestion des élèves", "1 enseignant", "1 Halaqa/mois", "Durée max 15 min", "Support email"],
+      en: ["Student management", "1 teacher", "1 Halaqa/month", "Max duration 15 min", "Email support"],
+      ar: ["إدارة الطلاب", "1 معلم", "1 حلقة/شهر", "المدة القصوى 15 دقيقة", "دعم بالبريد"],
+    },
+    popular: false,
+    limits: PLAN_CONFIG.FREE,
+  },
+  STARTER: {
+    name: { fr: "Starter", en: "Starter", ar: "بداية" },
+    students: { fr: "21 - 49 élèves", en: "21 - 49 students", ar: "21 - 49 طالب" },
+    monthlyPrice: 49,
+    yearlyPrice: 675,
+    currency: "CAD",
+    features: {
+      fr: ["Gestion des élèves et enseignants", "2 enseignants", "2 Halaqas/mois", "Durée max 45 min", "Rapports basiques"],
+      en: ["Student & teacher management", "2 teachers", "2 Halaqas/month", "Max duration 45 min", "Basic reports"],
+      ar: ["إدارة الطلاب والمعلمين", "2 معلم", "2 حلقة/شهر", "المدة القصوى 45 دقيقة", "تقارير أساسية"],
+    },
+    popular: false,
+    limits: PLAN_CONFIG.STARTER,
+  },
+  ECONOMIQUE: {
+    name: { fr: "Économique", en: "Economique", ar: "اقتصادي" },
+    students: { fr: "50 - 199 élèves", en: "50 - 199 students", ar: "50 - 199 طالب" },
+    monthlyPrice: 79,
+    yearlyPrice: 875,
+    currency: "CAD",
+    features: {
+      fr: ["Tout du plan Starter", "10 enseignants", "10 Halaqas/mois", "Durée max 60 min", "Notifications push", "Exports PDF"],
+      en: ["Everything in Starter", "10 teachers", "10 Halaqas/month", "Max duration 60 min", "Push notifications", "PDF exports"],
+      ar: ["كل مميزات Starter", "10 معلمين", "10 حلقات/شهر", "المدة القصوى 60 دقيقة", "إشعارات فورية", "تصدير PDF"],
+    },
+    popular: true,
+    limits: PLAN_CONFIG.ECONOMIQUE,
+  },
+  PRO: {
+    name: { fr: "Pro", en: "Pro", ar: "احترافي" },
+    students: { fr: "200 - 500 élèves", en: "200 - 500 students", ar: "200 - 500 طالب" },
+    monthlyPrice: 99,
+    yearlyPrice: 1099,
+    currency: "CAD",
+    features: {
+      fr: ["Tout du plan Économique", "Enseignants illimités", "Halaqas illimitées", "Durée max 120 min", "Tableau de bord avancé", "Support prioritaire"],
+      en: ["Everything in Economique", "Unlimited teachers", "Unlimited Halaqas", "Max duration 120 min", "Advanced dashboard", "Priority support"],
+      ar: ["كل مميزات Economique", "معلمين غير محدودين", "حلقات غير محدودة", "المدة القصوى 120 دقيقة", "لوحة معلومات متقدمة", "دعم أولوي"],
+    },
+    popular: false,
+    limits: PLAN_CONFIG.PRO,
+  },
+  ENTERPRISE: {
+    name: { fr: "Entreprise", en: "Enterprise", ar: "مؤسسي" },
+    students: { fr: "500+ élèves", en: "500+ students", ar: "500+ طالب" },
+    monthlyPrice: 199,
+    yearlyPrice: 2199,
+    currency: "CAD",
+    features: {
+      fr: ["Tout du plan Pro", "Élèves illimités", "Enseignants illimités", "Halaqas illimitées", "Durée max 180 min", "Support dédié"],
+      en: ["Everything in Pro", "Unlimited students", "Unlimited teachers", "Unlimited Halaqas", "Max duration 180 min", "Dedicated support"],
+      ar: ["كل مميزات Pro", "طلاب غير محدودين", "معلمين غير محدودين", "حلقات غير محدودة", "المدة القصوى 180 دقيقة", "دعم مخصص"],
+    },
+    popular: false,
+    limits: PLAN_CONFIG.ENTERPRISE,
+  },
+}
+
 export interface QuotaStatus {
   plan: SchoolPlan
   billingCycle: BillingCycle
