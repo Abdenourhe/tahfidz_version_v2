@@ -32,6 +32,79 @@ const statusColors: Record<string, string> = {
 
 const hours = Array.from({ length: 17 }, (_, i) => i + 6) // 06:00 → 22:00
 
+function sessionEnd(s: Session & { scheduledAt: Date }): Date {
+  return new Date(s.scheduledAt.getTime() + (s.duration ?? 60) * 60 * 1000)
+}
+
+function sessionsOverlap(a: Session & { scheduledAt: Date }, b: Session & { scheduledAt: Date }): boolean {
+  return a.scheduledAt.getTime() < sessionEnd(b).getTime() && b.scheduledAt.getTime() < sessionEnd(a).getTime()
+}
+
+function computeOverlapLayout(sessions: (Session & { scheduledAt: Date })[]): Map<string, { column: number; total: number }> {
+  if (sessions.length === 0) return new Map()
+
+  // 1. Trouver les composantes connexes par chevauchement
+  const visited = new Set<string>()
+  const components: (Session & { scheduledAt: Date })[][] = []
+
+  for (const session of sessions) {
+    if (visited.has(session.id)) continue
+    const component: (Session & { scheduledAt: Date })[] = []
+    const queue = [session]
+    visited.add(session.id)
+    while (queue.length > 0) {
+      const current = queue.shift()!
+      component.push(current)
+      for (const other of sessions) {
+        if (!visited.has(other.id) && sessionsOverlap(current, other)) {
+          visited.add(other.id)
+          queue.push(other)
+        }
+      }
+    }
+    components.push(component)
+  }
+
+  const layout = new Map<string, { column: number; total: number }>()
+
+  for (const component of components) {
+    // 2. Calculer le nombre maximal de sessions simultanées dans la composante
+    const events: { time: number; delta: number }[] = []
+    for (const s of component) {
+      events.push({ time: s.scheduledAt.getTime(), delta: 1 })
+      events.push({ time: sessionEnd(s).getTime(), delta: -1 })
+    }
+    events.sort((a, b) => a.time - b.time || a.delta - b.delta)
+    let current = 0
+    let maxConcurrent = 0
+    for (const e of events) {
+      current += e.delta
+      maxConcurrent = Math.max(maxConcurrent, current)
+    }
+
+    // 3. Assigner les colonnes en ordre chronologique
+    const sorted = [...component].sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime())
+    const assigned: { start: number; end: number; column: number }[] = []
+
+    for (const s of sorted) {
+      const start = s.scheduledAt.getTime()
+      const end = sessionEnd(s).getTime()
+      const usedColumns = new Set<number>()
+      for (const a of assigned) {
+        if (start < a.end && a.start < end) {
+          usedColumns.add(a.column)
+        }
+      }
+      let column = 0
+      while (usedColumns.has(column)) column++
+      assigned.push({ start, end, column })
+      layout.set(s.id, { column, total: Math.max(maxConcurrent, 1) })
+    }
+  }
+
+  return layout
+}
+
 export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionClick }: HalaqaCalendarViewProps) {
   const [view, setView] = useState<"week" | "month">("week")
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -218,23 +291,35 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
                   {hours.map((h) => (
                     <div key={h} className="h-12 border-b border-gray-50 dark:border-gray-800/50"></div>
                   ))}
-                  {weekSessions
-                    .filter((s) => new Date(s.scheduledAt).toDateString() === day.toDateString())
-                    .map((s) => {
+                  {(() => {
+                    const daySessions = weekSessions.filter(
+                      (s) => new Date(s.scheduledAt).toDateString() === day.toDateString()
+                    )
+                    const layout = computeOverlapLayout(daySessions)
+                    return daySessions.map((s) => {
                       const start = new Date(s.scheduledAt)
                       const top = (start.getHours() + start.getMinutes() / 60 - 6) * 48
                       const rawHeight = ((s.duration ?? 60) / 60) * 48
                       const height = Math.max(rawHeight, 56)
+                      const pos = layout.get(s.id) ?? { column: 0, total: 1 }
+                      const width = 100 / pos.total
+                      const left = pos.column * width
                       return (
                         <div
                           key={s.id}
-                          className="absolute left-1 right-1 z-10"
-                          style={{ top: `${top}px`, height: `${height}px` }}
+                          className="absolute z-10 px-0.5"
+                          style={{
+                            top: `${top}px`,
+                            height: `${height}px`,
+                            left: `${left}%`,
+                            width: `${width}%`,
+                          }}
                         >
                           <SessionPill session={s} />
                         </div>
                       )
-                    })}
+                    })
+                  })()}
                 </div>
               ))}
             </div>

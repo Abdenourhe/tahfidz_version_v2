@@ -22,8 +22,8 @@ interface HalaqaSession {
   scheduledAt: string
   studentIds: string[]
   duration?: number | null
-  teacher?: { fullName?: string | null } | null
-  group?: { name?: string | null } | null
+  teacher?: { id?: string; fullName?: string | null } | null
+  group?: { id?: string; name?: string | null } | null
   evaluations?: { id: string }[]
 }
 
@@ -42,16 +42,33 @@ interface QuotaStatus {
 export default function AdminHalaqaPage() {
   const router = useRouter()
   const [sessions, setSessions] = useState<HalaqaSession[]>([])
+  const [filteredSessions, setFilteredSessions] = useState<HalaqaSession[]>([])
   const [quota, setQuota] = useState<QuotaStatus | null>(null)
+  const [teachers, setTeachers] = useState<{ id: string; fullName: string }[]>([])
+  const [groups, setGroups] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState<"list" | "calendar" | "stats">("list")
   const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [filterTeacher, setFilterTeacher] = useState<string>("ALL")
+  const [filterGroup, setFilterGroup] = useState<string>("ALL")
 
   useEffect(() => {
     fetchSessions()
     fetchQuota()
+    fetchFiltersData()
   }, [])
+
+  useEffect(() => {
+    let result = [...sessions]
+    if (filterTeacher !== "ALL") {
+      result = result.filter((s) => s.teacher?.id === filterTeacher)
+    }
+    if (filterGroup !== "ALL") {
+      result = result.filter((s) => s.group?.id === filterGroup)
+    }
+    setFilteredSessions(result)
+  }, [sessions, filterTeacher, filterGroup])
 
   const fetchSessions = async () => {
     try {
@@ -63,6 +80,22 @@ export default function AdminHalaqaPage() {
       setSessions([])
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchFiltersData = async () => {
+    try {
+      const [tRes, gRes] = await Promise.all([fetch("/api/teachers"), fetch("/api/groups")])
+      if (tRes.ok) {
+        const tData = await tRes.json()
+        setTeachers((tData.teachers || []).map((t: any) => ({ id: t.user.id, fullName: t.user.fullName })))
+      }
+      if (gRes.ok) {
+        const gData = await gRes.json()
+        setGroups((gData.groups || []).map((g: any) => ({ id: g.id, name: g.name })))
+      }
+    } catch (err) {
+      console.error(err)
     }
   }
 
@@ -110,9 +143,9 @@ export default function AdminHalaqaPage() {
   }
 
   const now = new Date()
-  const upcoming = sessions.filter((s) => new Date(s.scheduledAt) > now && s.status === "SCHEDULED")
-  const live = sessions.filter((s) => s.status === "LIVE")
-  const past = sessions.filter((s) => s.status === "ENDED")
+  const upcoming = filteredSessions.filter((s) => new Date(s.scheduledAt) > now && s.status === "SCHEDULED")
+  const live = filteredSessions.filter((s) => s.status === "LIVE")
+  const past = filteredSessions.filter((s) => s.status === "ENDED")
 
   const statusBadge = (status: string) => {
     const map: Record<string, string> = {
@@ -199,7 +232,7 @@ export default function AdminHalaqaPage() {
             { label: "Séances planifiées", value: upcoming.length, icon: Calendar, color: "text-blue-600" },
             { label: "En direct", value: live.length, icon: Play, color: "text-red-600" },
             { label: "Terminées", value: past.length, icon: FileVideo, color: "text-gray-600" },
-            { label: "Total", value: sessions.length, icon: BarChart3, color: "text-tahfidz-green" },
+            { label: "Total affiché", value: filteredSessions.length, icon: BarChart3, color: "text-tahfidz-green" },
           ].map((stat, i) => (
             <motion.div
               key={i}
@@ -221,8 +254,8 @@ export default function AdminHalaqaPage() {
           ))}
         </div>
 
-        {/* Toggle vue */}
-        <div className="flex items-center justify-between gap-4 mb-6">
+        {/* Toggle vue + filtres */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div className="inline-flex items-center p-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
             <button
               type="button"
@@ -261,6 +294,28 @@ export default function AdminHalaqaPage() {
               Stats
             </button>
           </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <select
+              value={filterTeacher}
+              onChange={(e) => setFilterTeacher(e.target.value)}
+              className="text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1.5 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-tahfidz-green"
+            >
+              <option value="ALL">Tous les enseignants</option>
+              {teachers.map((t) => (
+                <option key={t.id} value={t.id}>{t.fullName}</option>
+              ))}
+            </select>
+            <select
+              value={filterGroup}
+              onChange={(e) => setFilterGroup(e.target.value)}
+              className="text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1.5 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-tahfidz-green"
+            >
+              <option value="ALL">Tous les groupes</option>
+              {groups.map((g) => (
+                <option key={g.id} value={g.id}>{g.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Contenu */}
@@ -270,7 +325,7 @@ export default function AdminHalaqaPage() {
           <HalaqaStats />
         ) : view === "calendar" ? (
           <HalaqaCalendarView
-            sessions={sessions}
+            sessions={filteredSessions}
             locale="fr"
             onSessionClick={(session) => router.push(`/admin/halaqa/${session.id}`)}
           />
@@ -291,7 +346,7 @@ export default function AdminHalaqaPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {sessions.map((s) => (
+                  {filteredSessions.map((s) => (
                     <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
                       <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{s.meetingName}</td>
                       <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
@@ -381,7 +436,7 @@ export default function AdminHalaqaPage() {
                 </tbody>
               </table>
             </div>
-            {sessions.length === 0 && (
+            {filteredSessions.length === 0 && (
               <div className="text-center py-12">
                 <Video size={48} className="mx-auto text-gray-300 dark:text-gray-700 mb-4" />
                 <p className="text-gray-500 dark:text-gray-400">Aucune séance Halaqa Online</p>

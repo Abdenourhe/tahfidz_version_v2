@@ -24,7 +24,7 @@ interface HalaqaSession {
   recordingUrl?: string
   duration?: number | null
   teacher?: { fullName?: string | null } | null
-  group?: { name: string }
+  group?: { id?: string; name: string }
   studentIds: string[]
 }
 
@@ -49,12 +49,15 @@ export default function TeacherHalaqaPage() {
   const [loading, setLoading] = useState(true)
   const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [filter, setFilter] = useState<"all" | "scheduled" | "live" | "ended">("all")
+  const [filterGroup, setFilterGroup] = useState<string>("ALL")
+  const [groups, setGroups] = useState<{ id: string; name: string }[]>([])
   const [view, setView] = useState<"list" | "calendar">("list")
   const [quota, setQuota] = useState<QuotaStatus | null>(null)
 
   useEffect(() => {
     fetchSessions()
     fetchQuota()
+    fetchGroups()
   }, [])
 
   const fetchQuota = async () => {
@@ -82,9 +85,22 @@ export default function TeacherHalaqaPage() {
   }
 
   const filtered = sessions.filter((s) => {
-    if (filter === "all") return true
-    return s.status.toLowerCase() === filter
+    const statusMatch = filter === "all" || s.status.toLowerCase() === filter
+    const groupMatch = filterGroup === "ALL" || s.group?.id === filterGroup
+    return statusMatch && groupMatch
   })
+
+  const fetchGroups = async () => {
+    try {
+      const res = await fetch("/api/groups")
+      if (res.ok) {
+        const data = await res.json()
+        setGroups((data.groups || []).map((g: any) => ({ id: g.id, name: g.name })))
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
 
   const cancelSession = async (sessionId: string) => {
     if (!confirm(t("confirmCancel"))) return
@@ -242,38 +258,50 @@ export default function TeacherHalaqaPage() {
               </button>
             ))}
           </div>
-          <div className="inline-flex items-center p-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-            <button
-              type="button"
-              onClick={() => setView("list")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition ${
-                view === "list"
-                  ? "bg-tahfidz-green text-white"
-                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
-              }`}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <select
+              value={filterGroup}
+              onChange={(e) => setFilterGroup(e.target.value)}
+              className="text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1.5 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-tahfidz-green"
             >
-              <LayoutList size={14} />
-              {t("list") || "Liste"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setView("calendar")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition ${
-                view === "calendar"
-                  ? "bg-tahfidz-green text-white"
-                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
-              }`}
-            >
-              <CalendarDays size={14} />
-              {t("calendar") || "Calendrier"}
-            </button>
+              <option value="ALL">{t("allGroups") || "Tous les groupes"}</option>
+              {groups.map((g) => (
+                <option key={g.id} value={g.id}>{g.name}</option>
+              ))}
+            </select>
+            <div className="inline-flex items-center p-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+              <button
+                type="button"
+                onClick={() => setView("list")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition ${
+                  view === "list"
+                    ? "bg-tahfidz-green text-white"
+                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                }`}
+              >
+                <LayoutList size={14} />
+                {t("list") || "Liste"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setView("calendar")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition ${
+                  view === "calendar"
+                    ? "bg-tahfidz-green text-white"
+                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                }`}
+              >
+                <CalendarDays size={14} />
+                {t("calendar") || "Calendrier"}
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Contenu */}
         {view === "calendar" ? (
           <HalaqaCalendarView
-            sessions={sessions}
+            sessions={filtered}
             locale={locale}
             isRTL={isRTL}
             onSessionClick={(session) => router.push(`/teacher/halaqa/${session.id}`)}
