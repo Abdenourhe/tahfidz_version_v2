@@ -2396,6 +2396,7 @@ export const translations = {
     group:            { fr: "Groupe",                en: "Group",                 ar: "المجموعة" },
     groupOptional:    { fr: "Groupe (optionnel)",    en: "Group (optional)",      ar: "المجموعة (اختياري)" },
     noGroup:          { fr: "Aucun groupe",          en: "No group",              ar: "لا يوجد مجموعة" },
+    selectGroup:      { fr: "Veuillez choisir un groupe", en: "Please select a group", ar: "يرجى اختيار مجموعة" },
     createSession:    { fr: "Créer la séance",       en: "Create session",        ar: "إنشاء الجلسة" },
     creating:         { fr: "Création…",             en: "Creating…",             ar: "جارٍ الإنشاء…" },
     errorCreate:      { fr: "Erreur lors de la création de la séance", en: "Error creating the session", ar: "خطأ أثناء إنشاء الجلسة" },

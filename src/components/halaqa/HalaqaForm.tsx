@@ -794,9 +794,15 @@ export default function HalaqaForm({
 
               {/* ─── Groupe ──────────────────────────────────────────────────── */}
               <div>
-                <label className={labelClass}>{t("groupOptional")}</label>
+                <label className={labelClass}>{t("group")}</label>
                 {isAdmin && !selectedTeacherId && (
                   <p className="text-xs text-gray-400 mb-1.5">{t("selectTeacherFirst")}</p>
+                )}
+                {!selectedGroupId && visibleGroups.length > 1 && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mb-1.5 flex items-center gap-1">
+                    <AlertTriangle size={12} />
+                    {t("selectGroup")}
+                  </p>
                 )}
                 {selectedGroupId && (
                   <p className="text-xs text-tahfidz-green mb-1.5 flex items-center gap-1">
