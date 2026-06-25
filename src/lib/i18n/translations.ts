@@ -2513,6 +2513,12 @@ export const translations = {
     invitedGroupsHint:  { fr: "Vous pouvez inviter des groupes d'autres enseignants. L'enseignant animateur pourra sélectionner leurs élèves.", en: "You can invite groups from other teachers. The host teacher will be able to select their students.", ar: "يمكنك دعوة مجموعات من معلمين آخرين. سيتمكن المعلم المضيف من اختيار طلابهم." },
     searchStudent:      { fr: "Rechercher un élève…",  en: "Search a student…",     ar: "البحث عن طالب…" },
     studentsSelected:   { fr: "élève(s) sélectionné(s)", en: "student(s) selected", ar: "طالب/طلاب محدد/محددون" },
+    selectAll:          { fr: "Tout sélectionner",     en: "Select all",            ar: "تحديد الكل" },
+    deselectAll:        { fr: "Tout désélectionner",   en: "Deselect all",          ar: "إلغاء التحديد" },
+    selectGroupToSeeStudents: { fr: "Sélectionnez un groupe pour voir ses élèves", en: "Select a group to see its students", ar: "اختر مجموعة لرؤية طلابها" },
+    groupRequired:      { fr: "Le groupe est requis",  en: "Group is required",     ar: "المجموعة مطلوبة" },
+    groupCapacity:      { fr: "Capacité du groupe",    en: "Group capacity",        ar: "سعة المجموعة" },
+    groupFull:          { fr: "Groupe plein",          en: "Group full",            ar: "المجموعة ممتلئة" },
     // Conflits & validation
     conflictDetected:   { fr: "Conflit de créneau détecté", en: "Time slot conflict detected", ar: "تم اكتشاف تعارض في الوقت" },
     conflictWithSession:{ fr: "Cette séance chevauche une autre séance ({name}, {time}).", en: "This session overlaps another session ({name}, {time}).", ar: "تتداخل هذه الجلسة مع جلسة أخرى ({name}، {time})." },

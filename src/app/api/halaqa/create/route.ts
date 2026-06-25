@@ -198,6 +198,11 @@ export async function POST(req: Request) {
       )
     }
 
+    // ─── Groupe principal requis pour l'enseignant ────────────────────
+    if (role === "TEACHER" && !data.groupId) {
+      return NextResponse.json({ error: "Le groupe principal est requis pour une Halaqa enseignant" }, { status: 400 })
+    }
+
     // ─── Vérification des groupes invités ─────────────────────────────
     if (data.invitedGroupIds.length > 0) {
       if (role === "TEACHER") {

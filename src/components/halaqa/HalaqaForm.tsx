@@ -37,6 +37,8 @@ interface GroupOption {
   name: string
   teacherUserId?: string | null
   teacherName?: string | null
+  maxCapacity?: number
+  studentCount?: number
 }
 
 export interface HalaqaSession {
@@ -123,7 +125,7 @@ export default function HalaqaForm({
       z.object({
         meetingName: z.string().min(2, t("nameRequired")),
         studentIds: z.array(z.string()).min(1, t("minOneStudent")),
-        groupId: z.string().optional(),
+        groupId: isAdmin ? z.string().optional() : z.string().min(1, t("groupRequired")),
         scheduledAt: z
           .string()
           .min(1, t("dateRequired"))
@@ -152,6 +154,7 @@ export default function HalaqaForm({
     watch,
     setValue,
     reset,
+    getValues,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -336,6 +339,21 @@ export default function HalaqaForm({
     }
   }, [visibleGroups, selectedGroupId, setValue])
 
+  // ─── Pré-remplissage intelligent du nom de séance ─────────────────────────────
+  useEffect(() => {
+    if (mode !== "create" || duplicateFrom) return
+    if (!selectedGroupId || !scheduledAt) return
+    const group = visibleGroups.find((g) => g.id === selectedGroupId)
+    if (!group) return
+    const current = getValues("meetingName")
+    if (current) return
+    const dateStr = new Date(scheduledAt).toLocaleDateString(
+      locale === "ar" ? "ar-MA" : locale === "en" ? "en-US" : "fr-FR",
+      { day: "2-digit", month: "short" }
+    )
+    setValue("meetingName", `Halaqa – ${group.name} – ${dateStr}`)
+  }, [mode, duplicateFrom, selectedGroupId, scheduledAt, visibleGroups, getValues, setValue, locale])
+
   // ─── Détection de conflits de créneaux ────────────────────────────────────────
   function overlaps(aStart: Date, aDuration: number, bStart: Date, bDuration: number) {
     const aEnd = new Date(aStart.getTime() + aDuration * 60000)
@@ -411,8 +429,12 @@ export default function HalaqaForm({
   }, [selectedGroupId, invitedGroupIds, students, selectedStudents, setValue])
 
   const visibleStudents = useMemo(() => {
-    let list = [...students]
     const allowedGroupIds = new Set([selectedGroupId, ...invitedGroupIds].filter(Boolean))
+
+    // Admin : si aucun groupe n'est sélectionné, on n'affiche pas la liste entière des élèves
+    if (isAdmin && allowedGroupIds.size === 0) return []
+
+    let list = [...students]
 
     // Admin : on réduit aux élèves de l'enseignant choisi (par enseignant assigné ou par groupe)
     if (isAdmin && selectedTeacherId) {
@@ -692,6 +714,23 @@ export default function HalaqaForm({
                       {durationValue} / {maxDuration} min
                     </span>
                   </div>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {[30, 45, 60, 90].map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => setValue("duration", Math.min(d, maxDuration), { shouldValidate: true })}
+                        className={cn(
+                          "px-2.5 py-1 rounded-lg border text-xs font-medium transition",
+                          durationValue === d
+                            ? "border-tahfidz-green bg-tahfidz-green/5 text-tahfidz-green"
+                            : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        )}
+                      >
+                        {d} min
+                      </button>
+                    ))}
+                  </div>
                   {errors.duration && <p className={errorClass}>{errors.duration.message}</p>}
                   {quotaStatus && (
                     <p className="text-xs text-gray-400 mt-1.5">
@@ -795,20 +834,23 @@ export default function HalaqaForm({
               {/* ─── Groupe ──────────────────────────────────────────────────── */}
               <div>
                 <label className={labelClass}>{t("group")}</label>
-                {isAdmin && !selectedTeacherId && (
+                {isAdmin && !selectedTeacherId ? (
                   <p className="text-xs text-gray-400 mb-1.5">{t("selectTeacherFirst")}</p>
-                )}
-                {!selectedGroupId && visibleGroups.length > 1 && (
-                  <p className="text-xs text-amber-600 dark:text-amber-400 mb-1.5 flex items-center gap-1">
-                    <AlertTriangle size={12} />
-                    {t("selectGroup")}
-                  </p>
-                )}
-                {selectedGroupId && (
-                  <p className="text-xs text-tahfidz-green mb-1.5 flex items-center gap-1">
-                    <CheckSquare size={12} />
-                    {t("groupAutoSelected")}
-                  </p>
+                ) : (
+                  <>
+                    {!selectedGroupId && visibleGroups.length > 1 && (
+                      <p className="text-xs text-amber-600 dark:text-amber-400 mb-1.5 flex items-center gap-1">
+                        <AlertTriangle size={12} />
+                        {t("selectGroup")}
+                      </p>
+                    )}
+                    {selectedGroupId && (
+                      <p className="text-xs text-tahfidz-green mb-1.5 flex items-center gap-1">
+                        <CheckSquare size={12} />
+                        {t("groupAutoSelected")}
+                      </p>
+                    )}
+                  </>
                 )}
                 <select
                   {...groupSelectRegister}
@@ -833,6 +875,27 @@ export default function HalaqaForm({
                     </option>
                   ))}
                 </select>
+
+                {selectedGroupId && (() => {
+                  const group = visibleGroups.find((g) => g.id === selectedGroupId)
+                  if (!group) return null
+                  const count = group.studentCount ?? 0
+                  const capacity = group.maxCapacity ?? 0
+                  const full = count >= capacity
+                  return (
+                    <div className="mt-2 flex items-center justify-between text-xs">
+                      <span className="text-gray-500 dark:text-gray-400">
+                        {t("groupCapacity")}: {count} / {capacity}
+                      </span>
+                      {full && (
+                        <span className="text-red-600 dark:text-red-400 flex items-center gap-1">
+                          <AlertTriangle size={10} />
+                          {t("groupFull")}
+                        </span>
+                      )}
+                    </div>
+                  )
+                })()}
 
                 {/* Groupes invités (admin uniquement) */}
                 {isAdmin && (
@@ -928,7 +991,7 @@ export default function HalaqaForm({
                       cardBase,
                       "cursor-pointer px-3 select-none",
                       filterByGroup && selectedGroupId ? cardActive : cardInactive,
-                      !selectedGroupId && "opacity-50 cursor-not-allowed"
+                      !selectedGroupId && "hidden"
                     )}
                   >
                     <input
@@ -946,13 +1009,41 @@ export default function HalaqaForm({
 
                 </div>
 
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                  {selectedStudents.length} {t("studentsSelected")}
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {selectedStudents.length} {t("studentsSelected")}
+                  </span>
+                  {visibleStudents.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const allSelected = visibleStudents.every((s) => selectedStudents.includes(s.id))
+                        if (allSelected) {
+                          const toKeep = selectedStudents.filter(
+                            (id) => !visibleStudents.some((s) => s.id === id)
+                          )
+                          setValue("studentIds", toKeep, { shouldValidate: true })
+                        } else {
+                          const newSet = new Set([...selectedStudents, ...visibleStudents.map((s) => s.id)])
+                          setValue("studentIds", Array.from(newSet), { shouldValidate: true })
+                        }
+                      }}
+                      className="text-xs font-medium text-tahfidz-green hover:underline"
+                    >
+                      {visibleStudents.every((s) => selectedStudents.includes(s.id))
+                        ? t("deselectAll")
+                        : t("selectAll")}
+                    </button>
+                  )}
                 </div>
 
                 <div className="max-h-56 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-xl divide-y divide-gray-100 dark:divide-gray-800">
                   {visibleStudents.length === 0 ? (
-                    <p className="px-4 py-6 text-center text-sm text-gray-400">{t("noStudentsInGroup")}</p>
+                    <p className="px-4 py-6 text-center text-sm text-gray-400">
+                      {isAdmin && !selectedGroupId && invitedGroupIds.length === 0
+                        ? t("selectGroupToSeeStudents")
+                        : t("noStudentsInGroup")}
+                    </p>
                   ) : (
                     visibleStudents.map((s) => {
                       const checked = selectedStudents.includes(s.id)

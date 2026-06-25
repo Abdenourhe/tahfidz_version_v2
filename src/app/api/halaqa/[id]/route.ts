@@ -105,6 +105,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       )
     }
 
+    // ─── Groupe principal requis pour l'enseignant ────────────────────
+    if (isTeacher && data.groupId === null) {
+      return NextResponse.json({ error: "Le groupe principal est requis" }, { status: 400 })
+    }
+
     // ─── Validation de la durée ───────────────────────────────────────
     const requestedDuration = data.duration ?? existing.duration ?? undefined
     const quotaCheck = await checkHalaqaCreationAllowed(schoolId, requestedDuration)
