@@ -591,9 +591,35 @@ async function exportPdf(students: StudentRow[], columns: ColumnDef[], L: Locale
 
   const addressHtml = [address, school?.phone].filter(Boolean).join(" • ")
 
+  // ── Calcul intelligent des largeurs de colonnes ──
+  const colWidths = columns.map(col => {
+    const header = col.label[L] ?? col.label.fr
+    const maxContent = Math.max(
+      header.length,
+      ...students.map(s => {
+        let v = col.getValue(s, L)
+        if (col.key === "level") v = levelLabel(String(v), L)
+        return String(v ?? "").length
+      })
+    )
+    // Estimation : ~7.2px par caractère + padding horizontal
+    let width = maxContent * 7.2 + 20
+    if (col.key === "email") width = Math.min(Math.max(width, 120), 185)
+    else if (["code", "age", "gender", "status", "surahs"].includes(col.key)) width = Math.min(Math.max(width, 55), 90)
+    else width = Math.min(Math.max(width, 70), 145)
+    return width
+  })
+
+  const totalWidth = colWidths.reduce((a, b) => a + b, 0)
+  const availableWidth = 1122 - 72 // container - paddings horizontaux
+  const scale = totalWidth > availableWidth ? availableWidth / totalWidth : 1
+  const finalWidths = colWidths.map(w => Math.round(w * scale))
+
+  const colgroupHtml = finalWidths.map(w => `<col style="width:${w}px;" />`).join("")
+
   const headerRowHtml = columns.map(col => {
     const label = col.label[L] ?? col.label.fr
-    return `<th style="padding:6px 3px;background:#059669;color:#ffffff;font-size:12px;font-weight:600;text-align:center;border:1px solid #059669;white-space:nowrap;">${escapeHtml(label)}</th>`
+    return `<th style="padding:9px 6px;background:#059669;color:#ffffff;font-size:12px;font-weight:600;text-align:center;border:1px solid #059669;white-space:nowrap;">${escapeHtml(label)}</th>`
   }).join("")
 
   const bodyRowsHtml = students.map((s, idx) => {
@@ -601,9 +627,10 @@ async function exportPdf(students: StudentRow[], columns: ColumnDef[], L: Locale
     const cells = columns.map(col => {
       let v = col.getValue(s, L)
       if (col.key === "level") v = levelLabel(String(v), L)
-      const align = typeof v === "number" ? "center" : "left"
+      const isNumeric = typeof v === "number" || ["age", "surahs"].includes(col.key)
+      const align = isNumeric ? "center" : "left"
       const dir = containsArabic(String(v)) ? "rtl" : "ltr"
-      return `<td style="padding:5px 3px;border:1px solid #e5e7eb;background:${bg};font-size:12px;text-align:${align};direction:${dir};white-space:nowrap;vertical-align:middle;">${escapeHtml(String(v ?? ""))}</td>`
+      return `<td style="padding:8px 6px;border:1px solid #e5e7eb;background:${bg};font-size:12px;text-align:${align};direction:${dir};white-space:nowrap;vertical-align:middle;">${escapeHtml(String(v ?? ""))}</td>`
     }).join("")
     return `<tr>${cells}</tr>`
   }).join("")
@@ -619,7 +646,8 @@ async function exportPdf(students: StudentRow[], columns: ColumnDef[], L: Locale
     <div style="height:2px;background:#d1fae5;margin-bottom:20px;"></div>
     <div style="font-size:20px;font-weight:700;color:#111827;margin-bottom:5px;">${escapeHtml(titleText)}</div>
     <div style="font-size:11px;color:#6b7280;margin-bottom:18px;">${escapeHtml(generatedText)}</div>
-    <table style="width:100%;border-collapse:collapse;table-layout:auto;">
+    <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+      <colgroup>${colgroupHtml}</colgroup>
       <thead>${headerRowHtml}</thead>
       <tbody>${bodyRowsHtml}</tbody>
     </table>
