@@ -9,12 +9,13 @@ import { useRouter } from "next/navigation"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { calculateAge } from "@/lib/utils"
 import {
-  Pencil, Trash2, FileSpreadsheet, UserPlus, Plus,
+  Pencil, Trash2, UserPlus, Plus,
   User, GraduationCap, Users, Search, Filter,
   Award, Eye, Power, PowerOff, X, Mail, Phone,
   Shield, ShieldOff, AlertTriangle, CheckCircle, Printer,
 } from "lucide-react"
 import { AvatarLightbox } from "@/components/AvatarLightbox"
+import { ExportStudentsButton } from "./ExportStudentsButton"
 
 // ─── Types ────────────────────────────────────────────────────────────────
 export interface StudentRow {
@@ -216,25 +217,6 @@ export function StudentTableClient({ students, groups, teachers: _teachers, stat
     inactive: students.filter(s => !s.user.isActive).length,
   }
 
-  // ── Export Excel (client-side via xlsx) ───────────────────────────────
-  const exportExcel = () => {
-    import("xlsx").then((XLSX) => {
-      const data = filtered.map(s => ({
-        Code: s.studentCode, Nom: s.user.fullName, "Nom arabe": s.user.fullNameAr || "",
-        Age: s.dateOfBirth ? calculateAge(s.dateOfBirth) + " ans" : "", Genre: s.user.gender || "",
-        Groupe: s.group?.name || "", Niveau: s.group?.level || "", Enseignant: s.teacher?.user.fullName || "",
-        Parent: s.parentLinks?.[0]?.parent.user.fullName || "", Email: s.user.email,
-        Urgence: s.emergencyPhone || "", Statut: s.user.isActive ? "Actif" : "Inactif",
-        Inscrit: new Date(s.user.createdAt).toLocaleDateString("fr-FR"),
-        "Sourates": s._count?.memorizedSurahs || 0,
-      }))
-      const ws = XLSX.utils.json_to_sheet(data)
-      const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, ws, "Elèves")
-      XLSX.writeFile(wb, `eleves_${new Date().toISOString().split("T")[0]}.xlsx`)
-    })
-  }
-
   // ── Appels API ─────────────────────────────────────────────────────────
   const doToggle = async (id: string, _current: boolean) => {
     try {
@@ -325,9 +307,7 @@ export function StudentTableClient({ students, groups, teachers: _teachers, stat
         <button onClick={() => setShowFilters(!showFilters)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${showFilters ? "bg-tahfidz-green text-white" : "text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"}`}>
           <Filter size={15} />{u("filters", L)}
         </button>
-        <button onClick={exportExcel} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition">
-          <FileSpreadsheet size={15} />{u("exportExcel", L)}
-        </button>
+        <ExportStudentsButton allStudents={students} filteredStudents={filtered} locale={L} />
       </div>
 
       {/* Filtres avancés */}
