@@ -19,7 +19,7 @@ import {
 } from "lucide-react"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
-type ExportFormat = "xlsx" | "csv" | "pdf"
+type ExportFormat = "xlsx" | "pdf"
 type ExportScope = "all" | "filtered"
 type Locale = "fr" | "en" | "ar"
 
@@ -152,7 +152,6 @@ export function ExportStudentsButton({ allStudents, filteredStudents, locale: L,
     setLoading(true)
     try {
       if (format === "xlsx") await exportExcel(scopeStudents, activeColumns, L, school)
-      else if (format === "csv") exportCsv(scopeStudents, activeColumns, L, school)
       else if (format === "pdf") await exportPdf(scopeStudents, activeColumns, L, school)
       setOpen(false)
       setShowConfig(false)
@@ -170,7 +169,6 @@ export function ExportStudentsButton({ allStudents, filteredStudents, locale: L,
     setLoading(true)
     try {
       if (fmt === "xlsx") await exportExcel(scopeStudents, activeColumns, L, school)
-      else if (fmt === "csv") exportCsv(scopeStudents, activeColumns, L, school)
       else if (fmt === "pdf") await exportPdf(scopeStudents, activeColumns, L, school)
       setOpen(false)
     } finally {
@@ -218,12 +216,6 @@ export function ExportStudentsButton({ allStudents, filteredStudents, locale: L,
             label={t("exportExcel", L)}
             active={format === "xlsx"}
             onClick={() => quickExport("xlsx")}
-          />
-          <MenuItem
-            icon={FileText}
-            label={t("exportCsv", L)}
-            active={format === "csv"}
-            onClick={() => quickExport("csv")}
           />
           <MenuItem
             icon={FileText}
@@ -275,9 +267,8 @@ export function ExportStudentsButton({ allStudents, filteredStudents, locale: L,
             {/* Format */}
             <div className="mb-5">
               <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block mb-2">Format</label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <FormatButton format="xlsx" current={format} setFormat={setFormat} label={t("exportExcel", L)} />
-                <FormatButton format="csv" current={format} setFormat={setFormat} label={t("exportCsv", L)} />
                 <FormatButton format="pdf" current={format} setFormat={setFormat} label={t("exportPdf", L)} />
               </div>
             </div>
@@ -573,33 +564,6 @@ async function exportExcel(students: StudentRow[], columns: ColumnDef[], L: Loca
   downloadBlob(blob, `eleves_${safeFileNamePart(school, L)}_${formatFileDate()}.xlsx`)
 }
 
-// ─── Export CSV ─────────────────────────────────────────────────────────────
-function exportCsv(students: StudentRow[], columns: ColumnDef[], L: Locale, school?: SchoolInfo) {
-  const displayName = schoolDisplayName(school, L)
-  const address = schoolAddress(school)
-
-  const headerLines: string[] = [
-    displayName,
-    address,
-    school?.phone,
-    `${t("generatedOn", L)} : ${new Date().toLocaleDateString("fr-FR")}  •  ${t("total", L)} : ${students.length}`,
-  ].filter((line): line is string => Boolean(line))
-
-  const headers = columns.map(c => c.label[L] ?? c.label.fr)
-  const rows = students.map(s =>
-    columns.map(col => {
-      let v = col.getValue(s, L)
-      if (col.key === "level") v = levelLabel(String(v), L)
-      const str = String(v ?? "").replace(/"/g, '""')
-      return `"${str}"`
-    }).join(";")
-  )
-
-  const csv = [...headerLines, headers.join(";"), ...rows].join("\n")
-  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" })
-  downloadBlob(blob, `eleves_${safeFileNamePart(school, L)}_${formatFileDate()}.csv`)
-}
-
 // ─── Export PDF ─────────────────────────────────────────────────────────────
 async function exportPdf(students: StudentRow[], columns: ColumnDef[], L: Locale, school?: SchoolInfo) {
   const displayName = schoolDisplayName(school, L)
@@ -613,23 +577,23 @@ async function exportPdf(students: StudentRow[], columns: ColumnDef[], L: Locale
     position: fixed;
     left: -9999px;
     top: 0;
-    width: 1122px;
+    width: 1046px;
     background: #ffffff;
-    padding: 40px 48px;
+    padding: 32px 36px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: #111827;
     box-sizing: border-box;
   `
 
   const logoHtml = school?.logo
-    ? `<img src="${school.logo}" alt="logo" style="width:80px;height:80px;object-fit:contain;border-radius:8px;" />`
-    : `<div style="width:80px;height:80px;background:linear-gradient(135deg,#059669,#14b8a6);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:24px;">${displayName.charAt(0)}</div>`
+    ? `<img src="${school.logo}" alt="logo" style="width:70px;height:70px;object-fit:contain;border-radius:8px;" />`
+    : `<div style="width:70px;height:70px;background:linear-gradient(135deg,#059669,#14b8a6);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:22px;">${escapeHtml(displayName.charAt(0))}</div>`
 
   const addressHtml = [address, school?.phone].filter(Boolean).join(" • ")
 
   const headerRowHtml = columns.map(col => {
     const label = col.label[L] ?? col.label.fr
-    return `<th style="padding:12px 10px;background:#059669;color:#ffffff;font-size:13px;font-weight:600;text-align:center;border:1px solid #059669;white-space:nowrap;">${escapeHtml(label)}</th>`
+    return `<th style="padding:7px 5px;background:#059669;color:#ffffff;font-size:10px;font-weight:600;text-align:center;border:1px solid #059669;word-wrap:break-word;overflow-wrap:break-word;">${escapeHtml(label)}</th>`
   }).join("")
 
   const bodyRowsHtml = students.map((s, idx) => {
@@ -639,23 +603,23 @@ async function exportPdf(students: StudentRow[], columns: ColumnDef[], L: Locale
       if (col.key === "level") v = levelLabel(String(v), L)
       const align = typeof v === "number" ? "center" : "left"
       const dir = containsArabic(String(v)) ? "rtl" : "ltr"
-      return `<td style="padding:10px;border:1px solid #e5e7eb;background:${bg};font-size:12px;text-align:${align};direction:${dir};white-space:nowrap;">${escapeHtml(String(v ?? ""))}</td>`
+      return `<td style="padding:6px 5px;border:1px solid #e5e7eb;background:${bg};font-size:10px;text-align:${align};direction:${dir};word-wrap:break-word;overflow-wrap:break-word;vertical-align:middle;">${escapeHtml(String(v ?? ""))}</td>`
     }).join("")
     return `<tr>${cells}</tr>`
   }).join("")
 
   container.innerHTML = `
-    <div style="display:flex;align-items:center;gap:20px;margin-bottom:12px;">
+    <div style="display:flex;align-items:center;gap:18px;margin-bottom:10px;">
       ${logoHtml}
       <div>
-        <div style="font-size:28px;font-weight:700;color:#059669;margin-bottom:4px;">${escapeHtml(displayName)}</div>
-        <div style="font-size:13px;color:#6b7280;">${escapeHtml(addressHtml)}</div>
+        <div style="font-size:26px;font-weight:700;color:#059669;margin-bottom:3px;">${escapeHtml(displayName)}</div>
+        <div style="font-size:12px;color:#6b7280;">${escapeHtml(addressHtml)}</div>
       </div>
     </div>
-    <div style="height:2px;background:#d1fae5;margin-bottom:24px;"></div>
-    <div style="font-size:22px;font-weight:700;color:#111827;margin-bottom:6px;">${escapeHtml(titleText)}</div>
-    <div style="font-size:12px;color:#6b7280;margin-bottom:24px;">${escapeHtml(generatedText)}</div>
-    <table style="width:100%;border-collapse:collapse;">
+    <div style="height:2px;background:#d1fae5;margin-bottom:20px;"></div>
+    <div style="font-size:20px;font-weight:700;color:#111827;margin-bottom:5px;">${escapeHtml(titleText)}</div>
+    <div style="font-size:11px;color:#6b7280;margin-bottom:18px;">${escapeHtml(generatedText)}</div>
+    <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
       <thead>${headerRowHtml}</thead>
       <tbody>${bodyRowsHtml}</tbody>
     </table>
