@@ -1,7 +1,7 @@
 "use client"
 // src/components/admin/ExportStudentsButton.tsx
 // Bouton d'export "pro" : multi-formats (Excel/CSV/PDF), portée filtrée/tous,
-// sélection des colonnes et nom de fichier dynamique.
+// sélection des colonnes et documents professionnels avec identité école.
 
 import { useState, useRef, useEffect, useMemo } from "react"
 import { StudentRow, SchoolInfo } from "./students"
@@ -443,6 +443,10 @@ function getImageFormat(url: string): "PNG" | "JPEG" {
   return "JPEG"
 }
 
+function getImageExtension(url: string): "png" | "jpeg" {
+  return getImageFormat(url) === "PNG" ? "png" : "jpeg"
+}
+
 function stripDataUrlPrefix(dataUrl: string): string {
   return dataUrl.replace(/^data:image\/[a-z]+;base64,/, "")
 }
@@ -453,30 +457,98 @@ function safeFileNamePart(school?: SchoolInfo, L?: Locale): string {
 
 // ─── Export Excel ───────────────────────────────────────────────────────────
 async function exportExcel(students: StudentRow[], columns: ColumnDef[], L: Locale, school?: SchoolInfo) {
-  const XLSX = await import("xlsx")
+  const ExcelJS = await import("exceljs")
+  const wb = new ExcelJS.Workbook()
+  const ws = wb.addWorksheet("Elèves")
+
   const displayName = schoolDisplayName(school, L)
   const address = schoolAddress(school)
 
-  const headerLines: (string | number)[][] = [
-    [displayName],
-    address ? [address] : [],
-    school?.phone ? [school.phone] : [],
-    [`${t("generatedOn", L)} : ${new Date().toLocaleDateString("fr-FR")}  •  ${t("total", L)} : ${students.length}`],
-    [],
-  ].filter(line => line.length > 0)
+  // Logo
+  if (school?.logo) {
+    const logoBase64 = await loadImageBase64(school.logo)
+    if (logoBase64) {
+      const imageId = wb.addImage({
+        base64: stripDataUrlPrefix(logoBase64),
+        extension: getImageExtension(school.logo),
+      })
+      ws.addImage(imageId, { tl: { col: 0, row: 0 }, ext: { width: 70, height: 70 } })
+    }
+  }
 
-  const colHeaders = columns.map(col => col.label[L] ?? col.label.fr)
-  const dataRows = students.map(s =>
-    columns.map(col => {
+  // Métadonnées école
+  ws.mergeCells("B1:E1")
+  const titleCell = ws.getCell("B1")
+  titleCell.value = displayName
+  titleCell.font = { name: "Calibri", size: 20, bold: true, color: { argb: "FF059669" } }
+  titleCell.alignment = { vertical: "middle" }
+
+  let metaRow = 2
+  if (address) {
+    ws.mergeCells(`B${metaRow}:E${metaRow}`)
+    const cell = ws.getCell(`B${metaRow}`)
+    cell.value = address
+    cell.font = { size: 11, color: { argb: "FF6B7280" } }
+    metaRow++
+  }
+  if (school?.phone) {
+    ws.mergeCells(`B${metaRow}:E${metaRow}`)
+    const cell = ws.getCell(`B${metaRow}`)
+    cell.value = school.phone
+    cell.font = { size: 11, color: { argb: "FF6B7280" } }
+    metaRow++
+  }
+  ws.mergeCells(`B${metaRow}:E${metaRow}`)
+  const metaCell = ws.getCell(`B${metaRow}`)
+  metaCell.value = `${t("generatedOn", L)} : ${new Date().toLocaleDateString("fr-FR")}  •  ${t("total", L)} : ${students.length}`
+  metaCell.font = { size: 10, italic: true, color: { argb: "FF9CA3AF" } }
+  metaRow += 2
+
+  // Hauteur lignes en-tête
+  ws.getRow(1).height = 30
+
+  // En-têtes de tableau
+  const headerRow = ws.getRow(metaRow)
+  columns.forEach((col, idx) => {
+    const cell = headerRow.getCell(idx + 1)
+    cell.value = col.label[L] ?? col.label.fr
+    cell.font = { bold: true, color: { argb: "FFFFFFFF" } }
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF059669" } }
+    cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true }
+    cell.border = {
+      top: { style: "thin", color: { argb: "FF059669" } },
+      bottom: { style: "thin", color: { argb: "FF059669" } },
+      left: { style: "thin", color: { argb: "FFD1FAE5" } },
+      right: { style: "thin", color: { argb: "FFD1FAE5" } },
+    }
+  })
+  headerRow.height = 28
+  const dataStartRow = metaRow + 1
+
+  // Données
+  students.forEach((s, rowIdx) => {
+    const row = ws.getRow(dataStartRow + rowIdx)
+    columns.forEach((col, colIdx) => {
       let v = col.getValue(s, L)
       if (col.key === "level") v = levelLabel(String(v), L)
-      return v
+      const cell = row.getCell(colIdx + 1)
+      cell.value = v as string | number
+      cell.alignment = { vertical: "middle", wrapText: true }
+      cell.border = {
+        top: { style: "thin", color: { argb: "FFE5E7EB" } },
+        bottom: { style: "thin", color: { argb: "FFE5E7EB" } },
+        left: { style: "thin", color: { argb: "FFE5E7EB" } },
+        right: { style: "thin", color: { argb: "FFE5E7EB" } },
+      }
+      if (rowIdx % 2 === 0) {
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF9FAFB" } }
+      }
     })
-  )
+    row.height = 22
+  })
 
-  const ws = XLSX.utils.aoa_to_sheet([...headerLines, colHeaders, ...dataRows])
-
-  ws["!cols"] = columns.map(col => {
+  // Largeurs de colonnes
+  ws.columns = columns.map(col => {
     const header = col.label[L] ?? col.label.fr
     const maxData = Math.max(
       header.length,
@@ -486,12 +558,19 @@ async function exportExcel(students: StudentRow[], columns: ColumnDef[], L: Loca
         return String(v ?? "").length
       })
     )
-    return { wch: Math.min(Math.max(maxData + 2, 10), 40) }
+    return { width: Math.min(Math.max(maxData + 2, 12), 35) }
   })
 
-  const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, ws, "Elèves")
-  XLSX.writeFile(wb, `eleves_${safeFileNamePart(school, L)}_${formatFileDate()}.xlsx`)
+  // Figer l'en-tête et les métadonnées
+  ws.views = [{ state: "frozen", ySplit: dataStartRow - 1 }]
+
+  // Filtres automatiques
+  ws.autoFilter = { from: { row: dataStartRow - 1, column: 1 }, to: { row: dataStartRow - 1, column: columns.length } }
+
+  // Télécharger
+  const buffer = await wb.xlsx.writeBuffer()
+  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
+  downloadBlob(blob, `eleves_${safeFileNamePart(school, L)}_${formatFileDate()}.xlsx`)
 }
 
 // ─── Export CSV ─────────────────────────────────────────────────────────────
@@ -523,143 +602,139 @@ function exportCsv(students: StudentRow[], columns: ColumnDef[], L: Locale, scho
 
 // ─── Export PDF ─────────────────────────────────────────────────────────────
 async function exportPdf(students: StudentRow[], columns: ColumnDef[], L: Locale, school?: SchoolInfo) {
-  const { jsPDF } = await import("jspdf")
-  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" })
-  const pageWidth = doc.internal.pageSize.getWidth()
-  const pageHeight = doc.internal.pageSize.getHeight()
-  const margin = 12
-  let y = 14
-
   const displayName = schoolDisplayName(school, L)
   const address = schoolAddress(school)
-  const logoX = margin
-  const textX = margin + (school?.logo ? 24 : 0)
+  const generatedText = `${t("generatedOn", L)} : ${new Date().toLocaleDateString("fr-FR")}  •  ${t("total", L)} : ${students.length}`
+  const titleText = t("exportTitle", L)
 
-  // Logo
-  if (school?.logo) {
-    try {
-      const logoBase64 = await loadImageBase64(school.logo)
-      if (logoBase64) {
-        const fmt = getImageFormat(school.logo)
-        doc.addImage(stripDataUrlPrefix(logoBase64), fmt, logoX, 10, 18, 18)
-      }
-    } catch {
-      // ignore
-    }
-  }
+  // Construction du HTML professionnel
+  const container = document.createElement("div")
+  container.style.cssText = `
+    position: fixed;
+    left: -9999px;
+    top: 0;
+    width: 1122px;
+    background: #ffffff;
+    padding: 40px 48px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #111827;
+    box-sizing: border-box;
+  `
 
-  // Nom de l'école
-  doc.setTextColor(5, 150, 105)
-  doc.setFont("helvetica", "bold")
-  doc.setFontSize(18)
-  doc.text(displayName, textX, y + 4)
+  const logoHtml = school?.logo
+    ? `<img src="${school.logo}" alt="logo" style="width:80px;height:80px;object-fit:contain;border-radius:8px;" />`
+    : `<div style="width:80px;height:80px;background:linear-gradient(135deg,#059669,#14b8a6);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:24px;">${displayName.charAt(0)}</div>`
 
-  // Adresse / téléphone
-  y += 9
-  doc.setTextColor(107, 114, 128)
-  doc.setFont("helvetica", "normal")
-  doc.setFontSize(9)
-  const metaLines = [address, school?.phone].filter(Boolean)
-  if (metaLines.length > 0) {
-    doc.text(metaLines.join("  •  "), textX, y)
-    y += 5
-  }
+  const addressHtml = [address, school?.phone].filter(Boolean).join(" • ")
 
-  // Ligne de séparation
-  y += 4
-  doc.setDrawColor(209, 250, 229)
-  doc.setLineWidth(0.5)
-  doc.line(margin, y, pageWidth - margin, y)
+  const headerRowHtml = columns.map(col => {
+    const label = col.label[L] ?? col.label.fr
+    return `<th style="padding:12px 10px;background:#059669;color:#ffffff;font-size:13px;font-weight:600;text-align:center;border:1px solid #059669;white-space:nowrap;">${escapeHtml(label)}</th>`
+  }).join("")
 
-  // Titre du document
-  y += 10
-  doc.setTextColor(31, 41, 55)
-  doc.setFont("helvetica", "bold")
-  doc.setFontSize(16)
-  doc.text(t("exportTitle", L), margin, y)
-
-  // Sous-titre
-  y += 7
-  doc.setFont("helvetica", "normal")
-  doc.setFontSize(9)
-  doc.setTextColor(107, 114, 128)
-  doc.text(`${t("generatedOn", L)} : ${new Date().toLocaleDateString("fr-FR")}  •  ${t("total", L)} : ${students.length}`, margin, y)
-
-  // Tableau
-  y += 10
-  const usableWidth = pageWidth - margin * 2
-  const colCount = columns.length
-  const colWidth = usableWidth / colCount
-  const rowHeight = 7
-
-  function drawTableHeader(yPos: number) {
-    doc.setFillColor(5, 150, 105)
-    doc.setDrawColor(5, 150, 105)
-    doc.rect(margin, yPos, usableWidth, rowHeight, "FD")
-    doc.setTextColor(255, 255, 255)
-    doc.setFont("helvetica", "bold")
-    doc.setFontSize(8)
-    columns.forEach((col, i) => {
-      const x = margin + i * colWidth + 1.5
-      const label = col.label[L] ?? col.label.fr
-      doc.text(truncateForPdf(doc, label, colWidth - 3), x, yPos + 4.8)
-    })
-  }
-
-  drawTableHeader(y)
-  y += rowHeight
-
-  doc.setFont("helvetica", "normal")
-  doc.setDrawColor(229, 231, 235)
-
-  students.forEach((s, idx) => {
-    if (y + rowHeight > pageHeight - margin - 8) {
-      addPdfFooter(doc, pageWidth, pageHeight, margin)
-      doc.addPage()
-      y = margin
-      drawTableHeader(y)
-      y += rowHeight
-    }
-
-    if (idx % 2 === 0) {
-      doc.setFillColor(249, 250, 251)
-      doc.rect(margin, y, usableWidth, rowHeight, "F")
-    }
-
-    doc.setTextColor(55, 65, 81)
-    columns.forEach((col, i) => {
+  const bodyRowsHtml = students.map((s, idx) => {
+    const bg = idx % 2 === 0 ? "#f9fafb" : "#ffffff"
+    const cells = columns.map(col => {
       let v = col.getValue(s, L)
       if (col.key === "level") v = levelLabel(String(v), L)
-      const x = margin + i * colWidth + 1.5
-      doc.text(truncateForPdf(doc, String(v ?? ""), colWidth - 3), x, y + 4.8)
+      const align = typeof v === "number" ? "center" : "left"
+      const dir = containsArabic(String(v)) ? "rtl" : "ltr"
+      return `<td style="padding:10px;border:1px solid #e5e7eb;background:${bg};font-size:12px;text-align:${align};direction:${dir};white-space:nowrap;">${escapeHtml(String(v ?? ""))}</td>`
+    }).join("")
+    return `<tr>${cells}</tr>`
+  }).join("")
+
+  container.innerHTML = `
+    <div style="display:flex;align-items:center;gap:20px;margin-bottom:12px;">
+      ${logoHtml}
+      <div>
+        <div style="font-size:28px;font-weight:700;color:#059669;margin-bottom:4px;">${escapeHtml(displayName)}</div>
+        <div style="font-size:13px;color:#6b7280;">${escapeHtml(addressHtml)}</div>
+      </div>
+    </div>
+    <div style="height:2px;background:#d1fae5;margin-bottom:24px;"></div>
+    <div style="font-size:22px;font-weight:700;color:#111827;margin-bottom:6px;">${escapeHtml(titleText)}</div>
+    <div style="font-size:12px;color:#6b7280;margin-bottom:24px;">${escapeHtml(generatedText)}</div>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>${headerRowHtml}</thead>
+      <tbody>${bodyRowsHtml}</tbody>
+    </table>
+  `
+
+  document.body.appendChild(container)
+
+  try {
+    const html2canvas = (await import("html2canvas")).default
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: "#ffffff",
+      logging: false,
     })
 
-    y += rowHeight
-  })
+    const { jsPDF } = await import("jspdf")
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" })
+    const pageWidth = doc.internal.pageSize.getWidth()
+    const pageHeight = doc.internal.pageSize.getHeight()
+    const margin = 10
+    const imgWidth = pageWidth - margin * 2
+    const canvasWidth = canvas.width
+    const canvasHeight = canvas.height
+    const imgHeight = (imgWidth * canvasHeight) / canvasWidth
+    const pageContentHeight = pageHeight - margin * 2
+    let heightLeft = imgHeight
+    let position = 0
+    let pageCount = 0
 
-  addPdfFooter(doc, pageWidth, pageHeight, margin)
-  doc.save(`eleves_${safeFileNamePart(school, L)}_${formatFileDate()}.pdf`)
-}
+    while (heightLeft > 0) {
+      if (pageCount > 0) doc.addPage()
+      const sliceHeight = Math.min(pageContentHeight, heightLeft)
+      // Source Y décalé à chaque page
+      const sourceY = (position / imgHeight) * canvasHeight
+      const sliceCanvasHeight = (sliceHeight / imgHeight) * canvasHeight
 
-function addPdfFooter(doc: any, pageWidth: number, pageHeight: number, margin: number) {
-  const pageCount = doc.internal.getNumberOfPages()
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i)
-    doc.setDrawColor(209, 250, 229)
-    doc.setLineWidth(0.3)
-    doc.line(margin, pageHeight - 10, pageWidth - margin, pageHeight - 10)
-    doc.setFont("helvetica", "normal")
-    doc.setFontSize(8)
-    doc.setTextColor(156, 163, 175)
-    doc.text(`TAHFIDZ  •  ${t("exportTitle", "fr")}`, margin, pageHeight - 6)
-    doc.text(`${i} / ${pageCount}`, pageWidth - margin - 10, pageHeight - 6)
+      const sliceCanvas = document.createElement("canvas")
+      sliceCanvas.width = canvasWidth
+      sliceCanvas.height = sliceCanvasHeight
+      const ctx = sliceCanvas.getContext("2d")
+      if (ctx) {
+        ctx.drawImage(
+          canvas,
+          0, sourceY, canvasWidth, sliceCanvasHeight,
+          0, 0, canvasWidth, sliceCanvasHeight
+        )
+      }
+
+      const imgData = sliceCanvas.toDataURL("image/png")
+      doc.addImage(imgData, "PNG", margin, margin, imgWidth, sliceHeight)
+
+      // Pied de page
+      doc.setFontSize(8)
+      doc.setTextColor(156, 163, 175)
+      doc.text(`TAHFIDZ • ${t("exportTitle", "fr")}`, margin, pageHeight - 6)
+      doc.text(`${pageCount + 1}`, pageWidth - margin - 5, pageHeight - 6, { align: "right" })
+
+      heightLeft -= pageContentHeight
+      position += pageContentHeight
+      pageCount++
+    }
+
+    doc.save(`eleves_${safeFileNamePart(school, L)}_${formatFileDate()}.pdf`)
+  } finally {
+    document.body.removeChild(container)
   }
 }
 
-function truncateForPdf(doc: any, text: string, maxWidth: number): string {
-  let truncated = text
-  while (doc.getTextWidth(truncated) > maxWidth && truncated.length > 0) {
-    truncated = truncated.slice(0, -1)
-  }
-  return truncated
+function containsArabic(text: string): boolean {
+  return /[\u0600-\u06FF\u0750-\u077F]/.test(text)
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;")
 }
