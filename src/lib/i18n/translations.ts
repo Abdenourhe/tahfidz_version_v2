@@ -2508,6 +2508,8 @@ export const translations = {
     noStudentsInGroup:  { fr: "Aucun élève dans ce groupe", en: "No students in this group", ar: "لا يوجد طلاب في هذه المجموعة" },
     groupAutoSelected:  { fr: "Les élèves du groupe sont automatiquement sélectionnés.", en: "Group students are automatically selected.", ar: "تم تحديد طلاب المجموعة تلقائيًا." },
     invitedGroups:      { fr: "Groupes invités",       en: "Invited groups",        ar: "المجموعات المدعوة" },
+    inviteOtherGroups:  { fr: "Inviter d'autres groupes (optionnel)", en: "Invite other groups (optional)", ar: "دعوة مجموعات أخرى (اختياري)" },
+    noInvitedGroupsSelected: { fr: "Aucun groupe invité", en: "No invited group", ar: "لا توجد مجموعات مدعوة" },
     noInvitedGroupsAvailable: { fr: "Aucun autre groupe disponible", en: "No other group available", ar: "لا توجد مجموعات أخرى متاحة" },
     invitedGroupsByAdmin: { fr: "Groupes invités par l'administration", en: "Groups invited by administration", ar: "المجموعات المدعوة من قبل الإدارة" },
     invitedGroupsHint:  { fr: "Vous pouvez inviter des groupes d'autres enseignants. L'enseignant animateur pourra sélectionner leurs élèves.", en: "You can invite groups from other teachers. The host teacher will be able to select their students.", ar: "يمكنك دعوة مجموعات من معلمين آخرين. سيتمكن المعلم المضيف من اختيار طلابهم." },

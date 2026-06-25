@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils"
 import {
   Video, ArrowLeft, Calendar, Clock, Users, BookOpen,
   Mic, Monitor, Video as VideoIcon, Loader2, GraduationCap, Pencil,
-  Repeat, AlertTriangle, Search, CheckSquare
+  Repeat, AlertTriangle, Search, CheckSquare, ChevronDown
 } from "lucide-react"
 
 interface TeacherOption {
@@ -117,6 +117,7 @@ export default function HalaqaForm({
   })
   const [filterByGroup, setFilterByGroup] = useState(false)
   const [studentSearch, setStudentSearch] = useState("")
+  const [invitedGroupsOpen, setInvitedGroupsOpen] = useState(false)
 
   const maxDuration = quotaStatus?.halaqaMaxDuration ?? 180
 
@@ -353,6 +354,13 @@ export default function HalaqaForm({
     )
     setValue("meetingName", `Halaqa – ${group.name} – ${dateStr}`)
   }, [mode, duplicateFrom, selectedGroupId, scheduledAt, visibleGroups, getValues, setValue, locale])
+
+  // ─── Ouvrir automatiquement l'accordéon des groupes invités en édition ─────────
+  useEffect(() => {
+    if (mode === "edit" && invitedGroupIds.length > 0) {
+      setInvitedGroupsOpen(true)
+    }
+  }, [mode, invitedGroupIds])
 
   // ─── Détection de conflits de créneaux ────────────────────────────────────────
   function overlaps(aStart: Date, aDuration: number, bStart: Date, bDuration: number) {
@@ -899,43 +907,85 @@ export default function HalaqaForm({
 
                 {/* Groupes invités (admin uniquement) */}
                 {isAdmin && (
-                  <div className="mt-4">
-                    <label className={labelClass}>{t("invitedGroups")}</label>
-                    <p className="text-xs text-amber-600 dark:text-amber-400 mb-1.5 flex items-start gap-1">
-                      <AlertTriangle size={12} className="shrink-0 mt-0.5" />
-                      {t("invitedGroupsHint")}
-                    </p>
-                    {availableGroupsForInvite.length === 0 ? (
-                      <p className="text-xs text-gray-400">{t("noInvitedGroupsAvailable")}</p>
-                    ) : (
-                      <div className="max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-xl divide-y divide-gray-100 dark:divide-gray-800">
-                        {availableGroupsForInvite.map((g) => {
-                          const checked = invitedGroupIds.includes(g.id)
-                          return (
-                            <label
-                              key={g.id}
-                              className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                onChange={(e) => {
-                                  const current = new Set(invitedGroupIds)
-                                  if (e.target.checked) current.add(g.id)
-                                  else current.delete(g.id)
-                                  setInvitedGroupIds(Array.from(current))
-                                }}
-                                className="w-4 h-4 rounded border-gray-300 text-tahfidz-green focus:ring-tahfidz-green/50"
-                              />
-                              <span className="text-sm text-gray-700 dark:text-gray-300">
-                                {g.name}
-                                {g.teacherName && (
-                                  <span className="block text-[10px] text-gray-400">{g.teacherName}</span>
-                                )}
-                              </span>
-                            </label>
-                          )
-                        })}
+                  <div className="mt-5 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setInvitedGroupsOpen((prev) => !prev)}
+                      className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition text-left"
+                    >
+                      <div className="min-w-0">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                          {t("inviteOtherGroups")}
+                        </span>
+                        {!invitedGroupsOpen && (
+                          <div className="mt-1.5 flex flex-wrap gap-1.5">
+                            {invitedGroupIds.length === 0 ? (
+                              <span className="text-xs text-gray-400">{t("noInvitedGroupsSelected")}</span>
+                            ) : (
+                              invitedGroupIds.map((id) => {
+                                const g = groups.find((grp) => grp.id === id)
+                                if (!g) return null
+                                return (
+                                  <span
+                                    key={id}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-[10px]"
+                                  >
+                                    {g.name}
+                                  </span>
+                                )
+                              })
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <ChevronDown
+                        size={16}
+                        className={cn(
+                          "shrink-0 text-gray-400 transition-transform",
+                          invitedGroupsOpen && "rotate-180"
+                        )}
+                      />
+                    </button>
+
+                    {invitedGroupsOpen && (
+                      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+                        <p className="text-xs text-amber-600 dark:text-amber-400 mb-2 flex items-start gap-1">
+                          <AlertTriangle size={12} className="shrink-0 mt-0.5" />
+                          {t("invitedGroupsHint")}
+                        </p>
+                        {availableGroupsForInvite.length === 0 ? (
+                          <p className="text-xs text-gray-400">{t("noInvitedGroupsAvailable")}</p>
+                        ) : (
+                          <div className="max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-xl divide-y divide-gray-100 dark:divide-gray-800">
+                            {availableGroupsForInvite.map((g) => {
+                              const checked = invitedGroupIds.includes(g.id)
+                              return (
+                                <label
+                                  key={g.id}
+                                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={(e) => {
+                                      const current = new Set(invitedGroupIds)
+                                      if (e.target.checked) current.add(g.id)
+                                      else current.delete(g.id)
+                                      setInvitedGroupIds(Array.from(current))
+                                    }}
+                                    className="w-4 h-4 rounded border-gray-300 text-tahfidz-green focus:ring-tahfidz-green/50"
+                                  />
+                                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                                    {g.name}
+                                    {g.teacherName && (
+                                      <span className="block text-[10px] text-gray-400">{g.teacherName}</span>
+                                    )}
+                                  </span>
+                                </label>
+                              )
+                            })}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
