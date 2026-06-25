@@ -1,9 +1,9 @@
 // src/components/halaqa/HalaqaCalendarView.tsx
-// Calendrier Halaqa : Agenda (7 colonnes), Mois (grille + détail)
+// Calendrier Halaqa : Semaine (liste), Mois (grille + détail)
 
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -60,11 +60,13 @@ function getSessionDotColor(session: Session, colorBy: "status" | "teacher" | "g
 }
 
 export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionClick }: HalaqaCalendarViewProps) {
-  const [view, setView] = useState<"agenda" | "month">("agenda")
+  const [view, setView] = useState<"week" | "month">("week")
   const [currentDate, setCurrentDate] = useState(new Date())
   const [colorBy, setColorBy] = useState<"status" | "teacher" | "group">("status")
   const [selectedMonthDay, setSelectedMonthDay] = useState<Date | null>(null)
   const [now, setNow] = useState(new Date())
+  const [initialScrollDone, setInitialScrollDone] = useState(false)
+  const dayRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60000)
@@ -74,6 +76,17 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
   useEffect(() => {
     setSelectedMonthDay(null)
   }, [currentDate, view])
+
+  useEffect(() => {
+    if (view === "week" && !initialScrollDone) {
+      const key = dateKey(now)
+      const el = dayRefs.current[key]
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" })
+        setInitialScrollDone(true)
+      }
+    }
+  }, [view, currentDate, initialScrollDone, now])
 
   const parsedSessions = useMemo(() => {
     return sessions.map((s) => ({ ...s, scheduledAt: new Date(s.scheduledAt) }))
@@ -97,12 +110,20 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
   const dateKey = (d: Date) =>
     `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
 
-  const weekSessions = useMemo(() => {
-    return parsedSessions.filter((s) => {
-      const d = new Date(s.scheduledAt)
-      return d >= weekStart && d < new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000)
+  const weekDaysSessions = useMemo(() => {
+    const map = new Map<string, (Session & { scheduledAt: Date })[]>()
+    weekDays.forEach((d) => map.set(dateKey(d), []))
+    parsedSessions.forEach((s) => {
+      const key = dateKey(s.scheduledAt)
+      if (map.has(key)) {
+        map.get(key)!.push(s)
+      }
     })
-  }, [parsedSessions, weekStart])
+    return weekDays.map((d) => ({
+      date: d,
+      sessions: (map.get(dateKey(d)) || []).sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime()),
+    }))
+  }, [weekDays, parsedSessions])
 
   const monthStart = useMemo(() => new Date(currentDate.getFullYear(), currentDate.getMonth(), 1), [currentDate])
   const monthEnd = useMemo(() => new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0), [currentDate])
@@ -138,27 +159,16 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
     return map[status] || "bg-gray-100 text-gray-700"
   }
 
-  const SessionCard = ({
-    session,
-    compact = false,
-  }: {
-    session: Session & { scheduledAt: Date }
-    compact?: boolean
-  }) => {
+  const SessionCard = ({ session }: { session: Session & { scheduledAt: Date } }) => {
     const endTime = formatEndTime(session.scheduledAt, session.duration)
     const dotColor = getSessionDotColor(session, colorBy)
     const duration = session.duration ? `${session.duration} min` : null
-    const subtitle = [session.teacher?.fullName, session.group?.name].filter(Boolean).join(" · ")
 
     return (
       <button
         type="button"
         onClick={() => onSessionClick?.(session)}
-        className={cn(
-          "w-full flex items-start gap-3 rounded-xl border text-left transition hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600",
-          compact ? "p-2" : "p-3",
-          "bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700"
-        )}
+        className="w-full flex items-start gap-3 p-3 rounded-xl border text-left transition hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700"
       >
         <div className={cn("mt-1.5 h-2.5 w-2.5 rounded-full shrink-0", dotColor)} />
         <div className="flex-1 min-w-0">
@@ -166,28 +176,25 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
             <span className="text-sm font-bold text-gray-900 dark:text-white">
               {formatTime(session.scheduledAt)}
               {endTime && <span className="text-gray-400 font-medium"> – {endTime}</span>}
-              {duration && !compact && (
+              {duration && (
                 <span className="ml-2 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
                   {duration}
                 </span>
               )}
             </span>
-            {!compact && (
-              <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold uppercase", statusBadgeClasses(session.status))}>
-                {session.status}
-              </span>
-            )}
+            <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold uppercase", statusBadgeClasses(session.status))}>
+              {session.status}
+            </span>
           </div>
-          <div
-            className={cn(
-              "font-semibold text-gray-800 dark:text-gray-100 mt-0.5",
-              compact ? "truncate text-xs" : "truncate"
-            )}
-          >
-            {session.meetingName}
-          </div>
-          {!compact && subtitle && (
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">{subtitle}</div>
+          <div className="font-semibold text-gray-800 dark:text-gray-100 truncate mt-0.5">{session.meetingName}</div>
+          {(session.teacher?.fullName || session.group?.name) && (
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
+              {session.teacher?.fullName && (
+                <span className="font-medium text-gray-700 dark:text-gray-300">{session.teacher.fullName}</span>
+              )}
+              {session.teacher?.fullName && session.group?.name && <span className="mx-1.5 opacity-60">·</span>}
+              {session.group?.name}
+            </div>
           )}
         </div>
       </button>
@@ -201,6 +208,7 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
     if (view === "month") d.setMonth(d.getMonth() - 1)
     else d.setDate(d.getDate() - 7)
     setCurrentDate(d)
+    setInitialScrollDone(false)
   }
 
   const handleNext = () => {
@@ -208,6 +216,7 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
     if (view === "month") d.setMonth(d.getMonth() + 1)
     else d.setDate(d.getDate() + 7)
     setCurrentDate(d)
+    setInitialScrollDone(false)
   }
 
   return (
@@ -220,7 +229,7 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <div className="inline-flex items-center p-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-            {(["agenda", "month"] as const).map((v) => (
+            {(["week", "month"] as const).map((v) => (
               <button
                 key={v}
                 type="button"
@@ -232,7 +241,7 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
                     : "text-gray-600 dark:text-gray-400"
                 )}
               >
-                {v === "agenda" ? "Agenda" : "Mois"}
+                {v === "week" ? "Semaine" : "Mois"}
               </button>
             ))}
           </div>
@@ -278,43 +287,64 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
         </div>
       </div>
 
-      {/* Vue Agenda (anciennement Semaine) */}
-      {view === "agenda" && (
-        <div className="overflow-x-auto">
-          <div className="min-w-[900px] grid grid-cols-7 gap-3">
-            {weekDays.map((day) => {
-              const daySessions = weekSessions
-                .filter((s) => dateKey(s.scheduledAt) === dateKey(day))
-                .sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime())
-              return (
+      {/* Vue Semaine (liste verticale) */}
+      {view === "week" && (
+        <div className="space-y-4">
+          {weekDaysSessions.map(({ date, sessions: daySessions }) => (
+            <div
+              key={dateKey(date)}
+              ref={(el) => {
+                dayRefs.current[dateKey(date)] = el
+              }}
+              className={cn(
+                "rounded-2xl border p-4 transition",
+                isToday(date)
+                  ? "border-tahfidz-green bg-tahfidz-green/5"
+                  : "border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900"
+              )}
+            >
+              <div className="flex items-center gap-3 mb-3">
                 <div
-                  key={dateKey(day)}
-                  className="flex flex-col rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 overflow-hidden min-h-[360px]"
+                  className={cn(
+                    "w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold",
+                    isToday(date)
+                      ? "bg-tahfidz-green text-white"
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                  )}
                 >
-                  <div
+                  {date.getDate()}
+                </div>
+                <div>
+                  <h3
                     className={cn(
-                      "text-center py-3 border-b border-gray-100 dark:border-gray-800",
-                      isToday(day) ? "bg-tahfidz-green text-white" : "bg-white dark:bg-gray-900"
+                      "text-sm font-bold",
+                      isToday(date) ? "text-tahfidz-green" : "text-gray-900 dark:text-white"
                     )}
                   >
-                    <div className="text-[10px] font-semibold uppercase tracking-wide opacity-90">
-                      {day.toLocaleDateString(locale === "ar" ? "ar-DZ" : locale === "en" ? "en-US" : "fr-FR", {
-                        weekday: "short",
-                      })}
-                    </div>
-                    <div className="text-xl font-bold">{day.getDate()}</div>
-                  </div>
-                  <div className="flex-1 p-2 space-y-2">
-                    {daySessions.length === 0 ? (
-                      <p className="text-xs text-gray-400 text-center py-6 italic">Aucune séance</p>
-                    ) : (
-                      daySessions.map((s) => <SessionCard key={s.id} session={s} compact />)
-                    )}
-                  </div>
+                    {date.toLocaleDateString(locale === "ar" ? "ar-DZ" : locale === "en" ? "en-US" : "fr-FR", {
+                      weekday: "long",
+                    })}
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {date.toLocaleDateString(locale === "ar" ? "ar-DZ" : locale === "en" ? "en-US" : "fr-FR", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </p>
                 </div>
-              )
-            })}
-          </div>
+              </div>
+              {daySessions.length === 0 ? (
+                <p className="text-sm text-gray-400 italic py-2">Aucune séance</p>
+              ) : (
+                <div className="space-y-2">
+                  {daySessions.map((s) => (
+                    <SessionCard key={s.id} session={s} />
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
 
@@ -401,8 +431,6 @@ export default function HalaqaCalendarView({ sessions, locale, isRTL, onSessionC
           )}
         </div>
       )}
-
-
     </div>
   )
 }
