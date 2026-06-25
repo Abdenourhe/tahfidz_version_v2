@@ -2492,6 +2492,32 @@ export const translations = {
     nameRequired:     { fr: "Nom requis",            en: "Name required",         ar: "الاسم مطلوب" },
     minOneStudent:    { fr: "Au moins un élève",     en: "At least one student",  ar: "طالب واحد على الأقل" },
     dateRequired:     { fr: "Date requise",          en: "Date required",         ar: "التاريخ مطلوب" },
+    // Répétition
+    repeatSession:      { fr: "Répéter la séance",     en: "Repeat session",        ar: "تكرار الجلسة" },
+    repeatThisSession:  { fr: "Répéter cette séance",  en: "Repeat this session",   ar: "كرر هذه الجلسة" },
+    frequency:          { fr: "Fréquence",             en: "Frequency",             ar: "التكرار" },
+    daily:              { fr: "Quotidienne",           en: "Daily",                 ar: "يومي" },
+    weekly:             { fr: "Hebdomadaire",          en: "Weekly",                ar: "أسبوعي" },
+    occurrences:        { fr: "Nombre d'occurrences",  en: "Number of occurrences", ar: "عدد المرات" },
+    occurrencesHint:    { fr: "Entre 2 et 10 séances", en: "Between 2 and 10 sessions", ar: "بين 2 و 10 جلسات" },
+    // Groupe / élèves
+    selectGroupStudents:{ fr: "Sélectionner les élèves du groupe", en: "Select group students", ar: "اختر طلاب المجموعة" },
+    allStudents:        { fr: "Tous les élèves",       en: "All students",          ar: "جميع الطلاب" },
+    groupStudentsOnly:  { fr: "Élèves du groupe uniquement", en: "Group students only", ar: "طلاب المجموعة فقط" },
+    noStudentsInGroup:  { fr: "Aucun élève dans ce groupe", en: "No students in this group", ar: "لا يوجد طلاب في هذه المجموعة" },
+    groupAutoSelected:  { fr: "Les élèves du groupe sont automatiquement sélectionnés.", en: "Group students are automatically selected.", ar: "تم تحديد طلاب المجموعة تلقائيًا." },
+    searchStudent:      { fr: "Rechercher un élève…",  en: "Search a student…",     ar: "البحث عن طالب…" },
+    studentsSelected:   { fr: "élève(s) sélectionné(s)", en: "student(s) selected", ar: "طالب/طلاب محدد/محددون" },
+    // Conflits & validation
+    conflictDetected:   { fr: "Conflit de créneau détecté", en: "Time slot conflict detected", ar: "تم اكتشاف تعارض في الوقت" },
+    conflictWithSession:{ fr: "Cette séance chevauche une autre séance ({name}, {time}).", en: "This session overlaps another session ({name}, {time}).", ar: "تتداخل هذه الجلسة مع جلسة أخرى ({name}، {time})." },
+    dateInPast:         { fr: "La date sélectionnée est dans le passé.", en: "The selected date is in the past.", ar: "التاريخ المحدد في الماضي." },
+    dateInPastCreate:   { fr: "Impossible de planifier une séance dans le passé.", en: "Cannot schedule a session in the past.", ar: "لا يمكن جدولة جلسة في الماضي." },
+    selectTeacherFirst: { fr: "Sélectionnez d'abord un enseignant pour filtrer ses groupes.", en: "Select a teacher first to filter their groups.", ar: "اختر معلمًا أولاً لتصفية مجموعاته." },
+    // Quota visuel
+    quotaRemaining:     { fr: "Durée restante autorisée", en: "Remaining allowed duration", ar: "المدة المتبقية المسموح بها" },
+    quotaMax:           { fr: "Durée max",             en: "Max duration",          ar: "المدة القصوى" },
+    durationSlider:     { fr: "Durée de la séance",    en: "Session duration",      ar: "مدة الجلسة" },
   },
 
   // ─── Carte d'inscription imprimable / Printable Registration Card ──
