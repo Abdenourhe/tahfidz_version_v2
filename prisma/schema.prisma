@@ -358,6 +358,7 @@ model Group {
   announcements  GroupAnnouncement[]
   attendances    Attendance[]
   halaqaSessions HalaqaSession[]     @relation("GroupHalaqa")
+  invitedHalaqaSessions HalaqaSessionGroup[]
   libraryCollections LibraryCollection[]
 
   @@index([schoolId])
@@ -1055,6 +1056,8 @@ model HalaqaSession {
   groupId String?
   group   Group?  @relation("GroupHalaqa", fields: [groupId], references: [id], onDelete: SetNull)
 
+  invitedGroups HalaqaSessionGroup[]
+
   type   HalaqaType
   status HalaqaStatus @default(SCHEDULED)
   mode   HalaqaMode   @default(AUDIO_ONLY)
@@ -1080,6 +1083,17 @@ model HalaqaSession {
   @@index([status])
   @@index([scheduledAt])
   @@map("halaqa_sessions")
+}
+
+model HalaqaSessionGroup {
+  id              String        @id @default(cuid())
+  halaqaSessionId String
+  halaqaSession   HalaqaSession @relation(fields: [halaqaSessionId], references: [id], onDelete: Cascade)
+  groupId         String
+  group           Group         @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([halaqaSessionId, groupId])
+  @@map("halaqa_session_groups")
 }
 
 model HalaqaEvaluation {

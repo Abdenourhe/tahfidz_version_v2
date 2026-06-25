@@ -2506,6 +2506,8 @@ export const translations = {
     groupStudentsOnly:  { fr: "Élèves du groupe uniquement", en: "Group students only", ar: "طلاب المجموعة فقط" },
     noStudentsInGroup:  { fr: "Aucun élève dans ce groupe", en: "No students in this group", ar: "لا يوجد طلاب في هذه المجموعة" },
     groupAutoSelected:  { fr: "Les élèves du groupe sont automatiquement sélectionnés.", en: "Group students are automatically selected.", ar: "تم تحديد طلاب المجموعة تلقائيًا." },
+    invitedGroups:      { fr: "Groupes invités",       en: "Invited groups",        ar: "المجموعات المدعوة" },
+    noInvitedGroupsAvailable: { fr: "Aucun autre groupe disponible", en: "No other group available", ar: "لا توجد مجموعات أخرى متاحة" },
     searchStudent:      { fr: "Rechercher un élève…",  en: "Search a student…",     ar: "البحث عن طالب…" },
     studentsSelected:   { fr: "élève(s) sélectionné(s)", en: "student(s) selected", ar: "طالب/طلاب محدد/محددون" },
     // Conflits & validation

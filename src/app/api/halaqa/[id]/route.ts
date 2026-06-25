@@ -19,6 +19,7 @@ const updateSchema = z.object({
   verses: z.string().optional().nullable(),
   duration: z.number().min(15).max(180).optional(),
   teacherId: z.string().optional(),
+  invitedGroupIds: z.array(z.string()).optional(),
 })
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -36,6 +37,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       include: {
         teacher: { select: { id: true, fullName: true, email: true } },
         group: { select: { id: true, name: true } },
+        invitedGroups: {
+          include: {
+            group: { select: { id: true, name: true } },
+          },
+        },
         evaluations: {
           include: { student: { select: { id: true, fullName: true } } },
         },
@@ -147,6 +153,39 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       }
     }
 
+    // ─── Mise à jour des groupes invités ──────────────────────────────
+    if (data.invitedGroupIds !== undefined) {
+      if (!isAdmin) {
+        return NextResponse.json({ error: "Non autorisé à modifier les groupes invités" }, { status: 403 })
+      }
+
+      const newGroupIds = data.invitedGroupIds
+      if (data.groupId && newGroupIds.includes(data.groupId)) {
+        return NextResponse.json({ error: "Le groupe principal ne peut pas être invité" }, { status: 400 })
+      }
+
+      const invitedGroups = await prisma.group.findMany({
+        where: {
+          id: { in: newGroupIds },
+          schoolId,
+          isActive: true,
+        },
+        select: { id: true },
+      })
+
+      if (invitedGroups.length !== newGroupIds.length) {
+        return NextResponse.json({ error: "Certains groupes invités sont invalides" }, { status: 400 })
+      }
+
+      await prisma.halaqaSessionGroup.deleteMany({ where: { halaqaSessionId: id } })
+      if (newGroupIds.length > 0) {
+        await prisma.halaqaSessionGroup.createMany({
+          data: newGroupIds.map((groupId) => ({ halaqaSessionId: id, groupId })),
+          skipDuplicates: true,
+        })
+      }
+    }
+
     // ─── Mise à jour Prisma uniquement (BBB non modifié) ──────────────
     const updated = await prisma.halaqaSession.update({
       where: { id },
@@ -165,6 +204,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       include: {
         teacher: { select: { id: true, fullName: true, email: true } },
         group: { select: { id: true, name: true } },
+        invitedGroups: {
+          include: {
+            group: { select: { id: true, name: true } },
+          },
+        },
       },
     })
 

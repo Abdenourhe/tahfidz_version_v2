@@ -38,6 +38,11 @@ export async function GET(req: Request) {
       include: {
         teacher: { select: { fullName: true } },
         group: { select: { name: true } },
+        invitedGroups: {
+          include: {
+            group: { select: { id: true, name: true } },
+          },
+        },
         evaluations: {
           where: role === "STUDENT" ? { studentId: userId } : undefined,
           select: { id: true, studentId: true, memorizationScore: true, tajweedScore: true, fluencyScore: true },

@@ -3,22 +3,8 @@
 
 import { useSearchParams } from "next/navigation"
 import { useState, useEffect } from "react"
-import HalaqaForm from "@/components/halaqa/HalaqaForm"
+import HalaqaForm, { type HalaqaSession } from "@/components/halaqa/HalaqaForm"
 import { useT } from "@/contexts/LanguageContext"
-
-interface HalaqaSession {
-  id: string
-  meetingName: string
-  type: "INDIVIDUAL" | "COLLECTIVE"
-  mode: "AUDIO_ONLY" | "VIDEO" | "SCREEN_SHARE"
-  scheduledAt: string
-  duration: number
-  sourah?: string | null
-  verses?: string | null
-  studentIds: string[]
-  groupId?: string | null
-  teacherId?: string
-}
 
 export default function TeacherNewHalaqaPage() {
   const t = useT("halaqa")

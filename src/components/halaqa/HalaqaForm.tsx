@@ -38,7 +38,7 @@ interface GroupOption {
   teacherUserId?: string | null
 }
 
-interface HalaqaSession {
+export interface HalaqaSession {
   id: string
   meetingName: string
   type: "INDIVIDUAL" | "COLLECTIVE"
@@ -50,6 +50,7 @@ interface HalaqaSession {
   studentIds: string[]
   groupId?: string | null
   group?: { id: string; name: string } | null
+  invitedGroups?: { group: { id: string; name: string } }[]
   teacherId?: string
   status?: string
 }
@@ -100,6 +101,8 @@ export default function HalaqaForm({
   const [fetching, setFetching] = useState(true)
   const [quotaStatus, setQuotaStatus] = useState<{ halaqaMaxDuration: number; plan: string } | null>(null)
   const [existingSessions, setExistingSessions] = useState<ExistingSession[]>([])
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [invitedGroupIds, setInvitedGroupIds] = useState<string[]>([])
   const [recurrence, setRecurrence] = useState<{
     enabled: boolean
     frequency: "DAILY" | "WEEKLY"
@@ -257,6 +260,7 @@ export default function HalaqaForm({
             ])
           }
 
+          setInvitedGroupIds(session.invitedGroups?.map((g) => g.group.id) || [])
           reset({
             meetingName: session.meetingName,
             studentIds: session.studentIds,
@@ -272,6 +276,7 @@ export default function HalaqaForm({
         } else if (duplicateFrom) {
           const nextDate = new Date(duplicateFrom.scheduledAt)
           nextDate.setDate(nextDate.getDate() + 7)
+          setInvitedGroupIds(duplicateFrom.invitedGroups?.map((g) => g.group.id) || [])
           reset({
             meetingName: duplicateFrom.meetingName,
             studentIds: duplicateFrom.studentIds,
@@ -298,6 +303,16 @@ export default function HalaqaForm({
   useEffect(() => {
     groupsRef.current = groups
   }, [groups])
+
+  // ─── Récupération de l'utilisateur connecté ───────────────────────────────────
+  useEffect(() => {
+    fetch("/api/auth/session")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.user?.id) setCurrentUserId(data.user.id)
+      })
+      .catch(console.error)
+  }, [])
 
   const visibleGroups = useMemo(() => {
     if (!isAdmin || !selectedTeacherId) return groups
@@ -356,8 +371,38 @@ export default function HalaqaForm({
     setFilterByGroup(!!selectedGroupId)
   }, [selectedGroupId])
 
+  // ─── Mise à jour intelligente des élèves selon les groupes autorisés ──────────
+  const prevAllowedGroupsRef = useRef<string[]>([])
+
+  useEffect(() => {
+    const allowedGroupIds = [selectedGroupId, ...invitedGroupIds].filter(Boolean)
+    const prevAllowed = prevAllowedGroupsRef.current
+
+    const addedGroups = allowedGroupIds.filter((id) => !prevAllowed.includes(id))
+    const removedGroups = prevAllowed.filter((id) => !allowedGroupIds.includes(id))
+
+    if (addedGroups.length === 0 && removedGroups.length === 0) return
+
+    const currentStudentIds = new Set(selectedStudents)
+
+    addedGroups.forEach((groupId) => {
+      students.filter((s) => s.groupId === groupId).forEach((s) => currentStudentIds.add(s.id))
+    })
+
+    removedGroups.forEach((groupId) => {
+      students.filter((s) => s.groupId === groupId).forEach((s) => {
+        const stillAllowed = allowedGroupIds.some((gid) => s.groupId === gid)
+        if (!stillAllowed) currentStudentIds.delete(s.id)
+      })
+    })
+
+    setValue("studentIds", Array.from(currentStudentIds), { shouldValidate: true })
+    prevAllowedGroupsRef.current = allowedGroupIds
+  }, [selectedGroupId, invitedGroupIds, students, selectedStudents, setValue])
+
   const visibleStudents = useMemo(() => {
     let list = [...students]
+    const allowedGroupIds = new Set([selectedGroupId, ...invitedGroupIds].filter(Boolean))
 
     // Admin : on réduit aux élèves de l'enseignant choisi (par enseignant assigné ou par groupe)
     if (isAdmin && selectedTeacherId) {
@@ -366,6 +411,15 @@ export default function HalaqaForm({
         (s) =>
           s.teacherUserId === selectedTeacherId ||
           (s.groupId && teacherGroupIds.has(s.groupId))
+      )
+    }
+
+    // Enseignant : on restreint aux élèves du groupe principal + groupes invités
+    if (!isAdmin && currentUserId) {
+      list = list.filter(
+        (s) =>
+          s.teacherUserId === currentUserId ||
+          (s.groupId && allowedGroupIds.has(s.groupId))
       )
     }
 
@@ -379,7 +433,7 @@ export default function HalaqaForm({
       list = list.filter((s) => s.fullName.toLowerCase().includes(q) || s.email.toLowerCase().includes(q))
     }
     return list
-  }, [students, isAdmin, selectedTeacherId, visibleGroups, filterByGroup, selectedGroupId, studentSearch])
+  }, [students, isAdmin, selectedTeacherId, visibleGroups, currentUserId, invitedGroupIds, filterByGroup, selectedGroupId, studentSearch])
 
   // ─── Soumission ───────────────────────────────────────────────────────────────
   const onSubmit = async (data: FormData) => {
@@ -387,6 +441,7 @@ export default function HalaqaForm({
     try {
       const payload: any = {
         ...data,
+        invitedGroupIds,
         scheduledAt: new Date(data.scheduledAt).toISOString(),
       }
       if (mode === "create" && recurrence.enabled) {
@@ -450,6 +505,11 @@ export default function HalaqaForm({
     })
     return `${date} ${pad(start.getHours())}:${pad(start.getMinutes())} – ${pad(end.getHours())}:${pad(end.getMinutes())}`
   }
+
+  const availableGroupsForInvite = useMemo(
+    () => groups.filter((g) => g.id !== selectedGroupId),
+    [groups, selectedGroupId]
+  )
 
   const groupSelectRegister = register("groupId")
 
@@ -757,6 +817,52 @@ export default function HalaqaForm({
                     </option>
                   ))}
                 </select>
+
+                {/* Groupes invités (admin uniquement) */}
+                {isAdmin && (
+                  <div className="mt-4">
+                    <label className={labelClass}>{t("invitedGroups")}</label>
+                    {availableGroupsForInvite.length === 0 ? (
+                      <p className="text-xs text-gray-400">{t("noInvitedGroupsAvailable")}</p>
+                    ) : (
+                      <div className="max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-xl divide-y divide-gray-100 dark:divide-gray-800">
+                        {availableGroupsForInvite.map((g) => {
+                          const checked = invitedGroupIds.includes(g.id)
+                          return (
+                            <label
+                              key={g.id}
+                              className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={(e) => {
+                                  const current = new Set(invitedGroupIds)
+                                  if (e.target.checked) current.add(g.id)
+                                  else current.delete(g.id)
+                                  setInvitedGroupIds(Array.from(current))
+                                }}
+                                className="w-4 h-4 rounded border-gray-300 text-tahfidz-green focus:ring-tahfidz-green/50"
+                              />
+                              <span className="text-sm text-gray-700 dark:text-gray-300">{g.name}</span>
+                            </label>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Groupes invités en mode enseignant (lecture seule) */}
+                {!isAdmin && invitedGroupIds.length > 0 && (
+                  <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                    <span className="font-medium">{t("invitedGroups")} :</span>{" "}
+                    {invitedGroupIds
+                      .map((id) => groups.find((g) => g.id === id)?.name)
+                      .filter(Boolean)
+                      .join(", ")}
+                  </div>
+                )}
               </div>
 
               {/* ─── Participants ────────────────────────────────────────────── */}
@@ -829,7 +935,14 @@ export default function HalaqaForm({
                             className="w-4 h-4 rounded border-gray-300 text-tahfidz-green focus:ring-tahfidz-green/50"
                           />
                           <span className="text-sm text-gray-700 dark:text-gray-300">{s.fullName}</span>
-                          <span className="text-xs text-gray-400 ml-auto">{s.email}</span>
+                          <span className="text-xs text-gray-400 ml-auto flex items-center gap-2">
+                            {s.groupId && (
+                              <span className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500">
+                                {groups.find((g) => g.id === s.groupId)?.name || t("noGroup")}
+                              </span>
+                            )}
+                            {s.email}
+                          </span>
                         </label>
                       )
                     })

@@ -3,21 +3,7 @@
 
 import { useSearchParams } from "next/navigation"
 import { useState, useEffect } from "react"
-import HalaqaForm from "@/components/halaqa/HalaqaForm"
-
-interface HalaqaSession {
-  id: string
-  meetingName: string
-  type: "INDIVIDUAL" | "COLLECTIVE"
-  mode: "AUDIO_ONLY" | "VIDEO" | "SCREEN_SHARE"
-  scheduledAt: string
-  duration: number
-  sourah?: string | null
-  verses?: string | null
-  studentIds: string[]
-  groupId?: string | null
-  teacherId?: string
-}
+import HalaqaForm, { type HalaqaSession } from "@/components/halaqa/HalaqaForm"
 
 export default function AdminNewHalaqaPage() {
   const searchParams = useSearchParams()

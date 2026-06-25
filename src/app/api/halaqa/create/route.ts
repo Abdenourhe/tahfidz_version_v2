@@ -24,6 +24,7 @@ const createSchema = z.object({
   duration: z.number().min(15).max(180).optional().default(60),
   teacherId: z.string().optional(),
   recurrence: recurrenceSchema.optional(),
+  invitedGroupIds: z.array(z.string()).optional().default([]),
 })
 
 function addRecurrence(date: Date, frequency: "DAILY" | "WEEKLY", index: number): Date {
@@ -113,6 +114,16 @@ async function createSingleHalaqa(
       },
     })
 
+    if (data.invitedGroupIds.length > 0) {
+      await tx.halaqaSessionGroup.createMany({
+        data: data.invitedGroupIds.map((groupId) => ({
+          halaqaSessionId: session.id,
+          groupId,
+        })),
+        skipDuplicates: true,
+      })
+    }
+
     await tx.school.update({
       where: { id: schoolId },
       data: { halaqaPlannedCount: { increment: 1 } },
@@ -185,6 +196,30 @@ export async function POST(req: Request) {
         },
         { status: 400 }
       )
+    }
+
+    // ─── Vérification des groupes invités ─────────────────────────────
+    if (data.invitedGroupIds.length > 0) {
+      if (role === "TEACHER") {
+        return NextResponse.json({ error: "Non autorisé à inviter d'autres groupes" }, { status: 403 })
+      }
+
+      if (data.groupId && data.invitedGroupIds.includes(data.groupId)) {
+        return NextResponse.json({ error: "Le groupe principal ne peut pas être invité" }, { status: 400 })
+      }
+
+      const invitedGroups = await prisma.group.findMany({
+        where: {
+          id: { in: data.invitedGroupIds },
+          schoolId,
+          isActive: true,
+        },
+        select: { id: true },
+      })
+
+      if (invitedGroups.length !== data.invitedGroupIds.length) {
+        return NextResponse.json({ error: "Certains groupes invités sont invalides" }, { status: 400 })
+      }
     }
 
     const baseDate = new Date(data.scheduledAt)
