@@ -36,6 +36,7 @@ interface GroupOption {
   id: string
   name: string
   teacherUserId?: string | null
+  teacherName?: string | null
 }
 
 export interface HalaqaSession {
@@ -209,6 +210,7 @@ export default function HalaqaForm({
               id: g.id,
               name: g.name,
               teacherUserId: g.teacher?.user?.id || null,
+              teacherName: g.teacher?.user?.fullName || null,
             }))
           )
         }
@@ -822,6 +824,10 @@ export default function HalaqaForm({
                 {isAdmin && (
                   <div className="mt-4">
                     <label className={labelClass}>{t("invitedGroups")}</label>
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mb-1.5 flex items-start gap-1">
+                      <AlertTriangle size={12} className="shrink-0 mt-0.5" />
+                      {t("invitedGroupsHint")}
+                    </p>
                     {availableGroupsForInvite.length === 0 ? (
                       <p className="text-xs text-gray-400">{t("noInvitedGroupsAvailable")}</p>
                     ) : (
@@ -844,7 +850,12 @@ export default function HalaqaForm({
                                 }}
                                 className="w-4 h-4 rounded border-gray-300 text-tahfidz-green focus:ring-tahfidz-green/50"
                               />
-                              <span className="text-sm text-gray-700 dark:text-gray-300">{g.name}</span>
+                              <span className="text-sm text-gray-700 dark:text-gray-300">
+                                {g.name}
+                                {g.teacherName && (
+                                  <span className="block text-[10px] text-gray-400">{g.teacherName}</span>
+                                )}
+                              </span>
                             </label>
                           )
                         })}
@@ -855,12 +866,26 @@ export default function HalaqaForm({
 
                 {/* Groupes invités en mode enseignant (lecture seule) */}
                 {!isAdmin && invitedGroupIds.length > 0 && (
-                  <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-                    <span className="font-medium">{t("invitedGroups")} :</span>{" "}
-                    {invitedGroupIds
-                      .map((id) => groups.find((g) => g.id === id)?.name)
-                      .filter(Boolean)
-                      .join(", ")}
+                  <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 p-2.5 text-xs text-amber-700 dark:text-amber-300">
+                    <p className="font-medium mb-1 flex items-center gap-1">
+                      <AlertTriangle size={12} />
+                      {t("invitedGroupsByAdmin")}
+                    </p>
+                    <ul className="space-y-0.5">
+                      {invitedGroupIds.map((id) => {
+                        const g = groups.find((grp) => grp.id === id)
+                        if (!g) return null
+                        return (
+                          <li key={id} className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                            <span>
+                              {g.name}
+                              {g.teacherName && <span className="text-amber-600/80 dark:text-amber-400/80"> — {g.teacherName}</span>}
+                            </span>
+                          </li>
+                        )
+                      })}
+                    </ul>
                   </div>
                 )}
               </div>
