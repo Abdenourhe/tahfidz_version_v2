@@ -43,7 +43,7 @@ export default function AdminAttendancePage() {
   const [error,     setError]     = useState<string | null>(null)
   const [success,   setSuccess]   = useState<string | null>(null)
 
-    const t = useT("attendance")
+    const t = useT("attendanceXX")
 
   const PRESETS = [
     { id: "day" as Preset,    label: t("day"),    icon: "📅", desc: t("dayDesc") },
