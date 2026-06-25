@@ -49,6 +49,7 @@ interface HalaqaSession {
   verses?: string | null
   studentIds: string[]
   groupId?: string | null
+  group?: { id: string; name: string } | null
   teacherId?: string
   status?: string
 }
@@ -93,6 +94,7 @@ export default function HalaqaForm({
 
   const [students, setStudents] = useState<StudentOption[]>([])
   const [groups, setGroups] = useState<GroupOption[]>([])
+  const groupsRef = useRef<GroupOption[]>([])
   const [teachers, setTeachers] = useState<TeacherOption[]>([])
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(true)
@@ -170,9 +172,10 @@ export default function HalaqaForm({
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const groupEndpoint = isAdmin ? "/api/groups" : "/api/groups?mine=true"
         const endpoints: Promise<Response>[] = [
           fetch("/api/students"),
-          fetch("/api/groups"),
+          fetch(groupEndpoint),
           fetch("/api/halaqa/quota"),
           fetch("/api/halaqa/sessions"),
         ]
@@ -239,6 +242,21 @@ export default function HalaqaForm({
           if (!res.ok) throw new Error("Session introuvable")
           const data = await res.json()
           const session: HalaqaSession = data.session
+
+          // En mode enseignant, seuls ses groupes sont retournés. Si la session
+          // possède un groupe hors de cette liste, on l'ajoute pour permettre l'édition.
+          const sessionGroupId = session.groupId
+          if (!isAdmin && sessionGroupId && !groupsRef.current.some((g) => g.id === sessionGroupId)) {
+            setGroups((prev) => [
+              ...prev,
+              {
+                id: sessionGroupId,
+                name: session.group?.name || "Groupe",
+                teacherUserId: session.teacherId || null,
+              },
+            ])
+          }
+
           reset({
             meetingName: session.meetingName,
             studentIds: session.studentIds,
@@ -277,6 +295,10 @@ export default function HalaqaForm({
   }, [mode, sessionId, isAdmin, initialTeacherId, duplicateFrom, reset])
 
   // ─── Filtre des groupes selon l'enseignant choisi (admin) ─────────────────────
+  useEffect(() => {
+    groupsRef.current = groups
+  }, [groups])
+
   const visibleGroups = useMemo(() => {
     if (!isAdmin || !selectedTeacherId) return groups
     return groups.filter((g) => g.teacherUserId === selectedTeacherId)
