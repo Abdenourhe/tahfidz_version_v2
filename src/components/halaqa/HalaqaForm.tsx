@@ -328,6 +328,14 @@ export default function HalaqaForm({
     }
   }, [visibleGroups, selectedGroupId, setValue])
 
+  // Pré-sélectionne automatiquement le groupe principal s'il n'y en a qu'un
+  useEffect(() => {
+    if (selectedGroupId) return
+    if (visibleGroups.length === 1) {
+      setValue("groupId", visibleGroups[0].id, { shouldValidate: true })
+    }
+  }, [visibleGroups, selectedGroupId, setValue])
+
   // ─── Détection de conflits de créneaux ────────────────────────────────────────
   function overlaps(aStart: Date, aDuration: number, bStart: Date, bDuration: number) {
     const aEnd = new Date(aStart.getTime() + aDuration * 60000)
