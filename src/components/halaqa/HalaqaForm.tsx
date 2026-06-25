@@ -3,7 +3,7 @@
 
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -29,6 +29,7 @@ interface StudentOption {
   fullName: string
   email: string
   groupId?: string | null
+  teacherUserId?: string | null
 }
 
 interface GroupOption {
@@ -189,6 +190,7 @@ export default function HalaqaForm({
                 fullName: s.user?.fullName || "",
                 email: s.user?.email || "",
                 groupId: s.group?.id || null,
+                teacherUserId: s.teacher?.user?.id || null,
               }))
               .filter((s: StudentOption) => s.id)
           )
@@ -321,18 +323,41 @@ export default function HalaqaForm({
     return !Number.isNaN(d.getTime()) && d.getTime() < Date.now() - 60_000
   }, [scheduledAt])
 
-  // ─── Participants : filtre et sélection intelligente ──────────────────────────
+  // ─── Participants : filtre par enseignant + auto-réduction au groupe ──────────
+  const skipAutoGroupFilterRef = useRef(false)
+
+  useEffect(() => {
+    if (skipAutoGroupFilterRef.current) {
+      skipAutoGroupFilterRef.current = false
+      return
+    }
+    setFilterByGroup(!!selectedGroupId)
+  }, [selectedGroupId])
+
   const visibleStudents = useMemo(() => {
     let list = [...students]
+
+    // Admin : on réduit aux élèves de l'enseignant choisi (par enseignant assigné ou par groupe)
+    if (isAdmin && selectedTeacherId) {
+      const teacherGroupIds = new Set(visibleGroups.map((g) => g.id))
+      list = list.filter(
+        (s) =>
+          s.teacherUserId === selectedTeacherId ||
+          (s.groupId && teacherGroupIds.has(s.groupId))
+      )
+    }
+
+    // Groupe sélectionné : réduction optionnelle (activée automatiquement, désactivable)
     if (filterByGroup && selectedGroupId) {
       list = list.filter((s) => s.groupId === selectedGroupId)
     }
+
     if (studentSearch.trim()) {
       const q = studentSearch.toLowerCase()
       list = list.filter((s) => s.fullName.toLowerCase().includes(q) || s.email.toLowerCase().includes(q))
     }
     return list
-  }, [students, filterByGroup, selectedGroupId, studentSearch])
+  }, [students, isAdmin, selectedTeacherId, visibleGroups, filterByGroup, selectedGroupId, studentSearch])
 
   // ─── Soumission ───────────────────────────────────────────────────────────────
   const onSubmit = async (data: FormData) => {
@@ -743,7 +768,10 @@ export default function HalaqaForm({
                       type="checkbox"
                       className="sr-only"
                       checked={filterByGroup}
-                      onChange={(e) => setFilterByGroup(e.target.checked)}
+                      onChange={(e) => {
+                        skipAutoGroupFilterRef.current = true
+                        setFilterByGroup(e.target.checked)
+                      }}
                       disabled={!selectedGroupId}
                     />
                     {t("groupStudentsOnly")}

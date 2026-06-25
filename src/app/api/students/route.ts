@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
       include: {
         user:    { select: { fullName: true, fullNameAr: true, email: true, phone: true, gender: true, isActive: true } },
         group:   { select: { name: true } },
-        teacher: { include: { user: { select: { fullName: true } } } },
+        teacher: { include: { user: { select: { id: true, fullName: true } } } },
         parentLinks: {
           where: { isVerified: true },
           include: { parent: { include: { user: { select: { fullName: true, phone: true, email: true } } } } },
