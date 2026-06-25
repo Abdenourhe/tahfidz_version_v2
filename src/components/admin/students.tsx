@@ -39,11 +39,23 @@ export interface StudentRow {
   _count?: { memorizedSurahs: number }
 }
 
+export interface SchoolInfo {
+  name: string
+  nameAr?: string | null
+  logo?: string | null
+  slug: string
+  address?: string | null
+  city?: string | null
+  country?: string | null
+  phone?: string | null
+}
+
 interface Props {
   students: StudentRow[]
   groups: { id: string; name: string; level: string }[]
   teachers: { id: string; user: { fullName: string } }[]
   statusFilter?: string
+  school?: SchoolInfo
 }
 
 // ─── Dictionnaire i18n ────────────────────────────────────────────────────
@@ -188,7 +200,7 @@ function ActionMenu({ studentId, isActive, onToggle, onDelete, locale }: {
 }
 
 // ─── Composant principal ───────────────────────────────────────────────────
-export function StudentTableClient({ students, groups, teachers: _teachers, statusFilter: initialStatus }: Props) {
+export function StudentTableClient({ students, groups, teachers: _teachers, statusFilter: initialStatus, school }: Props) {
   const { locale: ctxLocale } = useLanguage()
   const L = (ctxLocale || "fr") as "fr" | "en" | "ar"
   const router = useRouter()
@@ -307,7 +319,7 @@ export function StudentTableClient({ students, groups, teachers: _teachers, stat
         <button onClick={() => setShowFilters(!showFilters)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${showFilters ? "bg-tahfidz-green text-white" : "text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"}`}>
           <Filter size={15} />{u("filters", L)}
         </button>
-        <ExportStudentsButton allStudents={students} filteredStudents={filtered} locale={L} />
+        <ExportStudentsButton allStudents={students} filteredStudents={filtered} locale={L} school={school} />
       </div>
 
       {/* Filtres avancés */}

@@ -16,7 +16,11 @@ export default async function StudentsPage({
   const { status } = await searchParams
   const schoolId = session.user.schoolId
 
-  const [students, groups, teachers] = await Promise.all([
+  const [school, students, groups, teachers] = await Promise.all([
+    prisma.school.findUnique({
+      where: { id: schoolId },
+      select: { name: true, nameAr: true, logo: true, slug: true, address: true, city: true, country: true, phone: true },
+    }),
     prisma.student.findMany({
       where: {
         user: { schoolId },
@@ -65,6 +69,7 @@ export default async function StudentsPage({
       groups={groups}
       teachers={teachers}
       statusFilter={status}
+      school={school ?? undefined}
     />
   )
 }
