@@ -577,7 +577,7 @@ async function exportPdf(students: StudentRow[], columns: ColumnDef[], L: Locale
     position: fixed;
     left: -9999px;
     top: 0;
-    width: 1080px;
+    width: 1122px;
     background: #ffffff;
     padding: 32px 36px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -593,7 +593,7 @@ async function exportPdf(students: StudentRow[], columns: ColumnDef[], L: Locale
 
   const headerRowHtml = columns.map(col => {
     const label = col.label[L] ?? col.label.fr
-    return `<th style="padding:7px 4px;background:#059669;color:#ffffff;font-size:11px;font-weight:600;text-align:center;border:1px solid #059669;word-wrap:break-word;overflow-wrap:break-word;">${escapeHtml(label)}</th>`
+    return `<th style="padding:6px 3px;background:#059669;color:#ffffff;font-size:12px;font-weight:600;text-align:center;border:1px solid #059669;white-space:nowrap;">${escapeHtml(label)}</th>`
   }).join("")
 
   const bodyRowsHtml = students.map((s, idx) => {
@@ -603,7 +603,7 @@ async function exportPdf(students: StudentRow[], columns: ColumnDef[], L: Locale
       if (col.key === "level") v = levelLabel(String(v), L)
       const align = typeof v === "number" ? "center" : "left"
       const dir = containsArabic(String(v)) ? "rtl" : "ltr"
-      return `<td style="padding:6px 4px;border:1px solid #e5e7eb;background:${bg};font-size:11px;text-align:${align};direction:${dir};word-wrap:break-word;overflow-wrap:break-word;vertical-align:middle;">${escapeHtml(String(v ?? ""))}</td>`
+      return `<td style="padding:5px 3px;border:1px solid #e5e7eb;background:${bg};font-size:12px;text-align:${align};direction:${dir};white-space:nowrap;vertical-align:middle;">${escapeHtml(String(v ?? ""))}</td>`
     }).join("")
     return `<tr>${cells}</tr>`
   }).join("")
@@ -619,7 +619,7 @@ async function exportPdf(students: StudentRow[], columns: ColumnDef[], L: Locale
     <div style="height:2px;background:#d1fae5;margin-bottom:20px;"></div>
     <div style="font-size:20px;font-weight:700;color:#111827;margin-bottom:5px;">${escapeHtml(titleText)}</div>
     <div style="font-size:11px;color:#6b7280;margin-bottom:18px;">${escapeHtml(generatedText)}</div>
-    <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+    <table style="width:100%;border-collapse:collapse;table-layout:auto;">
       <thead>${headerRowHtml}</thead>
       <tbody>${bodyRowsHtml}</tbody>
     </table>
