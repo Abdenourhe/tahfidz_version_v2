@@ -11,7 +11,7 @@ import { calculateAge } from "@/lib/utils"
 import {
   Pencil, Trash2, UserPlus, Plus,
   User, GraduationCap, Users, Search, Filter,
-  Award, Eye, Power, PowerOff, X, Mail, Phone,
+  Award, Power, PowerOff, X, Mail, Phone,
   Shield, ShieldOff, AlertTriangle, CheckCircle, Printer,
 } from "lucide-react"
 import { AvatarLightbox } from "@/components/AvatarLightbox"
@@ -166,7 +166,6 @@ function ActionMenu({ studentId, isActive, onToggle, onDelete, locale }: {
   const actions = [
     { Icon: Award,  label: u("certificate", locale),  href: `/admin/students/${studentId}/certificate`, color: "text-amber-600", bg: "hover:bg-amber-50" },
     { Icon: Printer, label: u("registrationCard", locale), href: `/admin/students/${studentId}/registration-card`, color: "text-emerald-600", bg: "hover:bg-emerald-50" },
-    { Icon: Eye,    label: u("viewProfile", locale),   href: `/admin/students/${studentId}`,             color: "text-blue-600",  bg: "hover:bg-blue-50" },
     { Icon: Pencil, label: u("edit", locale),                 href: `/admin/students/${studentId}/edit`,        color: "text-gray-600",  bg: "hover:bg-gray-50" },
     { Icon: isActive ? PowerOff : Power, label: isActive ? u("deactivate", locale) : u("activate", locale), onClick: onToggle, color: isActive ? "text-orange-600" : "text-green-600", bg: isActive ? "hover:bg-orange-50" : "hover:bg-green-50" },
     { Icon: Trash2, label: u("delete", locale),        onClick: onDelete,                                color: "text-red-600",   bg: "hover:bg-red-50" },
@@ -356,7 +355,11 @@ export function StudentTableClient({ students, groups, teachers: _teachers, stat
             <p className="text-gray-500 text-lg">{u("noStudents", L)}</p>
           </div>
         ) : filtered.map(s => (
-          <div key={s.id} className="group bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-all">
+          <div
+          key={s.id}
+          onClick={() => router.push(`/admin/students/${s.id}`)}
+          className="group bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md hover:border-tahfidz-green/30 dark:hover:border-tahfidz-green/30 transition-all cursor-pointer"
+        >
             <div className="flex items-center gap-4">
               <div className="relative flex-shrink-0">
                 <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-tahfidz-green/20 to-tahfidz-green/5 flex items-center justify-center">
@@ -410,7 +413,7 @@ export function StudentTableClient({ students, groups, teachers: _teachers, stat
                 </div>
               </div>
 
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                 <ActionMenu
                   studentId={s.id}
                   isActive={s.user.isActive}
