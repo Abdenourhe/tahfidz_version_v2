@@ -2,7 +2,7 @@
 // src/app/admin/attendance/AttendanceClient.tsx
 // UI complète : aperçu des présences + exports CSV / Excel / PDF.
 
-import { useState, useEffect, useMemo, useCallback } from "react"
+import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Calendar,
@@ -169,8 +169,9 @@ export default function AttendanceClient({ school }: Props) {
   const [success, setSuccess] = useState<string | null>(null)
 
   const [exportScope, setExportScope] = useState<"group" | "all">("group")
-  const [showOnlyCourseDays, setShowOnlyCourseDays] = useState(false)
+  const [showOnlyCourseDays, setShowOnlyCourseDays] = useState(true)
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
+  const initializedCollapse = useRef(false)
 
   // ── Chargement initial des groupes ───────────────────────────────────────
   useEffect(() => {
@@ -220,6 +221,25 @@ export default function AttendanceClient({ school }: Props) {
     const timer = setTimeout(loadPreview, 300)
     return () => clearTimeout(timer)
   }, [loadPreview])
+
+  // Réduire tous les groupes par défaut au premier chargement de l'aperçu
+  useEffect(() => {
+    if (preview && !initializedCollapse.current) {
+      initializedCollapse.current = true
+      setCollapsedGroups(new Set(preview.groups.map(g => g.id)))
+    }
+  }, [preview])
+
+  // Développer automatiquement le groupe sélectionné
+  useEffect(() => {
+    if (selGroup && selGroup !== "all") {
+      setCollapsedGroups(prev => {
+        const next = new Set(prev)
+        next.delete(selGroup)
+        return next
+      })
+    }
+  }, [selGroup])
 
   // ── Gestion des presets ──────────────────────────────────────────────────
   const handlePreset = (p: Preset) => {
