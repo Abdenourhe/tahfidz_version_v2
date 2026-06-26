@@ -2,7 +2,7 @@
 // src/app/admin/attendance/AttendanceClient.tsx
 // UI complète : aperçu des présences + exports CSV / Excel / PDF.
 
-import { useState, useEffect, useRef, useMemo, useCallback } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import {
   Calendar,
   CalendarCheck,
@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 type Preset = "day" | "week" | "month" | "custom"
-type ExportFormat = "csv" | "xlsx" | "pdf"
+type ExportFormat = "xlsx" | "pdf"
 type Locale = "fr" | "en" | "ar"
 
 interface SchoolInfo {
@@ -158,8 +158,7 @@ export default function AttendanceClient({ school }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
-  const [exportOpen, setExportOpen] = useState(false)
-  const exportRef = useRef<HTMLDivElement>(null)
+  const [exportScope, setExportScope] = useState<"group" | "all">("group")
 
   // ── Chargement initial des groupes ───────────────────────────────────────
   useEffect(() => {
@@ -178,15 +177,6 @@ export default function AttendanceClient({ school }: Props) {
     setDateFrom(from)
     setDateTo(to)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // ── Fermeture dropdown export ────────────────────────────────────────────
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (exportRef.current && !exportRef.current.contains(e.target as Node)) setExportOpen(false)
-    }
-    document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
   }, [])
 
   // ── Chargement de l'aperçu ───────────────────────────────────────────────
@@ -250,37 +240,6 @@ export default function AttendanceClient({ school }: Props) {
     return { present, absent, late, excused, total, rate, totalStudents }
   }, [preview])
 
-  // ── Export CSV (API) ─────────────────────────────────────────────────────
-  const exportCsv = async (allGroups: boolean) => {
-    resetMsgs()
-    if (!dateFrom || !dateTo) { setError(t("errorPeriod")); return }
-    if (!allGroups && !selGroup) { setError(t("errorSelect")); return }
-
-    setBusy(true)
-    try {
-      const params = new URLSearchParams({
-        groupId: selGroup || "all",
-        dateFrom: `${dateFrom}T00:00:00.000Z`,
-        dateTo: `${dateTo}T23:59:59.999Z`,
-        allGroups: String(allGroups),
-        locale: L,
-      })
-      const res = await fetch(`/api/attendance/export?${params}`)
-      if (!res.ok) throw new Error(`Erreur ${res.status}`)
-      const blob = await res.blob()
-      const cd = res.headers.get("content-disposition") || ""
-      const match = cd.match(/filename="?([^"]+)"?/)
-      const filename = match ? match[1] : `presences_${dateFrom}_${dateTo}.csv`
-      downloadBlob(blob, filename)
-      setSuccess(`✓ ${filename} ${t("successMsg")}`)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : t("errorDownload"))
-    } finally {
-      setBusy(false)
-      setExportOpen(false)
-    }
-  }
-
   // ── Export Excel (client) ────────────────────────────────────────────────
   const exportExcel = async (allGroups: boolean) => {
     resetMsgs()
@@ -328,7 +287,16 @@ export default function AttendanceClient({ school }: Props) {
         ws.getCell("A5").font = { size: 10, color: { argb: "FF6B7280" } }
 
         const dateList = preview.dateList
-        const headerRow = [t("fullName") || "Nom", t("fullNameAr") || "Nom arabe", ...dateList.map(d => fmtDate(d, L)), "P", "A", "R", "E", "%"]
+        const headerRow = [
+          t("fullName") || "Nom",
+          t("fullNameAr") || "Nom arabe",
+          ...dateList.map(d => fmtDate(d, L)),
+          statusLabelWord("PRESENT", L),
+          statusLabelWord("ABSENT", L),
+          statusLabelWord("LATE", L),
+          statusLabelWord("EXCUSED", L),
+          "%",
+        ]
         const startRow = 7
 
         // En-tête
@@ -353,7 +321,7 @@ export default function AttendanceClient({ school }: Props) {
           const values = [
             s.fullName,
             s.fullNameAr || "",
-            ...dateList.map(d => statusLabel(s.dates[d], L)),
+            ...dateList.map(d => statusLabelWord(s.dates[d], L)),
             s.stats.present,
             s.stats.absent,
             s.stats.late,
@@ -392,7 +360,6 @@ export default function AttendanceClient({ school }: Props) {
       setError(e instanceof Error ? e.message : t("errorDownload"))
     } finally {
       setBusy(false)
-      setExportOpen(false)
     }
   }
 
@@ -429,16 +396,16 @@ export default function AttendanceClient({ school }: Props) {
         html += `<div style="margin-bottom:20px;">
           <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:8px;">${escapeHtml(group.name)} — ${escapeHtml(group.teacherName)}</div>
           <table style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:10px;">
-            <colgroup><col style="width:110px;" /><col style="width:80px;" />${dateList.map(() => `<col style="width:38px;" />`).join("")}<col style="width:28px;" /><col style="width:28px;" /><col style="width:28px;" /><col style="width:28px;" /><col style="width:32px;" /></colgroup>
+            <colgroup><col style="width:110px;" /><col style="width:80px;" />${dateList.map(() => `<col style="width:54px;" />`).join("")}<col style="width:28px;" /><col style="width:28px;" /><col style="width:28px;" /><col style="width:28px;" /><col style="width:32px;" /></colgroup>
             <thead>
               <tr>
                 <th style="padding:5px;background:#059669;color:#fff;font-weight:600;text-align:left;border:1px solid #059669;">${escapeHtml(t("fullName") as string || "Nom")}</th>
                 <th style="padding:5px;background:#059669;color:#fff;font-weight:600;text-align:left;border:1px solid #059669;">${escapeHtml(t("fullNameAr") as string || "Nom arabe")}</th>
                 ${dateList.map(d => `<th style="padding:5px;background:#059669;color:#fff;font-weight:600;text-align:center;border:1px solid #059669;">${escapeHtml(fmtDate(d, L))}</th>`).join("")}
-                <th style="padding:5px;background:#059669;color:#fff;font-weight:600;text-align:center;border:1px solid #059669;">P</th>
-                <th style="padding:5px;background:#059669;color:#fff;font-weight:600;text-align:center;border:1px solid #059669;">A</th>
-                <th style="padding:5px;background:#059669;color:#fff;font-weight:600;text-align:center;border:1px solid #059669;">R</th>
-                <th style="padding:5px;background:#059669;color:#fff;font-weight:600;text-align:center;border:1px solid #059669;">E</th>
+                <th style="padding:5px;background:#059669;color:#fff;font-weight:600;text-align:center;border:1px solid #059669;white-space:nowrap;">${escapeHtml(statusLabelWord("PRESENT", L))}</th>
+                <th style="padding:5px;background:#059669;color:#fff;font-weight:600;text-align:center;border:1px solid #059669;white-space:nowrap;">${escapeHtml(statusLabelWord("ABSENT", L))}</th>
+                <th style="padding:5px;background:#059669;color:#fff;font-weight:600;text-align:center;border:1px solid #059669;white-space:nowrap;">${escapeHtml(statusLabelWord("LATE", L))}</th>
+                <th style="padding:5px;background:#059669;color:#fff;font-weight:600;text-align:center;border:1px solid #059669;white-space:nowrap;">${escapeHtml(statusLabelWord("EXCUSED", L))}</th>
                 <th style="padding:5px;background:#059669;color:#fff;font-weight:600;text-align:center;border:1px solid #059669;">%</th>
               </tr>
             </thead>
@@ -451,8 +418,8 @@ export default function AttendanceClient({ school }: Props) {
                   ${dateList.map(d => {
                     const st = s.dates[d]
                     const color = st === "PRESENT" ? "#059669" : st === "ABSENT" ? "#dc2626" : st === "LATE" ? "#ea580c" : st === "EXCUSED" ? "#2563eb" : "#9ca3af"
-                    const label = st ? statusLabel(st, L).charAt(0) : "—"
-                    return `<td style="padding:4px;border:1px solid #e5e7eb;background:${bg};color:${color};font-weight:700;text-align:center;font-size:10px;">${label}</td>`
+                    const label = st ? statusLabelWord(st, L) : "—"
+                    return `<td style="padding:4px;border:1px solid #e5e7eb;background:${bg};color:${color};font-weight:700;text-align:center;font-size:9px;white-space:nowrap;">${escapeHtml(label)}</td>`
                   }).join("")}
                   <td style="padding:4px;border:1px solid #e5e7eb;background:${bg};text-align:center;font-size:10px;">${s.stats.present}</td>
                   <td style="padding:4px;border:1px solid #e5e7eb;background:${bg};text-align:center;font-size:10px;">${s.stats.absent}</td>
@@ -508,7 +475,6 @@ export default function AttendanceClient({ school }: Props) {
       setError(e instanceof Error ? e.message : t("errorDownload"))
     } finally {
       setBusy(false)
-      setExportOpen(false)
     }
   }
 
@@ -523,17 +489,6 @@ export default function AttendanceClient({ school }: Props) {
     return parts.join(" • ")
   }
 
-  function statusLabel(status?: string, loc: Locale = L) {
-    if (!status) return "—"
-    const map: Record<string, Record<Locale, string>> = {
-      PRESENT: { fr: "Présent", en: "Present", ar: "حاضر" },
-      ABSENT:  { fr: "Absent",  en: "Absent",  ar: "غائب" },
-      LATE:    { fr: "Retard",  en: "Late",    ar: "متأخر" },
-      EXCUSED: { fr: "Excusé",  en: "Excused", ar: "معذور" },
-    }
-    return map[status]?.[loc] || status
-  }
-
   // ── Rendu ────────────────────────────────────────────────────────────────
   const currentGroup = groups.find(g => g.id === selGroup)
   const isRtl = L === "ar"
@@ -545,9 +500,9 @@ export default function AttendanceClient({ school }: Props) {
     { id: "custom", icon: Settings2,      label: t("custom") as string, desc: t("customDesc") as string },
   ]
 
-  const handleExport = async (format: ExportFormat, allGroups: boolean) => {
-    if (format === "csv") await exportCsv(allGroups)
-    else if (format === "xlsx") await exportExcel(allGroups)
+  const handleExport = async (format: ExportFormat) => {
+    const allGroups = exportScope === "all"
+    if (format === "xlsx") await exportExcel(allGroups)
     else if (format === "pdf") await exportPdf(allGroups)
   }
 
@@ -709,10 +664,10 @@ export default function AttendanceClient({ school }: Props) {
                             {fmtDate(d, L)}
                           </th>
                         ))}
-                        <th className="px-2 py-2 text-center font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700">P</th>
-                        <th className="px-2 py-2 text-center font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700">A</th>
-                        <th className="px-2 py-2 text-center font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700">R</th>
-                        <th className="px-2 py-2 text-center font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700">E</th>
+                        <th className="px-2 py-2 text-center font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 whitespace-nowrap">{statusLabelWord("PRESENT", L)}</th>
+                        <th className="px-2 py-2 text-center font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 whitespace-nowrap">{statusLabelWord("ABSENT", L)}</th>
+                        <th className="px-2 py-2 text-center font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 whitespace-nowrap">{statusLabelWord("LATE", L)}</th>
+                        <th className="px-2 py-2 text-center font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 whitespace-nowrap">{statusLabelWord("EXCUSED", L)}</th>
                         <th className="px-2 py-2 text-center font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700">%</th>
                       </tr>
                     </thead>
@@ -749,36 +704,45 @@ export default function AttendanceClient({ school }: Props) {
           <Download size={18} className="text-tahfidz-green" /> {t("downloadTitle")}
         </h2>
 
-        <div className="flex flex-col sm:flex-row gap-3" ref={exportRef}>
-          <div className="relative flex-1">
-            <button
-              onClick={() => setExportOpen(!exportOpen)}
-              disabled={busy}
-              className={cn(
-                "w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all",
-                "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-lg hover:shadow-emerald-500/25 active:scale-[0.98]",
-                busy && "opacity-70 cursor-not-allowed"
-              )}>
-              {busy ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-              {busy ? t("generating") : t("downloadOne")}
-              <ChevronDown size={14} className={cn("transition-transform", exportOpen && "rotate-180")} />
-            </button>
-
-            {exportOpen && (
-              <div className={cn(
-                "absolute z-50 mt-2 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-2xl p-2",
-                isRtl ? "right-0" : "left-0"
-              )}>
-                <ExportMenuItem icon={FileText} label={`${t("exportCsv")} — ${t("exportThisGroup")}`} onClick={() => handleExport("csv", false)} />
-                <ExportMenuItem icon={FileSpreadsheet} label={`${t("exportXlsx")} — ${t("exportThisGroup")}`} onClick={() => handleExport("xlsx", false)} />
-                <ExportMenuItem icon={FileText} label={`${t("exportPdf")} — ${t("exportThisGroup")}`} onClick={() => handleExport("pdf", false)} />
-                <div className="my-1.5 h-px bg-gray-100 dark:bg-gray-800" />
-                <ExportMenuItem icon={FileText} label={`${t("exportCsv")} — ${t("exportAllGroups")}`} onClick={() => handleExport("csv", true)} />
-                <ExportMenuItem icon={FileSpreadsheet} label={`${t("exportXlsx")} — ${t("exportAllGroups")}`} onClick={() => handleExport("xlsx", true)} />
-                <ExportMenuItem icon={FileText} label={`${t("exportPdf")} — ${t("exportAllGroups")}`} onClick={() => handleExport("pdf", true)} />
-              </div>
-            )}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Portée */}
+          <div className="relative">
+            <select
+              value={exportScope}
+              onChange={e => setExportScope(e.target.value as "group" | "all")}
+              className="w-full pl-3 pr-8 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-tahfidz-green appearance-none"
+            >
+              <option value="group">{t("exportThisGroup")}</option>
+              <option value="all">{t("exportAllGroups")}</option>
+            </select>
+            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           </div>
+
+          {/* Excel */}
+          <button
+            onClick={() => handleExport("xlsx")}
+            disabled={busy}
+            className={cn(
+              "flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all border",
+              "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-900/30",
+              busy && "opacity-60 cursor-not-allowed"
+            )}>
+            {busy ? <Loader2 size={16} className="animate-spin" /> : <FileSpreadsheet size={18} />}
+            {t("exportXlsx")}
+          </button>
+
+          {/* PDF */}
+          <button
+            onClick={() => handleExport("pdf")}
+            disabled={busy}
+            className={cn(
+              "flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all border",
+              "bg-red-50 border-red-200 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/30",
+              busy && "opacity-60 cursor-not-allowed"
+            )}>
+            {busy ? <Loader2 size={16} className="animate-spin" /> : <FileText size={18} />}
+            {t("exportPdf")}
+          </button>
         </div>
       </section>
     </div>
@@ -804,26 +768,26 @@ function StatCard({ label, value, color }: { label: string; value: string | numb
 function StatusBadge({ status, L }: { status?: string; L: Locale }) {
   if (!status) return <span className="text-gray-300">—</span>
   const map: Record<string, { label: string; class: string }> = {
-    PRESENT: { label: L === "ar" ? "ح" : "P", class: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" },
-    ABSENT:  { label: L === "ar" ? "غ" : "A", class: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300" },
-    LATE:    { label: L === "ar" ? "ت" : "R", class: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300" },
-    EXCUSED: { label: L === "ar" ? "م" : "E", class: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" },
+    PRESENT: { label: statusLabelWord("PRESENT", L), class: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" },
+    ABSENT:  { label: statusLabelWord("ABSENT", L),  class: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300" },
+    LATE:    { label: statusLabelWord("LATE", L),    class: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300" },
+    EXCUSED: { label: statusLabelWord("EXCUSED", L), class: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" },
   }
   const s = map[status] || { label: status, class: "bg-gray-100 text-gray-600" }
   return (
-    <span className={cn("inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold", s.class)}>
+    <span className={cn("inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[10px] font-bold whitespace-nowrap", s.class)}>
       {s.label}
     </span>
   )
 }
 
-function ExportMenuItem({ icon: Icon, label, onClick }: { icon: React.ElementType; label: string; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition text-left">
-      <Icon size={16} className="text-tahfidz-green" />
-      {label}
-    </button>
-  )
+function statusLabelWord(status: string, L: Locale) {
+  const map: Record<string, Record<Locale, string>> = {
+    PRESENT: { fr: "Présent", en: "Present", ar: "حاضر" },
+    ABSENT:  { fr: "Absent",  en: "Absent",  ar: "غائب" },
+    LATE:    { fr: "Retard",  en: "Late",    ar: "متأخر" },
+    EXCUSED: { fr: "Excusé",  en: "Excused", ar: "معذور" },
+  }
+  return map[status]?.[L] || status
 }
+

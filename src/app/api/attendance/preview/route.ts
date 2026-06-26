@@ -99,18 +99,14 @@ export async function GET(req: Request) {
     orderBy: { name: "asc" },
   })
 
-  // ── Construction de la liste des dates ───────────────────────────────────
-  const dateSet = new Set<string>()
-  groups.forEach(g => {
-    g.students.forEach(s => {
-      s.attendances.forEach(a => {
-        const d = new Date(a.date)
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
-        dateSet.add(key)
-      })
-    })
-  })
-  const dateList = Array.from(dateSet).sort()
+  // ── Construction de la liste complète des dates de la période ────────────
+  const dateList: string[] = []
+  const cursor = new Date(fromDate)
+  while (cursor <= toDate) {
+    const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}-${String(cursor.getDate()).padStart(2, "0")}`
+    dateList.push(key)
+    cursor.setDate(cursor.getDate() + 1)
+  }
 
   // ── Construction de la réponse ───────────────────────────────────────────
   const result = groups.map(g => {
