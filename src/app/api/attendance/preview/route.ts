@@ -143,6 +143,7 @@ export async function GET(req: Request) {
       id: g.id,
       name: g.name,
       teacherName: g.teacher.user.fullName,
+      schedule: (g.schedule as Record<string, string> | null) || {},
       students,
     }
   })

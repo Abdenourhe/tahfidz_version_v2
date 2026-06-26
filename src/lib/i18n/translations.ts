@@ -1218,6 +1218,8 @@ export const translations = {
     exportAllGroups: { fr: "tous les groupes", en: "all groups", ar: "جميع المجموعات" },
     generating:      { fr: "Génération…", en: "Generating…", ar: "جارٍ التوليد…" },
     previewTitle:    { fr: "Aperçu", en: "Preview", ar: "معاينة" },
+    onlyCourseDays:  { fr: "Jours de cours uniquement", en: "Course days only", ar: "أيام الدروس فقط" },
+    noCourseDays:    { fr: "Aucun jour de cours dans cette période.", en: "No course days in this period.", ar: "لا توجد أيام دراسية خلال هذه الفترة." },
     previewEmpty:    { fr: "Aucune présence sur cette période.", en: "No attendance for this period.", ar: "لا يوجد حضور خلال هذه الفترة." },
     previewLoading:  { fr: "Chargement de l'aperçu…", en: "Loading preview…", ar: "جارٍ تحميل المعاينة…" },
     noAttendance:    { fr: "Aucune présence à exporter.", en: "No attendance to export.", ar: "لا يوجد حضور للتصدير." },

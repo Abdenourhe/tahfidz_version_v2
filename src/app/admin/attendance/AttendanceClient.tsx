@@ -3,6 +3,7 @@
 // UI complète : aperçu des présences + exports CSV / Excel / PDF.
 
 import { useState, useEffect, useMemo, useCallback } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   Calendar,
   CalendarCheck,
@@ -11,6 +12,7 @@ import {
   CheckCircle2,
   AlertCircle,
   ChevronDown,
+  ChevronUp,
   Download,
   FileSpreadsheet,
   FileText,
@@ -56,6 +58,7 @@ interface GroupPreview {
   id: string
   name: string
   teacherName: string
+  schedule: Record<string, string>
   students: StudentPreview[]
 }
 
@@ -140,6 +143,13 @@ function computeDates(p: Preset) {
   return { from, to: todayStr }
 }
 
+const DAY_KEYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]
+
+function isCourseDay(dateStr: string, schedule: Record<string, string>) {
+  const d = new Date(`${dateStr}T12:00:00`)
+  return !!schedule[DAY_KEYS[d.getDay()]]
+}
+
 // ─── Composant principal ────────────────────────────────────────────────────
 export default function AttendanceClient({ school }: Props) {
   const { locale } = useLanguage()
@@ -159,6 +169,8 @@ export default function AttendanceClient({ school }: Props) {
   const [success, setSuccess] = useState<string | null>(null)
 
   const [exportScope, setExportScope] = useState<"group" | "all">("group")
+  const [showOnlyCourseDays, setShowOnlyCourseDays] = useState(false)
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
 
   // ── Chargement initial des groupes ───────────────────────────────────────
   useEffect(() => {
@@ -286,7 +298,7 @@ export default function AttendanceClient({ school }: Props) {
         ws.getCell("A5").value = `${t("periodRange")} : ${fmtLongDate(dateFrom, L)} → ${fmtLongDate(dateTo, L)}`
         ws.getCell("A5").font = { size: 10, color: { argb: "FF6B7280" } }
 
-        const dateList = preview.dateList
+        const dateList = getGroupDateList(group)
         const headerRow = [
           t("fullName") || "Nom",
           t("fullNameAr") || "Nom arabe",
@@ -374,7 +386,6 @@ export default function AttendanceClient({ school }: Props) {
     setBusy(true)
     try {
       const logoBase64 = await loadImageBase64(school?.logo)
-      const dateList = preview.dateList
 
       const container = document.createElement("div")
       container.style.cssText = "position:absolute;left:-9999px;top:-9999px;width:1122px;padding:24px;background:#ffffff;font-family:Arial,DejaVu Sans,sans-serif;"
@@ -393,6 +404,7 @@ export default function AttendanceClient({ school }: Props) {
       `
 
       groupsToExport.forEach(group => {
+        const dateList = getGroupDateList(group)
         html += `<div style="margin-bottom:20px;">
           <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:8px;">${escapeHtml(group.name)} — ${escapeHtml(group.teacherName)}</div>
           <table style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:10px;">
@@ -487,6 +499,21 @@ export default function AttendanceClient({ school }: Props) {
   function schoolAddress() {
     const parts = [school?.address, school?.city, school?.country, school?.phone].filter(Boolean)
     return parts.join(" • ")
+  }
+
+  const getGroupDateList = useCallback((group: GroupPreview) => {
+    if (!preview) return []
+    if (!showOnlyCourseDays) return preview.dateList
+    return preview.dateList.filter(d => isCourseDay(d, group.schedule))
+  }, [preview, showOnlyCourseDays])
+
+  const toggleGroup = (id: string) => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }
 
   // ── Rendu ────────────────────────────────────────────────────────────────
@@ -630,11 +657,22 @@ export default function AttendanceClient({ school }: Props) {
 
       {/* Aperçu */}
       <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <h2 className="font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
             <CalendarCheck size={18} className="text-tahfidz-green" /> {t("previewTitle")}
           </h2>
-          {loadingPreview && <Loader2 size={18} className="animate-spin text-tahfidz-green" />}
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={showOnlyCourseDays}
+                onChange={e => setShowOnlyCourseDays(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-tahfidz-green focus:ring-tahfidz-green"
+              />
+              {t("onlyCourseDays") || "Jours de cours uniquement"}
+            </label>
+            {loadingPreview && <Loader2 size={18} className="animate-spin text-tahfidz-green" />}
+          </div>
         </div>
 
         {!preview || preview.groups.length === 0 ? (
@@ -643,57 +681,88 @@ export default function AttendanceClient({ school }: Props) {
             <p>{loadingPreview ? t("previewLoading") : t("previewEmpty")}</p>
           </div>
         ) : (
-          <div className="overflow-x-auto -mx-5 px-5">
-            {preview.groups.map(group => (
-              <div key={group.id} className="mb-6">
-                <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-tahfidz-green" />
-                  {group.name} — {group.teacherName}
+          <div className="overflow-x-auto -mx-5 px-5 space-y-3">
+            {preview.groups.map(group => {
+              const isCollapsed = collapsedGroups.has(group.id)
+              const groupDates = getGroupDateList(group)
+              return (
+                <div key={group.id} className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                  <button
+                    onClick={() => toggleGroup(group.id)}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition text-left"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="w-2.5 h-2.5 rounded-full bg-tahfidz-green" />
+                      <span className="font-semibold text-gray-800 dark:text-gray-100">{group.name}</span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">— {group.teacherName}</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">
+                        {group.students.length} {t("students")}
+                      </span>
+                    </div>
+                    {isCollapsed ? <ChevronDown size={18} className="text-gray-400" /> : <ChevronUp size={18} className="text-gray-400" />}
+                  </button>
+
+                  <AnimatePresence initial={false}>
+                    {!isCollapsed && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25, ease: "easeInOut" }}
+                        className="overflow-hidden"
+                      >
+                        <div className="p-4">
+                          {group.students.length === 0 ? (
+                            <p className="text-sm text-gray-400">{t("noAttendance")}</p>
+                          ) : groupDates.length === 0 ? (
+                            <p className="text-sm text-gray-400">{t("noCourseDays") || "Aucun jour de cours dans cette période."}</p>
+                          ) : (
+                            <table className="w-full border-collapse text-sm min-w-[600px]">
+                              <thead>
+                                <tr className="bg-emerald-50 dark:bg-emerald-900/20">
+                                  <th className="sticky left-0 z-10 px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 bg-emerald-50 dark:bg-emerald-900/30">
+                                    {t("fullName") || "Nom"}
+                                  </th>
+                                  {groupDates.map(d => (
+                                    <th key={d} className="px-2 py-2 text-center font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 whitespace-nowrap">
+                                      {fmtDate(d, L)}
+                                    </th>
+                                  ))}
+                                  <th className="px-2 py-2 text-center font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 whitespace-nowrap">{statusLabelWord("PRESENT", L)}</th>
+                                  <th className="px-2 py-2 text-center font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 whitespace-nowrap">{statusLabelWord("ABSENT", L)}</th>
+                                  <th className="px-2 py-2 text-center font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 whitespace-nowrap">{statusLabelWord("LATE", L)}</th>
+                                  <th className="px-2 py-2 text-center font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 whitespace-nowrap">{statusLabelWord("EXCUSED", L)}</th>
+                                  <th className="px-2 py-2 text-center font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700">%</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {group.students.map((s, idx) => (
+                                  <tr key={s.id} className={idx % 2 === 0 ? "bg-white dark:bg-gray-900" : "bg-gray-50 dark:bg-gray-800/50"}>
+                                    <td className="sticky left-0 z-10 px-3 py-2 border border-gray-200 dark:border-gray-700 bg-inherit font-medium text-gray-800 dark:text-gray-200">
+                                      {s.fullName}
+                                    </td>
+                                    {groupDates.map(d => (
+                                      <td key={d} className="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center">
+                                        <StatusBadge status={s.dates[d]} L={L} />
+                                      </td>
+                                    ))}
+                                    <td className="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center text-green-600 font-semibold">{s.stats.present}</td>
+                                    <td className="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center text-red-600 font-semibold">{s.stats.absent}</td>
+                                    <td className="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center text-orange-600 font-semibold">{s.stats.late}</td>
+                                    <td className="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center text-blue-600 font-semibold">{s.stats.excused}</td>
+                                    <td className="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center font-semibold text-gray-700 dark:text-gray-300">{s.stats.rate}%</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-                {group.students.length === 0 ? (
-                  <p className="text-sm text-gray-400">{t("noAttendance")}</p>
-                ) : (
-                  <table className="w-full border-collapse text-sm min-w-[600px]">
-                    <thead>
-                      <tr className="bg-emerald-50 dark:bg-emerald-900/20">
-                        <th className="sticky left-0 z-10 px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 bg-emerald-50 dark:bg-emerald-900/30">
-                          {t("fullName") || "Nom"}
-                        </th>
-                        {preview.dateList.map(d => (
-                          <th key={d} className="px-2 py-2 text-center font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 whitespace-nowrap">
-                            {fmtDate(d, L)}
-                          </th>
-                        ))}
-                        <th className="px-2 py-2 text-center font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 whitespace-nowrap">{statusLabelWord("PRESENT", L)}</th>
-                        <th className="px-2 py-2 text-center font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 whitespace-nowrap">{statusLabelWord("ABSENT", L)}</th>
-                        <th className="px-2 py-2 text-center font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 whitespace-nowrap">{statusLabelWord("LATE", L)}</th>
-                        <th className="px-2 py-2 text-center font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 whitespace-nowrap">{statusLabelWord("EXCUSED", L)}</th>
-                        <th className="px-2 py-2 text-center font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700">%</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {group.students.map((s, idx) => (
-                        <tr key={s.id} className={idx % 2 === 0 ? "bg-white dark:bg-gray-900" : "bg-gray-50 dark:bg-gray-800/50"}>
-                          <td className="sticky left-0 z-10 px-3 py-2 border border-gray-200 dark:border-gray-700 bg-inherit font-medium text-gray-800 dark:text-gray-200">
-                            {s.fullName}
-                          </td>
-                          {preview.dateList.map(d => (
-                            <td key={d} className="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center">
-                              <StatusBadge status={s.dates[d]} L={L} />
-                            </td>
-                          ))}
-                          <td className="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center text-green-600 font-semibold">{s.stats.present}</td>
-                          <td className="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center text-red-600 font-semibold">{s.stats.absent}</td>
-                          <td className="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center text-orange-600 font-semibold">{s.stats.late}</td>
-                          <td className="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center text-blue-600 font-semibold">{s.stats.excused}</td>
-                          <td className="px-2 py-2 border border-gray-200 dark:border-gray-700 text-center font-semibold text-gray-700 dark:text-gray-300">{s.stats.rate}%</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </section>
