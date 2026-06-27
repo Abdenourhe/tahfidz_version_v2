@@ -65,6 +65,22 @@ enum AttendanceStatus {
   EXCUSED
 }
 
+enum AttendanceMethod {
+  MANUAL
+  QR_SCAN
+}
+
+enum QrScanStatus {
+  SUCCESS
+  INVALID_TOKEN
+  INVALID_HMAC
+  EXPIRED_HMAC
+  ALREADY_PRESENT
+  UNAUTHORIZED_TEACHER
+  RATE_LIMITED
+  UNKNOWN_ERROR
+}
+
 enum AnnouncementType {
   GENERAL
   EVENT
@@ -279,6 +295,9 @@ model Student {
   longestStreak    Int       @default(0)
   lastActivityDate DateTime?
   status           String    @default("active")
+  qrCodeToken      String?   @unique
+  qrCodeSecret     String?   @unique
+  qrCodeUpdatedAt  DateTime  @default(now())
 
   user                 User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   group                Group?                 @relation(fields: [groupId], references: [id])
@@ -288,6 +307,7 @@ model Student {
   memorizationProgress MemorizationProgress[]
   memorizedSurahs      MemorizedSurah[]
   attendances          Attendance[]
+  qrScanLogs           QrScanLog[]
   parentAttendances    ParentAttendance[]
   studentBadges        StudentBadge[]
   starsLogs            StarsLog[]
@@ -615,19 +635,46 @@ model Attendance {
   groupId      String?
   date         DateTime
   status       AttendanceStatus
+  method       AttendanceMethod @default(MANUAL)
   checkInTime  DateTime?
   checkOutTime DateTime?
   notes        String?
   recordedBy   String
+  qrScanLogId  String?          @unique
   createdAt    DateTime         @default(now())
 
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  group   Group?  @relation(fields: [groupId], references: [id])
+  student   Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  group     Group?     @relation(fields: [groupId], references: [id])
+  qrScanLog QrScanLog? @relation(fields: [qrScanLogId], references: [id])
 
   @@unique([studentId, date])
   @@index([date])
   @@index([groupId])
+  @@index([qrScanLogId])
   @@map("attendances")
+}
+
+model QrScanLog {
+  id          String       @id @default(uuid())
+  studentId   String
+  teacherId   String?
+  schoolId    String
+  tokenUsed   String
+  hmacUsed    String
+  scannedAt   DateTime     @default(now())
+  ipAddress   String?
+  userAgent   String?
+  status      QrScanStatus
+  errorReason String?
+
+  student    Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  attendance Attendance?
+
+  @@index([studentId])
+  @@index([schoolId])
+  @@index([status])
+  @@index([scannedAt])
+  @@map("qr_scan_logs")
 }
 
 model ParentAttendance {

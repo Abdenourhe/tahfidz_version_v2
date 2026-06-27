@@ -13,7 +13,7 @@ import {
   User, Mail, Phone, AlertCircle, MapPin, Heart, Calendar,
   GraduationCap, Users, Copy, CheckCircle, Clock,
   TrendingUp, BarChart3, KeyRound, ArrowRight, Loader2, CheckCircle2, X, Printer,
-  Globe, Languages,
+  Globe, Languages, QrCode,
 } from "lucide-react"
 import { AvatarLightbox } from "@/components/AvatarLightbox"
 import { ParentInviteQR } from "@/components/admin/ParentInviteQR"
@@ -72,6 +72,7 @@ const TEXTS: Record<string, Record<string, string>> = {
   modify:      { fr: "Modifier les coordonnées", en: "Edit details", ar: "تعديل البيانات" },
   certificate: { fr: "Certificat", en: "Certificate", ar: "شهادة" },
   registrationCard: { fr: "Fiche d'inscription", en: "Registration card", ar: "بطاقة التسجيل" },
+  studentCard:     { fr: "Carte étudiant", en: "Student card", ar: "بطاقة الطالب" },
   transfer:    { fr: "Changer de groupe", en: "Change group", ar: "تغيير المجموعة" },
   active:      { fr: "Actif", en: "Active", ar: "نشط" },
   inactive:    { fr: "Inactif", en: "Inactive", ar: "غير نشط" },
@@ -406,6 +407,9 @@ export function StudentDetailClient({ student }: Props) {
           </Link>
           <Link href={`/admin/students/${student.id}/registration-card`} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl transition">
             <Printer size={16} />{t("registrationCard", L)}
+          </Link>
+          <Link href={`/admin/students/${student.id}/card`} className="flex items-center gap-2 px-4 py-2 bg-tahfidz-purple hover:bg-tahfidz-purple/90 text-white text-sm font-medium rounded-xl transition">
+            <QrCode size={16} />{t("studentCard", L)}
           </Link>
         </div>
       </div>
