@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { QRCodeSVG } from "qrcode.react"
@@ -64,23 +64,23 @@ export default function StudentCardPage() {
   const [error, setError] = useState<string | null>(null)
   const [regenerating, setRegenerating] = useState(false)
 
-  useEffect(() => {
-    const fetchCard = async () => {
-      try {
-        setLoading(true)
-        const res = await fetch(`/api/admin/students/${id}/card`)
-        if (!res.ok) throw new Error("Impossible de charger la carte")
-        const json = await res.json()
-        setData(json)
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Erreur inconnue")
-      } finally {
-        setLoading(false)
-      }
+  const fetchCard = useCallback(async () => {
+    try {
+      setLoading(true)
+      const res = await fetch(`/api/admin/students/${id}/card`)
+      if (!res.ok) throw new Error("Impossible de charger la carte")
+      const json = await res.json()
+      setData(json)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erreur inconnue")
+    } finally {
+      setLoading(false)
     }
-
-    fetchCard()
   }, [id])
+
+  useEffect(() => {
+    fetchCard()
+  }, [fetchCard])
 
   const handleRegenerate = async () => {
     if (!confirm(t("regenerateInfo", L))) return
