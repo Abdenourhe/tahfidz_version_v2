@@ -167,6 +167,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       },
     })
 
+    // Synchronize attendance table with daily log
+    if (data.attendanceStatus && ["PRESENT", "ABSENT", "LATE", "EXCUSED"].includes(data.attendanceStatus)) {
+      const status = data.attendanceStatus as "PRESENT" | "ABSENT" | "LATE" | "EXCUSED"
+      const student = await prisma.student.findUnique({
+        where: { id },
+        select: { groupId: true },
+      })
+      await prisma.attendance.upsert({
+        where: { studentId_date: { studentId: id, date: dateObj } },
+        update: { status, recordedBy: session.user.id },
+        create: {
+          studentId: id,
+          groupId: student?.groupId ?? null,
+          date: dateObj,
+          status,
+          recordedBy: session.user.id,
+        },
+      }).catch(() => {})
+    }
+
     // Notify parents
     const parentLinks = await prisma.parentStudentLink.findMany({
       where: { studentId: id, isVerified: true },
@@ -273,6 +293,26 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       where: { id: existing.id },
       data: updateData,
     })
+
+    // Synchronize attendance table with daily log
+    if (data.attendanceStatus && ["PRESENT", "ABSENT", "LATE", "EXCUSED"].includes(data.attendanceStatus)) {
+      const status = data.attendanceStatus as "PRESENT" | "ABSENT" | "LATE" | "EXCUSED"
+      const student = await prisma.student.findUnique({
+        where: { id },
+        select: { groupId: true },
+      })
+      await prisma.attendance.upsert({
+        where: { studentId_date: { studentId: id, date: dateObj } },
+        update: { status, recordedBy: session.user.id },
+        create: {
+          studentId: id,
+          groupId: student?.groupId ?? null,
+          date: dateObj,
+          status,
+          recordedBy: session.user.id,
+        },
+      }).catch(() => {})
+    }
 
     // Notify parents on teacher update
     if (!isParent) {

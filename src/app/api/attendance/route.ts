@@ -142,8 +142,8 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json({ error: "Date invalide" }, { status: 400 })
   }
-  // Normalize to start of day to avoid duplicates from time component
-  attendanceDate = new Date(attendanceDate.getFullYear(), attendanceDate.getMonth(), attendanceDate.getDate())
+  // Normalize to start of UTC day to stay consistent with /api/teacher/students
+  attendanceDate.setUTCHours(0, 0, 0, 0)
 
   // Verify access for PARENT: only their own children + only future dates
   if (session.user.role === "PARENT") {
@@ -208,6 +208,24 @@ export async function POST(req: Request) {
       upsertResults.push(result)
     } catch (e) {
       errors.push(`${record.studentId}: ${e instanceof Error ? e.message : "erreur"}`)
+    }
+  }
+
+  // Synchronize with DailyProgressLog (teacher/students grid)
+  for (const record of records) {
+    try {
+      await prisma.dailyProgressLog.upsert({
+        where: { studentId_date: { studentId: record.studentId, date: attendanceDate } },
+        update: { attendanceStatus: record.status },
+        create: {
+          studentId: record.studentId,
+          date: attendanceDate,
+          createdById: session.user.id,
+          attendanceStatus: record.status,
+        },
+      })
+    } catch (e) {
+      console.error("[ATTENDANCE SYNC DAILY LOG]", e)
     }
   }
 
