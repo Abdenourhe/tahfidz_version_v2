@@ -112,6 +112,18 @@ export async function POST(req: Request) {
       },
     })
 
+    // Synchroniser avec le carnet de suivi quotidien (page /teacher/students)
+    await prisma.dailyProgressLog.upsert({
+      where: { studentId_date: { studentId: student.id, date: today } },
+      update: { attendanceStatus: "PRESENT" },
+      create: {
+        studentId: student.id,
+        date: today,
+        createdById: session.user.id,
+        attendanceStatus: "PRESENT",
+      },
+    })
+
     // Mettre à jour la dernière activité de l'élève
     await prisma.student.update({
       where: { id: student.id },
