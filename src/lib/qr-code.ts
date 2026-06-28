@@ -17,17 +17,19 @@ export interface QrPayload {
 
 /**
  * Génère un token permanent unique pour une carte étudiant.
+ * Utilise un format court (12 caractères base64url) pour un QR code plus petit.
  */
 export function generateQrCodeToken(): string {
-  return crypto.randomUUID()
+  return crypto.randomBytes(9).toString("base64url")
 }
 
 /**
  * Génère un secret rotatif pour une carte étudiant.
  * Le régénérer invalide les anciens QR codes.
+ * Format court (16 caractères hex) pour réduire la taille du QR.
  */
 export function generateQrCodeSecret(): string {
-  return crypto.randomBytes(32).toString("hex")
+  return crypto.randomBytes(8).toString("hex")
 }
 
 /**
@@ -39,9 +41,14 @@ export function getQrDate(): string {
 
 /**
  * Calcule le HMAC attendu pour un secret et une date donnés.
+ * Tronqué à 16 caractères pour un QR code plus compact tout en gardant une sécurité suffisante.
  */
 export function computeQrHmac(secret: string, date: string): string {
-  return crypto.createHmac("sha256", SECRET).update(`${secret}:${date}`).digest("hex")
+  return crypto
+    .createHmac("sha256", SECRET)
+    .update(`${secret}:${date}`)
+    .digest("hex")
+    .slice(0, 16)
 }
 
 /**

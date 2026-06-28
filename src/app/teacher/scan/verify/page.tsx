@@ -4,18 +4,18 @@ import { useEffect, useState, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Image from "next/image"
 import { useLanguage } from "@/contexts/LanguageContext"
-import { Loader2, AlertCircle, CheckCircle, User, Users } from "lucide-react"
+import { Loader2, AlertCircle, CheckCircle, User, Users, X, ShieldCheck } from "lucide-react"
 
 const TEXTS: Record<string, Record<string, string>> = {
   verifying:   { fr: "Vérification...", en: "Verifying...", ar: "جاري التحقق..." },
   invalid:     { fr: "QR code invalide", en: "Invalid QR code", ar: "رمز QR غير صالح" },
-  notFound:    { fr: "Élève introuvable", en: "Student not found", ar: "الطالب غير موجود" },
   confirm:     { fr: "Confirmer la présence", en: "Confirm attendance", ar: "تأكيد الحضور" },
   cancel:      { fr: "Annuler", en: "Cancel", ar: "إلغاء" },
   student:     { fr: "Élève", en: "Student", ar: "الطالب" },
   group:       { fr: "Groupe", en: "Group", ar: "المجموعة" },
   success:     { fr: "Présence validée", en: "Attendance validated", ar: "تم تسجيل الحضور" },
   error:       { fr: "Erreur", en: "Error", ar: "خطأ" },
+  back:        { fr: "Retour", en: "Back", ar: "عودة" },
 }
 
 function t(key: string, locale: string): string {
@@ -85,15 +85,15 @@ function VerifyContent() {
 
   if (error) {
     return (
-      <div className="max-w-md mx-auto mt-20 p-6 bg-red-50 dark:bg-red-900/20 rounded-2xl text-center">
+      <div className="max-w-sm mx-auto mt-16 p-6 bg-red-50 dark:bg-red-900/20 rounded-3xl text-center">
         <AlertCircle size={48} className="text-red-500 mx-auto mb-3" />
         <h2 className="text-lg font-bold text-red-700 dark:text-red-300">{t("error", L)}</h2>
         <p className="text-red-600 dark:text-red-200 mt-1">{error}</p>
         <button
           onClick={() => router.push("/teacher/scan")}
-          className="mt-4 px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 transition"
+          className="mt-5 px-5 py-2.5 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 transition"
         >
-          {t("cancel", L)}
+          {t("back", L)}
         </button>
       </div>
     )
@@ -101,8 +101,10 @@ function VerifyContent() {
 
   if (confirmed) {
     return (
-      <div className="max-w-md mx-auto mt-20 p-8 bg-green-50 dark:bg-green-900/20 rounded-2xl text-center">
-        <CheckCircle size={56} className="text-green-500 mx-auto mb-3" />
+      <div className="max-w-sm mx-auto mt-16 p-8 bg-green-50 dark:bg-green-900/20 rounded-3xl text-center">
+        <div className="w-16 h-16 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center mx-auto mb-3">
+          <CheckCircle size={36} className="text-green-600 dark:text-green-300" />
+        </div>
         <h2 className="text-xl font-bold text-green-700 dark:text-green-300">{t("success", L)}</h2>
         <p className="text-green-600 dark:text-green-200 mt-1">{student?.fullName}</p>
       </div>
@@ -110,14 +112,19 @@ function VerifyContent() {
   }
 
   return (
-    <div className="max-w-md mx-auto p-4 md:p-8" dir={dir}>
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 p-6 text-center">
-        <div className="w-24 h-24 mx-auto rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden mb-4">
+    <div className="max-w-sm mx-auto p-4" dir={dir}>
+      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 p-6 text-center">
+        <div className="w-20 h-20 mx-auto rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden mb-4 ring-4 ring-tahfidz-green/10">
           {student?.avatar ? (
-            <Image src={student.avatar} alt={student.fullName} width={96} height={96} className="w-full h-full object-cover" unoptimized />
+            <Image src={student.avatar} alt={student.fullName} width={80} height={80} className="w-full h-full object-cover" unoptimized />
           ) : (
-            <User size={40} className="text-gray-400" />
+            <User size={36} className="text-gray-400" />
           )}
+        </div>
+
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-tahfidz-green/10 text-tahfidz-green text-xs font-medium mb-3">
+          <ShieldCheck size={12} />
+          {t("student", L)}
         </div>
 
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{student?.fullName}</h2>
@@ -133,15 +140,16 @@ function VerifyContent() {
           <button
             onClick={handleConfirm}
             disabled={confirming}
-            className="w-full py-3 px-4 bg-tahfidz-green hover:bg-tahfidz-green/90 text-white font-semibold rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full py-3.5 px-4 bg-tahfidz-green hover:bg-tahfidz-green/90 text-white font-semibold rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {confirming ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle size={18} />}
             {t("confirm", L)}
           </button>
           <button
             onClick={() => router.push("/teacher/scan")}
-            className="w-full py-3 px-4 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+            className="w-full py-3.5 px-4 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center gap-2"
           >
+            <X size={18} />
             {t("cancel", L)}
           </button>
         </div>
