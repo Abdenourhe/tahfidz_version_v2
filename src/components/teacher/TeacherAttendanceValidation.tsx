@@ -77,10 +77,9 @@ export default function TeacherAttendanceValidation() {
   /* ── Students + Attendance ── */
   const [students, setStudents] = useState<Student[]>([])
   const [attendance, setAttendance] = useState<Record<string, string>>({})
-  const [initialAttendance, setInitialAttendance] = useState<Record<string, string>>({})
   const [parentAlertsMap, setParentAlertsMap] = useState<Record<string, ParentAlert>>({})
   const [loadingStudents, setLoadingStudents] = useState(false)
-  const [saving, setSaving] = useState(false)
+  const [savingStudentId, setSavingStudentId] = useState<string | null>(null)
 
   /* ── Alerts section ── */
   const [alerts, setAlerts] = useState<ParentAlert[]>([])
@@ -153,7 +152,6 @@ export default function TeacherAttendanceValidation() {
       })
 
       setAttendance(attMap)
-      setInitialAttendance(attMap)
       setParentAlertsMap(alertMap)
     } catch (e) {
       console.error(e)
@@ -164,14 +162,11 @@ export default function TeacherAttendanceValidation() {
 
   useEffect(() => { loadSheet() }, [loadSheet])
 
-  /* ── Save attendances ── */
-  const changedRecords = students
-    .map(s => ({ studentId: s.id, status: attendance[s.id] || "PRESENT" }))
-    .filter(r => (initialAttendance[r.studentId] || "PRESENT") !== r.status)
-
-  const saveAttendances = async () => {
-    if (changedRecords.length === 0 || !selectedGroup) return
-    setSaving(true)
+  /* ── Update single attendance on click ── */
+  const updateAttendance = async (studentId: string, status: string) => {
+    if (!selectedGroup) return
+    setAttendance(prev => ({ ...prev, [studentId]: status }))
+    setSavingStudentId(studentId)
     try {
       const res = await fetch("/api/attendance", {
         method: "POST",
@@ -179,7 +174,7 @@ export default function TeacherAttendanceValidation() {
         body: JSON.stringify({
           groupId: selectedGroup,
           date: `${date}T00:00:00.000Z`,
-          records: changedRecords,
+          records: [{ studentId, status }],
         }),
       })
       if (!res.ok) {
@@ -192,7 +187,7 @@ export default function TeacherAttendanceValidation() {
       console.error(e)
       alert("Erreur réseau")
     } finally {
-      setSaving(false)
+      setSavingStudentId(null)
     }
   }
 
@@ -268,25 +263,15 @@ export default function TeacherAttendanceValidation() {
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">{t("attendanceSheet")}</h2>
 
         {/* Controls */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Users size={16} className="text-gray-400" />
-            <select
-              value={selectedGroup}
-              onChange={e => setSelectedGroup(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green"
-            >
-              {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-            </select>
-          </div>
-          <button
-            onClick={saveAttendances}
-            disabled={saving || changedRecords.length === 0}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-tahfidz-green text-white rounded-lg hover:bg-tahfidz-green/90 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        <div className="flex items-center gap-2 mb-4">
+          <Users size={16} className="text-gray-400" />
+          <select
+            value={selectedGroup}
+            onChange={e => setSelectedGroup(e.target.value)}
+            className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green"
           >
-            {saving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-            {changedRecords.length > 0 ? `${t("save")} (${changedRecords.length})` : t("save")}
-          </button>
+            {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+          </select>
         </div>
 
         {/* Calendar card */}
@@ -383,13 +368,14 @@ export default function TeacherAttendanceValidation() {
                             return (
                               <button
                                 key={o.value}
-                                onClick={() => setAttendance(prev => ({ ...prev, [s.id]: o.value }))}
+                                onClick={() => updateAttendance(s.id, o.value)}
+                                disabled={savingStudentId === s.id}
                                 className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition ${
                                   active ? o.cls : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
-                                }`}
+                                } ${savingStudentId === s.id ? "opacity-60 cursor-wait" : ""}`}
                                 title={o.label}
                               >
-                                <Icon size={12} />
+                                {savingStudentId === s.id ? <Loader2 size={12} className="animate-spin" /> : <Icon size={12} />}
                                 {o.label}
                               </button>
                             )
