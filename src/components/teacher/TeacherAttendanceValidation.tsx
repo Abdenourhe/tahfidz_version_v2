@@ -77,8 +77,10 @@ export default function TeacherAttendanceValidation() {
   /* ── Students + Attendance ── */
   const [students, setStudents] = useState<Student[]>([])
   const [attendance, setAttendance] = useState<Record<string, string>>({})
+  const [initialAttendance, setInitialAttendance] = useState<Record<string, string>>({})
   const [parentAlertsMap, setParentAlertsMap] = useState<Record<string, ParentAlert>>({})
   const [loadingStudents, setLoadingStudents] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   /* ── Alerts section ── */
   const [alerts, setAlerts] = useState<ParentAlert[]>([])
@@ -151,6 +153,7 @@ export default function TeacherAttendanceValidation() {
       })
 
       setAttendance(attMap)
+      setInitialAttendance(attMap)
       setParentAlertsMap(alertMap)
     } catch (e) {
       console.error(e)
@@ -160,6 +163,38 @@ export default function TeacherAttendanceValidation() {
   }, [selectedGroup, date])
 
   useEffect(() => { loadSheet() }, [loadSheet])
+
+  /* ── Save attendances ── */
+  const changedRecords = students
+    .map(s => ({ studentId: s.id, status: attendance[s.id] || "PRESENT" }))
+    .filter(r => (initialAttendance[r.studentId] || "PRESENT") !== r.status)
+
+  const saveAttendances = async () => {
+    if (changedRecords.length === 0 || !selectedGroup) return
+    setSaving(true)
+    try {
+      const res = await fetch("/api/attendance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          groupId: selectedGroup,
+          date: `${date}T00:00:00.000Z`,
+          records: changedRecords,
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        alert(err.error || "Erreur lors de l'enregistrement")
+        return
+      }
+      await loadSheet()
+    } catch (e) {
+      console.error(e)
+      alert("Erreur réseau")
+    } finally {
+      setSaving(false)
+    }
+  }
 
   /* ── Scroll to highlighted alert ── */
   useEffect(() => {
@@ -244,6 +279,14 @@ export default function TeacherAttendanceValidation() {
               {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
             </select>
           </div>
+          <button
+            onClick={saveAttendances}
+            disabled={saving || changedRecords.length === 0}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-tahfidz-green text-white rounded-lg hover:bg-tahfidz-green/90 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            {saving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+            {changedRecords.length > 0 ? `${t("save")} (${changedRecords.length})` : t("save")}
+          </button>
         </div>
 
         {/* Calendar card */}

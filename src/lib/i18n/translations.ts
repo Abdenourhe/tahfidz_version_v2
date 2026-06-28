@@ -1896,6 +1896,7 @@ export const translations = {
     excused:           { fr: "Excusé", en: "Excused", ar: "معذور" },
     attendanceSheet:   { fr: "Feuille de présence", en: "Attendance sheet", ar: "ورقة الحضور" },
     validateAll:       { fr: "Valider les présences", en: "Validate attendances", ar: "تحقق من الحضور" },
+    save:              { fr: "Enregistrer", en: "Save", ar: "حفظ" },
     saved:             { fr: "Enregistré ✓", en: "Saved ✓", ar: "تم الحفظ ✓" },
     saving:            { fr: "Enregistrement…", en: "Saving…", ar: "جارٍ الحفظ…" },
     saveError:         { fr: "Erreur lors de l'enregistrement", en: "Save error", ar: "خطأ أثناء الحفظ" },
