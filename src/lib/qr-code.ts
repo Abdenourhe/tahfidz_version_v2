@@ -83,7 +83,67 @@ export function decodeQrPayload(encoded: string): QrPayload | null {
 }
 
 /**
- * Construit l'URL complète du QR code.
+ * Génère un payload compact pour un QR code plus petit et plus facile à scanner.
+ * Format : schoolSlug:token:hmac
+ */
+export function generateCompactQrPayload(
+  schoolSlug: string,
+  qrCodeToken: string,
+  qrCodeSecret: string
+): string {
+  const { h } = generateQrPayload(schoolSlug, qrCodeToken, qrCodeSecret)
+  return `${schoolSlug}:${qrCodeToken}:${h}`
+}
+
+/**
+ * Décode un payload compact (schoolSlug:token:hmac).
+ * Retourne null si le format est invalide.
+ */
+export function decodeCompactQrPayload(value: string): QrPayload | null {
+  const parts = value.trim().split(":")
+  if (parts.length !== 3) return null
+  const [s, t, h] = parts
+  if (!s || !t || !h) return null
+  return { s, t, h }
+}
+
+/**
+ * Tente de décoder n'importe quelle valeur scannée (URL, payload base64 ou compact).
+ */
+export function decodeAnyQrValue(value: string): QrPayload | null {
+  const trimmed = value.trim()
+
+  // 1. Si c'est une URL, extraire le paramètre d
+  try {
+    const url = new URL(trimmed)
+    const d = url.searchParams.get("d")
+    if (d) {
+      const decoded = decodeQrPayload(d) || decodeCompactQrPayload(d)
+      if (decoded) return decoded
+    }
+  } catch {
+    // pas une URL absolue
+  }
+
+  // 2. Si c'est une URL relative (/teacher/scan/verify?d=...)
+  if (trimmed.includes("?d=")) {
+    const d = trimmed.split("?d=")[1]?.split("&")[0]
+    if (d) {
+      const decoded = decodeQrPayload(d) || decodeCompactQrPayload(d)
+      if (decoded) return decoded
+    }
+  }
+
+  // 3. Payload compact
+  const compact = decodeCompactQrPayload(trimmed)
+  if (compact) return compact
+
+  // 4. Payload base64url
+  return decodeQrPayload(trimmed)
+}
+
+/**
+ * Construit l'URL complète du QR code (format compact pour faciliter le scan).
  */
 export function generateStudentQrUrl(
   appUrl: string,
@@ -91,9 +151,8 @@ export function generateStudentQrUrl(
   qrCodeToken: string,
   qrCodeSecret: string
 ): string {
-  const payload = generateQrPayload(schoolSlug, qrCodeToken, qrCodeSecret)
-  const encoded = encodeQrPayload(payload)
-  return `${appUrl}/teacher/scan/verify?d=${encoded}`
+  const compactPayload = generateCompactQrPayload(schoolSlug, qrCodeToken, qrCodeSecret)
+  return `${appUrl}/teacher/scan/verify?d=${encodeURIComponent(compactPayload)}`
 }
 
 /**

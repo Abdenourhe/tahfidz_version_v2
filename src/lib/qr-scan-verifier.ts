@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { decodeQrPayload, getQrDate, verifyQrHmac, type QrPayload } from "@/lib/qr-code"
+import { decodeAnyQrValue, getQrDate, verifyQrHmac, type QrPayload } from "@/lib/qr-code"
 import type { Prisma } from "@prisma/client"
 
 const studentInclude = {
@@ -22,7 +22,7 @@ export async function verifyQrPayload(
   teacherUserId: string,
   teacherRole: string
 ): Promise<VerifyResult> {
-  const payload = decodeQrPayload(encoded)
+  const payload = decodeAnyQrValue(encoded)
   if (!payload) {
     return { ok: false, status: "INVALID_TOKEN", reason: "Payload invalide" }
   }
