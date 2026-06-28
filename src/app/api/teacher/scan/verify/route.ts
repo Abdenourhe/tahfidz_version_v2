@@ -1,5 +1,6 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { decodeAnyQrValue } from "@/lib/qr-code"
 import { verifyQrPayload } from "@/lib/qr-scan-verifier"
 import { NextResponse } from "next/server"
 
@@ -25,28 +26,28 @@ export async function GET(req: Request) {
     if (!result.ok) {
       // Journaliser l'échec si possible
       try {
-        const payload = JSON.parse(Buffer.from(encoded, "base64url").toString("utf-8"))
-        const student = payload.t
-          ? await prisma.student.findUnique({
-              where: { qrCodeToken: payload.t },
-              select: { id: true },
-            })
-          : null
-
-        if (student) {
-          await prisma.qrScanLog.create({
-            data: {
-              studentId: student.id,
-              teacherId: session.user.role === "TEACHER" ? session.user.id : null,
-              schoolId: session.user.schoolId ?? "unknown",
-              tokenUsed: payload.t ?? "",
-              hmacUsed: payload.h ?? "",
-              ipAddress,
-              userAgent,
-              status: result.status as any,
-              errorReason: result.reason,
-            },
+        const decodedPayload = decodeAnyQrValue(encoded)
+        if (decodedPayload?.t) {
+          const student = await prisma.student.findUnique({
+            where: { qrCodeToken: decodedPayload.t },
+            select: { id: true },
           })
+
+          if (student) {
+            await prisma.qrScanLog.create({
+              data: {
+                studentId: student.id,
+                teacherId: session.user.role === "TEACHER" ? session.user.id : null,
+                schoolId: session.user.schoolId ?? "unknown",
+                tokenUsed: decodedPayload.t,
+                hmacUsed: decodedPayload.h,
+                ipAddress,
+                userAgent,
+                status: result.status as any,
+                errorReason: result.reason,
+              },
+            })
+          }
         }
       } catch {
         // Ignorer les erreurs de journalisation
@@ -59,6 +60,7 @@ export async function GET(req: Request) {
     }
 
     const student = result.student
+    const decodedPayload = decodeAnyQrValue(encoded)
 
     // Journaliser la vérification réussie
     await prisma.qrScanLog.create({
@@ -67,7 +69,7 @@ export async function GET(req: Request) {
         teacherId: session.user.role === "TEACHER" ? session.user.id : null,
         schoolId: session.user.schoolId ?? student.user.schoolId,
         tokenUsed: student.qrCodeToken ?? "",
-        hmacUsed: JSON.parse(Buffer.from(encoded, "base64url").toString("utf-8")).h ?? "",
+        hmacUsed: decodedPayload?.h ?? "",
         ipAddress,
         userAgent,
         status: "SUCCESS",

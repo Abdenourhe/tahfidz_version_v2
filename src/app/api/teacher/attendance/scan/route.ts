@@ -1,5 +1,6 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { decodeAnyQrValue } from "@/lib/qr-code"
 import { checkQrScanRateLimit } from "@/lib/rate-limit"
 import { verifyQrPayload } from "@/lib/qr-scan-verifier"
 import { NextResponse } from "next/server"
@@ -19,6 +20,7 @@ export async function POST(req: Request) {
     }
 
     const result = await verifyQrPayload(encoded, session.user.id, session.user.role)
+    const decodedPayload = decodeAnyQrValue(encoded)
 
     const ipAddress = req.headers.get("x-forwarded-for") ?? undefined
     const userAgent = req.headers.get("user-agent") ?? undefined
@@ -41,7 +43,7 @@ export async function POST(req: Request) {
           teacherId: session.user.role === "TEACHER" ? session.user.id : null,
           schoolId: session.user.schoolId ?? student.user.schoolId,
           tokenUsed: student.qrCodeToken ?? "",
-          hmacUsed: JSON.parse(Buffer.from(encoded, "base64url").toString("utf-8")).h ?? "",
+          hmacUsed: decodedPayload?.h ?? "",
           ipAddress,
           userAgent,
           status: "RATE_LIMITED",
@@ -69,7 +71,7 @@ export async function POST(req: Request) {
           teacherId: session.user.role === "TEACHER" ? session.user.id : null,
           schoolId: session.user.schoolId ?? student.user.schoolId,
           tokenUsed: student.qrCodeToken ?? "",
-          hmacUsed: JSON.parse(Buffer.from(encoded, "base64url").toString("utf-8")).h ?? "",
+          hmacUsed: decodedPayload?.h ?? "",
           ipAddress,
           userAgent,
           status: "ALREADY_PRESENT",
@@ -89,7 +91,7 @@ export async function POST(req: Request) {
         teacherId: session.user.role === "TEACHER" ? session.user.id : null,
         schoolId: session.user.schoolId ?? student.user.schoolId,
         tokenUsed: student.qrCodeToken ?? "",
-        hmacUsed: JSON.parse(Buffer.from(encoded, "base64url").toString("utf-8")).h ?? "",
+        hmacUsed: decodedPayload?.h ?? "",
         ipAddress,
         userAgent,
         status: "SUCCESS",

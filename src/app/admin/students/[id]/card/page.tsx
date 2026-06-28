@@ -210,13 +210,13 @@ export default function StudentCardPage() {
             <div className="bg-white p-2 rounded-2xl border border-gray-200 shadow-sm">
               <QRCodeSVG
                 value={qrCodeUrl}
-                size={120}
+                size={140}
                 level="H"
-                includeMargin={false}
+                includeMargin={true}
                 imageSettings={{
                   src: logoUrl,
-                  height: 28,
-                  width: 28,
+                  height: 24,
+                  width: 24,
                   excavate: true,
                 }}
               />
