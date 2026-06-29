@@ -278,190 +278,117 @@ function StudentCardContent({
       {/* Bandeau supérieur */}
       <div
         className="absolute top-0 left-0 right-0 flex items-center justify-center"
-        style={{ height: "10mm", backgroundColor: "#1e1b4b" }}
+        style={{ height: "9mm", backgroundColor: "#1e1b4b" }}
       >
         <span
           className="font-bold uppercase"
-          style={{ color: "#ffffff", fontSize: "3.2mm", letterSpacing: "0.22em", lineHeight: 1 }}
+          style={{ color: "#ffffff", fontSize: "3mm", letterSpacing: "0.25em", lineHeight: 1 }}
         >
           {t("cardTitle", locale)}
         </span>
       </div>
 
-      {/* Logo école */}
+      {/* Ligne école : logo + nom/slug à gauche, ville à droite */}
       <div
-        className="absolute flex items-center justify-center overflow-hidden"
-        style={{
-          left: "4mm",
-          top: "11mm",
-          width: "7.5mm",
-          height: "7.5mm",
-          backgroundColor: "#ffffff",
-          borderRadius: "50%",
-          boxShadow: "0 0 0 0.4mm rgba(0,0,0,0.08)",
-        }}
+        className="absolute left-0 right-0 flex items-center justify-between"
+        style={{ top: "10mm", height: "7mm", paddingLeft: "3.5mm", paddingRight: "3.5mm" }}
       >
-        <Image src={logoUrl} alt={school.name} width={64} height={64} className="object-contain w-full h-full" unoptimized />
-      </div>
+        <div className="flex items-center gap-[1.5mm]">
+          {/* Logo */}
+          <div
+            className="flex items-center justify-center overflow-hidden"
+            style={{
+              width: "6mm",
+              height: "6mm",
+              backgroundColor: "#ffffff",
+              borderRadius: "50%",
+              boxShadow: "0 0 0 0.3mm rgba(0,0,0,0.08)",
+              flexShrink: 0,
+            }}
+          >
+            <Image src={logoUrl} alt={school.name} width={48} height={48} className="object-contain w-full h-full" unoptimized />
+          </div>
 
-      {/* Nom école + ville */}
-      <div
-        className="absolute"
-        style={{ right: "4mm", top: "11mm", maxWidth: "46mm", textAlign: "right" }}
-      >
-        <p className="truncate" style={{ color: "#1f2937", fontWeight: 700, fontSize: "2.6mm", lineHeight: 1.2 }}>
-          {school.name}
-        </p>
+          {/* Nom + slug */}
+          <div className="flex flex-col justify-center">
+            <p className="truncate" style={{ color: "#1f2937", fontWeight: 700, fontSize: "2.4mm", lineHeight: 1.15 }}>
+              {school.name}
+            </p>
+            <p className="truncate" style={{ color: "#6b7280", fontSize: "1.6mm", lineHeight: 1.15, marginTop: "0.3mm" }}>
+              {school.slug}
+            </p>
+          </div>
+        </div>
+
+        {/* Ville */}
         {school.city && (
-          <p className="truncate" style={{ color: "#6b7280", fontSize: "2mm", lineHeight: 1.2, marginTop: "0.3mm" }}>
+          <p className="truncate" style={{ color: "#6b7280", fontSize: "1.9mm", lineHeight: 1.2, maxWidth: "25mm", textAlign: "right" }}>
             {school.city}
           </p>
         )}
       </div>
 
-      {/* Photo de l'étudiant */}
+      {/* Corps : photo + infos + QR */}
       <div
-        className="absolute overflow-hidden flex items-center justify-center"
-        style={{
-          left: "4mm",
-          top: "17mm",
-          width: "23mm",
-          height: "26mm",
-          backgroundColor: "#f3f4f6",
-          border: "0.4mm solid #e5e7eb",
-        }}
+        className="absolute left-0 right-0 flex items-start justify-between"
+        style={{ top: "18mm", height: "26mm", paddingLeft: "3.5mm", paddingRight: "3.5mm" }}
       >
-        {student.avatar ? (
-          <Image
-            src={student.avatar}
-            alt={student.fullName}
-            width={128}
-            height={160}
-            className="w-full h-full object-cover"
-            unoptimized
-          />
-        ) : (
-          <span style={{ color: "#d1d5db", fontWeight: 700, fontSize: "10mm" }}>
-            {student.fullName.charAt(0)}
-          </span>
-        )}
-      </div>
-
-      {/* Colonne d'informations */}
-      <div
-        className="absolute flex flex-col"
-        style={{ left: "29mm", top: "21mm", width: "32mm", gap: "1mm" }}
-      >
-        {/* N° d'identification */}
-        <div>
-          <div
-            className="font-bold uppercase"
-            style={{
-              backgroundColor: "#dbeafe",
-              color: "#1e3a8a",
-              fontSize: "1.8mm",
-              letterSpacing: "0.08em",
-              padding: "0.6mm 1.5mm 0.5mm 1.5mm",
-              lineHeight: 1,
-            }}
-          >
-            {t("studentCode", locale)}
-          </div>
-          <div
-            className="font-mono truncate"
-            style={{ color: "#111827", fontWeight: 600, fontSize: "2.6mm", padding: "0.5mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
-          >
-            {student.studentCode}
-          </div>
-        </div>
-
-        {/* Nom */}
-        <div>
-          <div
-            className="font-bold uppercase"
-            style={{
-              backgroundColor: "#dbeafe",
-              color: "#1e3a8a",
-              fontSize: "1.8mm",
-              letterSpacing: "0.08em",
-              padding: "0.6mm 1.5mm 0.5mm 1.5mm",
-              lineHeight: 1,
-            }}
-          >
-            {locale === "ar" ? "الاسم" : "Nom"}
-          </div>
-          {locale === "ar" ? (
-            <div
-              className="arabic truncate"
-              style={{ color: "#111827", fontWeight: 700, fontSize: "3mm", padding: "0.5mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
-            >
-              {student.fullNameAr || student.fullName}
-            </div>
+        {/* Photo */}
+        <div
+          className="overflow-hidden flex items-center justify-center flex-shrink-0"
+          style={{
+            width: "22mm",
+            height: "26mm",
+            backgroundColor: "#f8fafc",
+            border: "0.35mm solid #e2e8f0",
+          }}
+        >
+          {student.avatar ? (
+            <Image
+              src={student.avatar}
+              alt={student.fullName}
+              width={128}
+              height={160}
+              className="w-full h-full object-cover"
+              unoptimized
+            />
           ) : (
-            <div
-              className="truncate"
-              style={{ color: "#111827", fontWeight: 700, fontSize: "3mm", padding: "0.5mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
-            >
-              {student.fullName}
-            </div>
+            <span style={{ color: "#cbd5e1", fontWeight: 700, fontSize: "10mm" }}>
+              {student.fullName.charAt(0)}
+            </span>
           )}
         </div>
 
-        {/* Groupe */}
-        <div>
-          <div
-            className="font-bold uppercase"
-            style={{
-              backgroundColor: "#dbeafe",
-              color: "#1e3a8a",
-              fontSize: "1.8mm",
-              letterSpacing: "0.08em",
-              padding: "0.6mm 1.5mm 0.5mm 1.5mm",
-              lineHeight: 1,
-            }}
-          >
-            {t("group", locale)}
-          </div>
-          <div
-            className="truncate"
-            style={{ color: "#111827", fontWeight: 600, fontSize: "2.4mm", padding: "0.5mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
-          >
-            {student.group?.name || "—"}
-          </div>
-        </div>
-
-        {/* Enseignant */}
-        <div>
-          <div
-            className="font-bold uppercase"
-            style={{
-              backgroundColor: "#dbeafe",
-              color: "#1e3a8a",
-              fontSize: "1.8mm",
-              letterSpacing: "0.08em",
-              padding: "0.6mm 1.5mm 0.5mm 1.5mm",
-              lineHeight: 1,
-            }}
-          >
-            {t("teacher", locale)}
-          </div>
-          <div
-            className="truncate"
-            style={{ color: "#111827", fontWeight: 600, fontSize: "2.4mm", padding: "0.5mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
-          >
-            {student.teacher?.user?.fullName || "—"}
-          </div>
-        </div>
-      </div>
-
-      {/* QR Code */}
-      <div
-        className="absolute flex items-center justify-center"
-        style={{ right: "4mm", top: "23mm", width: "20mm", height: "20mm" }}
-      >
+        {/* Infos */}
         <div
-          className="flex items-center justify-center"
-          style={{ width: "20mm", height: "20mm", padding: "1.5mm", backgroundColor: "#ffffff", border: "0.4mm solid #e5e7eb" }}
+          className="flex flex-col"
+          style={{ width: "31mm", height: "26mm", justifyContent: "space-between" }}
+        >
+          <InfoRow
+            label={t("studentCode", locale)}
+            value={student.studentCode}
+            valueClassName="font-mono"
+          />
+          <InfoRow
+            label={locale === "ar" ? "الاسم" : "Nom"}
+            value={locale === "ar" ? student.fullNameAr || student.fullName : student.fullName}
+            isArabic={locale === "ar"}
+            valueStyle={{ fontWeight: 700, fontSize: "2.8mm" }}
+          />
+          <InfoRow
+            label={t("group", locale)}
+            value={student.group?.name || "—"}
+          />
+          <InfoRow
+            label={t("teacher", locale)}
+            value={student.teacher?.user?.fullName || "—"}
+          />
+        </div>
+
+        {/* QR Code */}
+        <div
+          className="flex items-center justify-center flex-shrink-0"
+          style={{ width: "20mm", height: "20mm", padding: "1.5mm", backgroundColor: "#ffffff", border: "0.35mm solid #e2e8f0" }}
         >
           <QRCodeSVG
             value={qrCodeUrl}
@@ -480,27 +407,68 @@ function StudentCardContent({
 
       {/* Bandeau inférieur */}
       <div
-        className="absolute left-0 right-0 flex items-center justify-between"
-        style={{ bottom: 0, height: "5.5mm", backgroundColor: "#8b5cf6", paddingLeft: "4mm", paddingRight: "4mm" }}
+        className="absolute left-0 right-0 flex items-center justify-center"
+        style={{ bottom: 0, height: "6mm", backgroundColor: "#7c3aed", paddingLeft: "4mm", paddingRight: "4mm" }}
       >
         <span
-          className="truncate"
-          style={{ color: "#ffffff", fontWeight: 600, fontSize: "1.8mm", lineHeight: 1, maxWidth: "25mm" }}
-        >
-          {school.slug}
-        </span>
-        <span
           className="uppercase text-center truncate"
-          style={{ color: "#ffffff", fontWeight: 900, fontSize: "3mm", letterSpacing: "0.12em", lineHeight: 1, flex: 1, padding: "0 2mm" }}
+          style={{ color: "#ffffff", fontWeight: 900, fontSize: "3.2mm", letterSpacing: "0.12em", lineHeight: 1 }}
         >
           {school.name}
         </span>
-        <span
-          className="truncate"
-          style={{ color: "#ffffff", fontWeight: 500, fontSize: "1.5mm", lineHeight: 1 }}
-        >
-          {displayDate}
-        </span>
+      </div>
+
+      {/* Date d'émission */}
+      <div
+        className="absolute"
+        style={{ right: "4mm", bottom: "1.5mm", color: "#ffffff", fontWeight: 500, fontSize: "1.5mm", lineHeight: 1 }}
+      >
+        {displayDate}
+      </div>
+    </div>
+  )
+}
+
+function InfoRow({
+  label,
+  value,
+  valueClassName,
+  valueStyle,
+  isArabic,
+}: {
+  label: string
+  value: string
+  valueClassName?: string
+  valueStyle?: React.CSSProperties
+  isArabic?: boolean
+}) {
+  return (
+    <div style={{ marginBottom: "0.8mm" }}>
+      <div
+        className="font-bold uppercase"
+        style={{
+          backgroundColor: "#dbeafe",
+          color: "#1e40af",
+          fontSize: "1.7mm",
+          letterSpacing: "0.06em",
+          padding: "0.5mm 1.2mm 0.4mm 1.2mm",
+          lineHeight: 1,
+        }}
+      >
+        {label}
+      </div>
+      <div
+        className={`truncate ${valueClassName || ""} ${isArabic ? "arabic" : ""}`}
+        style={{
+          color: "#111827",
+          fontWeight: 600,
+          fontSize: "2.4mm",
+          padding: "0.6mm 1.2mm 0 1.2mm",
+          lineHeight: 1.2,
+          ...valueStyle,
+        }}
+      >
+        {value}
       </div>
     </div>
   )
