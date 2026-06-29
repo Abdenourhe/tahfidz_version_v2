@@ -174,6 +174,7 @@ export default function StudentCardPage() {
               height: "54mm",
               transform: "scale(1.5)",
               transformOrigin: "center center",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
             }}
           >
             <StudentCardContent
@@ -292,9 +293,9 @@ function StudentCardContent({
         className="absolute flex items-center justify-center overflow-hidden"
         style={{
           left: "4mm",
-          top: "11.5mm",
-          width: "8mm",
-          height: "8mm",
+          top: "11mm",
+          width: "7.5mm",
+          height: "7.5mm",
           backgroundColor: "#ffffff",
           borderRadius: "50%",
           boxShadow: "0 0 0 0.4mm rgba(0,0,0,0.08)",
@@ -306,7 +307,7 @@ function StudentCardContent({
       {/* Nom école + ville */}
       <div
         className="absolute"
-        style={{ right: "4mm", top: "11.5mm", maxWidth: "46mm", textAlign: "right" }}
+        style={{ right: "4mm", top: "11mm", maxWidth: "46mm", textAlign: "right" }}
       >
         <p className="truncate" style={{ color: "#1f2937", fontWeight: 700, fontSize: "2.6mm", lineHeight: 1.2 }}>
           {school.name}
@@ -323,9 +324,9 @@ function StudentCardContent({
         className="absolute overflow-hidden flex items-center justify-center"
         style={{
           left: "4mm",
-          top: "20.5mm",
-          width: "24mm",
-          height: "30mm",
+          top: "19.5mm",
+          width: "23mm",
+          height: "24mm",
           backgroundColor: "#f3f4f6",
           border: "0.4mm solid #e5e7eb",
         }}
@@ -349,7 +350,7 @@ function StudentCardContent({
       {/* Colonne d'informations */}
       <div
         className="absolute flex flex-col"
-        style={{ left: "30mm", top: "20.5mm", width: "28mm", gap: "1.6mm" }}
+        style={{ left: "29mm", top: "19.5mm", width: "28mm", gap: "1.4mm" }}
       >
         {/* N° d'identification */}
         <div>
@@ -455,7 +456,7 @@ function StudentCardContent({
       {/* QR Code */}
       <div
         className="absolute flex flex-col items-center"
-        style={{ right: "4mm", top: "20.5mm", width: "20mm", gap: "0.8mm" }}
+        style={{ right: "4mm", top: "19.5mm", width: "20mm", gap: "0.6mm" }}
       >
         <div
           className="flex items-center justify-center"
@@ -476,7 +477,7 @@ function StudentCardContent({
         </div>
         <p
           className="text-center"
-          style={{ color: "#6b7280", fontSize: "1.5mm", maxWidth: "20mm", lineHeight: 1.25 }}
+          style={{ color: "#6b7280", fontSize: "1.4mm", maxWidth: "20mm", lineHeight: 1.2 }}
         >
           {t("scanInfo", locale)}
         </p>
@@ -484,8 +485,8 @@ function StudentCardContent({
 
       {/* Bandeau inférieur */}
       <div
-        className="absolute bottom-0 left-0 right-0 flex items-center justify-center px-[4mm]"
-        style={{ height: "10mm", backgroundColor: "#8b5cf6" }}
+        className="absolute bottom-0 left-0 right-0 flex items-center justify-center"
+        style={{ height: "10mm", backgroundColor: "#8b5cf6", paddingLeft: "4mm", paddingRight: "4mm" }}
       >
         <span
           className="uppercase text-center truncate"
