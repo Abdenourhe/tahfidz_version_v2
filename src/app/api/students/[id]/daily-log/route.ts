@@ -36,6 +36,81 @@ const LogSchema = z.object({
   memorizationProgressId: z.string().optional().nullable(),
 })
 
+async function findOrCreateMemorizationProgress(
+  studentId: string,
+  hifzData: { hifzFromSurahId?: number | null; hifzFromVerse?: number | null; hifzToSurahId?: number | null; hifzToVerse?: number | null },
+  userId: string,
+  role: string
+) {
+  try {
+    const surahId = hifzData.hifzToSurahId ?? hifzData.hifzFromSurahId
+    const fromVerse = hifzData.hifzFromVerse ?? 1
+    const toVerse = hifzData.hifzToVerse ?? hifzData.hifzFromVerse ?? 1
+    if (!surahId || !toVerse) return null
+
+    // Recherche d'une assignation existante non mémorisée pour cette sourate
+    const existing = await prisma.memorizationProgress.findFirst({
+      where: { studentId, surahId, status: { not: "MEMORIZED" } },
+      orderBy: { updatedAt: "desc" },
+    })
+    if (existing) return existing.id
+
+    const surah = await prisma.surah.findUnique({ where: { id: surahId } })
+    if (!surah) return null
+
+    const endVerse = Math.min(toVerse, surah.verseCount)
+    const startVerse = Math.min(fromVerse, endVerse)
+    const currentVerse = endVerse
+    const totalVerses = endVerse - startVerse + 1
+    const percentage = totalVerses > 0
+      ? Math.min(100, Math.max(0, Math.round(((currentVerse - startVerse + 1) / totalVerses) * 100)))
+      : 0
+    const status = percentage >= 100 ? "MEMORIZED" : percentage > 0 ? "IN_PROGRESS" : "ASSIGNED"
+
+    let teacherId: string | undefined
+    if (role === "TEACHER") {
+      const teacher = await prisma.teacher.findUnique({ where: { userId } })
+      if (teacher) teacherId = teacher.id
+    }
+
+    const targetDate = new Date()
+    targetDate.setDate(targetDate.getDate() + 30)
+
+    const created = await prisma.memorizationProgress.create({
+      data: {
+        studentId,
+        surahId,
+        startVerse,
+        endVerse,
+        versesFrom: startVerse,
+        versesTo: endVerse,
+        currentVerse,
+        completionPercentage: percentage,
+        status,
+        targetDate,
+        dueDate: targetDate,
+        teacherId,
+      },
+    })
+
+    await prisma.statusHistory.create({
+      data: {
+        progressId: created.id,
+        oldStatus: "ASSIGNED",
+        newStatus: status,
+        changedBy: userId,
+        versesMemorized: currentVerse - startVerse + 1,
+        note: `Assignation automatique depuis le carnet Hifz (versets ${startVerse}-${endVerse})`,
+      },
+    })
+
+    return created.id
+  } catch (e) {
+    console.error("[FIND OR CREATE MEMORIZATION PROGRESS]", e)
+    return null
+  }
+}
+
 async function updateMemorizationProgress(
   progressId: string,
   hifzData: { hifzFromSurahId?: number | null; hifzFromVerse?: number | null; hifzToSurahId?: number | null; hifzToVerse?: number | null },
@@ -200,6 +275,22 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ error: "Un log existe déjà pour cette date. Utilisez PATCH." }, { status: 409 })
     }
 
+    // Auto-crée ou récupère l'assignation de mémorisation liée au Hifz
+    let linkedProgressId = data.memorizationProgressId ?? null
+    if (!linkedProgressId && (data.hifzFromSurahId || data.hifzToSurahId)) {
+      linkedProgressId = await findOrCreateMemorizationProgress(
+        id,
+        {
+          hifzFromSurahId: data.hifzFromSurahId,
+          hifzFromVerse: data.hifzFromVerse,
+          hifzToSurahId: data.hifzToSurahId,
+          hifzToVerse: data.hifzToVerse,
+        },
+        session.user.id,
+        session.user.role
+      )
+    }
+
     const log = await prisma.dailyProgressLog.create({
       data: {
         studentId: id,
@@ -228,13 +319,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         teacherObservation: data.teacherObservation ?? null,
         parentObservation: data.parentObservation ?? null,
         globalScore: data.globalScore ?? null,
-        memorizationProgressId: data.memorizationProgressId ?? null,
+        memorizationProgressId: linkedProgressId,
       },
     })
 
     // Synchronize memorization progress with Hifz entry
-    if (data.memorizationProgressId && (data.hifzFromSurahId || data.hifzToSurahId)) {
-      await updateMemorizationProgress(data.memorizationProgressId, {
+    if (linkedProgressId && (data.hifzFromSurahId || data.hifzToSurahId)) {
+      await updateMemorizationProgress(linkedProgressId, {
         hifzFromSurahId: data.hifzFromSurahId,
         hifzFromVerse: data.hifzFromVerse,
         hifzToSurahId: data.hifzToSurahId,
@@ -364,16 +455,31 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
           globalScore: data.globalScore ?? existing.globalScore,
         }
 
+    // Auto-crée ou récupère l'assignation de mémorisation liée au Hifz
+    let linkedProgressId = data.memorizationProgressId ?? existing.memorizationProgressId
+    if (!linkedProgressId && (data.hifzFromSurahId || data.hifzToSurahId)) {
+      linkedProgressId = await findOrCreateMemorizationProgress(
+        id,
+        {
+          hifzFromSurahId: data.hifzFromSurahId,
+          hifzFromVerse: data.hifzFromVerse,
+          hifzToSurahId: data.hifzToSurahId,
+          hifzToVerse: data.hifzToVerse,
+        },
+        session.user.id,
+        session.user.role
+      )
+    }
+
     const log = await prisma.dailyProgressLog.update({
       where: { id: existing.id },
       data: {
         ...updateData,
-        memorizationProgressId: data.memorizationProgressId ?? existing.memorizationProgressId,
+        memorizationProgressId: linkedProgressId,
       },
     })
 
     // Synchronize memorization progress with Hifz entry
-    const linkedProgressId = data.memorizationProgressId ?? existing.memorizationProgressId
     if (linkedProgressId && (data.hifzFromSurahId || data.hifzToSurahId)) {
       await updateMemorizationProgress(linkedProgressId, {
         hifzFromSurahId: data.hifzFromSurahId,

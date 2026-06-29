@@ -464,12 +464,6 @@ export default function TeacherMemorizationPanel() {
           <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t("myAssignments")}</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t("subtitle")}</p>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center justify-center gap-1.5 px-4 py-2 bg-tahfidz-green text-white rounded-lg text-sm font-medium hover:bg-tahfidz-green-dark transition"
-        >
-          <Plus size={16} /> {t("assignSurah")}
-        </button>
       </div>
 
       {/* Statistiques dashboard */}
