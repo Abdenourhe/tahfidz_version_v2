@@ -350,7 +350,7 @@ function StudentCardContent({
       {/* Colonne d'informations */}
       <div
         className="absolute flex flex-col"
-        style={{ left: "29mm", top: "19.5mm", width: "28mm", gap: "1.4mm" }}
+        style={{ left: "29mm", top: "19.5mm", width: "28mm", gap: "1.8mm" }}
       >
         {/* N° d'identification */}
         <div>
@@ -485,12 +485,12 @@ function StudentCardContent({
 
       {/* Bandeau inférieur */}
       <div
-        className="absolute bottom-0 left-0 right-0 flex items-center justify-center"
-        style={{ height: "10mm", backgroundColor: "#8b5cf6", paddingLeft: "4mm", paddingRight: "4mm" }}
+        className="absolute left-0 right-0 flex items-center justify-center"
+        style={{ bottom: 0, height: "7mm", backgroundColor: "#8b5cf6", paddingLeft: "4mm", paddingRight: "4mm" }}
       >
         <span
           className="uppercase text-center truncate"
-          style={{ color: "#ffffff", fontWeight: 900, fontSize: "4.5mm", letterSpacing: "0.12em", lineHeight: 1 }}
+          style={{ color: "#ffffff", fontWeight: 900, fontSize: "3.6mm", letterSpacing: "0.12em", lineHeight: 1 }}
         >
           {school.name}
         </span>
@@ -499,7 +499,7 @@ function StudentCardContent({
       {/* Date d'émission */}
       <div
         className="absolute"
-        style={{ right: "4mm", bottom: "2.2mm", color: "#ffffff", fontWeight: 500, fontSize: "1.6mm", lineHeight: 1 }}
+        style={{ right: "4mm", bottom: "1.6mm", color: "#ffffff", fontWeight: 500, fontSize: "1.6mm", lineHeight: 1 }}
       >
         {displayDate}
       </div>
