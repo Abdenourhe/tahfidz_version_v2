@@ -5,8 +5,7 @@ import { useState, useEffect, useCallback, useMemo } from "react"
 import Link from "next/link"
 import {
   BookOpen, Loader2, Trash2, Search,
-  CheckCircle2, User, Eye,
-  ChevronDown, ChevronUp, LayoutGrid, List, Calendar,
+  CheckCircle2, User, Eye, ChevronDown, ChevronUp,
 } from "lucide-react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { cn, formatDate } from "@/lib/utils"
@@ -43,7 +42,7 @@ interface Assignment {
   startedAt: string
 }
 
-interface StudentCard {
+interface StudentRow {
   id: string
   fullName: string
   fullNameAr?: string | null
@@ -56,6 +55,7 @@ interface StudentCard {
 }
 
 const STATUS_ORDER = ["ASSIGNED", "IN_PROGRESS", "NEEDS_REVISION", "MEMORIZED"]
+const MAX_VISIBLE_BADGES = 3
 
 function statusColor(status: string) {
   const map: Record<string, string> = {
@@ -76,6 +76,18 @@ function isOverdue(a: Assignment) {
   return dueDay < today && a.status !== "MEMORIZED"
 }
 
+function globalStatus(row: StudentRow) {
+  if (row.overdueCount > 0) return { label: "overdue", color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300" }
+  if (row.inProgressCount > 0) return { label: "inProgress", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" }
+  if (row.memorizedCount > 0) return { label: "memorized", color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" }
+  return { label: "assigned", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" }
+}
+
+function surahBadge(a: Assignment, L: string) {
+  const name = L === "ar" ? a.surah.nameAr : a.surah.nameFr
+  if (a.status === "MEMORIZED") return `${name} ✓`
+  return `${name} ${a.currentVerse}/${a.surah.verseCount}`
+}
 
 export default function TeacherMemorizationPanel() {
   const { locale } = useLanguage()
@@ -87,7 +99,6 @@ export default function TeacherMemorizationPanel() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [selectedGroupId, setSelectedGroupId] = useState<string>("ALL")
-  const [viewMode, setViewMode] = useState<"cards" | "table">("cards")
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set())
   const [dailyLogModal, setDailyLogModal] = useState<{ open: boolean; assignment: Assignment | null } | null>(null)
 
@@ -111,8 +122,8 @@ export default function TeacherMemorizationPanel() {
 
   useEffect(() => { load() }, [load])
 
-  const studentsById = useMemo(() => {
-    const map = new Map<string, StudentCard>()
+  const rows = useMemo(() => {
+    const map = new Map<string, StudentRow>()
     for (const a of assignments) {
       const sid = a.student.id
       if (!map.has(sid)) {
@@ -128,61 +139,59 @@ export default function TeacherMemorizationPanel() {
           averageProgress: 0,
         })
       }
-      const card = map.get(sid)!
-      card.assignments.push(a)
-      if (a.status === "MEMORIZED") card.memorizedCount++
-      else if (a.status === "IN_PROGRESS") card.inProgressCount++
-      if (isOverdue(a)) card.overdueCount++
+      const row = map.get(sid)!
+      row.assignments.push(a)
+      if (a.status === "MEMORIZED") row.memorizedCount++
+      else if (a.status === "IN_PROGRESS") row.inProgressCount++
+      if (isOverdue(a)) row.overdueCount++
     }
-    for (const card of map.values()) {
-      const total = card.assignments.length
-      card.averageProgress = total > 0
-        ? Math.round(card.assignments.reduce((sum, a) => sum + a.completionPercentage, 0) / total)
+    for (const row of map.values()) {
+      const total = row.assignments.length
+      row.averageProgress = total > 0
+        ? Math.round(row.assignments.reduce((sum, a) => sum + a.completionPercentage, 0) / total)
         : 0
-      card.assignments.sort((a, b) => STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status))
+      row.assignments.sort((a, b) => STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status))
     }
-    return map
+    return Array.from(map.values()).sort((a, b) => a.fullName.localeCompare(b.fullName))
   }, [assignments])
 
-  const allStudents = useMemo(() => Array.from(studentsById.values()), [studentsById])
-
-  const filteredStudents = useMemo(() => {
-    let result = allStudents
+  const filteredRows = useMemo(() => {
+    let result = rows
     if (selectedGroupId !== "ALL") {
-      result = result.filter((s) => s.group?.id === selectedGroupId)
+      result = result.filter((r) => r.group?.id === selectedGroupId)
     }
     if (search.trim()) {
       const q = search.toLowerCase()
-      result = result.filter((s) =>
-        s.fullName.toLowerCase().includes(q) ||
-        s.fullNameAr?.toLowerCase().includes(q) ||
-        s.assignments.some((a) =>
+      result = result.filter((r) =>
+        r.fullName.toLowerCase().includes(q) ||
+        r.fullNameAr?.toLowerCase().includes(q) ||
+        r.assignments.some((a) =>
           a.surah.nameFr.toLowerCase().includes(q) ||
           a.surah.nameAr.includes(q)
         )
       )
     }
-    return result.sort((a, b) => a.fullName.localeCompare(b.fullName))
-  }, [allStudents, selectedGroupId, search])
+    return result
+  }, [rows, selectedGroupId, search])
 
   const groupStats = useMemo(() => {
-    const targetStudents = selectedGroupId === "ALL" ? allStudents : allStudents.filter((s) => s.group?.id === selectedGroupId)
-    const totalAssignments = targetStudents.reduce((sum, s) => sum + s.assignments.length, 0)
-    const inProgress = targetStudents.reduce((sum, s) => sum + s.inProgressCount, 0)
-    const memorized = targetStudents.reduce((sum, s) => sum + s.memorizedCount, 0)
-    const overdue = targetStudents.reduce((sum, s) => sum + s.overdueCount, 0)
+    const targetRows = selectedGroupId === "ALL" ? rows : rows.filter((r) => r.group?.id === selectedGroupId)
+    const totalAssignments = targetRows.reduce((sum, r) => sum + r.assignments.length, 0)
+    const inProgress = targetRows.reduce((sum, r) => sum + r.inProgressCount, 0)
+    const memorized = targetRows.reduce((sum, r) => sum + r.memorizedCount, 0)
+    const overdue = targetRows.reduce((sum, r) => sum + r.overdueCount, 0)
     const avgProgress = totalAssignments > 0
-      ? Math.round(targetStudents.reduce((sum, s) => sum + s.assignments.reduce((s2, a) => s2 + a.completionPercentage, 0), 0) / totalAssignments)
+      ? Math.round(targetRows.reduce((sum, r) => sum + r.assignments.reduce((s2, a) => s2 + a.completionPercentage, 0), 0) / totalAssignments)
       : 0
     return {
-      studentsCount: targetStudents.length,
+      studentsCount: targetRows.length,
       totalAssignments,
       inProgress,
       memorized,
       overdue,
       avgProgress,
     }
-  }, [allStudents, selectedGroupId])
+  }, [rows, selectedGroupId])
 
   const toggleExpand = (id: string) => {
     setExpandedStudents((prev) => {
@@ -243,48 +252,24 @@ export default function TeacherMemorizationPanel() {
             <option key={g.id} value={g.id}>{g.name}</option>
           ))}
         </select>
-        <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-          <button
-            onClick={() => setViewMode("cards")}
-            className={cn(
-              "px-3 py-2 text-sm flex items-center gap-1.5 transition",
-              viewMode === "cards" ? "bg-tahfidz-green text-white" : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300"
-            )}
-          >
-            <LayoutGrid size={14} /> {t("cards") || "Cartes"}
-          </button>
-          <button
-            onClick={() => setViewMode("table")}
-            className={cn(
-              "px-3 py-2 text-sm flex items-center gap-1.5 transition",
-              viewMode === "table" ? "bg-tahfidz-green text-white" : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300"
-            )}
-          >
-            <List size={14} /> {t("table") || "Tableau"}
-          </button>
-        </div>
       </div>
 
-      {/* Statistiques du groupe */}
+      {/* Statistiques */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          { key: "students", label: t("students") || "Élèves", value: groupStats.studentsCount, color: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200" },
-          { key: "assignments", label: t("assignments") || "Assignations", value: groupStats.totalAssignments, color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" },
-          { key: "inProgress", label: t("status_IN_PROGRESS") || "En cours", value: groupStats.inProgress, color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" },
-          { key: "memorized", label: t("status_MEMORIZED") || "Mémorisées", value: groupStats.memorized, color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" },
-          { key: "overdue", label: t("overdue") || "En retard", value: groupStats.overdue, color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300" },
-        ].map((stat) => (
-          <div
-            key={stat.key}
-            className="text-start rounded-xl border border-gray-100 dark:border-gray-800 p-3 bg-white dark:bg-gray-900"
-          >
-            <p className={cn("text-lg font-bold", stat.color.split(" ")[1])}>{stat.value}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</p>
+          { label: t("students") || "Élèves", value: groupStats.studentsCount },
+          { label: t("assignments") || "Assignations", value: groupStats.totalAssignments },
+          { label: t("status_IN_PROGRESS") || "En cours", value: groupStats.inProgress },
+          { label: t("status_MEMORIZED") || "Mémorisées", value: groupStats.memorized },
+          { label: t("overdue") || "En retard", value: groupStats.overdue },
+        ].map((s, i) => (
+          <div key={i} className="rounded-xl border border-gray-100 dark:border-gray-800 p-3 bg-white dark:bg-gray-900">
+            <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{s.value}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{s.label}</p>
           </div>
         ))}
       </div>
 
-      {/* Barre de progression moyenne */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4">
         <div className="flex items-center justify-between mb-2">
           <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{t("averageProgress") || "Progression moyenne du groupe"}</p>
@@ -295,223 +280,185 @@ export default function TeacherMemorizationPanel() {
         </div>
       </div>
 
-      {/* Vue cartes */}
-      {viewMode === "cards" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filteredStudents.length === 0 ? (
-            <div className="col-span-full p-12 text-center text-gray-400 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800">
-              <BookOpen size={32} className="mx-auto mb-3 opacity-30" />
-              <p>{t("noStudents") || "Aucun élève trouvé"}</p>
-            </div>
-          ) : (
-            filteredStudents.map((s) => (
-              <div
-                key={s.id}
-                className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden hover:border-tahfidz-green/50 transition"
-              >
-                <div className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-full gradient-tahfidz flex items-center justify-center text-white font-bold text-sm">
-                        {(L === "ar" && s.fullNameAr ? s.fullNameAr : s.fullName).charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <Link
-                          href={`/teacher/students/${s.id}`}
-                          className="font-semibold text-gray-900 dark:text-gray-100 hover:text-tahfidz-green transition"
-                        >
-                          {L === "ar" && s.fullNameAr ? s.fullNameAr : s.fullName}
-                        </Link>
-                        <p className="text-xs text-gray-500">{s.group?.name || t("noGroup") || "Sans groupe"}</p>
-                      </div>
-                    </div>
-                    <div className="text-end">
-                      <p className="text-lg font-bold text-tahfidz-green">{s.averageProgress}%</p>
-                      <p className="text-[10px] text-gray-400">{t("average") || "moyenne"}</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex items-center gap-2 text-xs">
-                    <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
-                      {s.inProgressCount} {t("inProgress") || "en cours"}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-                      {s.memorizedCount} {t("memorized") || "mémorisées"}
-                    </span>
-                    {s.overdueCount > 0 && (
-                      <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
-                        {s.overdueCount} {t("overdue") || "en retard"}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="mt-4 space-y-2">
-                    {s.assignments.slice(0, expandedStudents.has(s.id) ? undefined : 2).map((a) => (
-                      <div
-                        key={a.id}
-                        className="flex items-center justify-between p-2.5 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+      {/* Tableau */}
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+        {filteredRows.length === 0 ? (
+          <div className="p-12 text-center text-gray-400">
+            <BookOpen size={32} className="mx-auto mb-3 opacity-30" />
+            <p>{t("noStudents") || "Aucun élève trouvé"}</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                <tr>
+                  <th className="px-4 py-3 text-left font-medium w-10"></th>
+                  <th className="px-4 py-3 text-left font-medium">{t("student")}</th>
+                  <th className="px-4 py-3 text-left font-medium">{t("group")}</th>
+                  <th className="px-4 py-3 text-left font-medium">{t("activeSurahs") || "Sourates actives"}</th>
+                  <th className="px-4 py-3 text-left font-medium">{t("progress")}</th>
+                  <th className="px-4 py-3 text-left font-medium">{t("status")}</th>
+                  <th className="px-4 py-3 text-right font-medium">{t("actions")}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {filteredRows.map((row) => {
+                  const visible = row.assignments.slice(0, MAX_VISIBLE_BADGES)
+                  const hiddenCount = row.assignments.length - MAX_VISIBLE_BADGES
+                  const expanded = expandedStudents.has(row.id)
+                  const status = globalStatus(row)
+                  return (
+                    <>
+                      <tr
+                        key={row.id}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition cursor-pointer"
+                        onClick={() => row.assignments.length > MAX_VISIBLE_BADGES && toggleExpand(row.id)}
                       >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <BookOpen size={14} className="text-tahfidz-green flex-shrink-0" />
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                              {L === "ar" ? a.surah.nameAr : a.surah.nameFr}
-                            </p>
-                            <p className="text-[10px] text-gray-500 truncate">
-                              {a.currentVerse} / {a.surah.verseCount} {t("verses") || "versets"}
-                              {a.dueDate && ` · ${isOverdue(a) ? t("overdue") + " · " : ""}${formatDate(a.dueDate, L)}`}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                          <div className="w-16 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                            <div className="h-full bg-tahfidz-green rounded-full" style={{ width: `${a.completionPercentage}%` }} />
-                          </div>
-                          <span className="text-[10px] text-gray-500 w-7 text-end">{a.completionPercentage}%</span>
-                          {a.status !== "MEMORIZED" && (
+                        <td className="px-4 py-3">
+                          {row.assignments.length > MAX_VISIBLE_BADGES && (
                             <button
-                              onClick={() => setDailyLogModal({ open: true, assignment: a })}
-                              title={t("fillInDailyLog") || "Remplir dans le carnet"}
-                              className="p-1 rounded text-gray-400 hover:text-emerald-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                              onClick={(e) => { e.stopPropagation(); toggleExpand(row.id) }}
+                              className="p-0.5 rounded text-gray-400 hover:text-tahfidz-green hover:bg-gray-100 dark:hover:bg-gray-700 transition"
                             >
-                              <BookOpen size={14} />
+                              {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                             </button>
                           )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {s.assignments.length > 2 && (
-                    <button
-                      onClick={() => toggleExpand(s.id)}
-                      className="mt-3 text-xs text-tahfidz-green hover:text-tahfidz-green-dark font-medium flex items-center gap-1"
-                    >
-                      {expandedStudents.has(s.id) ? (
-                        <><ChevronUp size={14} /> {t("seeLess") || "Voir moins"}</>
-                      ) : (
-                        <><ChevronDown size={14} /> {t("seeMore") || "Voir plus"} ({s.assignments.length - 2})</>
-                      )}
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-
-      {/* Vue tableau */}
-      {viewMode === "table" && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-          {filteredStudents.length === 0 ? (
-            <div className="p-12 text-center text-gray-400">
-              <BookOpen size={32} className="mx-auto mb-3 opacity-30" />
-              <p>{t("noStudents") || "Aucun élève trouvé"}</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[800px]">
-                <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-medium">{t("student")}</th>
-                    <th className="px-4 py-3 text-left font-medium">{t("group")}</th>
-                    <th className="px-4 py-3 text-left font-medium">{t("surah")}</th>
-                    <th className="px-4 py-3 text-left font-medium">{t("verses")}</th>
-                    <th className="px-4 py-3 text-left font-medium">{t("progress")}</th>
-                    <th className="px-4 py-3 text-left font-medium">{t("status")}</th>
-                    <th className="px-4 py-3 text-right font-medium">{t("actions")}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {filteredStudents.flatMap((s) =>
-                    s.assignments.map((a) => (
-                      <tr key={`${s.id}-${a.id}`} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+                        </td>
                         <td className="px-4 py-3">
                           <Link
-                            href={`/teacher/students/${s.id}`}
+                            href={`/teacher/students/${row.id}`}
+                            onClick={(e) => e.stopPropagation()}
                             className="font-medium text-gray-900 dark:text-gray-100 hover:text-tahfidz-green transition flex items-center gap-1.5"
                           >
                             <User size={14} className="text-gray-400" />
-                            {L === "ar" && s.fullNameAr ? s.fullNameAr : s.fullName}
+                            {L === "ar" && row.fullNameAr ? row.fullNameAr : row.fullName}
                           </Link>
                         </td>
-                        <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{s.group?.name || "—"}</td>
+                        <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{row.group?.name || "—"}</td>
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-1.5">
-                            <BookOpen size={13} className="text-tahfidz-green" />
-                            <span className="font-medium text-gray-800 dark:text-gray-200">
-                              {L === "ar" ? a.surah.nameAr : a.surah.nameFr}
-                            </span>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {visible.map((a) => (
+                              <span
+                                key={a.id}
+                                className={cn(
+                                  "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
+                                  a.status === "MEMORIZED"
+                                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                                    : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                                )}
+                              >
+                                <BookOpen size={10} />
+                                {surahBadge(a, L)}
+                              </span>
+                            ))}
+                            {hiddenCount > 0 && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-tahfidz-green/10 text-tahfidz-green dark:bg-tahfidz-green/20 dark:text-tahfidz-green-light">
+                                +{hiddenCount}
+                              </span>
+                            )}
                           </div>
-                          {a.dueDate && (
-                            <div className={cn("flex items-center gap-1 text-xs mt-0.5", isOverdue(a) ? "text-red-500 font-medium" : "text-gray-400")}>
-                              <Calendar size={11} />
-                              {isOverdue(a) ? `${t("overdue")} · ` : ""}{formatDate(a.dueDate, L)}
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
-                          {a.versesFrom ?? 1}-{a.versesTo ?? a.surah.verseCount}
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <div className="w-24 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                              <div className="h-full bg-tahfidz-green rounded-full transition-all" style={{ width: `${a.completionPercentage}%` }} />
+                            <div className="w-20 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                              <div className="h-full bg-tahfidz-green rounded-full" style={{ width: `${row.averageProgress}%` }} />
                             </div>
-                            <span className="text-xs text-gray-500 w-8">{a.completionPercentage}%</span>
+                            <span className="text-xs text-gray-500 w-8">{row.averageProgress}%</span>
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <span className={cn("inline-flex px-2 py-0.5 rounded-full text-xs font-medium", statusColor(a.status))}>
-                            {t(`status_${a.status}`) || a.status}
+                          <span className={cn("inline-flex px-2 py-0.5 rounded-full text-xs font-medium", status.color)}>
+                            {t(`status_${status.label}`) || status.label}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex items-center justify-end gap-1">
                             <Link
-                              href={`/teacher/students/${s.id}`}
+                              href={`/teacher/students/${row.id}`}
+                              onClick={(e) => e.stopPropagation()}
                               title={t("viewProfile")}
                               className="p-1.5 rounded-lg text-gray-400 hover:text-tahfidz-green hover:bg-gray-100 dark:hover:bg-gray-800 transition"
                             >
                               <Eye size={16} />
                             </Link>
-                            {a.status !== "MEMORIZED" && (
-                              <>
-                                <Link
-                                  href={`/teacher/evaluation/new?studentId=${s.id}${a.id ? `&progressId=${a.id}` : ""}`}
-                                  title={t("evaluate")}
-                                  className="p-1.5 rounded-lg text-gray-400 hover:text-tahfidz-gold hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                                >
-                                  <CheckCircle2 size={16} />
-                                </Link>
-                                <button
-                                  onClick={() => setDailyLogModal({ open: true, assignment: a })}
-                                  title={t("fillInDailyLog") || "Remplir dans le carnet"}
-                                  className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                                >
-                                  <BookOpen size={16} />
-                                </button>
-                              </>
-                            )}
-                            <button
-                              onClick={() => handleDelete(a.id)}
-                              className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                              title={t("delete")}
-                            >
-                              <Trash2 size={16} />
-                            </button>
                           </div>
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
+
+                      {/* Ligne dépliée */}
+                      {expanded && (
+                        <tr className="bg-gray-50/50 dark:bg-gray-800/30">
+                          <td colSpan={7} className="px-4 py-3">
+                            <div className="pl-10 space-y-2">
+                              {row.assignments.map((a) => (
+                                <div
+                                  key={a.id}
+                                  className="flex items-center justify-between p-2.5 rounded-lg bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800"
+                                >
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <BookOpen size={14} className="text-tahfidz-green flex-shrink-0" />
+                                    <div className="min-w-0">
+                                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                                        {L === "ar" ? a.surah.nameAr : a.surah.nameFr}
+                                      </p>
+                                      <p className="text-[10px] text-gray-500">
+                                        {a.versesFrom ?? 1}-{a.versesTo ?? a.surah.verseCount} {t("verses") || "versets"}
+                                        {a.dueDate && ` · ${isOverdue(a) ? t("overdue") + " · " : ""}${formatDate(a.dueDate, L)}`}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-3 flex-shrink-0">
+                                    <div className="flex items-center gap-2 w-32">
+                                      <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                                        <div className="h-full bg-tahfidz-green rounded-full" style={{ width: `${a.completionPercentage}%` }} />
+                                      </div>
+                                      <span className="text-[10px] text-gray-500 w-7 text-end">{a.completionPercentage}%</span>
+                                    </div>
+                                    <span className={cn("inline-flex px-2 py-0.5 rounded-full text-xs font-medium", statusColor(a.status))}>
+                                      {t(`status_${a.status}`) || a.status}
+                                    </span>
+                                    <div className="flex items-center gap-0.5">
+                                      {a.status !== "MEMORIZED" && (
+                                        <>
+                                          <Link
+                                            href={`/teacher/evaluation/new?studentId=${row.id}${a.id ? `&progressId=${a.id}` : ""}`}
+                                            title={t("evaluate")}
+                                            className="p-1.5 rounded-lg text-gray-400 hover:text-tahfidz-gold hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                                          >
+                                            <CheckCircle2 size={15} />
+                                          </Link>
+                                          <button
+                                            onClick={() => setDailyLogModal({ open: true, assignment: a })}
+                                            title={t("fillInDailyLog") || "Remplir dans le carnet"}
+                                            className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                                          >
+                                            <BookOpen size={15} />
+                                          </button>
+                                        </>
+                                      )}
+                                      <button
+                                        onClick={() => handleDelete(a.id)}
+                                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                                        title={t("delete")}
+                                      >
+                                        <Trash2 size={15} />
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {/* Modal Hifz */}
       {dailyLogModal?.open && dailyLogModal.assignment && (
