@@ -324,9 +324,9 @@ function StudentCardContent({
         className="absolute overflow-hidden flex items-center justify-center"
         style={{
           left: "4mm",
-          top: "19.5mm",
+          top: "17mm",
           width: "23mm",
-          height: "24mm",
+          height: "26mm",
           backgroundColor: "#f3f4f6",
           border: "0.4mm solid #e5e7eb",
         }}
@@ -350,7 +350,7 @@ function StudentCardContent({
       {/* Colonne d'informations */}
       <div
         className="absolute flex flex-col"
-        style={{ left: "29mm", top: "19.5mm", width: "28mm", gap: "1.8mm" }}
+        style={{ left: "29mm", top: "17mm", width: "28mm", gap: "1.2mm" }}
       >
         {/* N° d'identification */}
         <div>
@@ -369,7 +369,7 @@ function StudentCardContent({
           </div>
           <div
             className="font-mono truncate"
-            style={{ color: "#111827", fontWeight: 600, fontSize: "2.8mm", padding: "1mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
+            style={{ color: "#111827", fontWeight: 600, fontSize: "2.6mm", padding: "0.8mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
           >
             {student.studentCode}
           </div>
@@ -392,14 +392,14 @@ function StudentCardContent({
           </div>
           <div
             className="truncate"
-            style={{ color: "#111827", fontWeight: 700, fontSize: "3.2mm", padding: "1mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
+            style={{ color: "#111827", fontWeight: 700, fontSize: "3mm", padding: "0.8mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
           >
             {student.fullName}
           </div>
           {student.fullNameAr && (
             <div
               className="arabic truncate"
-              style={{ color: "#6b7280", fontSize: "2.4mm", padding: "0.2mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
+              style={{ color: "#6b7280", fontSize: "2.2mm", padding: "0.2mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
             >
               {student.fullNameAr}
             </div>
@@ -424,7 +424,7 @@ function StudentCardContent({
             </div>
             <div
               className="truncate"
-              style={{ color: "#111827", fontWeight: 600, fontSize: "2.4mm", padding: "1mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
+              style={{ color: "#111827", fontWeight: 600, fontSize: "2.2mm", padding: "0.8mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
             >
               {student.group?.name || "—"}
             </div>
@@ -445,7 +445,7 @@ function StudentCardContent({
             </div>
             <div
               className="truncate"
-              style={{ color: "#111827", fontWeight: 600, fontSize: "2.4mm", padding: "1mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
+              style={{ color: "#111827", fontWeight: 600, fontSize: "2.2mm", padding: "0.8mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
             >
               {student.teacher?.user?.fullName || "—"}
             </div>
@@ -456,7 +456,7 @@ function StudentCardContent({
       {/* QR Code */}
       <div
         className="absolute flex flex-col items-center"
-        style={{ right: "4mm", top: "19.5mm", width: "20mm", gap: "0.6mm" }}
+        style={{ right: "4mm", top: "17mm", width: "20mm", gap: "0.6mm" }}
       >
         <div
           className="flex items-center justify-center"
@@ -486,11 +486,11 @@ function StudentCardContent({
       {/* Bandeau inférieur */}
       <div
         className="absolute left-0 right-0 flex items-center justify-center"
-        style={{ bottom: 0, height: "7mm", backgroundColor: "#8b5cf6", paddingLeft: "4mm", paddingRight: "4mm" }}
+        style={{ bottom: 0, height: "5.5mm", backgroundColor: "#8b5cf6", paddingLeft: "4mm", paddingRight: "4mm" }}
       >
         <span
           className="uppercase text-center truncate"
-          style={{ color: "#ffffff", fontWeight: 900, fontSize: "3.6mm", letterSpacing: "0.12em", lineHeight: 1 }}
+          style={{ color: "#ffffff", fontWeight: 900, fontSize: "3mm", letterSpacing: "0.12em", lineHeight: 1 }}
         >
           {school.name}
         </span>
@@ -499,7 +499,7 @@ function StudentCardContent({
       {/* Date d'émission */}
       <div
         className="absolute"
-        style={{ right: "4mm", bottom: "1.6mm", color: "#ffffff", fontWeight: 500, fontSize: "1.6mm", lineHeight: 1 }}
+        style={{ right: "4mm", bottom: "1.2mm", color: "#ffffff", fontWeight: 500, fontSize: "1.5mm", lineHeight: 1 }}
       >
         {displayDate}
       </div>
