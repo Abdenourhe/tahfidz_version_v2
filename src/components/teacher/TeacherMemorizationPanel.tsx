@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
 import {
   BookOpen, Loader2, Search,
-  User, Eye, NotebookPen,
+  User, Eye, NotebookPen, Trash2,
 } from "lucide-react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { cn } from "@/lib/utils"
@@ -191,6 +191,16 @@ export default function TeacherMemorizationPanel() {
     }
   }, [rows, selectedGroupId])
 
+  const handleDelete = async (id: string) => {
+    if (!confirm(t("confirmDelete") || "Supprimer ?")) return
+    const res = await fetch(`/api/memorization/assign?id=${id}`, { method: "DELETE" })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      alert(err.error || "Erreur")
+    }
+    load()
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center py-12">
@@ -340,6 +350,20 @@ export default function TeacherMemorizationPanel() {
                             className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
                           >
                             <NotebookPen size={16} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (row.assignments.length === 1) {
+                                handleDelete(row.assignments[0].id)
+                              } else {
+                                setSelectedStudentId(row.id)
+                              }
+                            }}
+                            title={t("delete")}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                          >
+                            <Trash2 size={16} />
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); setSelectedStudentId(row.id) }}
