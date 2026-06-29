@@ -112,7 +112,6 @@ export function TeacherStudentDrawer({ open, onClose, studentId, assignments: pr
   const [error, setError] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [logModal, setLogModal] = useState<Assignment | null>(null)
-  const [generalLogOpen, setGeneralLogOpen] = useState(false)
 
   useLockBodyScroll(open)
 
@@ -270,23 +269,6 @@ export function TeacherStudentDrawer({ open, onClose, studentId, assignments: pr
                         )}
                       </div>
                     </div>
-                  </div>
-
-                  {/* Actions globales */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={() => setGeneralLogOpen(true)}
-                      className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition"
-                    >
-                      <NotebookPen size={16} /> {t("dailyLog")}
-                    </button>
-                    <Link
-                      href={`/teacher/students/${studentId}`}
-                      onClick={onClose}
-                      className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-sm font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-                    >
-                      <ExternalLink size={16} /> {t("fullProfile")}
-                    </Link>
                   </div>
 
                   {/* Coordonnées */}
@@ -490,7 +472,7 @@ export function TeacherStudentDrawer({ open, onClose, studentId, assignments: pr
             </div>
 
             {/* Modal carnet */}
-            {(logModal || generalLogOpen) && (
+            {logModal && (
               <TeacherDailyLogModal
                 studentId={studentId}
                 studentName={L === "ar" && student?.user.fullNameAr ? student.user.fullNameAr : student?.user.fullName || ""}
@@ -498,7 +480,7 @@ export function TeacherStudentDrawer({ open, onClose, studentId, assignments: pr
                 defaultSection="HIFZ"
                 singleSection={true}
                 lastLog={{}}
-                memorizationAssignments={logModal?.id ? [{
+                memorizationAssignments={[{
                   id: logModal.id,
                   surahId: logModal.surah.id,
                   status: logModal.status,
@@ -507,12 +489,11 @@ export function TeacherStudentDrawer({ open, onClose, studentId, assignments: pr
                   startVerse: logModal.versesFrom ?? 1,
                   endVerse: logModal.versesTo ?? logModal.surah.verseCount,
                   surah: logModal.surah,
-                }] : undefined}
-                defaultMemorizationProgressId={logModal?.id || undefined}
-                onClose={() => { setLogModal(null); setGeneralLogOpen(false) }}
+                }]}
+                defaultMemorizationProgressId={logModal.id}
+                onClose={() => setLogModal(null)}
                 onSaved={() => {
                   setLogModal(null)
-                  setGeneralLogOpen(false)
                   onAssignmentsChange?.()
                   load()
                 }}
