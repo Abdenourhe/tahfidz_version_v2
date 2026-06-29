@@ -304,16 +304,13 @@ function StudentCardContent({
         <Image src={logoUrl} alt={school.name} width={64} height={64} className="object-contain w-full h-full" unoptimized />
       </div>
 
-      {/* Nom école + slug + ville */}
+      {/* Nom école + ville */}
       <div
         className="absolute"
         style={{ right: "4mm", top: "11mm", maxWidth: "46mm", textAlign: "right" }}
       >
         <p className="truncate" style={{ color: "#1f2937", fontWeight: 700, fontSize: "2.6mm", lineHeight: 1.2 }}>
           {school.name}
-        </p>
-        <p className="truncate" style={{ color: "#4b5563", fontSize: "1.8mm", lineHeight: 1.2, marginTop: "0.3mm" }}>
-          {school.slug}
         </p>
         {school.city && (
           <p className="truncate" style={{ color: "#6b7280", fontSize: "2mm", lineHeight: 1.2, marginTop: "0.3mm" }}>
@@ -353,7 +350,7 @@ function StudentCardContent({
       {/* Colonne d'informations */}
       <div
         className="absolute flex flex-col"
-        style={{ left: "29mm", top: "19mm", width: "32mm", gap: "1mm" }}
+        style={{ left: "29mm", top: "21mm", width: "32mm", gap: "1mm" }}
       >
         {/* N° d'identification */}
         <div>
@@ -460,7 +457,7 @@ function StudentCardContent({
       {/* QR Code */}
       <div
         className="absolute flex items-center justify-center"
-        style={{ right: "4mm", top: "21mm", width: "20mm", height: "20mm" }}
+        style={{ right: "4mm", top: "23mm", width: "20mm", height: "20mm" }}
       >
         <div
           className="flex items-center justify-center"
@@ -483,23 +480,27 @@ function StudentCardContent({
 
       {/* Bandeau inférieur */}
       <div
-        className="absolute left-0 right-0 flex items-center justify-center"
+        className="absolute left-0 right-0 flex items-center justify-between"
         style={{ bottom: 0, height: "5.5mm", backgroundColor: "#8b5cf6", paddingLeft: "4mm", paddingRight: "4mm" }}
       >
         <span
+          className="truncate"
+          style={{ color: "#ffffff", fontWeight: 600, fontSize: "1.8mm", lineHeight: 1, maxWidth: "25mm" }}
+        >
+          {school.slug}
+        </span>
+        <span
           className="uppercase text-center truncate"
-          style={{ color: "#ffffff", fontWeight: 900, fontSize: "3mm", letterSpacing: "0.12em", lineHeight: 1 }}
+          style={{ color: "#ffffff", fontWeight: 900, fontSize: "3mm", letterSpacing: "0.12em", lineHeight: 1, flex: 1, padding: "0 2mm" }}
         >
           {school.name}
         </span>
-      </div>
-
-      {/* Date d'émission */}
-      <div
-        className="absolute"
-        style={{ right: "4mm", bottom: "1.2mm", color: "#ffffff", fontWeight: 500, fontSize: "1.5mm", lineHeight: 1 }}
-      >
-        {displayDate}
+        <span
+          className="truncate"
+          style={{ color: "#ffffff", fontWeight: 500, fontSize: "1.5mm", lineHeight: 1 }}
+        >
+          {displayDate}
+        </span>
       </div>
     </div>
   )
