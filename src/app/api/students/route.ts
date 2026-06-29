@@ -243,6 +243,13 @@ export async function POST(req: NextRequest) {
             include: { user: true, group: true, teacher: { include: { user: true } } },
           })
 
+          // Synchronise le groupe principal dans la table de liaison
+          if (groupId) {
+            await tx.studentGroup.create({
+              data: { studentId: student.id, groupId },
+            })
+          }
+
           // Générer l'invitation parent
           const inviteCode = crypto.randomBytes(4).toString("hex").toUpperCase()
           const expiresAt = new Date()

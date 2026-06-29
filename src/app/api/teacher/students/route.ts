@@ -47,32 +47,44 @@ export async function GET(req: NextRequest) {
 
     const groupIds = groups.map((g) => g.id)
 
-    // Élèves filtrés
-    const where: Record<string, unknown> = {
-      user: { schoolId, isActive: true },
-      ...(teacherId ? { teacherId } : {}),
-      ...(groupId ? { groupId } : groupIds.length ? { groupId: { in: groupIds } } : {}),
-    }
-
-    const students = await prisma.student.findMany({
-      where,
+    // Élèves liés aux groupes accessibles via StudentGroup
+    const studentGroups = await prisma.studentGroup.findMany({
+      where: {
+        groupId: groupId ? groupId : { in: groupIds },
+        ...(teacherId ? { group: { teacherId } } : {}),
+        student: { user: { schoolId, isActive: true } },
+      },
       include: {
-        user: { select: { id: true, fullName: true, fullNameAr: true, avatar: true } },
-        group: { select: { id: true, name: true, nameAr: true } },
-        memorizationProgress: {
-          where: { status: { not: "MEMORIZED" } },
-          orderBy: { updatedAt: "desc" },
+        student: {
           include: {
-            surah: { select: { id: true, nameFr: true, nameAr: true, verseCount: true } },
+            user: { select: { id: true, fullName: true, fullNameAr: true, avatar: true } },
+            group: { select: { id: true, name: true, nameAr: true } },
+            memorizationProgress: {
+              where: { status: { not: "MEMORIZED" } },
+              orderBy: { updatedAt: "desc" },
+              include: {
+                surah: { select: { id: true, nameFr: true, nameAr: true, verseCount: true } },
+              },
+            },
+            dailyLogs: {
+              where: { date: dateObj },
+              take: 1,
+            },
           },
         },
-        dailyLogs: {
-          where: { date: dateObj },
-          take: 1,
-        },
       },
-      orderBy: { user: { fullName: "asc" } },
+      orderBy: { student: { user: { fullName: "asc" } } },
     })
+
+    // Évite les doublons quand un élève est dans plusieurs groupes accessibles
+    const seen = new Set<string>()
+    const students = studentGroups
+      .map((sg) => sg.student)
+      .filter((s): s is NonNullable<typeof s> => {
+        if (!s || seen.has(s.id)) return false
+        seen.add(s.id)
+        return true
+      })
 
     // Derniers logs non vides par section pour chaque élève (avant la date sélectionnée)
     const studentIds = students.map((s) => s.id)
@@ -126,7 +138,7 @@ export async function GET(req: NextRequest) {
     // Collecte les sourates référencées pour éviter un appel supplémentaire côté client
     const surahIds = new Set<number>()
     students.forEach((s) => {
-      s.memorizationProgress.forEach((p) => { if (p.surah?.id) surahIds.add(p.surah.id) })
+      s.memorizationProgress.forEach((p: { surah?: { id?: number } }) => { if (p.surah?.id) surahIds.add(p.surah.id) })
       const log = s.dailyLogs[0]
       if (log) {
         if (log.hifzFromSurahId) surahIds.add(log.hifzFromSurahId)

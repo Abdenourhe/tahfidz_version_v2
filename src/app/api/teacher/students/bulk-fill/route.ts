@@ -63,17 +63,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Groupe non accessible" }, { status: 403 })
     }
 
-    // Élèves filtrés
-    const where: Record<string, unknown> = {
-      user: { schoolId, isActive: true },
-      ...(teacherId ? { teacherId } : {}),
-      ...(groupId ? { groupId } : groupIds.length ? { groupId: { in: groupIds } } : {}),
-    }
-
-    const students = await prisma.student.findMany({
-      where,
-      select: { id: true, groupId: true, dailyLogs: { where: { date: dateObj }, take: 1 } },
+    // Élèves liés au groupe sélectionné via StudentGroup
+    const studentGroups = await prisma.studentGroup.findMany({
+      where: {
+        groupId,
+        ...(teacherId ? { group: { teacherId } } : {}),
+        student: { user: { schoolId, isActive: true } },
+      },
+      include: {
+        student: {
+          include: {
+            dailyLogs: { where: { date: dateObj }, take: 1 },
+          },
+        },
+      },
     })
+
+    const students = studentGroups.map((sg) => sg.student).filter((s): s is NonNullable<typeof s> => !!s)
 
     if (students.length === 0) {
       return NextResponse.json({ count: 0 })
@@ -106,14 +112,13 @@ export async function POST(req: NextRequest) {
     if (section === "ATTENDANCE" && value.attendanceStatus) {
       const status = value.attendanceStatus as "PRESENT" | "ABSENT" | "LATE" | "EXCUSED"
       students.forEach((student) => {
-        if (!student.groupId) return
         operations.push(
           prisma.attendance.upsert({
-            where: { studentId_date: { studentId: student.id, date: dateObj } },
+            where: { studentId_groupId_date: { studentId: student.id, groupId, date: dateObj } },
             update: { status, recordedBy: session.user.id },
             create: {
               studentId: student.id,
-              groupId: student.groupId,
+              groupId,
               date: dateObj,
               status,
               recordedBy: session.user.id,

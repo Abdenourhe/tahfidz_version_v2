@@ -302,6 +302,7 @@ model Student {
   user                 User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   group                Group?                 @relation(fields: [groupId], references: [id])
   teacher              Teacher?               @relation(fields: [teacherId], references: [id])
+  studentGroups        StudentGroup[]
   parentLinks          ParentStudentLink[]
   parentInvites        ParentInvite[]
   memorizationProgress MemorizationProgress[]
@@ -319,6 +320,21 @@ model Student {
   @@index([groupId])
   @@index([teacherId])
   @@map("students")
+}
+
+model StudentGroup {
+  id        String   @id @default(uuid())
+  studentId String
+  groupId   String
+  createdAt DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  group   Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, groupId])
+  @@index([groupId])
+  @@index([studentId])
+  @@map("student_groups")
 }
 
 model ParentStudentLink {
@@ -374,6 +390,7 @@ model Group {
   school         School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   teacher        Teacher             @relation(fields: [teacherId], references: [id])
   students       Student[]
+  studentGroups  StudentGroup[]
   exams          Exam[]
   announcements  GroupAnnouncement[]
   attendances    Attendance[]
@@ -652,9 +669,10 @@ model Attendance {
   group     Group?     @relation(fields: [groupId], references: [id])
   qrScanLog QrScanLog? @relation(fields: [qrScanLogId], references: [id])
 
-  @@unique([studentId, date])
+  @@unique([studentId, groupId, date])
   @@index([date])
   @@index([groupId])
+  @@index([studentId])
   @@index([qrScanLogId])
   @@map("attendances")
 }

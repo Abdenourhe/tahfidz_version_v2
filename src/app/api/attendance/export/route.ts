@@ -106,19 +106,37 @@ export async function GET(req: Request) {
     where: { id: { in: targetGroupIds } },
     include: {
       teacher: { include: { user: { select: { fullName: true } } } },
-      students: {
-        where: { user: { isActive: true } },
-        include: {
-          user: { select: { fullName: true, fullNameAr: true } },
-          attendances: {
-            where: { date: { gte: fromDate, lte: toDate } },
-            orderBy: { date: "asc" },
-          },
-        },
-        orderBy: { user: { fullName: "asc" } },
-      },
     },
     orderBy: { name: "asc" },
+  })
+
+  const studentGroups = await prisma.studentGroup.findMany({
+    where: {
+      groupId: { in: targetGroupIds },
+      student: { user: { isActive: true } },
+    },
+    include: {
+      student: {
+        include: {
+          user: { select: { fullName: true, fullNameAr: true } },
+        },
+      },
+    },
+  })
+
+  const studentsByGroup: Record<string, typeof studentGroups[number]["student"][]> = {}
+  studentGroups.forEach((sg) => {
+    if (!sg.student) return
+    if (!studentsByGroup[sg.groupId]) studentsByGroup[sg.groupId] = []
+    studentsByGroup[sg.groupId].push(sg.student)
+  })
+
+  const attendances = await prisma.attendance.findMany({
+    where: {
+      groupId: { in: targetGroupIds },
+      date: { gte: fromDate, lte: toDate },
+    },
+    orderBy: { date: "asc" },
   })
 
   // ── Construction du CSV ──────────────────────────────────────────────────
@@ -130,14 +148,19 @@ export async function GET(req: Request) {
     // En-tête métier
     lines.push(escCell(`${g.name} — ${g.teacher.user.fullName}`))
 
+    const groupStudents = studentsByGroup[g.id] || []
+    const groupAttendances = attendances.filter(a => a.groupId === g.id)
+
     // Dates présentes dans ce groupe
     const dateSet = new Set<string>()
-    g.students.forEach(s => {
-      s.attendances.forEach(a => dateSet.add(toDateKey(new Date(a.date))))
+    groupStudents.forEach(s => {
+      groupAttendances
+        .filter(a => a.studentId === s.id)
+        .forEach(a => dateSet.add(toDateKey(new Date(a.date))))
     })
     const dateList = Array.from(dateSet).sort()
 
-    if (dateList.length === 0 || g.students.length === 0) {
+    if (dateList.length === 0 || groupStudents.length === 0) {
       lines.push(escCell("Aucune donnée"))
       lines.push("")
       return
@@ -155,18 +178,20 @@ export async function GET(req: Request) {
     ]
     lines.push(headers.map(escCell).join(SEP))
 
-    g.students.forEach(s => {
+    groupStudents.forEach(s => {
       const dateMap = new Map<string, string>()
       let present = 0, absent = 0, late = 0, excused = 0
 
-      s.attendances.forEach(a => {
-        const key = toDateKey(new Date(a.date))
-        dateMap.set(key, STATUS_LABELS[a.status]?.[locale] ?? a.status)
-        if (a.status === "PRESENT") present++
-        else if (a.status === "ABSENT") absent++
-        else if (a.status === "LATE") late++
-        else if (a.status === "EXCUSED") excused++
-      })
+      groupAttendances
+        .filter(a => a.studentId === s.id)
+        .forEach(a => {
+          const key = toDateKey(new Date(a.date))
+          dateMap.set(key, STATUS_LABELS[a.status]?.[locale] ?? a.status)
+          if (a.status === "PRESENT") present++
+          else if (a.status === "ABSENT") absent++
+          else if (a.status === "LATE") late++
+          else if (a.status === "EXCUSED") excused++
+        })
 
       const total = present + absent + late + excused
       const rate = total > 0 ? Math.round(((present + late) / total) * 100) : 0

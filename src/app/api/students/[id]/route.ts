@@ -174,6 +174,18 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         data: { groupId: newGroupId, teacherId: newGroup.teacherId },
       })
 
+      // Synchronise la table de liaison : retire l'ancien groupe principal, ajoute le nouveau
+      if (student.groupId && student.groupId !== newGroupId) {
+        await prisma.studentGroup.deleteMany({
+          where: { studentId: id, groupId: student.groupId },
+        })
+      }
+      await prisma.studentGroup.upsert({
+        where: { studentId_groupId: { studentId: id, groupId: newGroupId } },
+        update: {},
+        create: { studentId: id, groupId: newGroupId },
+      })
+
       await prisma.auditLog.create({
         data: {
           schoolId, userId: session.user.id, action: "TRANSFER_STUDENT",
@@ -281,6 +293,20 @@ export async function PATCH(req: NextRequest, { params }: Params) {
           include: { user: true, group: true, teacher: { include: { user: true } } },
         })
       }
+
+      // Synchronise le groupe principal avec la table de liaison
+      if (groupId !== undefined) {
+        if (groupId) {
+          await tx.studentGroup.upsert({
+            where: { studentId_groupId: { studentId: id, groupId } },
+            update: {},
+            create: { studentId: id, groupId },
+          })
+        }
+        // Note : si groupId est null, on ne supprime pas les liens existants
+        // pour préserver les groupes additionnels gérés ailleurs
+      }
+
       return updated
     })
 

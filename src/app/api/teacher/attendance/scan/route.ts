@@ -74,8 +74,16 @@ export async function POST(req: Request) {
     })
 
     // Créer ou remplacer la présence du jour (action réversible/modifiable)
+    // Détermine le groupe cible (QR scanné pour le groupe principal ou un groupe passé explicitement)
+    const studentGroups = await prisma.studentGroup.findMany({
+      where: { studentId: student.id },
+      select: { groupId: true },
+      take: 1,
+    })
+    const scanGroupId = studentGroups[0]?.groupId ?? student.groupId ?? null
+
     const attendance = await prisma.attendance.upsert({
-      where: { studentId_date: { studentId: student.id, date: today } },
+      where: { studentId_groupId_date: { studentId: student.id, groupId: scanGroupId, date: today } },
       update: {
         status: "PRESENT",
         method: "QR_SCAN",
@@ -85,7 +93,7 @@ export async function POST(req: Request) {
       },
       create: {
         studentId: student.id,
-        groupId: student.groupId,
+        groupId: scanGroupId,
         date: today,
         status: "PRESENT",
         method: "QR_SCAN",

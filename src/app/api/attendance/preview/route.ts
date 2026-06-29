@@ -77,26 +77,44 @@ export async function GET(req: Request) {
     targetGroupIds = [groupId]
   }
 
-  // ── Récupération des groupes avec élèves et présences ────────────────────
+  // ── Récupération des groupes ─────────────────────────────────────────────
   const groups = await prisma.group.findMany({
     where: { id: { in: targetGroupIds } },
     include: {
       teacher: { include: { user: { select: { fullName: true } } } },
-      students: {
-        where: { user: { isActive: true } },
-        include: {
-          user: { select: { id: true, fullName: true, fullNameAr: true } },
-          attendances: {
-            where: {
-              date: { gte: fromDate, lte: toDate },
-            },
-            orderBy: { date: "asc" },
-          },
-        },
-        orderBy: { user: { fullName: "asc" } },
-      },
     },
     orderBy: { name: "asc" },
+  })
+
+  // ── Récupération des élèves liés aux groupes via StudentGroup ──────────────
+  const studentGroups = await prisma.studentGroup.findMany({
+    where: {
+      groupId: { in: targetGroupIds },
+      student: { user: { isActive: true } },
+    },
+    include: {
+      student: {
+        include: {
+          user: { select: { id: true, fullName: true, fullNameAr: true } },
+        },
+      },
+    },
+  })
+
+  const studentsByGroup: Record<string, typeof studentGroups[number]["student"][]> = {}
+  studentGroups.forEach((sg) => {
+    if (!sg.student) return
+    if (!studentsByGroup[sg.groupId]) studentsByGroup[sg.groupId] = []
+    studentsByGroup[sg.groupId].push(sg.student)
+  })
+
+  // ── Récupération des présences pour ces groupes ────────────────────────────
+  const attendances = await prisma.attendance.findMany({
+    where: {
+      groupId: { in: targetGroupIds },
+      date: { gte: fromDate, lte: toDate },
+    },
+    orderBy: { date: "asc" },
   })
 
   // ── Construction de la liste complète des dates de la période ────────────
@@ -110,22 +128,27 @@ export async function GET(req: Request) {
 
   // ── Construction de la réponse ───────────────────────────────────────────
   const result = groups.map(g => {
-    const students = g.students.map(s => {
+    const groupStudents = studentsByGroup[g.id] || []
+    const groupAttendances = attendances.filter(a => a.groupId === g.id)
+
+    const students = groupStudents.map(s => {
       const dates: Record<string, string> = {}
       let present = 0
       let absent = 0
       let late = 0
       let excused = 0
 
-      s.attendances.forEach(a => {
-        const d = new Date(a.date)
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
-        dates[key] = a.status
-        if (a.status === "PRESENT") present++
-        else if (a.status === "ABSENT") absent++
-        else if (a.status === "LATE") late++
-        else if (a.status === "EXCUSED") excused++
-      })
+      groupAttendances
+        .filter(a => a.studentId === s.id)
+        .forEach(a => {
+          const d = new Date(a.date)
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+          dates[key] = a.status
+          if (a.status === "PRESENT") present++
+          else if (a.status === "ABSENT") absent++
+          else if (a.status === "LATE") late++
+          else if (a.status === "EXCUSED") excused++
+        })
 
       const total = present + absent + late + excused
       const rate = total > 0 ? Math.round(((present + late) / total) * 100) : 0

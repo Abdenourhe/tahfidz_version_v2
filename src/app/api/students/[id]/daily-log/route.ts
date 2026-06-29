@@ -342,17 +342,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         where: { id },
         select: { groupId: true },
       })
-      await prisma.attendance.upsert({
-        where: { studentId_date: { studentId: id, date: dateObj } },
-        update: { status, recordedBy: session.user.id },
-        create: {
-          studentId: id,
-          groupId: student?.groupId ?? null,
-          date: dateObj,
-          status,
-          recordedBy: session.user.id,
-        },
-      }).catch(() => {})
+      // Synchronise la présence pour le groupe principal de l'élève
+      const studentGroups = await prisma.studentGroup.findMany({
+        where: { studentId: id },
+        select: { groupId: true },
+        take: 1,
+      })
+      const primaryGroupId = studentGroups[0]?.groupId ?? student?.groupId ?? null
+      if (primaryGroupId) {
+        await prisma.attendance.upsert({
+          where: { studentId_groupId_date: { studentId: id, groupId: primaryGroupId, date: dateObj } },
+          update: { status, recordedBy: session.user.id },
+          create: {
+            studentId: id,
+            groupId: primaryGroupId,
+            date: dateObj,
+            status,
+            recordedBy: session.user.id,
+          },
+        }).catch(() => {})
+      }
     }
 
     // Notify parents
@@ -498,17 +507,26 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         where: { id },
         select: { groupId: true },
       })
-      await prisma.attendance.upsert({
-        where: { studentId_date: { studentId: id, date: dateObj } },
-        update: { status, recordedBy: session.user.id },
-        create: {
-          studentId: id,
-          groupId: student?.groupId ?? null,
-          date: dateObj,
-          status,
-          recordedBy: session.user.id,
-        },
-      }).catch(() => {})
+      // Synchronise la présence pour le groupe principal de l'élève
+      const studentGroups = await prisma.studentGroup.findMany({
+        where: { studentId: id },
+        select: { groupId: true },
+        take: 1,
+      })
+      const primaryGroupId = studentGroups[0]?.groupId ?? student?.groupId ?? null
+      if (primaryGroupId) {
+        await prisma.attendance.upsert({
+          where: { studentId_groupId_date: { studentId: id, groupId: primaryGroupId, date: dateObj } },
+          update: { status, recordedBy: session.user.id },
+          create: {
+            studentId: id,
+            groupId: primaryGroupId,
+            date: dateObj,
+            status,
+            recordedBy: session.user.id,
+          },
+        }).catch(() => {})
+      }
     }
 
     // Notify parents on teacher update

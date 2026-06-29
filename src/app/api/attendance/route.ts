@@ -84,27 +84,31 @@ export async function GET(req: Request) {
 
   // Stats per student if a group is queried
   if (groupId) {
-    const students = await prisma.student.findMany({
-      where: { groupId, user: { schoolId } },
-      include: { user: { select: { fullName: true } } },
+    const studentGroups = await prisma.studentGroup.findMany({
+      where: { groupId, student: { user: { schoolId } } },
+      include: { student: { include: { user: { select: { fullName: true } } } } },
     })
 
-    const stats = students.map(s => {
-      const studentAtt = attendances.filter(a => a.studentId === s.id)
-      const total   = studentAtt.length
-      const present = studentAtt.filter(a => a.status === "PRESENT").length
-      const late    = studentAtt.filter(a => a.status === "LATE").length
-      return {
-        studentId: s.id,
-        fullName:  s.user.fullName,
-        total,
-        present,
-        late,
-        absent:   studentAtt.filter(a => a.status === "ABSENT").length,
-        excused:  studentAtt.filter(a => a.status === "EXCUSED").length,
-        rate:     total > 0 ? Math.round(((present + late) / total) * 100) : 0,
-      }
-    })
+    const stats = studentGroups
+      .map(sg => {
+        const s = sg.student
+        if (!s) return null
+        const studentAtt = attendances.filter(a => a.studentId === s.id)
+        const total   = studentAtt.length
+        const present = studentAtt.filter(a => a.status === "PRESENT").length
+        const late    = studentAtt.filter(a => a.status === "LATE").length
+        return {
+          studentId: s.id,
+          fullName:  s.user.fullName,
+          total,
+          present,
+          late,
+          absent:   studentAtt.filter(a => a.status === "ABSENT").length,
+          excused:  studentAtt.filter(a => a.status === "EXCUSED").length,
+          rate:     total > 0 ? Math.round(((present + late) / total) * 100) : 0,
+        }
+      })
+      .filter((s): s is NonNullable<typeof s> => s !== null)
 
     return NextResponse.json({ attendances, stats })
   }
@@ -178,6 +182,18 @@ export async function POST(req: Request) {
     }
   }
 
+  // Verify that all students belong to the requested group
+  const recordStudentIds = records.map(r => r.studentId)
+  const groupStudentLinks = await prisma.studentGroup.findMany({
+    where: { groupId, studentId: { in: recordStudentIds } },
+    select: { studentId: true },
+  })
+  const allowedStudentIds = new Set(groupStudentLinks.map(sg => sg.studentId))
+  const invalidStudent = records.find(r => !allowedStudentIds.has(r.studentId))
+  if (invalidStudent) {
+    return NextResponse.json({ error: "Un ou plusieurs élèves ne font pas partie de ce groupe" }, { status: 403 })
+  }
+
   // Create or update each attendance record
   const upsertResults = []
   const errors: string[] = []
@@ -186,8 +202,9 @@ export async function POST(req: Request) {
     try {
       const result = await prisma.attendance.upsert({
         where: {
-          studentId_date: {
+          studentId_groupId_date: {
             studentId: record.studentId,
+            groupId,
             date:      attendanceDate,
           },
         },
