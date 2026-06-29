@@ -44,13 +44,13 @@ async function findOrCreateMemorizationProgress(
 ) {
   try {
     const surahId = hifzData.hifzToSurahId ?? hifzData.hifzFromSurahId
-    const fromVerse = hifzData.hifzFromVerse ?? 1
     const toVerse = hifzData.hifzToVerse ?? hifzData.hifzFromVerse ?? 1
     if (!surahId || !toVerse) return null
 
-    // Recherche d'une assignation existante non mémorisée pour cette sourate
+    // Recherche d'une assignation existante pour cette sourate (peu importe le statut)
+    // pour éviter les doublons et faire avancer la même progression
     const existing = await prisma.memorizationProgress.findFirst({
-      where: { studentId, surahId, status: { not: "MEMORIZED" } },
+      where: { studentId, surahId },
       orderBy: { updatedAt: "desc" },
     })
     if (existing) return existing.id
@@ -58,9 +58,11 @@ async function findOrCreateMemorizationProgress(
     const surah = await prisma.surah.findUnique({ where: { id: surahId } })
     if (!surah) return null
 
-    const endVerse = Math.min(toVerse, surah.verseCount)
-    const startVerse = Math.min(fromVerse, endVerse)
-    const currentVerse = endVerse
+    // Par défaut, l'assignation automatique couvre toute la sourate.
+    // Le Hifz du jour ne fait qu'avancer le currentVerse à l'intérieur.
+    const startVerse = 1
+    const endVerse = surah.verseCount
+    const currentVerse = Math.min(toVerse, endVerse)
     const totalVerses = endVerse - startVerse + 1
     const percentage = totalVerses > 0
       ? Math.min(100, Math.max(0, Math.round(((currentVerse - startVerse + 1) / totalVerses) * 100)))
@@ -100,7 +102,7 @@ async function findOrCreateMemorizationProgress(
         newStatus: status,
         changedBy: userId,
         versesMemorized: currentVerse - startVerse + 1,
-        note: `Assignation automatique depuis le carnet Hifz (versets ${startVerse}-${endVerse})`,
+        note: `Assignation automatique depuis le carnet Hifz (sourate ${surahId}, verset atteint ${currentVerse}/${endVerse})`,
       },
     })
 
