@@ -38,6 +38,17 @@ interface LastLogValues {
   globalScore?: number | null
 }
 
+interface MemorizationAssignment {
+  id: string
+  surahId: number
+  status: string
+  completionPercentage: number
+  currentVerse: number
+  startVerse: number
+  endVerse: number
+  surah: { id: number; nameFr: string; nameAr: string; verseCount: number }
+}
+
 interface Props {
   studentId: string
   studentName: string
@@ -45,6 +56,8 @@ interface Props {
   defaultSection?: LogSection
   singleSection?: boolean
   lastLog?: LastLogValues | null
+  memorizationAssignments?: MemorizationAssignment[]
+  defaultMemorizationProgressId?: string
   onClose: () => void
   onSaved?: () => void
 }
@@ -106,7 +119,7 @@ function Section({
   )
 }
 
-export function TeacherDailyLogModal({ studentId, studentName, date: initialDate, defaultSection, singleSection = false, lastLog, onClose, onSaved }: Props) {
+export function TeacherDailyLogModal({ studentId, studentName, date: initialDate, defaultSection, singleSection = false, lastLog, memorizationAssignments = [], defaultMemorizationProgressId, onClose, onSaved }: Props) {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
   const t = useT("teacherDailyLog")
@@ -125,6 +138,7 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
     talqinFromSurahId: "", talqinFromVerse: "", talqinToSurahId: "", talqinToVerse: "", talqinNote: "",
     courseBook: "", courseFromPage: "", courseToPage: "", courseNote: "",
     attendanceStatus: "PRESENT", teacherObservation: "", globalScore: "",
+    memorizationProgressId: "",
   })
   const [existingLogId, setExistingLogId] = useState<string | null>(null)
 
@@ -194,11 +208,40 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
           attendanceStatus: log?.attendanceStatus || lastLog?.attendanceStatus || "PRESENT",
           teacherObservation: log?.teacherObservation || lastLog?.teacherObservation || "",
           globalScore: log?.globalScore?.toString() || lastLog?.globalScore?.toString() || "",
+          memorizationProgressId: log?.memorizationProgressId?.toString() || defaultMemorizationProgressId || "",
         })
       })
-  }, [studentId, date, lastLog])
+  }, [studentId, date, lastLog, defaultMemorizationProgressId])
 
   const update = (field: string, value: string) => setForm((f) => ({ ...f, [field]: value }))
+
+  // Auto-sélectionne l'assignation de mémorisation selon la sourate choisie
+  useEffect(() => {
+    if (memorizationAssignments.length === 0) return
+
+    const selectedSurahId = form.hifzToSurahId || form.hifzFromSurahId
+    if (!selectedSurahId) return
+
+    const surahIdNum = Number(selectedSurahId)
+    const matching = memorizationAssignments.find((a) => a.surahId === surahIdNum)
+
+    if (matching) {
+      // Si aucune assignation n'est liée manuellement, on lie automatiquement
+      if (!form.memorizationProgressId) {
+        setForm((f) => ({ ...f, memorizationProgressId: matching.id }))
+      }
+      // Préremplit les versets si les champs sont vides
+      setForm((f) => ({
+        ...f,
+        hifzFromVerse: f.hifzFromVerse || matching.currentVerse.toString(),
+        hifzToVerse: f.hifzToVerse || matching.endVerse.toString(),
+      }))
+    } else if (form.memorizationProgressId && !memorizationAssignments.find((a) => a.id === form.memorizationProgressId)) {
+      // L'assignation liée ne correspond pas à la sourate sélectionnée
+      setForm((f) => ({ ...f, memorizationProgressId: "" }))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.hifzFromSurahId, form.hifzToSurahId, memorizationAssignments])
 
   const handleSave = async () => {
     setSaving(true)
@@ -215,6 +258,7 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
         addIf("hifzToSurahId", form.hifzToSurahId)
         addIf("hifzToVerse", form.hifzToVerse)
         if (form.hifzNote) body.hifzNote = form.hifzNote
+        if (form.memorizationProgressId) body.memorizationProgressId = form.memorizationProgressId
       }
 
       if (includeSection("MURAJA")) {
@@ -319,6 +363,23 @@ export function TeacherDailyLogModal({ studentId, studentName, date: initialDate
                     <SurahSelect surahs={surahs} locale={L} value={form.hifzToSurahId} onChange={(v) => update("hifzToSurahId", v)} label={t("toSurah")} />
                     <VerseInput value={form.hifzToVerse} onChange={(v) => update("hifzToVerse", v)} label={t("toVerse")} />
                   </div>
+                  {memorizationAssignments.length > 0 && (
+                    <div>
+                      <label className="block text-[11px] uppercase tracking-wider text-gray-500 mb-1">{t("linkedAssignment") || "Assignation liée"}</label>
+                      <select
+                        value={form.memorizationProgressId}
+                        onChange={(e) => update("memorizationProgressId", e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      >
+                        <option value="">{t("noAssignment") || "Aucune assignation"}</option>
+                        {memorizationAssignments.map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {L === "ar" ? a.surah.nameAr : a.surah.nameFr} ({a.startVerse}-{a.endVerse}) — {a.completionPercentage}%
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                   <textarea
                     value={form.hifzNote}
                     onChange={(e) => update("hifzNote", e.target.value)}

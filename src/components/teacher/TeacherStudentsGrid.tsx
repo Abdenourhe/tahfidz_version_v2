@@ -63,6 +63,17 @@ interface ActiveProgress {
   surah: Surah
 }
 
+interface MemorizationAssignment {
+  id: string
+  surahId: number
+  status: string
+  completionPercentage: number
+  currentVerse: number
+  startVerse: number
+  endVerse: number
+  surah: { id: number; nameFr: string; nameAr: string; verseCount: number }
+}
+
 interface StudentRow {
   id: string
   user: { id: string; fullName: string; fullNameAr: string | null; avatar: string | null }
@@ -75,6 +86,7 @@ interface StudentRow {
     course?: DailyLog
   }
   activeProgress: ActiveProgress | null
+  memorizationAssignments: MemorizationAssignment[]
   readyForEvaluation: boolean
 }
 
@@ -1005,6 +1017,7 @@ export function TeacherStudentsGrid({ initialGroups }: Props) {
           defaultSection={modal.section}
           singleSection={modal.section !== "FULL"}
           lastLog={lastLogForModal(modal.student, modal.section)}
+          memorizationAssignments={modal.student.memorizationAssignments}
           onClose={() => setModal({ open: false, student: null, section: "HIFZ" })}
           onSaved={loadData}
         />

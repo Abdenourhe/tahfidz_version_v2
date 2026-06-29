@@ -433,6 +433,7 @@ model MemorizationProgress {
   surah         Surah           @relation(fields: [surahId], references: [id])
   evaluation    Evaluation?
   statusHistory StatusHistory[]
+  dailyLogs     DailyProgressLog[]
 
   @@unique([studentId, surahId, startVerse, endVerse])
   @@index([studentId, status])
@@ -516,12 +517,16 @@ model DailyProgressLog {
   // Global
   globalScore Int?
 
+  // Lien vers l'assignation de mémorisation (Hifz)
+  memorizationProgressId String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  student   Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  createdBy User              @relation(fields: [createdById], references: [id], onDelete: Cascade)
-  comments  DailyLogComment[]
+  student                Student                @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdBy              User                   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  memorizationProgress   MemorizationProgress?  @relation(fields: [memorizationProgressId], references: [id], onDelete: SetNull)
+  comments               DailyLogComment[]
 
   @@unique([studentId, date])
   @@index([studentId, date])

@@ -11,6 +11,7 @@ import {
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { cn, formatDate } from "@/lib/utils"
 import { AvatarLightbox } from "@/components/AvatarLightbox"
+import { TeacherDailyLogModal } from "@/components/teacher/TeacherDailyLogModal"
 import { CourseDatePicker, displayLocalDate, dateToNoonIso, nextCourseDate } from "@/components/shared/CourseDatePicker"
 
 interface StudentOption {
@@ -79,6 +80,7 @@ export default function TeacherMemorizationPanel() {
   const [submitting, setSubmitting] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [dailyLogModal, setDailyLogModal] = useState<{ open: boolean; assignment: Assignment | null }>({ open: false, assignment: null })
 
   // Filtres tableau
   const [searchAssignment, setSearchAssignment] = useState("")
@@ -427,7 +429,9 @@ export default function TeacherMemorizationPanel() {
         a.surah.nameAr.includes(q)
       )
     }
-    if (statusFilter !== "ALL") {
+    if (statusFilter === "OVERDUE") {
+      filtered = filtered.filter(isOverdue)
+    } else if (statusFilter !== "ALL") {
       filtered = filtered.filter((a) => a.status === statusFilter)
     }
     return filtered.sort((a, b) => {
@@ -466,6 +470,29 @@ export default function TeacherMemorizationPanel() {
         >
           <Plus size={16} /> {t("assignSurah")}
         </button>
+      </div>
+
+      {/* Statistiques dashboard */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { key: "ALL", label: t("all"), count: assignments.length, color: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200" },
+          { key: "IN_PROGRESS", label: t("status_IN_PROGRESS"), count: statusCounts.IN_PROGRESS || 0, color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" },
+          { key: "NEEDS_REVISION", label: t("status_NEEDS_REVISION"), count: statusCounts.NEEDS_REVISION || 0, color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300" },
+          { key: "OVERDUE", label: t("overdue"), count: assignments.filter(isOverdue).length, color: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300" },
+        ].map((stat) => (
+          <button
+            key={stat.key}
+            onClick={() => setStatusFilter(stat.key)}
+            className={cn(
+              "text-start rounded-xl border p-3 transition",
+              statusFilter === stat.key ? "border-tahfidz-green ring-1 ring-tahfidz-green" : "border-gray-100 dark:border-gray-800 hover:border-tahfidz-green/50",
+              "bg-white dark:bg-gray-900"
+            )}
+          >
+            <p className={cn("text-lg font-bold", stat.color.split(" ")[1])}>{stat.count}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</p>
+          </button>
+        ))}
       </div>
 
       {/* Filtres tableau */}
@@ -589,6 +616,13 @@ export default function TeacherMemorizationPanel() {
                             <CheckCircle2 size={16} />
                           </Link>
                         )}
+                        <button
+                          onClick={() => setDailyLogModal({ open: true, assignment: a })}
+                          title={t("fillInDailyLog") || "Remplir dans le carnet"}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                        >
+                          <BookOpen size={16} />
+                        </button>
                         <button
                           onClick={() => handleDelete(a.id)}
                           className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
@@ -1133,6 +1167,35 @@ export default function TeacherMemorizationPanel() {
             </div>
           </div>
         </div>
+      )}
+
+      {dailyLogModal.open && dailyLogModal.assignment && (
+        <TeacherDailyLogModal
+          studentId={dailyLogModal.assignment.student.id}
+          studentName={L === "ar" && dailyLogModal.assignment.student.user.fullNameAr
+            ? dailyLogModal.assignment.student.user.fullNameAr
+            : dailyLogModal.assignment.student.user.fullName}
+          date={new Date().toISOString().split("T")[0]}
+          defaultSection="HIFZ"
+          singleSection={true}
+          lastLog={{}}
+          memorizationAssignments={[{
+            id: dailyLogModal.assignment.id,
+            surahId: dailyLogModal.assignment.surah.id,
+            status: dailyLogModal.assignment.status,
+            completionPercentage: dailyLogModal.assignment.completionPercentage,
+            currentVerse: dailyLogModal.assignment.currentVerse,
+            startVerse: dailyLogModal.assignment.versesFrom ?? 1,
+            endVerse: dailyLogModal.assignment.versesTo ?? dailyLogModal.assignment.surah.verseCount,
+            surah: dailyLogModal.assignment.surah,
+          }]}
+          defaultMemorizationProgressId={dailyLogModal.assignment.id}
+          onClose={() => setDailyLogModal({ open: false, assignment: null })}
+          onSaved={() => {
+            setDailyLogModal({ open: false, assignment: null })
+            load()
+          }}
+        />
       )}
     </div>
   )

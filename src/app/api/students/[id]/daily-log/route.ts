@@ -33,7 +33,69 @@ const LogSchema = z.object({
   teacherObservation: z.string().optional().nullable(),
   parentObservation: z.string().optional().nullable(),
   globalScore: z.number().optional().nullable(),
+  memorizationProgressId: z.string().optional().nullable(),
 })
+
+async function updateMemorizationProgress(
+  progressId: string,
+  hifzData: { hifzFromSurahId?: number | null; hifzFromVerse?: number | null; hifzToSurahId?: number | null; hifzToVerse?: number | null },
+  changedById: string
+) {
+  try {
+    const assignment = await prisma.memorizationProgress.findUnique({
+      where: { id: progressId },
+    })
+    if (!assignment) return
+
+    // Détermine la sourate et le verset de fin du Hifz
+    const hifzSurahId = hifzData.hifzToSurahId ?? hifzData.hifzFromSurahId
+    const hifzToVerse = hifzData.hifzToVerse ?? hifzData.hifzFromVerse
+
+    // Ne met à jour la progression que si le Hifz correspond à la sourate de l'assignation
+    if (hifzSurahId !== assignment.surahId || !hifzToVerse) return
+
+    const fromVerse = assignment.startVerse
+    const toVerse = assignment.endVerse
+    const newCurrentVerse = Math.max(assignment.currentVerse, Math.min(hifzToVerse, toVerse))
+    const totalVerses = toVerse - fromVerse + 1
+    const percentage = Math.min(100, Math.max(0, Math.round(((newCurrentVerse - fromVerse + 1) / totalVerses) * 100)))
+
+    let newStatus = assignment.status
+    if (percentage >= 100) {
+      newStatus = "MEMORIZED"
+    } else if (percentage > 0 && ["NOT_STARTED", "ASSIGNED"].includes(assignment.status)) {
+      newStatus = "IN_PROGRESS"
+    }
+
+    const hasChanged = newCurrentVerse !== assignment.currentVerse || newStatus !== assignment.status
+
+    await prisma.memorizationProgress.update({
+      where: { id: progressId },
+      data: {
+        currentVerse: newCurrentVerse,
+        completionPercentage: percentage,
+        status: newStatus,
+        lastRevisedAt: new Date(),
+        completedAt: percentage >= 100 ? assignment.completedAt ?? new Date() : assignment.completedAt,
+      },
+    })
+
+    if (hasChanged) {
+      await prisma.statusHistory.create({
+        data: {
+          progressId,
+          oldStatus: assignment.status,
+          newStatus,
+          changedBy: changedById,
+          versesMemorized: newCurrentVerse - fromVerse + 1,
+          note: `Mise à jour depuis le carnet Hifz (verset ${newCurrentVerse})`,
+        },
+      })
+    }
+  } catch (e) {
+    console.error("[UPDATE MEMORIZATION PROGRESS]", e)
+  }
+}
 
 async function canAccessStudent(session: any, studentId: string) {
   if (!session?.user) return false
@@ -85,6 +147,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         take: 7,
         include: {
           createdBy: { select: { fullName: true } },
+          memorizationProgress: { select: { id: true, surahId: true, status: true, completionPercentage: true } },
         },
       })
       return NextResponse.json({ logs })
@@ -95,6 +158,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         where: { studentId_date: { studentId: id, date: new Date(date + "T00:00:00Z") } },
         include: {
           createdBy: { select: { fullName: true } },
+          memorizationProgress: { select: { id: true, surahId: true, status: true, completionPercentage: true } },
         },
       })
       return NextResponse.json({ log })
@@ -164,8 +228,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         teacherObservation: data.teacherObservation ?? null,
         parentObservation: data.parentObservation ?? null,
         globalScore: data.globalScore ?? null,
+        memorizationProgressId: data.memorizationProgressId ?? null,
       },
     })
+
+    // Synchronize memorization progress with Hifz entry
+    if (data.memorizationProgressId && (data.hifzFromSurahId || data.hifzToSurahId)) {
+      await updateMemorizationProgress(data.memorizationProgressId, {
+        hifzFromSurahId: data.hifzFromSurahId,
+        hifzFromVerse: data.hifzFromVerse,
+        hifzToSurahId: data.hifzToSurahId,
+        hifzToVerse: data.hifzToVerse,
+      }, session.user.id)
+    }
 
     // Synchronize attendance table with daily log
     if (data.attendanceStatus && ["PRESENT", "ABSENT", "LATE", "EXCUSED"].includes(data.attendanceStatus)) {
@@ -291,8 +366,22 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     const log = await prisma.dailyProgressLog.update({
       where: { id: existing.id },
-      data: updateData,
+      data: {
+        ...updateData,
+        memorizationProgressId: data.memorizationProgressId ?? existing.memorizationProgressId,
+      },
     })
+
+    // Synchronize memorization progress with Hifz entry
+    const linkedProgressId = data.memorizationProgressId ?? existing.memorizationProgressId
+    if (linkedProgressId && (data.hifzFromSurahId || data.hifzToSurahId)) {
+      await updateMemorizationProgress(linkedProgressId, {
+        hifzFromSurahId: data.hifzFromSurahId,
+        hifzFromVerse: data.hifzFromVerse,
+        hifzToSurahId: data.hifzToSurahId,
+        hifzToVerse: data.hifzToVerse,
+      }, session.user.id)
+    }
 
     // Synchronize attendance table with daily log
     if (data.attendanceStatus && ["PRESENT", "ABSENT", "LATE", "EXCUSED"].includes(data.attendanceStatus)) {

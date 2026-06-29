@@ -62,7 +62,6 @@ export async function GET(req: NextRequest) {
         memorizationProgress: {
           where: { status: { not: "MEMORIZED" } },
           orderBy: { updatedAt: "desc" },
-          take: 1,
           include: {
             surah: { select: { id: true, nameFr: true, nameAr: true, verseCount: true } },
           },
@@ -119,6 +118,7 @@ export async function GET(req: NextRequest) {
         dailyLog: s.dailyLogs[0] ?? null,
         lastLogs: lastByStudent[s.id] || {},
         activeProgress,
+        memorizationAssignments: s.memorizationProgress,
         readyForEvaluation,
       }
     })
