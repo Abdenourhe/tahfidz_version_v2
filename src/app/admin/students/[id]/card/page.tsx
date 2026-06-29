@@ -6,7 +6,7 @@ import { useParams } from "next/navigation"
 import { QRCodeSVG } from "qrcode.react"
 import Image from "next/image"
 import { useLanguage } from "@/contexts/LanguageContext"
-import { ArrowLeft, Printer, RefreshCw, Loader2, AlertCircle, QrCode } from "lucide-react"
+import { ArrowLeft, Printer, RefreshCw, Loader2, AlertCircle } from "lucide-react"
 
 interface CardData {
   student: {
@@ -41,11 +41,14 @@ const TEXTS: Record<string, Record<string, string>> = {
   regenerateInfo:{ fr: "En cas de perte ou vol, régénérez le secret pour invalider l'ancienne carte.", en: "In case of loss or theft, regenerate the secret to invalidate the old card.", ar: "في حالة الفقدان أو السرقة، أعد إنشاء السر لإبطال البطاقة القديمة." },
   scanInfo:      { fr: "Scannez pour valider la présence", en: "Scan to validate attendance", ar: "امسح لتسجيل الحضور" },
   validToday:    { fr: "Valable aujourd'hui", en: "Valid today", ar: "صالح لهذا اليوم" },
-  studentCode:   { fr: "Code élève", en: "Student code", ar: "رمز الطالب" },
+  studentCode:   { fr: "N° d'identification", en: "Student ID", ar: "رقم التعريف" },
   group:         { fr: "Groupe", en: "Group", ar: "المجموعة" },
   teacher:       { fr: "Enseignant", en: "Teacher", ar: "المعلم" },
   loading:       { fr: "Chargement...", en: "Loading...", ar: "جاري التحميل..." },
   error:         { fr: "Erreur", en: "Error", ar: "خطأ" },
+  cardTitle:     { fr: "CARTE D'ÉTUDIANT", en: "STUDENT CARD", ar: "بطاقة الطالب" },
+  issuedOn:      { fr: "Émise le", en: "Issued on", ar: "تاريخ الإصدار" },
+  previewInfo:   { fr: "Format d'impression : 86 × 54 mm (taille carte de crédit)", en: "Print format: 86 × 54 mm (credit card size)", ar: "تنسيق الطباعة: 86 × 54 ملم (حجم بطاقة الائتمان)" },
 }
 
 function t(key: string, locale: string): string {
@@ -123,11 +126,12 @@ export default function StudentCardPage() {
 
   const { student, school, qrCodeUrl, generatedAt } = data
   const logoUrl = school.logo || "/images/logo_icon.png"
+  const displayDate = new Date(generatedAt).toLocaleDateString(L === "ar" ? "ar-SA" : L === "en" ? "en-US" : "fr-FR")
 
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-8" dir={dir}>
+    <div className="max-w-5xl mx-auto p-4 md:p-8" dir={dir}>
       {/* En-tête */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <Link
           href={`/admin/students/${id}`}
           className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-tahfidz-green transition"
@@ -154,113 +158,322 @@ export default function StudentCardPage() {
         </div>
       </div>
 
-      {/* Carte professionnelle */}
-      <div
-        id="student-qr-card"
-        className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden print:shadow-none print:border-2 print:border-tahfidz-green print:rounded-none print:w-[86mm] print:h-[54mm]"
-        style={{ aspectRatio: "1.586" }}
-      >
-        {/* Bandeau supérieur */}
-        <div className="bg-gradient-to-r from-tahfidz-green to-emerald-600 text-white px-6 py-4 md:px-8 md:py-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-xl p-1 flex items-center justify-center overflow-hidden">
-              <Image src={logoUrl} alt={school.name} width={40} height={40} className="object-contain" unoptimized />
-            </div>
-            <div>
-              <h1 className="text-lg md:text-xl font-bold leading-tight">{school.name}</h1>
-              <p className="text-[10px] md:text-xs text-white/80 uppercase tracking-wider">{school.slug}</p>
-            </div>
-          </div>
-          <div className="text-end">
-            <p className="text-[10px] md:text-xs text-white/80 uppercase tracking-wider">{t("studentCode", L)}</p>
-            <p className="font-mono font-bold text-sm md:text-base">{student.studentCode}</p>
-          </div>
-        </div>
+      <p className="text-center text-sm text-gray-500 mb-6 print:hidden">
+        {t("previewInfo", L)}
+      </p>
 
-        {/* Corps */}
-        <div className="px-6 py-5 md:px-8 md:py-6 flex items-center gap-4 md:gap-8">
-          {/* Photo */}
-          <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl border-2 border-gray-100 dark:border-gray-800 overflow-hidden bg-gray-50 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 shadow-inner">
-            {student.avatar ? (
-              <Image src={student.avatar} alt={student.fullName} width={128} height={128} className="w-full h-full object-cover" unoptimized />
-            ) : (
-              <span className="text-4xl md:text-5xl font-bold text-gray-300">{student.fullName.charAt(0)}</span>
-            )}
-          </div>
-
-          {/* Infos */}
-          <div className="flex-1 min-w-0">
-            <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white truncate">{student.fullName}</h2>
-            {student.fullNameAr && <p className="text-base md:text-lg text-gray-500 dark:text-gray-400 arabic mt-0.5">{student.fullNameAr}</p>}
-
-            <div className="grid grid-cols-2 gap-x-6 gap-y-2 mt-4">
-              <div>
-                <p className="text-[10px] md:text-xs text-gray-400 uppercase tracking-wider">{t("group", L)}</p>
-                <p className="font-semibold text-gray-800 dark:text-gray-200 text-sm md:text-base">{student.group?.name || "—"}</p>
-              </div>
-              <div>
-                <p className="text-[10px] md:text-xs text-gray-400 uppercase tracking-wider">{t("teacher", L)}</p>
-                <p className="font-semibold text-gray-800 dark:text-gray-200 text-sm md:text-base truncate">{student.teacher?.user?.fullName || "—"}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* QR Code avec logo */}
-          <div className="flex flex-col items-center gap-2 flex-shrink-0">
-            <div className="bg-white p-2 rounded-2xl border border-gray-200 shadow-sm">
-              <QRCodeSVG
-                value={qrCodeUrl}
-                size={140}
-                level="H"
-                includeMargin={true}
-                imageSettings={{
-                  src: logoUrl,
-                  height: 24,
-                  width: 24,
-                  excavate: true,
-                }}
-              />
-            </div>
-            <p className="text-[10px] text-gray-400 text-center max-w-[120px] leading-tight">{t("scanInfo", L)}</p>
+      {/* Conteneur centré pour la prévisualisation (échelle ×1.5 à l'écran) */}
+      <div className="flex justify-center print:block">
+        <div className="print:hidden" style={{ width: "129mm", height: "81mm" }}>
+          <div
+            style={{
+              width: "86mm",
+              height: "54mm",
+              transform: "scale(1.5)",
+              transformOrigin: "top center",
+            }}
+          >
+            <StudentCardContent
+              student={student}
+              school={school}
+              qrCodeUrl={qrCodeUrl}
+              displayDate={displayDate}
+              locale={L}
+              logoUrl={logoUrl}
+            />
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="bg-gray-50 dark:bg-gray-800/50 px-6 py-2 md:px-8 md:py-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between text-[10px] md:text-xs text-gray-500">
-          <span className="flex items-center gap-1.5">
-            <QrCode size={12} className="text-tahfidz-green" />
-            {t("validToday", L)}
-          </span>
-          <span>{new Date(generatedAt).toLocaleDateString(L === "ar" ? "ar-SA" : L === "en" ? "en-US" : "fr-FR")}</span>
+        {/* Version imprimable */}
+        <div className="hidden print:block">
+          <div id="student-qr-card" style={{ width: "86mm", height: "54mm" }}>
+            <StudentCardContent
+              student={student}
+              school={school}
+              qrCodeUrl={qrCodeUrl}
+              displayDate={displayDate}
+              locale={L}
+              logoUrl={logoUrl}
+            />
+          </div>
         </div>
       </div>
 
       {/* Note */}
-      <p className="mt-6 text-sm text-gray-500 print:hidden">
+      <p className="mt-6 text-sm text-gray-500 print:hidden text-center max-w-2xl mx-auto">
         💡 {t("regenerateInfo", L)}
       </p>
 
       {/* Styles d'impression */}
       <style jsx global>{`
         @media print {
+          @page {
+            size: 86mm 54mm;
+            margin: 0;
+          }
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
           body * {
-            visibility: hidden;
+            visibility: hidden !important;
           }
           #student-qr-card,
           #student-qr-card * {
-            visibility: visible;
+            visibility: visible !important;
           }
           #student-qr-card {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 86mm;
-            height: 54mm;
-            margin: 0;
-            box-shadow: none;
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 86mm !important;
+            height: 54mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+            border-radius: 0 !important;
+            overflow: hidden !important;
+            transform: none !important;
           }
         }
       `}</style>
+    </div>
+  )
+}
+
+function StudentCardContent({
+  student,
+  school,
+  qrCodeUrl,
+  displayDate,
+  locale,
+  logoUrl,
+}: {
+  student: CardData["student"]
+  school: CardData["school"]
+  qrCodeUrl: string
+  displayDate: string
+  locale: string
+  logoUrl: string
+}) {
+  return (
+    <div
+      className="relative bg-white text-slate-900 overflow-hidden"
+      style={{ width: "86mm", height: "54mm", fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
+    >
+      {/* Bandeau supérieur */}
+      <div
+        className="absolute top-0 left-0 right-0 flex items-center justify-center"
+        style={{ height: "10mm", backgroundColor: "#1e1b4b" }}
+      >
+        <span
+          className="text-white font-bold uppercase tracking-[0.22em]"
+          style={{ fontSize: "3.2mm", lineHeight: 1 }}
+        >
+          {t("cardTitle", locale)}
+        </span>
+      </div>
+
+      {/* Logo école */}
+      <div
+        className="absolute flex items-center justify-center bg-white rounded-full overflow-hidden shadow-sm"
+        style={{ left: "4mm", top: "11.5mm", width: "8mm", height: "8mm" }}
+      >
+        <Image src={logoUrl} alt={school.name} width={64} height={64} className="object-contain w-full h-full" unoptimized />
+      </div>
+
+      {/* Nom école + ville */}
+      <div
+        className="absolute text-right"
+        style={{ right: "4mm", top: "11.5mm", maxWidth: "46mm", textAlign: "right" }}
+      >
+        <p className="font-bold text-slate-800 truncate" style={{ fontSize: "2.6mm", lineHeight: 1.2 }}>
+          {school.name}
+        </p>
+        {school.city && (
+          <p className="text-slate-500 truncate" style={{ fontSize: "2mm", lineHeight: 1.2 }}>
+            {school.city}
+          </p>
+        )}
+      </div>
+
+      {/* Photo de l'étudiant */}
+      <div
+        className="absolute bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center"
+        style={{ left: "4mm", top: "20.5mm", width: "24mm", height: "30mm" }}
+      >
+        {student.avatar ? (
+          <Image
+            src={student.avatar}
+            alt={student.fullName}
+            width={128}
+            height={160}
+            className="w-full h-full object-cover"
+            unoptimized
+          />
+        ) : (
+          <span className="font-bold text-slate-300" style={{ fontSize: "10mm" }}>
+            {student.fullName.charAt(0)}
+          </span>
+        )}
+      </div>
+
+      {/* Colonne d'informations */}
+      <div
+        className="absolute flex flex-col"
+        style={{ left: "30mm", top: "20.5mm", width: "27mm", gap: "1.8mm" }}
+      >
+        {/* N° d'identification */}
+        <div>
+          <div
+            className="font-bold uppercase text-indigo-900"
+            style={{
+              backgroundColor: "#e0e7ff",
+              fontSize: "2mm",
+              letterSpacing: "0.08em",
+              padding: "0.8mm 1.5mm 0.6mm 1.5mm",
+              lineHeight: 1,
+            }}
+          >
+            {t("studentCode", locale)}
+          </div>
+          <div
+            className="font-semibold text-slate-800 font-mono truncate"
+            style={{ fontSize: "2.8mm", padding: "1mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
+          >
+            {student.studentCode}
+          </div>
+        </div>
+
+        {/* Nom */}
+        <div>
+          <div
+            className="font-bold uppercase text-indigo-900"
+            style={{
+              backgroundColor: "#e0e7ff",
+              fontSize: "2mm",
+              letterSpacing: "0.08em",
+              padding: "0.8mm 1.5mm 0.6mm 1.5mm",
+              lineHeight: 1,
+            }}
+          >
+            {locale === "ar" ? "الاسم" : "Nom"}
+          </div>
+          <div
+            className="font-bold text-slate-800 truncate"
+            style={{ fontSize: "3.2mm", padding: "1mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
+          >
+            {student.fullName}
+          </div>
+          {student.fullNameAr && (
+            <div
+              className="text-slate-500 arabic truncate"
+              style={{ fontSize: "2.4mm", padding: "0.2mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
+            >
+              {student.fullNameAr}
+            </div>
+          )}
+        </div>
+
+        {/* Groupe et Enseignant */}
+        <div className="flex gap-[1.5mm]">
+          <div className="min-w-0 flex-1">
+            <div
+              className="font-bold uppercase text-indigo-900"
+              style={{
+                backgroundColor: "#e0e7ff",
+                fontSize: "2mm",
+                letterSpacing: "0.08em",
+                padding: "0.8mm 1.5mm 0.6mm 1.5mm",
+                lineHeight: 1,
+              }}
+            >
+              {t("group", locale)}
+            </div>
+            <div
+              className="font-semibold text-slate-800 truncate"
+              style={{ fontSize: "2.4mm", padding: "1mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
+            >
+              {student.group?.name || "—"}
+            </div>
+          </div>
+          <div className="min-w-0 flex-1">
+            <div
+              className="font-bold uppercase text-indigo-900"
+              style={{
+                backgroundColor: "#e0e7ff",
+                fontSize: "2mm",
+                letterSpacing: "0.08em",
+                padding: "0.8mm 1.5mm 0.6mm 1.5mm",
+                lineHeight: 1,
+              }}
+            >
+              {t("teacher", locale)}
+            </div>
+            <div
+              className="font-semibold text-slate-800 truncate"
+              style={{ fontSize: "2.4mm", padding: "1mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
+            >
+              {student.teacher?.user?.fullName || "—"}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* QR Code */}
+      <div
+        className="absolute flex flex-col items-center"
+        style={{ right: "4mm", top: "20.5mm", width: "20mm", gap: "1mm" }}
+      >
+        <div
+          className="bg-white border border-slate-200 flex items-center justify-center"
+          style={{ width: "20mm", height: "20mm", padding: "1.5mm" }}
+        >
+          <QRCodeSVG
+            value={qrCodeUrl}
+            size={68}
+            level="H"
+            includeMargin={false}
+            imageSettings={{
+              src: logoUrl,
+              height: 14,
+              width: 14,
+              excavate: true,
+            }}
+          />
+        </div>
+        <p
+          className="text-slate-500 text-center leading-tight"
+          style={{ fontSize: "1.7mm", maxWidth: "20mm" }}
+        >
+          {t("scanInfo", locale)}
+        </p>
+      </div>
+
+      {/* Bandeau inférieur */}
+      <div
+        className="absolute bottom-0 left-0 right-0 flex items-center justify-center px-[4mm]"
+        style={{ height: "10mm", backgroundColor: "#c4b5fd" }}
+      >
+        <span
+          className="text-indigo-900 font-black uppercase text-center truncate"
+          style={{ fontSize: "4.5mm", letterSpacing: "0.12em", lineHeight: 1 }}
+        >
+          {school.name}
+        </span>
+      </div>
+
+      {/* Date d'émission */}
+      <div
+        className="absolute font-medium text-indigo-900"
+        style={{ right: "4mm", bottom: "2.2mm", fontSize: "1.7mm", lineHeight: 1 }}
+      >
+        {displayDate}
+      </div>
     </div>
   )
 }
