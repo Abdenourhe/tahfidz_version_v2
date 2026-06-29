@@ -304,7 +304,7 @@ function StudentCardContent({
         <Image src={logoUrl} alt={school.name} width={64} height={64} className="object-contain w-full h-full" unoptimized />
       </div>
 
-      {/* Nom école + ville */}
+      {/* Nom école + slug + ville */}
       <div
         className="absolute"
         style={{ right: "4mm", top: "11mm", maxWidth: "46mm", textAlign: "right" }}
@@ -312,8 +312,11 @@ function StudentCardContent({
         <p className="truncate" style={{ color: "#1f2937", fontWeight: 700, fontSize: "2.6mm", lineHeight: 1.2 }}>
           {school.name}
         </p>
+        <p className="truncate" style={{ color: "#4b5563", fontSize: "1.8mm", lineHeight: 1.2, marginTop: "0.3mm" }}>
+          {school.slug}
+        </p>
         {school.city && (
-          <p className="truncate" style={{ color: "#6b7280", fontSize: "2mm", lineHeight: 1.2 }}>
+          <p className="truncate" style={{ color: "#6b7280", fontSize: "2mm", lineHeight: 1.2, marginTop: "0.3mm" }}>
             {school.city}
           </p>
         )}
@@ -350,7 +353,7 @@ function StudentCardContent({
       {/* Colonne d'informations */}
       <div
         className="absolute flex flex-col"
-        style={{ left: "29mm", top: "17mm", width: "32mm", gap: "1mm" }}
+        style={{ left: "29mm", top: "19mm", width: "32mm", gap: "1mm" }}
       >
         {/* N° d'identification */}
         <div>
@@ -457,7 +460,7 @@ function StudentCardContent({
       {/* QR Code */}
       <div
         className="absolute flex items-center justify-center"
-        style={{ right: "4mm", top: "19mm", width: "20mm", height: "20mm" }}
+        style={{ right: "4mm", top: "21mm", width: "20mm", height: "20mm" }}
       >
         <div
           className="flex items-center justify-center"
