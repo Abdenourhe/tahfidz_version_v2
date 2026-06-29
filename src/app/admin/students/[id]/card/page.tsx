@@ -390,18 +390,19 @@ function StudentCardContent({
           >
             {locale === "ar" ? "الاسم" : "Nom"}
           </div>
-          <div
-            className="truncate"
-            style={{ color: "#111827", fontWeight: 700, fontSize: "3mm", padding: "0.5mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
-          >
-            {student.fullName}
-          </div>
-          {student.fullNameAr && (
+          {locale === "ar" ? (
             <div
               className="arabic truncate"
-              style={{ color: "#6b7280", fontSize: "2.2mm", padding: "0.2mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
+              style={{ color: "#111827", fontWeight: 700, fontSize: "3mm", padding: "0.5mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
             >
-              {student.fullNameAr}
+              {student.fullNameAr || student.fullName}
+            </div>
+          ) : (
+            <div
+              className="truncate"
+              style={{ color: "#111827", fontWeight: 700, fontSize: "3mm", padding: "0.5mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
+            >
+              {student.fullName}
             </div>
           )}
         </div>
@@ -455,8 +456,8 @@ function StudentCardContent({
 
       {/* QR Code */}
       <div
-        className="absolute flex flex-col items-center"
-        style={{ right: "4mm", top: "17mm", width: "20mm", gap: "0.6mm" }}
+        className="absolute flex items-center justify-center"
+        style={{ right: "4mm", top: "19mm", width: "20mm", height: "20mm" }}
       >
         <div
           className="flex items-center justify-center"
@@ -475,12 +476,6 @@ function StudentCardContent({
             }}
           />
         </div>
-        <p
-          className="text-center"
-          style={{ color: "#6b7280", fontSize: "1.4mm", maxWidth: "20mm", lineHeight: 1.2 }}
-        >
-          {t("scanInfo", locale)}
-        </p>
       </div>
 
       {/* Bandeau inférieur */}
