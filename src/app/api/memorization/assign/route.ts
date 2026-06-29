@@ -238,7 +238,12 @@ export async function GET() {
     const assignments = await prisma.memorizationProgress.findMany({
       where,
       include: {
-        student: { include: { user: { select: { fullName: true, fullNameAr: true } } } },
+        student: {
+          include: {
+            user: { select: { fullName: true, fullNameAr: true } },
+            group: { select: { id: true, name: true, nameAr: true } },
+          },
+        },
         surah: { select: { id: true, nameFr: true, nameAr: true, verseCount: true } },
         statusHistory: { orderBy: { changedAt: "desc" }, take: 1 },
       },
