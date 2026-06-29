@@ -1303,6 +1303,9 @@ export const translations = {
   // ─── teacherStudentDetailClient (components/teacher/TeacherStudentDetailClient.tsx) ─────────────────────────────────────────────
   teacherStudentDetailClient: {
     back:            { fr: "Retour", en: "Back", ar: "رجوع" },
+    title:           { fr: "Fiche élève", en: "Student card", ar: "بطاقة الطالب" },
+    fullProfile:     { fr: "Fiche complète", en: "Full profile", ar: "الملف الكامل" },
+    dueDate:         { fr: "Date butoir", en: "Due date", ar: "تاريخ الاستحقاق" },
     evaluateNow:     { fr: "Évaluer maintenant", en: "Evaluate now", ar: "تقييم الآن" },
     group:           { fr: "Groupe", en: "Group", ar: "المجموعة" },
     age:             { fr: "Âge", en: "Age", ar: "العمر" },

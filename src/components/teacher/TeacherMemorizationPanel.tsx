@@ -2,13 +2,13 @@
 // src/components/teacher/TeacherMemorizationPanel.tsx
 
 import { useState, useEffect, useCallback, useMemo } from "react"
-import Link from "next/link"
 import {
-  BookOpen, Loader2, Trash2, Search,
-  CheckCircle2, User, Eye, ChevronDown, ChevronUp,
+  BookOpen, Loader2, Search,
+  User, Eye, NotebookPen,
 } from "lucide-react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
-import { cn, formatDate } from "@/lib/utils"
+import { cn } from "@/lib/utils"
+import { TeacherStudentDrawer } from "@/components/teacher/TeacherStudentDrawer"
 import { TeacherDailyLogModal } from "@/components/teacher/TeacherDailyLogModal"
 
 interface Surah {
@@ -55,17 +55,6 @@ interface StudentRow {
 }
 
 const STATUS_ORDER = ["ASSIGNED", "IN_PROGRESS", "NEEDS_REVISION", "MEMORIZED"]
-const MAX_VISIBLE_BADGES = 3
-
-function statusColor(status: string) {
-  const map: Record<string, string> = {
-    ASSIGNED: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
-    IN_PROGRESS: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
-    MEMORIZED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
-    NEEDS_REVISION: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
-  }
-  return map[status] || "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
-}
 
 function isOverdue(a: Assignment) {
   if (!a.dueDate) return false
@@ -83,6 +72,12 @@ function globalStatus(row: StudentRow) {
   return { label: "assigned", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" }
 }
 
+function visibleSurahBadges(assignments: Assignment[]) {
+  const visible = assignments.slice(0, 3)
+  const hiddenCount = assignments.length - 3
+  return { visible, hiddenCount }
+}
+
 function surahBadge(a: Assignment, L: string) {
   const name = L === "ar" ? a.surah.nameAr : a.surah.nameFr
   if (a.status === "MEMORIZED") return `${name} ✓`
@@ -95,24 +90,19 @@ export default function TeacherMemorizationPanel() {
   const t = useT("teacherMemorizationPanel")
 
   const [assignments, setAssignments] = useState<Assignment[]>([])
-  const [groups, setGroups] = useState<Group[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [selectedGroupId, setSelectedGroupId] = useState<string>("ALL")
-  const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set())
-  const [dailyLogModal, setDailyLogModal] = useState<{ open: boolean; assignment: Assignment | null } | null>(null)
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
+  const [dailyLogStudent, setDailyLogStudent] = useState<{ id: string; fullName: string; fullNameAr?: string | null } | null>(null)
+
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [aRes, gRes] = await Promise.all([
-        fetch("/api/memorization/assign"),
-        fetch("/api/groups?mine=true"),
-      ])
-      const aData = await aRes.json()
-      const gData = await gRes.json()
-      setAssignments(aData.assignments || [])
-      setGroups(gData.groups || [])
+      const res = await fetch("/api/memorization/assign")
+      const data = await res.json()
+      setAssignments(data.assignments || [])
     } catch (e) {
       console.error(e)
     } finally {
@@ -174,6 +164,14 @@ export default function TeacherMemorizationPanel() {
     return result
   }, [rows, selectedGroupId, search])
 
+  const availableGroups = useMemo(() => {
+    const map = new Map<string, Group>()
+    for (const row of rows) {
+      if (row.group) map.set(row.group.id, row.group)
+    }
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name))
+  }, [rows])
+
   const groupStats = useMemo(() => {
     const targetRows = selectedGroupId === "ALL" ? rows : rows.filter((r) => r.group?.id === selectedGroupId)
     const totalAssignments = targetRows.reduce((sum, r) => sum + r.assignments.length, 0)
@@ -192,25 +190,6 @@ export default function TeacherMemorizationPanel() {
       avgProgress,
     }
   }, [rows, selectedGroupId])
-
-  const toggleExpand = (id: string) => {
-    setExpandedStudents((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
-  const handleDelete = async (id: string) => {
-    if (!confirm(t("confirmDelete") || "Supprimer ?")) return
-    const res = await fetch(`/api/memorization/assign?id=${id}`, { method: "DELETE" })
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}))
-      alert(err.error || "Erreur")
-    }
-    load()
-  }
 
   if (loading) {
     return (
@@ -248,7 +227,7 @@ export default function TeacherMemorizationPanel() {
           className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green"
         >
           <option value="ALL">{t("allGroups") || "Tous les groupes"}</option>
-          {groups.map((g) => (
+          {availableGroups.map((g) => (
             <option key={g.id} value={g.id}>{g.name}</option>
           ))}
         </select>
@@ -292,7 +271,6 @@ export default function TeacherMemorizationPanel() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium w-10"></th>
                   <th className="px-4 py-3 text-left font-medium">{t("student")}</th>
                   <th className="px-4 py-3 text-left font-medium">{t("group")}</th>
                   <th className="px-4 py-3 text-left font-medium">{t("activeSurahs") || "Sourates actives"}</th>
@@ -303,155 +281,76 @@ export default function TeacherMemorizationPanel() {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {filteredRows.map((row) => {
-                  const visible = row.assignments.slice(0, MAX_VISIBLE_BADGES)
-                  const hiddenCount = row.assignments.length - MAX_VISIBLE_BADGES
-                  const expanded = expandedStudents.has(row.id)
+                  const { visible, hiddenCount } = visibleSurahBadges(row.assignments)
                   const status = globalStatus(row)
                   return (
-                    <>
-                      <tr
-                        key={row.id}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition cursor-pointer"
-                        onClick={() => row.assignments.length > MAX_VISIBLE_BADGES && toggleExpand(row.id)}
-                      >
-                        <td className="px-4 py-3">
-                          {row.assignments.length > MAX_VISIBLE_BADGES && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); toggleExpand(row.id) }}
-                              className="p-0.5 rounded text-gray-400 hover:text-tahfidz-green hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                    <tr
+                      key={row.id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition cursor-pointer"
+                      onClick={() => setSelectedStudentId(row.id)}
+                    >
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+                          <User size={14} className="text-gray-400" />
+                          {L === "ar" && row.fullNameAr ? row.fullNameAr : row.fullName}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{row.group?.name || "—"}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {visible.map((a) => (
+                            <span
+                              key={a.id}
+                              className={cn(
+                                "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
+                                a.status === "MEMORIZED"
+                                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                                  : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                              )}
                             >
-                              {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                            </button>
+                              <BookOpen size={10} />
+                              {surahBadge(a, L)}
+                            </span>
+                          ))}
+                          {hiddenCount > 0 && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-tahfidz-green/10 text-tahfidz-green dark:bg-tahfidz-green/20 dark:text-tahfidz-green-light">
+                              +{hiddenCount}
+                            </span>
                           )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <Link
-                            href={`/teacher/students/${row.id}`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="font-medium text-gray-900 dark:text-gray-100 hover:text-tahfidz-green transition flex items-center gap-1.5"
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-20 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div className="h-full bg-tahfidz-green rounded-full" style={{ width: `${row.averageProgress}%` }} />
+                          </div>
+                          <span className="text-xs text-gray-500 w-8">{row.averageProgress}%</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={cn("inline-flex px-2 py-0.5 rounded-full text-xs font-medium", status.color)}>
+                          {t(`status_${status.label}`) || status.label}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setDailyLogStudent({ id: row.id, fullName: row.fullName, fullNameAr: row.fullNameAr }) }}
+                            title={t("fillInDailyLog") || "Remplir le carnet"}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
                           >
-                            <User size={14} className="text-gray-400" />
-                            {L === "ar" && row.fullNameAr ? row.fullNameAr : row.fullName}
-                          </Link>
-                        </td>
-                        <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{row.group?.name || "—"}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            {visible.map((a) => (
-                              <span
-                                key={a.id}
-                                className={cn(
-                                  "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
-                                  a.status === "MEMORIZED"
-                                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
-                                    : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                                )}
-                              >
-                                <BookOpen size={10} />
-                                {surahBadge(a, L)}
-                              </span>
-                            ))}
-                            {hiddenCount > 0 && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-tahfidz-green/10 text-tahfidz-green dark:bg-tahfidz-green/20 dark:text-tahfidz-green-light">
-                                +{hiddenCount}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <div className="w-20 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                              <div className="h-full bg-tahfidz-green rounded-full" style={{ width: `${row.averageProgress}%` }} />
-                            </div>
-                            <span className="text-xs text-gray-500 w-8">{row.averageProgress}%</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={cn("inline-flex px-2 py-0.5 rounded-full text-xs font-medium", status.color)}>
-                            {t(`status_${status.label}`) || status.label}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Link
-                              href={`/teacher/students/${row.id}`}
-                              onClick={(e) => e.stopPropagation()}
-                              title={t("viewProfile")}
-                              className="p-1.5 rounded-lg text-gray-400 hover:text-tahfidz-green hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                            >
-                              <Eye size={16} />
-                            </Link>
-                          </div>
-                        </td>
-                      </tr>
-
-                      {/* Ligne dépliée */}
-                      {expanded && (
-                        <tr className="bg-gray-50/50 dark:bg-gray-800/30">
-                          <td colSpan={7} className="px-4 py-3">
-                            <div className="pl-10 space-y-2">
-                              {row.assignments.map((a) => (
-                                <div
-                                  key={a.id}
-                                  className="flex items-center justify-between p-2.5 rounded-lg bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800"
-                                >
-                                  <div className="flex items-center gap-3 min-w-0">
-                                    <BookOpen size={14} className="text-tahfidz-green flex-shrink-0" />
-                                    <div className="min-w-0">
-                                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                                        {L === "ar" ? a.surah.nameAr : a.surah.nameFr}
-                                      </p>
-                                      <p className="text-[10px] text-gray-500">
-                                        {a.versesFrom ?? 1}-{a.versesTo ?? a.surah.verseCount} {t("verses") || "versets"}
-                                        {a.dueDate && ` · ${isOverdue(a) ? t("overdue") + " · " : ""}${formatDate(a.dueDate, L)}`}
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-3 flex-shrink-0">
-                                    <div className="flex items-center gap-2 w-32">
-                                      <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                                        <div className="h-full bg-tahfidz-green rounded-full" style={{ width: `${a.completionPercentage}%` }} />
-                                      </div>
-                                      <span className="text-[10px] text-gray-500 w-7 text-end">{a.completionPercentage}%</span>
-                                    </div>
-                                    <span className={cn("inline-flex px-2 py-0.5 rounded-full text-xs font-medium", statusColor(a.status))}>
-                                      {t(`status_${a.status}`) || a.status}
-                                    </span>
-                                    <div className="flex items-center gap-0.5">
-                                      {a.status !== "MEMORIZED" && (
-                                        <>
-                                          <Link
-                                            href={`/teacher/evaluation/new?studentId=${row.id}${a.id ? `&progressId=${a.id}` : ""}`}
-                                            title={t("evaluate")}
-                                            className="p-1.5 rounded-lg text-gray-400 hover:text-tahfidz-gold hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                                          >
-                                            <CheckCircle2 size={15} />
-                                          </Link>
-                                          <button
-                                            onClick={() => setDailyLogModal({ open: true, assignment: a })}
-                                            title={t("fillInDailyLog") || "Remplir dans le carnet"}
-                                            className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                                          >
-                                            <BookOpen size={15} />
-                                          </button>
-                                        </>
-                                      )}
-                                      <button
-                                        onClick={() => handleDelete(a.id)}
-                                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                                        title={t("delete")}
-                                      >
-                                        <Trash2 size={15} />
-                                      </button>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </>
+                            <NotebookPen size={16} />
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setSelectedStudentId(row.id) }}
+                            title={t("viewProfile")}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-tahfidz-green hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                          >
+                            <Eye size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
                   )
                 })}
               </tbody>
@@ -460,31 +359,29 @@ export default function TeacherMemorizationPanel() {
         )}
       </div>
 
-      {/* Modal Hifz */}
-      {dailyLogModal?.open && dailyLogModal.assignment && (
+      {/* Drawer fiche élève */}
+      {selectedStudentId && (
+        <TeacherStudentDrawer
+          open={!!selectedStudentId}
+          onClose={() => setSelectedStudentId(null)}
+          studentId={selectedStudentId}
+          assignments={assignments.filter((a) => a.student.id === selectedStudentId)}
+          onAssignmentsChange={load}
+        />
+      )}
+
+      {/* Modal carnet rapide */}
+      {dailyLogStudent && (
         <TeacherDailyLogModal
-          studentId={dailyLogModal.assignment.student.id}
-          studentName={L === "ar" && dailyLogModal.assignment.student.user.fullNameAr
-            ? dailyLogModal.assignment.student.user.fullNameAr
-            : dailyLogModal.assignment.student.user.fullName}
+          studentId={dailyLogStudent.id}
+          studentName={L === "ar" && dailyLogStudent.fullNameAr ? dailyLogStudent.fullNameAr : dailyLogStudent.fullName}
           date={new Date().toISOString().split("T")[0]}
           defaultSection="HIFZ"
           singleSection={true}
           lastLog={{}}
-          memorizationAssignments={[{
-            id: dailyLogModal.assignment.id,
-            surahId: dailyLogModal.assignment.surah.id,
-            status: dailyLogModal.assignment.status,
-            completionPercentage: dailyLogModal.assignment.completionPercentage,
-            currentVerse: dailyLogModal.assignment.currentVerse,
-            startVerse: dailyLogModal.assignment.versesFrom ?? 1,
-            endVerse: dailyLogModal.assignment.versesTo ?? dailyLogModal.assignment.surah.verseCount,
-            surah: dailyLogModal.assignment.surah,
-          }]}
-          defaultMemorizationProgressId={dailyLogModal.assignment.id}
-          onClose={() => setDailyLogModal(null)}
+          onClose={() => setDailyLogStudent(null)}
           onSaved={() => {
-            setDailyLogModal(null)
+            setDailyLogStudent(null)
             load()
           }}
         />

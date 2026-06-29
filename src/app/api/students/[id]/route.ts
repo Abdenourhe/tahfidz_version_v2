@@ -50,6 +50,16 @@ export async function GET(req: NextRequest, { params }: Params) {
           where: { isVerified: true },
         },
         _count: { select: { memorizedSurahs: true } },
+        memorizationProgress: {
+          include: {
+            surah: true,
+            evaluation: { select: { finalScore: true, decision: true } },
+            statusHistory: { orderBy: { changedAt: "desc" }, take: 2 },
+          },
+          orderBy: { updatedAt: "desc" },
+        },
+        attendances: { orderBy: { date: "desc" }, take: 14, select: { date: true, status: true } },
+        studentBadges: { include: { badge: { select: { icon: true, name: true, rarity: true } } }, orderBy: { earnedAt: "desc" } },
       },
     })
 
