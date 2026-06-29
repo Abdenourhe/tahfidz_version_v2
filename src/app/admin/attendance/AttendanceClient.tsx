@@ -253,24 +253,34 @@ export default function AttendanceClient({ school }: Props) {
 
   const resetMsgs = () => { setError(null); setSuccess(null) }
 
-  // ── Stats globales ───────────────────────────────────────────────────────
+  const getGroupDateList = useCallback((group: GroupPreview) => {
+    if (!preview) return []
+    if (!showOnlyCourseDays) return preview.dateList
+    return preview.dateList.filter(d => isCourseDay(d, group.schedule))
+  }, [preview, showOnlyCourseDays])
+
+  // ── Stats globales (recalculées selon le filtre "Jours de cours") ────────
   const globalStats = useMemo(() => {
     if (!preview) return null
     let present = 0, absent = 0, late = 0, excused = 0
     let totalStudents = 0
     preview.groups.forEach(g => {
+      const groupDates = getGroupDateList(g)
       g.students.forEach(s => {
-        present += s.stats.present
-        absent += s.stats.absent
-        late += s.stats.late
-        excused += s.stats.excused
+        groupDates.forEach(d => {
+          const status = s.dates[d]
+          if (status === "PRESENT") present++
+          else if (status === "ABSENT") absent++
+          else if (status === "LATE") late++
+          else if (status === "EXCUSED") excused++
+        })
         totalStudents++
       })
     })
     const total = present + absent + late + excused
     const rate = total > 0 ? Math.round(((present + late) / total) * 100) : 0
     return { present, absent, late, excused, total, rate, totalStudents }
-  }, [preview])
+  }, [preview, getGroupDateList])
 
   // ── Export Excel (client) ────────────────────────────────────────────────
   const exportExcel = async (allGroups: boolean) => {
@@ -520,12 +530,6 @@ export default function AttendanceClient({ school }: Props) {
     const parts = [school?.address, school?.city, school?.country, school?.phone].filter(Boolean)
     return parts.join(" • ")
   }
-
-  const getGroupDateList = useCallback((group: GroupPreview) => {
-    if (!preview) return []
-    if (!showOnlyCourseDays) return preview.dateList
-    return preview.dateList.filter(d => isCourseDay(d, group.schedule))
-  }, [preview, showOnlyCourseDays])
 
   const toggleGroup = (id: string) => {
     setCollapsedGroups(prev => {

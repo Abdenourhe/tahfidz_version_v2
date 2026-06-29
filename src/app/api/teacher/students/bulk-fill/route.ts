@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { Prisma } from "@prisma/client"
 
 const VALID_SECTIONS = ["ATTENDANCE", "HIFZ", "MURAJA", "TALQIN", "COURSE", "GLOBAL_SCORE"] as const
 type Section = typeof VALID_SECTIONS[number]
@@ -88,8 +89,8 @@ export async function POST(req: NextRequest) {
       else if (section === "ATTENDANCE") data.teacherObservation = note.trim()
     }
 
-    // Upsert des daily logs
-    const upsertPromises = students.map((student) => {
+    // Upsert des daily logs + synchronisation Attendance dans une seule transaction
+    const operations: Prisma.PrismaPromise<unknown>[] = students.map((student) => {
       const existing = student.dailyLogs[0]
       if (existing) {
         return prisma.dailyProgressLog.update({
@@ -102,32 +103,28 @@ export async function POST(req: NextRequest) {
       })
     })
 
-    await prisma.$transaction(upsertPromises)
-
-    // Synchronise les présences avec le modèle Attendance
     if (section === "ATTENDANCE" && value.attendanceStatus) {
       const status = value.attendanceStatus as "PRESENT" | "ABSENT" | "LATE" | "EXCUSED"
-      const byGroup: Record<string, string[]> = {}
-      students.forEach((s) => {
-        if (!s.groupId) return
-        byGroup[s.groupId] = byGroup[s.groupId] || []
-        byGroup[s.groupId].push(s.id)
+      students.forEach((student) => {
+        if (!student.groupId) return
+        operations.push(
+          prisma.attendance.upsert({
+            where: { studentId_date: { studentId: student.id, date: dateObj } },
+            update: { status, recordedBy: session.user.id },
+            create: {
+              studentId: student.id,
+              groupId: student.groupId,
+              date: dateObj,
+              status,
+              recordedBy: session.user.id,
+              notes: null,
+            },
+          })
+        )
       })
-
-      const attendancePromises = Object.entries(byGroup).map(([groupId, studentIds]) =>
-        fetch("/api/attendance", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            groupId,
-            date: `${date}T00:00:00.000Z`,
-            records: studentIds.map((studentId) => ({ studentId, status, notes: "" })),
-          }),
-        })
-      )
-
-      await Promise.all(attendancePromises)
     }
+
+    await prisma.$transaction(operations)
 
     return NextResponse.json({ count: students.length })
   } catch (error: any) {
