@@ -350,7 +350,7 @@ function StudentCardContent({
       {/* Colonne d'informations */}
       <div
         className="absolute flex flex-col"
-        style={{ left: "29mm", top: "17mm", width: "28mm", gap: "1.2mm" }}
+        style={{ left: "29mm", top: "17mm", width: "32mm", gap: "1mm" }}
       >
         {/* N° d'identification */}
         <div>
@@ -359,9 +359,9 @@ function StudentCardContent({
             style={{
               backgroundColor: "#dbeafe",
               color: "#1e3a8a",
-              fontSize: "1.9mm",
+              fontSize: "1.8mm",
               letterSpacing: "0.08em",
-              padding: "0.8mm 1.5mm 0.6mm 1.5mm",
+              padding: "0.6mm 1.5mm 0.5mm 1.5mm",
               lineHeight: 1,
             }}
           >
@@ -369,7 +369,7 @@ function StudentCardContent({
           </div>
           <div
             className="font-mono truncate"
-            style={{ color: "#111827", fontWeight: 600, fontSize: "2.6mm", padding: "0.8mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
+            style={{ color: "#111827", fontWeight: 600, fontSize: "2.6mm", padding: "0.5mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
           >
             {student.studentCode}
           </div>
@@ -382,9 +382,9 @@ function StudentCardContent({
             style={{
               backgroundColor: "#dbeafe",
               color: "#1e3a8a",
-              fontSize: "1.9mm",
+              fontSize: "1.8mm",
               letterSpacing: "0.08em",
-              padding: "0.8mm 1.5mm 0.6mm 1.5mm",
+              padding: "0.6mm 1.5mm 0.5mm 1.5mm",
               lineHeight: 1,
             }}
           >
@@ -392,7 +392,7 @@ function StudentCardContent({
           </div>
           <div
             className="truncate"
-            style={{ color: "#111827", fontWeight: 700, fontSize: "3mm", padding: "0.8mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
+            style={{ color: "#111827", fontWeight: 700, fontSize: "3mm", padding: "0.5mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
           >
             {student.fullName}
           </div>
@@ -406,49 +406,49 @@ function StudentCardContent({
           )}
         </div>
 
-        {/* Groupe et Enseignant */}
-        <div className="flex gap-[1.5mm]">
-          <div className="min-w-0 flex-1">
-            <div
-              className="font-bold uppercase"
-              style={{
-                backgroundColor: "#dbeafe",
-                color: "#1e3a8a",
-                fontSize: "1.9mm",
-                letterSpacing: "0.08em",
-                padding: "0.8mm 1.5mm 0.6mm 1.5mm",
-                lineHeight: 1,
-              }}
-            >
-              {t("group", locale)}
-            </div>
-            <div
-              className="truncate"
-              style={{ color: "#111827", fontWeight: 600, fontSize: "2.2mm", padding: "0.8mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
-            >
-              {student.group?.name || "—"}
-            </div>
+        {/* Groupe */}
+        <div>
+          <div
+            className="font-bold uppercase"
+            style={{
+              backgroundColor: "#dbeafe",
+              color: "#1e3a8a",
+              fontSize: "1.8mm",
+              letterSpacing: "0.08em",
+              padding: "0.6mm 1.5mm 0.5mm 1.5mm",
+              lineHeight: 1,
+            }}
+          >
+            {t("group", locale)}
           </div>
-          <div className="min-w-0 flex-1">
-            <div
-              className="font-bold uppercase"
-              style={{
-                backgroundColor: "#dbeafe",
-                color: "#1e3a8a",
-                fontSize: "1.9mm",
-                letterSpacing: "0.08em",
-                padding: "0.8mm 1.5mm 0.6mm 1.5mm",
-                lineHeight: 1,
-              }}
-            >
-              {t("teacher", locale)}
-            </div>
-            <div
-              className="truncate"
-              style={{ color: "#111827", fontWeight: 600, fontSize: "2.2mm", padding: "0.8mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
-            >
-              {student.teacher?.user?.fullName || "—"}
-            </div>
+          <div
+            className="truncate"
+            style={{ color: "#111827", fontWeight: 600, fontSize: "2.4mm", padding: "0.5mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
+          >
+            {student.group?.name || "—"}
+          </div>
+        </div>
+
+        {/* Enseignant */}
+        <div>
+          <div
+            className="font-bold uppercase"
+            style={{
+              backgroundColor: "#dbeafe",
+              color: "#1e3a8a",
+              fontSize: "1.8mm",
+              letterSpacing: "0.08em",
+              padding: "0.6mm 1.5mm 0.5mm 1.5mm",
+              lineHeight: 1,
+            }}
+          >
+            {t("teacher", locale)}
+          </div>
+          <div
+            className="truncate"
+            style={{ color: "#111827", fontWeight: 600, fontSize: "2.4mm", padding: "0.5mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
+          >
+            {student.teacher?.user?.fullName || "—"}
           </div>
         </div>
       </div>
