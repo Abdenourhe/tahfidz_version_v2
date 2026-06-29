@@ -164,13 +164,16 @@ export default function StudentCardPage() {
 
       {/* Conteneur centré pour la prévisualisation (échelle ×1.5 à l'écran) */}
       <div className="flex justify-center print:block">
-        <div className="print:hidden" style={{ width: "129mm", height: "81mm" }}>
+        <div
+          className="print:hidden flex items-center justify-center"
+          style={{ width: "129mm", height: "81mm", backgroundColor: "#f3f4f6", borderRadius: "4mm" }}
+        >
           <div
             style={{
               width: "86mm",
               height: "54mm",
               transform: "scale(1.5)",
-              transformOrigin: "top center",
+              transformOrigin: "center center",
             }}
           >
             <StudentCardContent
@@ -262,8 +265,14 @@ function StudentCardContent({
 }) {
   return (
     <div
-      className="relative bg-white text-slate-900 overflow-hidden"
-      style={{ width: "86mm", height: "54mm", fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
+      className="relative overflow-hidden"
+      style={{
+        width: "86mm",
+        height: "54mm",
+        backgroundColor: "#ffffff",
+        color: "#1f2937",
+        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      }}
     >
       {/* Bandeau supérieur */}
       <div
@@ -271,8 +280,8 @@ function StudentCardContent({
         style={{ height: "10mm", backgroundColor: "#1e1b4b" }}
       >
         <span
-          className="text-white font-bold uppercase tracking-[0.22em]"
-          style={{ fontSize: "3.2mm", lineHeight: 1 }}
+          className="font-bold uppercase"
+          style={{ color: "#ffffff", fontSize: "3.2mm", letterSpacing: "0.22em", lineHeight: 1 }}
         >
           {t("cardTitle", locale)}
         </span>
@@ -280,22 +289,30 @@ function StudentCardContent({
 
       {/* Logo école */}
       <div
-        className="absolute flex items-center justify-center bg-white rounded-full overflow-hidden shadow-sm"
-        style={{ left: "4mm", top: "11.5mm", width: "8mm", height: "8mm" }}
+        className="absolute flex items-center justify-center overflow-hidden"
+        style={{
+          left: "4mm",
+          top: "11.5mm",
+          width: "8mm",
+          height: "8mm",
+          backgroundColor: "#ffffff",
+          borderRadius: "50%",
+          boxShadow: "0 0 0 0.4mm rgba(0,0,0,0.08)",
+        }}
       >
         <Image src={logoUrl} alt={school.name} width={64} height={64} className="object-contain w-full h-full" unoptimized />
       </div>
 
       {/* Nom école + ville */}
       <div
-        className="absolute text-right"
+        className="absolute"
         style={{ right: "4mm", top: "11.5mm", maxWidth: "46mm", textAlign: "right" }}
       >
-        <p className="font-bold text-slate-800 truncate" style={{ fontSize: "2.6mm", lineHeight: 1.2 }}>
+        <p className="truncate" style={{ color: "#1f2937", fontWeight: 700, fontSize: "2.6mm", lineHeight: 1.2 }}>
           {school.name}
         </p>
         {school.city && (
-          <p className="text-slate-500 truncate" style={{ fontSize: "2mm", lineHeight: 1.2 }}>
+          <p className="truncate" style={{ color: "#6b7280", fontSize: "2mm", lineHeight: 1.2 }}>
             {school.city}
           </p>
         )}
@@ -303,8 +320,15 @@ function StudentCardContent({
 
       {/* Photo de l'étudiant */}
       <div
-        className="absolute bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center"
-        style={{ left: "4mm", top: "20.5mm", width: "24mm", height: "30mm" }}
+        className="absolute overflow-hidden flex items-center justify-center"
+        style={{
+          left: "4mm",
+          top: "20.5mm",
+          width: "24mm",
+          height: "30mm",
+          backgroundColor: "#f3f4f6",
+          border: "0.4mm solid #e5e7eb",
+        }}
       >
         {student.avatar ? (
           <Image
@@ -316,7 +340,7 @@ function StudentCardContent({
             unoptimized
           />
         ) : (
-          <span className="font-bold text-slate-300" style={{ fontSize: "10mm" }}>
+          <span style={{ color: "#d1d5db", fontWeight: 700, fontSize: "10mm" }}>
             {student.fullName.charAt(0)}
           </span>
         )}
@@ -325,15 +349,16 @@ function StudentCardContent({
       {/* Colonne d'informations */}
       <div
         className="absolute flex flex-col"
-        style={{ left: "30mm", top: "20.5mm", width: "27mm", gap: "1.8mm" }}
+        style={{ left: "30mm", top: "20.5mm", width: "28mm", gap: "1.6mm" }}
       >
         {/* N° d'identification */}
         <div>
           <div
-            className="font-bold uppercase text-indigo-900"
+            className="font-bold uppercase"
             style={{
-              backgroundColor: "#e0e7ff",
-              fontSize: "2mm",
+              backgroundColor: "#dbeafe",
+              color: "#1e3a8a",
+              fontSize: "1.9mm",
               letterSpacing: "0.08em",
               padding: "0.8mm 1.5mm 0.6mm 1.5mm",
               lineHeight: 1,
@@ -342,8 +367,8 @@ function StudentCardContent({
             {t("studentCode", locale)}
           </div>
           <div
-            className="font-semibold text-slate-800 font-mono truncate"
-            style={{ fontSize: "2.8mm", padding: "1mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
+            className="font-mono truncate"
+            style={{ color: "#111827", fontWeight: 600, fontSize: "2.8mm", padding: "1mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
           >
             {student.studentCode}
           </div>
@@ -352,10 +377,11 @@ function StudentCardContent({
         {/* Nom */}
         <div>
           <div
-            className="font-bold uppercase text-indigo-900"
+            className="font-bold uppercase"
             style={{
-              backgroundColor: "#e0e7ff",
-              fontSize: "2mm",
+              backgroundColor: "#dbeafe",
+              color: "#1e3a8a",
+              fontSize: "1.9mm",
               letterSpacing: "0.08em",
               padding: "0.8mm 1.5mm 0.6mm 1.5mm",
               lineHeight: 1,
@@ -364,15 +390,15 @@ function StudentCardContent({
             {locale === "ar" ? "الاسم" : "Nom"}
           </div>
           <div
-            className="font-bold text-slate-800 truncate"
-            style={{ fontSize: "3.2mm", padding: "1mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
+            className="truncate"
+            style={{ color: "#111827", fontWeight: 700, fontSize: "3.2mm", padding: "1mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
           >
             {student.fullName}
           </div>
           {student.fullNameAr && (
             <div
-              className="text-slate-500 arabic truncate"
-              style={{ fontSize: "2.4mm", padding: "0.2mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
+              className="arabic truncate"
+              style={{ color: "#6b7280", fontSize: "2.4mm", padding: "0.2mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
             >
               {student.fullNameAr}
             </div>
@@ -383,10 +409,11 @@ function StudentCardContent({
         <div className="flex gap-[1.5mm]">
           <div className="min-w-0 flex-1">
             <div
-              className="font-bold uppercase text-indigo-900"
+              className="font-bold uppercase"
               style={{
-                backgroundColor: "#e0e7ff",
-                fontSize: "2mm",
+                backgroundColor: "#dbeafe",
+                color: "#1e3a8a",
+                fontSize: "1.9mm",
                 letterSpacing: "0.08em",
                 padding: "0.8mm 1.5mm 0.6mm 1.5mm",
                 lineHeight: 1,
@@ -395,18 +422,19 @@ function StudentCardContent({
               {t("group", locale)}
             </div>
             <div
-              className="font-semibold text-slate-800 truncate"
-              style={{ fontSize: "2.4mm", padding: "1mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
+              className="truncate"
+              style={{ color: "#111827", fontWeight: 600, fontSize: "2.4mm", padding: "1mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
             >
               {student.group?.name || "—"}
             </div>
           </div>
           <div className="min-w-0 flex-1">
             <div
-              className="font-bold uppercase text-indigo-900"
+              className="font-bold uppercase"
               style={{
-                backgroundColor: "#e0e7ff",
-                fontSize: "2mm",
+                backgroundColor: "#dbeafe",
+                color: "#1e3a8a",
+                fontSize: "1.9mm",
                 letterSpacing: "0.08em",
                 padding: "0.8mm 1.5mm 0.6mm 1.5mm",
                 lineHeight: 1,
@@ -415,8 +443,8 @@ function StudentCardContent({
               {t("teacher", locale)}
             </div>
             <div
-              className="font-semibold text-slate-800 truncate"
-              style={{ fontSize: "2.4mm", padding: "1mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
+              className="truncate"
+              style={{ color: "#111827", fontWeight: 600, fontSize: "2.4mm", padding: "1mm 1.5mm 0 1.5mm", lineHeight: 1.2 }}
             >
               {student.teacher?.user?.fullName || "—"}
             </div>
@@ -427,11 +455,11 @@ function StudentCardContent({
       {/* QR Code */}
       <div
         className="absolute flex flex-col items-center"
-        style={{ right: "4mm", top: "20.5mm", width: "20mm", gap: "1mm" }}
+        style={{ right: "4mm", top: "20.5mm", width: "20mm", gap: "0.8mm" }}
       >
         <div
-          className="bg-white border border-slate-200 flex items-center justify-center"
-          style={{ width: "20mm", height: "20mm", padding: "1.5mm" }}
+          className="flex items-center justify-center"
+          style={{ width: "20mm", height: "20mm", padding: "1.5mm", backgroundColor: "#ffffff", border: "0.4mm solid #e5e7eb" }}
         >
           <QRCodeSVG
             value={qrCodeUrl}
@@ -447,8 +475,8 @@ function StudentCardContent({
           />
         </div>
         <p
-          className="text-slate-500 text-center leading-tight"
-          style={{ fontSize: "1.7mm", maxWidth: "20mm" }}
+          className="text-center"
+          style={{ color: "#6b7280", fontSize: "1.5mm", maxWidth: "20mm", lineHeight: 1.25 }}
         >
           {t("scanInfo", locale)}
         </p>
@@ -457,11 +485,11 @@ function StudentCardContent({
       {/* Bandeau inférieur */}
       <div
         className="absolute bottom-0 left-0 right-0 flex items-center justify-center px-[4mm]"
-        style={{ height: "10mm", backgroundColor: "#c4b5fd" }}
+        style={{ height: "10mm", backgroundColor: "#8b5cf6" }}
       >
         <span
-          className="text-indigo-900 font-black uppercase text-center truncate"
-          style={{ fontSize: "4.5mm", letterSpacing: "0.12em", lineHeight: 1 }}
+          className="uppercase text-center truncate"
+          style={{ color: "#ffffff", fontWeight: 900, fontSize: "4.5mm", letterSpacing: "0.12em", lineHeight: 1 }}
         >
           {school.name}
         </span>
@@ -469,8 +497,8 @@ function StudentCardContent({
 
       {/* Date d'émission */}
       <div
-        className="absolute font-medium text-indigo-900"
-        style={{ right: "4mm", bottom: "2.2mm", fontSize: "1.7mm", lineHeight: 1 }}
+        className="absolute"
+        style={{ right: "4mm", bottom: "2.2mm", color: "#ffffff", fontWeight: 500, fontSize: "1.6mm", lineHeight: 1 }}
       >
         {displayDate}
       </div>
