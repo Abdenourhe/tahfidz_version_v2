@@ -21,7 +21,7 @@ const baseSchema = z.object({
   emergencyPhone: z.string().optional(),
   gender: z.enum(["MALE", "FEMALE"]).optional(),
   role: z.literal("STUDENT"),
-  groupId: z.string().optional(),
+  groupIds: z.array(z.string()).optional(),
   teacherId: z.string().optional(),
   dateOfBirth: z.string().optional(),
   address: z.string().optional(),
@@ -67,6 +67,7 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
   const [showPwd, setShowPwd] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([])
   const [selectedGroupInfo, setSelectedGroupInfo] = useState<Group | null>(null)
   const [loadingData, setLoadingData] = useState(true)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
@@ -109,7 +110,7 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
     defaultValues: { role: "STUDENT", gender: "MALE", status: "ACTIVE" },
   })
 
-  const watchedGroupId = watch("groupId")
+  const watchedGroupIds = watch("groupIds")
 
   /* ── Load groups & teachers ── */
   useEffect(() => {
@@ -142,6 +143,7 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
         const data = await res.json()
         const s = data.student
         if (s) {
+          const initialGroupIds = s.studentGroups?.map((sg: any) => sg.groupId) || (s.groupId ? [s.groupId] : [])
           reset({
             email: s.user.email,
             fullName: s.user.fullName,
@@ -150,7 +152,7 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
             emergencyPhone: s.emergencyPhone || "",
             gender: (s.user.gender as any) || "MALE",
             role: "STUDENT",
-            groupId: s.groupId || "",
+            groupIds: initialGroupIds,
             teacherId: s.teacherId || "",
             dateOfBirth: s.dateOfBirth ? s.dateOfBirth.split("T")[0] : "",
             address: s.address || "",
@@ -162,6 +164,7 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
             spokenLanguages: s.spokenLanguages || "",
             status: s.user.isActive ? "ACTIVE" : "INACTIVE",
           })
+          setSelectedGroupIds(initialGroupIds)
           if (s.nationality && !nationalityOptions.some(o => o.value === s.nationality)) {
             setNationalityCustom(s.nationality)
           }
@@ -175,14 +178,16 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
     loadStudent()
   }, [isEdit, studentId, reset, t, nationalityOptions, setValue])
 
-  /* ── Auto-assign teacher from group ── */
+  /* ── Auto-assign teacher from primary group ── */
   useEffect(() => {
-    const grp = groups.find(g => g.id === watchedGroupId)
+    const ids = watchedGroupIds || selectedGroupIds || []
+    const primaryId = ids[0]
+    const grp = primaryId ? groups.find(g => g.id === primaryId) : null
     setSelectedGroupInfo(grp || null)
     if (grp?.teacher?.id) {
       setValue("teacherId", grp.teacher.id)
     }
-  }, [watchedGroupId, groups, setValue])
+  }, [watchedGroupIds, selectedGroupIds, groups, setValue])
 
   const levelLabel: Record<string, string> = {
     beginner:     L === "ar" ? "مبتدئ"  : L === "en" ? "Beginner"     : "Débutant",
@@ -195,6 +200,9 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
     setSuccess(false)
     try {
       const payload: any = { ...data }
+      // Envoyer le tableau de groupes sélectionnés ; groupId n'est plus utilisé
+      payload.groupIds = selectedGroupIds
+      delete payload.groupId
       if (payload.nationality === "OTHER") payload.nationality = nationalityCustom || "OTHER"
       const langs = (payload.spokenLanguages || "").split(",").map((s: string) => s.trim()).filter(Boolean)
       if (langs.includes("other") && languageCustom) {
@@ -449,13 +457,44 @@ export function StudentForm({ mode, studentId }: { mode: "create" | "edit"; stud
           <h2 className="font-semibold text-gray-800 dark:text-gray-100">{t("pedagogy")}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("group")}</label>
-              <select className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green text-sm bg-white" {...register("groupId")}>
-                <option value="">{t("noGroup")}</option>
-                {groups.map(g => (
-                  <option key={g.id} value={g.id}>{g.name} — {levelLabel[g.level] ?? g.level}</option>
-                ))}
-              </select>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("groups") || "Groupes"}</label>
+              <div className="space-y-2 max-h-48 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-white dark:bg-gray-800">
+                {groups.length === 0 && (
+                  <p className="text-sm text-gray-400">{t("noGroupAvailable") || "Aucun groupe disponible"}</p>
+                )}
+                {groups.map(g => {
+                  const checked = selectedGroupIds.includes(g.id)
+                  const isPrimary = selectedGroupIds[0] === g.id
+                  return (
+                    <label key={g.id} className={`flex items-center justify-between gap-2 px-3 py-2 rounded-md border cursor-pointer transition ${checked ? "bg-tahfidz-green/10 border-tahfidz-green" : "bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700"}`}>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-gray-300 text-tahfidz-green focus:ring-tahfidz-green"
+                          checked={checked}
+                          onChange={(e) => {
+                            const next = e.target.checked
+                              ? [...selectedGroupIds, g.id]
+                              : selectedGroupIds.filter(id => id !== g.id)
+                            // Le premier élément reste le groupe principal ; s'il est décoché, on retire
+                            const reordered = next.includes(g.id) && e.target.checked
+                              ? next
+                              : next
+                            setSelectedGroupIds(reordered)
+                            setValue("groupIds", reordered, { shouldDirty: true })
+                          }}
+                        />
+                        <span className="text-sm text-gray-700 dark:text-gray-200">{g.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400">{levelLabel[g.level] ?? g.level}</span>
+                        {isPrimary && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-tahfidz-green text-white">{t("primary") || "principal"}</span>}
+                      </div>
+                    </label>
+                  )
+                })}
+              </div>
+              <p className="text-xs text-gray-400 mt-1.5">{t("groupsHint") || "Le premier groupe coché est le groupe principal."}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("teacherRef")}</label>

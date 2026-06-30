@@ -131,6 +131,25 @@ export async function GET(req: Request) {
     studentsByGroup[sg.groupId].push(sg.student)
   })
 
+  // Fallback : élèves dont le groupe principal est dans targetGroupIds
+  const fallbackStudents = await prisma.student.findMany({
+    where: {
+      groupId: { in: targetGroupIds },
+      user: { isActive: true },
+    },
+    include: {
+      user: { select: { fullName: true, fullNameAr: true } },
+    },
+  })
+
+  fallbackStudents.forEach((s) => {
+    if (!s.groupId) return
+    if (!studentsByGroup[s.groupId]) studentsByGroup[s.groupId] = []
+    if (!studentsByGroup[s.groupId].some((existing) => existing.id === s.id)) {
+      studentsByGroup[s.groupId].push(s)
+    }
+  })
+
   const attendances = await prisma.attendance.findMany({
     where: {
       groupId: { in: targetGroupIds },

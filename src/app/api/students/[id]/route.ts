@@ -45,6 +45,10 @@ export async function GET(req: NextRequest, { params }: Params) {
         },
         group:   { select: { id: true, name: true, level: true } },
         teacher: { include: { user: { select: { id: true, fullName: true, phone: true, email: true } } } },
+        studentGroups: {
+          include: { group: { select: { id: true, name: true, level: true } } },
+          orderBy: { createdAt: "asc" },
+        },
         parentLinks: {
           include: { parent: { include: { user: { select: { fullName: true, phone: true, email: true } } } } },
           where: { isVerified: true },
@@ -243,7 +247,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     // ── ACTION : mise à jour générale (défaut) ───────────────────────────
     const body = await req.json()
     const { email, phone, emergencyPhone, fullName, fullNameAr, gender,
-            isActive, groupId, teacherId, address, city, postalCode,
+            isActive, groupId, groupIds, teacherId, address, city, postalCode,
             medicalNotes, currentSurahNote, nationality, spokenLanguages, avatar } = body
 
     const existingStudent = await prisma.student.findUnique({ where: { id }, include: { user: true } })
@@ -260,6 +264,15 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
     if (!isAuthorized) return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
 
+    // Normalise les groupes : `groupIds` prime sur `groupId` (compatibilité)
+    const effectiveGroupIds: string[] | undefined = Array.isArray(groupIds)
+      ? groupIds.filter((g): g is string => typeof g === "string" && g.length > 0)
+      : groupId !== undefined
+        ? groupId
+          ? [groupId]
+          : []
+        : undefined
+
     const userUpdate: Record<string, unknown> = {}
     if (email !== undefined)     userUpdate.email     = email
     if (phone !== undefined)     userUpdate.phone     = phone
@@ -271,7 +284,6 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
     const studentUpdate: Record<string, unknown> = {}
     if (emergencyPhone !== undefined) studentUpdate.emergencyPhone = emergencyPhone || null
-    if (groupId !== undefined)   studentUpdate.groupId   = groupId || null
     if (teacherId !== undefined) studentUpdate.teacherId = teacherId || null
     if (address !== undefined)   studentUpdate.address   = address || null
     if (city !== undefined)      studentUpdate.city      = city || null
@@ -280,6 +292,12 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (currentSurahNote !== undefined) studentUpdate.currentSurahNote = currentSurahNote || null
     if (nationality !== undefined) studentUpdate.nationality = nationality || null
     if (spokenLanguages !== undefined) studentUpdate.spokenLanguages = spokenLanguages || null
+
+    if (effectiveGroupIds !== undefined) {
+      studentUpdate.groupId = effectiveGroupIds[0] || null
+    } else if (groupId !== undefined) {
+      studentUpdate.groupId = groupId || null
+    }
 
     const result = await prisma.$transaction(async (tx) => {
       if (Object.keys(userUpdate).length > 0) {
@@ -294,17 +312,26 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         })
       }
 
-      // Synchronise le groupe principal avec la table de liaison
-      if (groupId !== undefined) {
-        if (groupId) {
-          await tx.studentGroup.upsert({
-            where: { studentId_groupId: { studentId: id, groupId } },
-            update: {},
-            create: { studentId: id, groupId },
+      // Synchronise les groupes avec la table de liaison
+      if (effectiveGroupIds !== undefined) {
+        if (effectiveGroupIds.length > 0) {
+          await tx.studentGroup.deleteMany({
+            where: { studentId: id, groupId: { notIn: effectiveGroupIds } },
           })
+          await tx.studentGroup.createMany({
+            data: effectiveGroupIds.map((gid) => ({ studentId: id, groupId: gid })),
+            skipDuplicates: true,
+          })
+        } else {
+          await tx.studentGroup.deleteMany({ where: { studentId: id } })
         }
-        // Note : si groupId est null, on ne supprime pas les liens existants
-        // pour préserver les groupes additionnels gérés ailleurs
+      } else if (groupId !== undefined && groupId) {
+        // Compatibilité : ancien champ groupId unique
+        await tx.studentGroup.upsert({
+          where: { studentId_groupId: { studentId: id, groupId } },
+          update: {},
+          create: { studentId: id, groupId },
+        })
       }
 
       return updated

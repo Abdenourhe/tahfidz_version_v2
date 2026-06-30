@@ -176,10 +176,16 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const {
       fullName, fullNameAr, email, password, gender, dateOfBirth,
-      phone, emergencyPhone, groupId, teacherId,
+      phone, emergencyPhone, groupId, groupIds, teacherId,
       address, city, postalCode, medicalNotes, currentSurahNote,
       nationality, spokenLanguages, photo,
     } = body
+
+    const effectiveGroupIds: string[] = Array.isArray(groupIds)
+      ? groupIds.filter((g): g is string => typeof g === "string" && g.length > 0)
+      : groupId
+        ? [groupId]
+        : []
 
     const schoolId = session.user.schoolId
 
@@ -231,7 +237,7 @@ export async function POST(req: NextRequest) {
           const student = await tx.student.create({
             data: {
               userId: user.id, studentCode,
-              groupId: groupId || null, teacherId: teacherId || null,
+              groupId: effectiveGroupIds[0] || null, teacherId: teacherId || null,
               emergencyPhone: emergencyPhone || null,
               dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
               address: address || null, city: city || null,
@@ -243,10 +249,11 @@ export async function POST(req: NextRequest) {
             include: { user: true, group: true, teacher: { include: { user: true } } },
           })
 
-          // Synchronise le groupe principal dans la table de liaison
-          if (groupId) {
-            await tx.studentGroup.create({
-              data: { studentId: student.id, groupId },
+          // Synchronise tous les groupes dans la table de liaison
+          if (effectiveGroupIds.length > 0) {
+            await tx.studentGroup.createMany({
+              data: effectiveGroupIds.map((gid) => ({ studentId: student.id, groupId: gid })),
+              skipDuplicates: true,
             })
           }
 
