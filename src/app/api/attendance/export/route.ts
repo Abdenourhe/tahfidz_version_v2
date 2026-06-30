@@ -131,6 +131,14 @@ export async function GET(req: Request) {
     studentsByGroup[sg.groupId].push(sg.student)
   })
 
+  const attendances = await prisma.attendance.findMany({
+    where: {
+      groupId: { in: targetGroupIds },
+      date: { gte: fromDate, lte: toDate },
+    },
+    orderBy: { date: "asc" },
+  })
+
   // Fallback : élèves dont le groupe principal est dans targetGroupIds
   const fallbackStudents = await prisma.student.findMany({
     where: {
@@ -150,13 +158,28 @@ export async function GET(req: Request) {
     }
   })
 
-  const attendances = await prisma.attendance.findMany({
-    where: {
-      groupId: { in: targetGroupIds },
-      date: { gte: fromDate, lte: toDate },
-    },
-    orderBy: { date: "asc" },
-  })
+  // Fallback ultime : élèves ayant des présences dans ces groupes
+  const studentIdsFromAttendances = new Set(attendances.map(a => a.studentId))
+  if (studentIdsFromAttendances.size > 0) {
+    const attendanceStudents = await prisma.student.findMany({
+      where: {
+        id: { in: Array.from(studentIdsFromAttendances) },
+        user: { isActive: true },
+      },
+      include: {
+        user: { select: { fullName: true, fullNameAr: true } },
+      },
+    })
+    const attendanceStudentsById = new Map(attendanceStudents.map(s => [s.id, s]))
+    attendances.forEach((a) => {
+      const s = attendanceStudentsById.get(a.studentId)
+      if (!s || !a.groupId) return
+      if (!studentsByGroup[a.groupId]) studentsByGroup[a.groupId] = []
+      if (!studentsByGroup[a.groupId].some((existing: typeof s) => existing.id === s.id)) {
+        studentsByGroup[a.groupId].push(s)
+      }
+    })
+  }
 
   // ── Construction du CSV ──────────────────────────────────────────────────
   const SEP = ";"
