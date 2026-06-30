@@ -13,6 +13,7 @@ import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import { AvatarLightbox } from "@/components/AvatarLightbox"
+import { useMobile } from "@/hooks/useMobile"
 import { TeacherDailyLogModal } from "@/components/teacher/TeacherDailyLogModal"
 import { TeacherBulkFillModal } from "@/components/teacher/TeacherBulkFillModal"
 import { CourseDatePicker, displayLocalDate } from "@/components/shared/CourseDatePicker"
@@ -155,6 +156,7 @@ export function TeacherStudentsGrid({ initialGroups }: Props) {
   const { locale, dir } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
   const t = useT("teacherStudents")
+  const { isMobile } = useMobile()
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -452,6 +454,172 @@ export function TeacherStudentsGrid({ initialGroups }: Props) {
     return student.lastLogs[key]
   }
 
+  const renderMobileCard = (student: StudentRow) => {
+    const log = student.dailyLog
+    const displayStatus = pendingAttendance[student.id] ?? log?.attendanceStatus ?? null
+    return (
+      <div key={student.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-3 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <Link href={`/teacher/students/${student.id}`} className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-lg gradient-tahfidz flex items-center justify-center overflow-hidden flex-shrink-0">
+              <AvatarLightbox
+                src={student.user.avatar}
+                alt={student.user.fullName}
+                fallback={<span className="text-white font-bold text-sm">{student.user.fullName.charAt(0).toUpperCase()}</span>}
+                className="w-full h-full"
+                imgClassName="w-full h-full"
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                {L === "ar" && student.user.fullNameAr ? student.user.fullNameAr : student.user.fullName}
+              </p>
+              <p className="text-[10px] text-gray-400 truncate">
+                {student.group ? (L === "ar" && student.group.nameAr ? student.group.nameAr : student.group.name) : t("noGroup")}
+              </p>
+            </div>
+          </Link>
+          {student.readyForEvaluation && (
+            <Link
+              href={`/teacher/evaluation/new?studentId=${student.id}${student.activeProgress ? `&progressId=${student.activeProgress.id}` : ""}`}
+              className="p-2 rounded-lg bg-tahfidz-gold text-white flex-shrink-0"
+            >
+              <Award size={16} />
+            </Link>
+          )}
+        </div>
+
+        <div>
+          <AnimatePresence mode="wait">
+            {openMenuStudentId === student.id ? (
+              <motion.div
+                ref={attendanceMenuRef}
+                key="attendance-menu"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.12 }}
+                className="grid grid-cols-2 gap-2"
+              >
+                {ATTENDANCE_OPTIONS.map((opt) => {
+                  const selected = (pendingAttendance[student.id] ?? log?.attendanceStatus) === opt.value
+                  const Icon = opt.icon
+                  return (
+                    <button
+                      key={opt.value}
+                      onClick={(e) => { e.stopPropagation(); selectPendingAttendance(student.id, opt.value) }}
+                      className={cn(
+                        "px-2 py-2 rounded-lg flex items-center justify-center gap-2 transition shadow-sm text-xs font-bold",
+                        opt.classes,
+                        selected ? "ring-2 ring-offset-1 ring-gray-400 dark:ring-offset-gray-900" : "opacity-80 hover:opacity-100"
+                      )}
+                    >
+                      <Icon size={14} />
+                      <span>{t(opt.labelKey)}</span>
+                    </button>
+                  )
+                })}
+              </motion.div>
+            ) : (
+              <motion.button
+                key="attendance-badge"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.12 }}
+                onClick={(e) => { e.stopPropagation(); setOpenMenuStudentId(student.id) }}
+                className={cn(
+                  "w-full text-center px-3 py-2.5 rounded-lg text-sm font-medium border transition min-h-[44px] flex items-center justify-center relative",
+                  displayStatus ? attendanceBadge(displayStatus)!.classes : "border-dashed border-gray-200 dark:border-gray-700 text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800",
+                  pendingAttendance[student.id] !== undefined && "ring-2 ring-tahfidz-gold ring-offset-1 dark:ring-offset-gray-900"
+                )}
+              >
+                {displayStatus ? attendanceBadge(displayStatus)!.label : <EmptyCell label={t("fill")} colorClass="text-gray-400" />}
+                {pendingAttendance[student.id] !== undefined && <span className="absolute top-1 end-1 w-1.5 h-1.5 rounded-full bg-tahfidz-gold" />}
+              </motion.button>
+            )}
+          </AnimatePresence>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          {SECTIONS.slice(1).map((sec) => {
+            const hasValue = sec.key === "HIFZ" ? log?.hifzFromSurahId
+              : sec.key === "MURAJA" ? log?.murajaFromSurahId
+              : sec.key === "TALQIN" ? log?.talqinFromSurahId
+              : log?.courseBook
+            return (
+              <button
+                key={sec.key}
+                onClick={() => openLog(student, sec.key)}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs border transition text-start",
+                  hasValue ? `${sec.bg} ${sec.color} border-current` : "border-dashed border-gray-200 dark:border-gray-700 text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                )}
+              >
+                <sec.icon size={14} className={hasValue ? sec.color : "text-gray-400"} />
+                <span className="truncate flex-1">
+                  {sec.key === "HIFZ" && log?.hifzFromSurahId
+                    ? verseRange(findSurah(log.hifzFromSurahId), log.hifzFromVerse, findSurah(log.hifzToSurahId), log.hifzToVerse, L)
+                    : sec.key === "MURAJA" && log?.murajaFromSurahId
+                      ? verseRange(findSurah(log.murajaFromSurahId), log.murajaFromVerse, findSurah(log.murajaToSurahId), log.murajaToVerse, L)
+                      : sec.key === "TALQIN" && log?.talqinFromSurahId
+                        ? verseRange(findSurah(log.talqinFromSurahId), log.talqinFromVerse, findSurah(log.talqinToSurahId), log.talqinToVerse, L)
+                        : sec.key === "COURSE" && log?.courseBook
+                          ? `${log.courseBook}${log.courseFromPage ? ` ${log.courseFromPage}${log.courseToPage && log.courseToPage !== log.courseFromPage ? `→${log.courseToPage}` : ""}` : ""}`
+                          : t(sec.labelKey)}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {editingScore[student.id] ? (
+            <input
+              type="number"
+              min={0}
+              max={20}
+              autoFocus
+              value={scoreDraft[student.id] ?? ""}
+              onChange={(e) => setScoreDraft((d) => ({ ...d, [student.id]: e.target.value }))}
+              onBlur={() => saveGlobalScore(student, scoreDraft[student.id] ?? "")}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") saveGlobalScore(student, scoreDraft[student.id] ?? "")
+                if (e.key === "Escape") {
+                  setEditingScore((s) => ({ ...s, [student.id]: false }))
+                  setScoreDraft((d) => ({ ...d, [student.id]: "" }))
+                }
+              }}
+              className="flex-1 px-3 py-2 rounded-lg border border-tahfidz-green dark:border-tahfidz-green/50 bg-white dark:bg-gray-800 text-center text-sm font-bold text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/20"
+            />
+          ) : (
+            <button
+              onClick={() => {
+                setEditingScore((s) => ({ ...s, [student.id]: true }))
+                setScoreDraft((d) => ({ ...d, [student.id]: log?.globalScore?.toString() ?? "" }))
+              }}
+              className={cn(
+                "flex-1 text-center px-3 py-2 rounded-lg text-sm font-bold border transition",
+                log?.globalScore !== null && log?.globalScore !== undefined
+                  ? "bg-tahfidz-green/10 border-tahfidz-green/20 text-tahfidz-green"
+                  : "border-dashed border-gray-200 dark:border-gray-700 text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+              )}
+            >
+              {log?.globalScore !== null && log?.globalScore !== undefined ? `${log.globalScore}/20` : t("global")}
+            </button>
+          )}
+          <button
+            onClick={() => openLog(student, "FULL")}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-tahfidz-green text-white rounded-lg hover:bg-tahfidz-green/90 transition"
+          >
+            <FileText size={14} />
+            {t("openLog")}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
       {/* Header / Filtres */}
@@ -500,7 +668,7 @@ export function TeacherStudentsGrid({ initialGroups }: Props) {
 
       {/* Groupes rapides + recherche */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0 no-scrollbar">
+        <div className="flex flex-wrap items-center gap-1 md:overflow-x-auto md:flex-nowrap md:pb-0 pb-1 no-scrollbar">
           <button
             onClick={() => handleGroupChange("")}
             className={cn(
@@ -662,8 +830,13 @@ export function TeacherStudentsGrid({ initialGroups }: Props) {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px]">
+            {isMobile ? (
+              <div className="space-y-3 p-3">
+                {displayRows.map(renderMobileCard)}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[900px]">
                 <thead>
                   <tr className="bg-gray-50 dark:bg-gray-800/60 border-b border-gray-100 dark:border-gray-800">
                   <th className="sticky start-0 z-10 bg-gray-50 dark:bg-gray-800/60 text-start px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[200px]">
@@ -982,6 +1155,7 @@ export function TeacherStudentsGrid({ initialGroups }: Props) {
               </tbody>
             </table>
           </div>
+          )}
 
           {/* Barre d'actions en bas du tableau */}
           <AnimatePresence>
