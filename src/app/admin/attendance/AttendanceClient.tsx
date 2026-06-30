@@ -418,7 +418,7 @@ export default function AttendanceClient({ school }: Props) {
       const logoBase64 = await loadImageBase64(school?.logo)
 
       const container = document.createElement("div")
-      container.style.cssText = "position:absolute;left:-9999px;top:-9999px;width:1122px;padding:24px;background:#ffffff;font-family:Arial,DejaVu Sans,sans-serif;"
+      container.style.cssText = "position:absolute;left:-9999px;top:-9999px;width:1300px;padding:24px;background:#ffffff;font-family:Arial,DejaVu Sans,sans-serif;"
 
       let html = `
         <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
@@ -437,37 +437,36 @@ export default function AttendanceClient({ school }: Props) {
         const dateList = getGroupDateList(group)
         html += `<div style="margin-bottom:20px;">
           <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:8px;">${escapeHtml(group.name)} — ${escapeHtml(group.teacherName)}</div>
-          <table style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:10px;">
-            <colgroup><col style="width:110px;" /><col style="width:80px;" />${dateList.map(() => `<col style="width:54px;" />`).join("")}<col style="width:28px;" /><col style="width:28px;" /><col style="width:28px;" /><col style="width:28px;" /><col style="width:32px;" /></colgroup>
+          <table style="width:100%;border-collapse:collapse;font-size:11px;">
             <thead>
               <tr>
-                <th style="padding:5px;background:#059669;color:#fff;font-weight:600;text-align:left;border:1px solid #059669;">${escapeHtml(t("fullName") as string || "Nom")}</th>
-                <th style="padding:5px;background:#059669;color:#fff;font-weight:600;text-align:left;border:1px solid #059669;">${escapeHtml(t("fullNameAr") as string || "Nom arabe")}</th>
-                ${dateList.map(d => `<th style="padding:5px;background:#059669;color:#fff;font-weight:600;text-align:center;border:1px solid #059669;">${escapeHtml(fmtDate(d, L))}</th>`).join("")}
-                <th style="padding:5px;background:#059669;color:#fff;font-weight:600;text-align:center;border:1px solid #059669;white-space:nowrap;">${escapeHtml(statusLabelWord("PRESENT", L))}</th>
-                <th style="padding:5px;background:#059669;color:#fff;font-weight:600;text-align:center;border:1px solid #059669;white-space:nowrap;">${escapeHtml(statusLabelWord("ABSENT", L))}</th>
-                <th style="padding:5px;background:#059669;color:#fff;font-weight:600;text-align:center;border:1px solid #059669;white-space:nowrap;">${escapeHtml(statusLabelWord("LATE", L))}</th>
-                <th style="padding:5px;background:#059669;color:#fff;font-weight:600;text-align:center;border:1px solid #059669;white-space:nowrap;">${escapeHtml(statusLabelWord("EXCUSED", L))}</th>
-                <th style="padding:5px;background:#059669;color:#fff;font-weight:600;text-align:center;border:1px solid #059669;">%</th>
+                <th style="width:150px;padding:6px;background:#059669;color:#fff;font-weight:600;text-align:left;border:1px solid #059669;">${escapeHtml(t("fullName") as string || "Nom")}</th>
+                <th style="width:110px;padding:6px;background:#059669;color:#fff;font-weight:600;text-align:left;border:1px solid #059669;">${escapeHtml(t("fullNameAr") as string || "Nom arabe")}</th>
+                ${dateList.map(d => `<th style="width:60px;padding:6px;background:#059669;color:#fff;font-weight:600;text-align:center;border:1px solid #059669;">${escapeHtml(fmtDate(d, L))}</th>`).join("")}
+                <th style="width:36px;padding:6px;background:#059669;color:#fff;font-weight:600;text-align:center;border:1px solid #059669;">P</th>
+                <th style="width:36px;padding:6px;background:#059669;color:#fff;font-weight:600;text-align:center;border:1px solid #059669;">A</th>
+                <th style="width:36px;padding:6px;background:#059669;color:#fff;font-weight:600;text-align:center;border:1px solid #059669;">R</th>
+                <th style="width:36px;padding:6px;background:#059669;color:#fff;font-weight:600;text-align:center;border:1px solid #059669;">E</th>
+                <th style="width:44px;padding:6px;background:#059669;color:#fff;font-weight:600;text-align:center;border:1px solid #059669;">%</th>
               </tr>
             </thead>
             <tbody>
               ${group.students.map((s, idx) => {
                 const bg = idx % 2 === 0 ? "#ffffff" : "#f0fdf4"
                 return `<tr>
-                  <td style="padding:4px;border:1px solid #e5e7eb;background:${bg};font-size:10px;direction:${containsArabic(s.fullName) ? "rtl" : "ltr"};text-align:${containsArabic(s.fullName) ? "right" : "left"};">${escapeHtml(s.fullName)}</td>
-                  <td style="padding:4px;border:1px solid #e5e7eb;background:${bg};font-size:10px;direction:rtl;text-align:right;">${escapeHtml(s.fullNameAr || "")}</td>
+                  <td style="padding:6px;border:1px solid #e5e7eb;background:${bg};font-size:11px;direction:${containsArabic(s.fullName) ? "rtl" : "ltr"};text-align:${containsArabic(s.fullName) ? "right" : "left"};word-wrap:break-word;">${escapeHtml(s.fullName)}</td>
+                  <td style="padding:6px;border:1px solid #e5e7eb;background:${bg};font-size:11px;direction:rtl;text-align:right;word-wrap:break-word;">${escapeHtml(s.fullNameAr || "")}</td>
                   ${dateList.map(d => {
                     const st = s.dates[d]
                     const color = st === "PRESENT" ? "#059669" : st === "ABSENT" ? "#dc2626" : st === "LATE" ? "#ea580c" : st === "EXCUSED" ? "#2563eb" : "#9ca3af"
                     const label = st ? statusLabelWord(st, L) : "—"
-                    return `<td style="padding:4px;border:1px solid #e5e7eb;background:${bg};color:${color};font-weight:700;text-align:center;font-size:9px;white-space:nowrap;">${escapeHtml(label)}</td>`
+                    return `<td style="padding:6px;border:1px solid #e5e7eb;background:${bg};color:${color};font-weight:700;text-align:center;font-size:10px;white-space:nowrap;">${escapeHtml(label)}</td>`
                   }).join("")}
-                  <td style="padding:4px;border:1px solid #e5e7eb;background:${bg};text-align:center;font-size:10px;">${s.stats.present}</td>
-                  <td style="padding:4px;border:1px solid #e5e7eb;background:${bg};text-align:center;font-size:10px;">${s.stats.absent}</td>
-                  <td style="padding:4px;border:1px solid #e5e7eb;background:${bg};text-align:center;font-size:10px;">${s.stats.late}</td>
-                  <td style="padding:4px;border:1px solid #e5e7eb;background:${bg};text-align:center;font-size:10px;">${s.stats.excused}</td>
-                  <td style="padding:4px;border:1px solid #e5e7eb;background:${bg};text-align:center;font-size:10px;">${s.stats.rate}%</td>
+                  <td style="padding:6px;border:1px solid #e5e7eb;background:${bg};text-align:center;font-size:11px;font-weight:600;">${s.stats.present}</td>
+                  <td style="padding:6px;border:1px solid #e5e7eb;background:${bg};text-align:center;font-size:11px;font-weight:600;">${s.stats.absent}</td>
+                  <td style="padding:6px;border:1px solid #e5e7eb;background:${bg};text-align:center;font-size:11px;font-weight:600;">${s.stats.late}</td>
+                  <td style="padding:6px;border:1px solid #e5e7eb;background:${bg};text-align:center;font-size:11px;font-weight:600;">${s.stats.excused}</td>
+                  <td style="padding:6px;border:1px solid #e5e7eb;background:${bg};text-align:center;font-size:11px;font-weight:600;">${s.stats.rate}%</td>
                 </tr>`
               }).join("")}
             </tbody>
