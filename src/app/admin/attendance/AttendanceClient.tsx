@@ -168,7 +168,7 @@ export default function AttendanceClient({ school }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
-  const [exportScope, setExportScope] = useState<"group" | "all">("all")
+
   const [showOnlyCourseDays, setShowOnlyCourseDays] = useState(true)
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
   const initializedCollapse = useRef(false)
@@ -240,22 +240,6 @@ export default function AttendanceClient({ school }: Props) {
       })
     }
   }, [selGroup])
-
-  // Synchronise la portée d'export avec le groupe sélectionné
-  useEffect(() => {
-    if (selGroup === "all") {
-      setExportScope("all")
-    } else {
-      setExportScope("group")
-    }
-  }, [selGroup])
-
-  // Si on choisit "Tous les groupes" à l'export, on remet le filtre sur "Tous"
-  useEffect(() => {
-    if (exportScope === "all" && selGroup !== "all") {
-      setSelGroup("all")
-    }
-  }, [exportScope, selGroup])
 
   // ── Gestion des presets ──────────────────────────────────────────────────
   const handlePreset = (p: Preset) => {
@@ -567,8 +551,7 @@ export default function AttendanceClient({ school }: Props) {
     { id: "custom", icon: Settings2,      label: t("custom") as string, desc: t("customDesc") as string },
   ]
 
-  const handleExport = async (format: ExportFormat) => {
-    const allGroups = exportScope === "all"
+  const handleExport = async (format: ExportFormat, allGroups: boolean) => {
     if (format === "xlsx") await exportExcel(allGroups)
     else if (format === "pdf") await exportPdf(allGroups)
   }
@@ -813,27 +796,36 @@ export default function AttendanceClient({ school }: Props) {
           <Download size={18} className="text-tahfidz-green" /> {t("downloadTitle")}
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {/* Portée */}
-          <div className="relative">
-            <select
-              value={exportScope}
-              onChange={e => setExportScope(e.target.value as "group" | "all")}
-              className="w-full pl-3 pr-8 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-tahfidz-green appearance-none"
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {selGroup === "all"
+              ? t("exportAllGroupsLabel") || "Exporter tous les groupes"
+              : `${t("exportThisGroupLabel") || "Exporter le groupe"} : ${currentGroup?.name}`}
+          </p>
+          {selGroup !== "all" && (
+            <button
+              type="button"
+              onClick={() => setSelGroup("all")}
+              className="text-xs text-tahfidz-green hover:underline"
             >
-              <option value="group" disabled={selGroup === "all"}>
-                {selGroup === "all"
-                  ? t("exportThisGroup")
-                  : `${t("exportThisGroup")} (${currentGroup?.name})`}
-              </option>
-              <option value="all">{t("exportAllGroups")}</option>
-            </select>
-            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-          </div>
+              {t("switchToAllGroups") || "Passer à tous les groupes"}
+            </button>
+          )}
+          {selGroup === "all" && groups.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setSelGroup(groups[0].id)}
+              className="text-xs text-tahfidz-green hover:underline"
+            >
+              {t("switchToFirstGroup") || "Choisir le premier groupe"}
+            </button>
+          )}
+        </div>
 
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {/* Excel */}
           <button
-            onClick={() => handleExport("xlsx")}
+            onClick={() => handleExport("xlsx", selGroup === "all")}
             disabled={busy}
             className={cn(
               "flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all border",
@@ -846,7 +838,7 @@ export default function AttendanceClient({ school }: Props) {
 
           {/* PDF */}
           <button
-            onClick={() => handleExport("pdf")}
+            onClick={() => handleExport("pdf", selGroup === "all")}
             disabled={busy}
             className={cn(
               "flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all border",
