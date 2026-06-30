@@ -454,19 +454,19 @@ export default function AttendanceClient({ school }: Props) {
               ${group.students.map((s, idx) => {
                 const bg = idx % 2 === 0 ? "#ffffff" : "#f0fdf4"
                 return `<tr>
-                  <td style="padding:6px;border:1px solid #e5e7eb;background:${bg};font-size:11px;direction:${containsArabic(s.fullName) ? "rtl" : "ltr"};text-align:${containsArabic(s.fullName) ? "right" : "left"};word-wrap:break-word;">${escapeHtml(s.fullName)}</td>
-                  <td style="padding:6px;border:1px solid #e5e7eb;background:${bg};font-size:11px;direction:rtl;text-align:right;word-wrap:break-word;">${escapeHtml(s.fullNameAr || "")}</td>
+                  <td style="padding:6px;border:1px solid #e5e7eb;background:${bg};color:#000000;font-size:11px;text-align:left;">${escapeHtml(s.fullName)}</td>
+                  <td style="padding:6px;border:1px solid #e5e7eb;background:${bg};color:#000000;font-size:11px;text-align:right;">${escapeHtml(s.fullNameAr || "")}</td>
                   ${dateList.map(d => {
                     const st = s.dates[d]
                     const color = st === "PRESENT" ? "#059669" : st === "ABSENT" ? "#dc2626" : st === "LATE" ? "#ea580c" : st === "EXCUSED" ? "#2563eb" : "#9ca3af"
                     const label = st ? statusLabelWord(st, L) : "—"
                     return `<td style="padding:6px;border:1px solid #e5e7eb;background:${bg};color:${color};font-weight:700;text-align:center;font-size:10px;white-space:nowrap;">${escapeHtml(label)}</td>`
                   }).join("")}
-                  <td style="padding:6px;border:1px solid #e5e7eb;background:${bg};text-align:center;font-size:11px;font-weight:600;">${s.stats.present}</td>
-                  <td style="padding:6px;border:1px solid #e5e7eb;background:${bg};text-align:center;font-size:11px;font-weight:600;">${s.stats.absent}</td>
-                  <td style="padding:6px;border:1px solid #e5e7eb;background:${bg};text-align:center;font-size:11px;font-weight:600;">${s.stats.late}</td>
-                  <td style="padding:6px;border:1px solid #e5e7eb;background:${bg};text-align:center;font-size:11px;font-weight:600;">${s.stats.excused}</td>
-                  <td style="padding:6px;border:1px solid #e5e7eb;background:${bg};text-align:center;font-size:11px;font-weight:600;">${s.stats.rate}%</td>
+                  <td style="padding:6px;border:1px solid #e5e7eb;background:${bg};color:#000000;text-align:center;font-size:11px;font-weight:600;">${s.stats.present}</td>
+                  <td style="padding:6px;border:1px solid #e5e7eb;background:${bg};color:#000000;text-align:center;font-size:11px;font-weight:600;">${s.stats.absent}</td>
+                  <td style="padding:6px;border:1px solid #e5e7eb;background:${bg};color:#000000;text-align:center;font-size:11px;font-weight:600;">${s.stats.late}</td>
+                  <td style="padding:6px;border:1px solid #e5e7eb;background:${bg};color:#000000;text-align:center;font-size:11px;font-weight:600;">${s.stats.excused}</td>
+                  <td style="padding:6px;border:1px solid #e5e7eb;background:${bg};color:#000000;text-align:center;font-size:11px;font-weight:600;">${s.stats.rate}%</td>
                 </tr>`
               }).join("")}
             </tbody>
@@ -478,6 +478,7 @@ export default function AttendanceClient({ school }: Props) {
       document.body.appendChild(container)
 
       try {
+        await document.fonts.ready
         const html2canvas = (await import("html2canvas")).default
         const canvas = await html2canvas(container, { scale: 2, useCORS: true, allowTaint: true })
         const { jsPDF } = await import("jspdf")
