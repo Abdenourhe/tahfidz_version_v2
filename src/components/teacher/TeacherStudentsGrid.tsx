@@ -321,6 +321,16 @@ export function TeacherStudentsGrid({ initialGroups }: Props) {
           method: student.dailyLog ? "PATCH" : "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ date, attendanceStatus: status }),
+        }).then(async (res) => {
+          // Si un log a été créé entre temps, on bascule en PATCH
+          if (res.status === 409 && !student.dailyLog) {
+            return fetch(`/api/students/${student.id}/daily-log`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ date, attendanceStatus: status }),
+            })
+          }
+          return res
         })
       )
 
@@ -365,11 +375,19 @@ export function TeacherStudentsGrid({ initialGroups }: Props) {
     try {
       const body: any = { date, globalScore: num }
       const method = student.dailyLog ? "PATCH" : "POST"
-      const res = await fetch(`/api/students/${student.id}/daily-log`, {
+      let res = await fetch(`/api/students/${student.id}/daily-log`, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       })
+      // Si un log a été créé entre temps, on bascule en PATCH
+      if (res.status === 409 && method === "POST") {
+        res = await fetch(`/api/students/${student.id}/daily-log`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        })
+      }
       if (!res.ok) throw new Error("Erreur")
       loadData()
     } catch (e) {
