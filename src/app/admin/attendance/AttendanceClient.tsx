@@ -241,6 +241,25 @@ export default function AttendanceClient({ school }: Props) {
     }
   }, [selGroup])
 
+  // Synchronise la portée d'export avec le groupe sélectionné
+  useEffect(() => {
+    if (selGroup === "all") {
+      setExportScope("all")
+    } else {
+      setExportScope("group")
+    }
+  }, [selGroup])
+
+  // Si on choisit "ce groupe" sans groupe sélectionné, on sélectionne le premier groupe
+  useEffect(() => {
+    if (exportScope === "group" && selGroup === "all" && groups.length > 0) {
+      setSelGroup(groups[0].id)
+    }
+    if (exportScope === "all" && selGroup !== "all") {
+      setSelGroup("all")
+    }
+  }, [exportScope, groups, selGroup])
+
   // ── Gestion des presets ──────────────────────────────────────────────────
   const handlePreset = (p: Preset) => {
     setPreset(p)
@@ -805,7 +824,11 @@ export default function AttendanceClient({ school }: Props) {
               onChange={e => setExportScope(e.target.value as "group" | "all")}
               className="w-full pl-3 pr-8 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-tahfidz-green appearance-none"
             >
-              <option value="group">{t("exportThisGroup")}</option>
+              <option value="group" disabled={selGroup === "all"}>
+                {selGroup === "all"
+                  ? t("exportThisGroup")
+                  : `${t("exportThisGroup")} (${currentGroup?.name})`}
+              </option>
               <option value="all">{t("exportAllGroups")}</option>
             </select>
             <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
