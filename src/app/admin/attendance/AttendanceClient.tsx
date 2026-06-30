@@ -168,7 +168,7 @@ export default function AttendanceClient({ school }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
-  const [exportScope, setExportScope] = useState<"group" | "all">("group")
+  const [exportScope, setExportScope] = useState<"group" | "all">("all")
   const [showOnlyCourseDays, setShowOnlyCourseDays] = useState(true)
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
   const initializedCollapse = useRef(false)
@@ -250,15 +250,12 @@ export default function AttendanceClient({ school }: Props) {
     }
   }, [selGroup])
 
-  // Si on choisit "ce groupe" sans groupe sélectionné, on sélectionne le premier groupe
+  // Si on choisit "Tous les groupes" à l'export, on remet le filtre sur "Tous"
   useEffect(() => {
-    if (exportScope === "group" && selGroup === "all" && groups.length > 0) {
-      setSelGroup(groups[0].id)
-    }
     if (exportScope === "all" && selGroup !== "all") {
       setSelGroup("all")
     }
-  }, [exportScope, groups, selGroup])
+  }, [exportScope, selGroup])
 
   // ── Gestion des presets ──────────────────────────────────────────────────
   const handlePreset = (p: Preset) => {
