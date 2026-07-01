@@ -8,6 +8,7 @@ import {
 } from "lucide-react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { cn } from "@/lib/utils"
+import { useMobile } from "@/hooks/useMobile"
 import { TeacherStudentDrawer } from "@/components/teacher/TeacherStudentDrawer"
 import { TeacherDailyLogModal } from "@/components/teacher/TeacherDailyLogModal"
 
@@ -88,6 +89,7 @@ export default function TeacherMemorizationPanel() {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
   const t = useT("teacherMemorizationPanel")
+  const { isMobile } = useMobile()
 
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [loading, setLoading] = useState(true)
@@ -244,7 +246,7 @@ export default function TeacherMemorizationPanel() {
       </div>
 
       {/* Statistiques */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
         {[
           { label: t("students") || "Élèves", value: groupStats.studentsCount },
           { label: t("assignments") || "Assignations", value: groupStats.totalAssignments },
@@ -252,9 +254,9 @@ export default function TeacherMemorizationPanel() {
           { label: t("status_MEMORIZED") || "Mémorisées", value: groupStats.memorized },
           { label: t("overdue") || "En retard", value: groupStats.overdue },
         ].map((s, i) => (
-          <div key={i} className="rounded-xl border border-gray-100 dark:border-gray-800 p-3 bg-white dark:bg-gray-900">
-            <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{s.value}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{s.label}</p>
+          <div key={i} className="rounded-xl border border-gray-100 dark:border-gray-800 p-2.5 sm:p-3 bg-white dark:bg-gray-900">
+            <p className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">{s.value}</p>
+            <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">{s.label}</p>
           </div>
         ))}
       </div>
@@ -269,12 +271,99 @@ export default function TeacherMemorizationPanel() {
         </div>
       </div>
 
-      {/* Tableau */}
+      {/* Tableau / cartes mobile */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
         {filteredRows.length === 0 ? (
           <div className="p-12 text-center text-gray-400">
             <BookOpen size={32} className="mx-auto mb-3 opacity-30" />
             <p>{t("noStudents") || "Aucun élève trouvé"}</p>
+          </div>
+        ) : isMobile ? (
+          <div className="p-3 space-y-3">
+            {filteredRows.map((row) => {
+              const { visible, hiddenCount } = visibleSurahBadges(row.assignments)
+              const status = globalStatus(row)
+              return (
+                <div
+                  key={row.id}
+                  className="rounded-xl border border-gray-100 dark:border-gray-800 p-3 space-y-3"
+                  onClick={() => setSelectedStudentId(row.id)}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+                        <User size={14} className="text-gray-400" />
+                        {L === "ar" && row.fullNameAr ? row.fullNameAr : row.fullName}
+                      </p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">{row.group?.name || "—"}</p>
+                    </div>
+                    <span className={cn("inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium", status.color)}>
+                      {t(`status_${status.label}`) || status.label}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {visible.map((a) => (
+                      <span
+                        key={a.id}
+                        className={cn(
+                          "inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium",
+                          a.status === "MEMORIZED"
+                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                            : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                        )}
+                      >
+                        <BookOpen size={10} />
+                        {surahBadge(a, L)}
+                      </span>
+                    ))}
+                    {hiddenCount > 0 && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-medium bg-tahfidz-green/10 text-tahfidz-green dark:bg-tahfidz-green/20 dark:text-tahfidz-green-light">
+                        +{hiddenCount}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div className="h-full bg-tahfidz-green rounded-full" style={{ width: `${row.averageProgress}%` }} />
+                    </div>
+                    <span className="text-xs text-gray-500 w-8 text-right">{row.averageProgress}%</span>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-1 pt-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setDailyLogStudent({ id: row.id, fullName: row.fullName, fullNameAr: row.fullNameAr }) }}
+                      title={t("fillInDailyLog") || "Remplir le carnet"}
+                      className="p-2 rounded-lg text-gray-400 hover:text-emerald-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                    >
+                      <NotebookPen size={18} />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (row.assignments.length === 1) {
+                          handleDelete(row.assignments[0].id)
+                        } else {
+                          setSelectedStudentId(row.id)
+                        }
+                      }}
+                      title={t("delete")}
+                      className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setSelectedStudentId(row.id) }}
+                      title={t("viewProfile")}
+                      className="p-2 rounded-lg text-gray-400 hover:text-tahfidz-green hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                    >
+                      <Eye size={18} />
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         ) : (
           <div className="overflow-x-auto">
