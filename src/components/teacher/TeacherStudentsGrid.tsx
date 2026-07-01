@@ -1165,15 +1165,15 @@ export function TeacherStudentsGrid({ initialGroups }: Props) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
                 transition={{ duration: 0.2 }}
-                className="border-t border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/60 px-4 py-3"
+                className="border-t border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/60 px-3 sm:px-4 py-2.5 sm:py-3"
               >
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3 text-sm text-gray-800 dark:text-gray-100">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+                  <div className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-100">
                     <span className="relative flex h-3 w-3">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-tahfidz-gold opacity-75" />
                       <span className="relative inline-flex rounded-full h-3 w-3 bg-tahfidz-gold" />
                     </span>
-                    <span className="font-medium">
+                    <span className="font-medium text-xs sm:text-sm">
                       {t("pendingAttendances").replace("{count}", String(Object.keys(pendingAttendance).length))}
                     </span>
                   </div>
@@ -1181,16 +1181,17 @@ export function TeacherStudentsGrid({ initialGroups }: Props) {
                     <button
                       onClick={validateAllAttendances}
                       disabled={validatingAll}
-                      className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-tahfidz-gold text-gray-900 hover:bg-tahfidz-gold-dark rounded-lg transition disabled:opacity-60"
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium bg-tahfidz-gold text-gray-900 hover:bg-tahfidz-gold-dark rounded-lg transition disabled:opacity-60"
                     >
-                      {validatingAll ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                      {validatingAll ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
                       {t("validateAllAttendances")}
                     </button>
                     <button
                       onClick={() => setPendingAttendance({})}
-                      className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition"
+                      className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition"
                     >
-                      {t("cancel")}
+                      <span className="hidden sm:inline">{t("cancel")}</span>
+                      <X size={16} className="sm:hidden" />
                     </button>
                   </div>
                 </div>

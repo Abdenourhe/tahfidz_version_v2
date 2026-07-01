@@ -71,26 +71,27 @@ export function TeacherDashboardClient({ teacher, stats }: Props) {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {cards.map(card => {
           const Icon = card.icon
           return (
             <Link
               key={card.title}
               href={card.href}
-              className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 hover:shadow-md transition-all group"
+              className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-5 hover:shadow-md transition-all group"
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className={`w-10 h-10 rounded-lg ${card.color} flex items-center justify-center`}>
-                  <Icon size={20} className="text-white" />
+              <div className="flex items-start justify-between mb-3 sm:mb-4">
+                <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg ${card.color} flex items-center justify-center`}>
+                  <Icon size={18} className="text-white sm:hidden" />
+                  <Icon size={20} className="text-white hidden sm:block" />
                 </div>
                 {card.alert && (
                   <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                 )}
               </div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{card.value}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{card.title}</p>
-              <div className="flex items-center gap-1 mt-3 text-xs text-tahfidz-green opacity-0 group-hover:opacity-100 transition">
+              <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{card.value}</p>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">{card.title}</p>
+              <div className="flex items-center gap-1 mt-2 sm:mt-3 text-xs text-tahfidz-green opacity-0 group-hover:opacity-100 transition">
                 <span>{t("viewAll")}</span>
                 <ArrowRight size={12} />
               </div>
