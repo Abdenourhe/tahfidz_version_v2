@@ -22,7 +22,7 @@ export function TeacherBottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg border-t border-gray-200/50 dark:border-gray-800/50 safe-area-pb md:hidden">
-      <div className="flex items-center justify-around h-16 relative">
+      <div className="flex items-center justify-around h-14 relative">
         {MOBILE_NAV.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
@@ -47,7 +47,7 @@ export function TeacherBottomNav() {
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
               >
                 <Icon
-                  size={22}
+                  size={20}
                   strokeWidth={isActive ? 2.5 : 1.5}
                   className={isActive ? "text-tahfidz-green" : "text-gray-400 dark:text-gray-500"}
                 />

@@ -80,7 +80,7 @@ export function TeacherProfileClient({ teacher, totalStudents, schoolName, schoo
         </div>
       </ProfileHeader>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 md:grid-cols-3 gap-4">
         <StatCard icon={Users} label={t("groups")} value={teacher._count.groups} colorClass="text-purple-600" delay={0.1} />
         <StatCard icon={BookOpen} label={t("students")} value={totalStudents} colorClass="text-blue-600" delay={0.2} />
         <StatCard icon={ClipboardList} label={t("evaluations")} value={teacher._count.evaluations} colorClass="text-tahfidz-gold" delay={0.3} />
@@ -121,7 +121,7 @@ export function TeacherProfileClient({ teacher, totalStudents, schoolName, schoo
             <Link
               key={a.href}
               href={a.href}
-              className={`flex items-center gap-2 p-3 rounded-xl transition hover:opacity-80 active:scale-95 ${a.color}`}
+              className={`flex items-center gap-2 p-2.5 sm:p-3 rounded-xl transition hover:opacity-80 active:scale-95 ${a.color}`}
             >
               <a.icon size={16} />
               <span className="text-xs font-medium">{a.label}</span>
@@ -129,7 +129,7 @@ export function TeacherProfileClient({ teacher, totalStudents, schoolName, schoo
           ))}
           <button
             onClick={() => setShowFeedback(true)}
-            className="flex items-center gap-2 p-3 rounded-xl transition hover:opacity-80 active:scale-95 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300"
+            className="flex items-center gap-2 p-2.5 sm:p-3 rounded-xl transition hover:opacity-80 active:scale-95 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300"
           >
             <Bug size={16} />
             <span className="text-xs font-medium">{L === "ar" ? "إبلاغ" : L === "en" ? "Report" : "Signaler"}</span>

@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
+import { useMobile } from "@/hooks/useMobile"
 import { useSearchParams } from "next/navigation"
 import { CheckCircle2, XCircle, Loader2, Users, AlertTriangle, Clock, BookOpen, ChevronLeft, ChevronRight } from "lucide-react"
 import { formatDate } from "@/lib/utils"
@@ -59,10 +60,18 @@ const OPTS = [
   { value: "ABSENT",  label: "Absent",  icon: XCircle,      cls: "bg-red-500 text-white",    off: "text-gray-300 hover:text-red-500" },
 ]
 
+const MOBILE_SHORT_LABELS: Record<string, string> = {
+  PRESENT: "P",
+  LATE: "R",
+  EXCUSED: "E",
+  ABSENT: "A",
+}
+
 export default function TeacherAttendanceValidation() {
   const { locale } = useLanguage()
   const L = locale as "fr" | "en" | "ar"
   const t = useT("teacherAttendanceValidation")
+  const { isMobile } = useMobile()
   const searchParams = useSearchParams()
   const highlightStudentId = searchParams.get("studentId")
   const highlightDate = searchParams.get("date")
@@ -276,7 +285,7 @@ export default function TeacherAttendanceValidation() {
 
         {/* Calendar card */}
         {selectedGroup && (
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-5 mb-6">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-3 sm:p-5 mb-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <button
@@ -320,7 +329,7 @@ export default function TeacherAttendanceValidation() {
                 <button key={i}
                   disabled={!cell.isCourseDay}
                   onClick={() => cell.dateStr && cell.isCourseDay && setDate(cell.dateStr)}
-                  className={`h-10 rounded-lg text-sm font-bold flex items-center justify-center transition active:scale-90 ${
+                  className={`h-9 rounded-lg text-xs font-bold flex items-center justify-center transition active:scale-90 ${
                     cell.dateStr === date
                       ? "bg-tahfidz-green text-white shadow-sm ring-2 ring-tahfidz-green/30"
                       : cell.isToday
@@ -344,61 +353,106 @@ export default function TeacherAttendanceValidation() {
             {t("noStudentsInGroup")}
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden overflow-x-auto">
-            <table className="w-full text-sm min-w-[600px]">
-              <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                <tr>
-                  <th className="px-4 py-3 text-left font-medium">{t("student")}</th>
-                  <th className="px-4 py-3 text-left font-medium">{t("status")}</th>
-                  <th className="px-4 py-3 text-left font-medium">{t("alert")}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+          isMobile ? (
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+              <div className="divide-y divide-gray-100 dark:divide-gray-800">
                 {students.map(s => {
                   const cur = attendance[s.id] || "PRESENT"
                   const alert = parentAlertsMap[s.id]
                   return (
-                    <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{s.user.fullName}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1">
-                          {OPTS.map(o => {
-                            const Icon = o.icon
-                            const active = cur === o.value
-                            return (
-                              <button
-                                key={o.value}
-                                onClick={() => updateAttendance(s.id, o.value)}
-                                disabled={savingStudentId === s.id}
-                                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition ${
-                                  active ? o.cls : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
-                                } ${savingStudentId === s.id ? "opacity-60 cursor-wait" : ""}`}
-                                title={o.label}
-                              >
-                                {savingStudentId === s.id ? <Loader2 size={12} className="animate-spin" /> : <Icon size={12} />}
-                                {o.label}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        {alert ? (
-                          <span className="inline-flex items-center gap-1 text-xs text-orange-600 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-full">
-                            <AlertTriangle size={10} />
-                            {t("parentAlert")}: {alert.status}
-                            {alert.reason && <span className="text-orange-400">— {alert.reason}</span>}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-gray-300">—</span>
-                        )}
-                      </td>
-                    </tr>
+                    <div key={s.id} className="p-3 space-y-2">
+                      <p className="font-medium text-sm text-gray-900 dark:text-white">{s.user.fullName}</p>
+                      <div className="flex items-center gap-1 flex-wrap">
+                        {OPTS.map(o => {
+                          const Icon = o.icon
+                          const active = cur === o.value
+                          return (
+                            <button
+                              key={o.value}
+                              onClick={() => updateAttendance(s.id, o.value)}
+                              disabled={savingStudentId === s.id}
+                              className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition ${
+                                active ? o.cls : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                              } ${savingStudentId === s.id ? "opacity-60 cursor-wait" : ""}`}
+                              title={o.label}
+                            >
+                              {savingStudentId === s.id ? <Loader2 size={12} className="animate-spin" /> : <Icon size={12} />}
+                              {MOBILE_SHORT_LABELS[o.value]}
+                            </button>
+                          )
+                        })}
+                      </div>
+                      {alert ? (
+                        <span className="inline-flex items-center gap-1 text-xs text-orange-600 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-full">
+                          <AlertTriangle size={10} />
+                          {t("parentAlert")}: {alert.status}
+                          {alert.reason && <span className="text-orange-400">— {alert.reason}</span>}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-300">—</span>
+                      )}
+                    </div>
                   )
                 })}
-              </tbody>
-            </table>
-          </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden overflow-x-auto">
+              <table className="w-full text-sm min-w-[600px]">
+                <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-medium">{t("student")}</th>
+                    <th className="px-4 py-3 text-left font-medium">{t("status")}</th>
+                    <th className="px-4 py-3 text-left font-medium">{t("alert")}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {students.map(s => {
+                    const cur = attendance[s.id] || "PRESENT"
+                    const alert = parentAlertsMap[s.id]
+                    return (
+                      <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{s.user.fullName}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1">
+                            {OPTS.map(o => {
+                              const Icon = o.icon
+                              const active = cur === o.value
+                              return (
+                                <button
+                                  key={o.value}
+                                  onClick={() => updateAttendance(s.id, o.value)}
+                                  disabled={savingStudentId === s.id}
+                                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition ${
+                                    active ? o.cls : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                                  } ${savingStudentId === s.id ? "opacity-60 cursor-wait" : ""}`}
+                                  title={o.label}
+                                >
+                                  {savingStudentId === s.id ? <Loader2 size={12} className="animate-spin" /> : <Icon size={12} />}
+                                  {o.label}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          {alert ? (
+                            <span className="inline-flex items-center gap-1 text-xs text-orange-600 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-full">
+                              <AlertTriangle size={10} />
+                              {t("parentAlert")}: {alert.status}
+                              {alert.reason && <span className="text-orange-400">— {alert.reason}</span>}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-300">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )
         )}
       </div>
 

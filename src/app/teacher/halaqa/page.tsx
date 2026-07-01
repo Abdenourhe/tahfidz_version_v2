@@ -142,7 +142,7 @@ export default function TeacherHalaqaPage() {
       <div className="max-w-6xl mx-auto">
         {/* Quota banner */}
         {quota && (
-          <div className={`mb-6 rounded-xl p-4 border ${
+          <div className={`mb-6 rounded-xl p-3 sm:p-4 border ${
             quota.isUnlimited || quota.remaining > 0
               ? "bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/20"
               : "bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/20"
@@ -183,7 +183,7 @@ export default function TeacherHalaqaPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <Video size={28} className="text-tahfidz-green" />
+              <Video size={24} className="text-tahfidz-green" />
               {t("halaqa")}
             </h1>
             <p className="text-gray-500 dark:text-gray-400 mt-1">
@@ -226,14 +226,14 @@ export default function TeacherHalaqaPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-100 dark:border-gray-800"
+              className="bg-white dark:bg-gray-900 rounded-xl p-3 sm:p-4 border border-gray-100 dark:border-gray-800"
             >
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg bg-gray-50 dark:bg-gray-800 ${stat.color}`}>
-                  <stat.icon size={20} />
+                  <stat.icon size={18} />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</p>
                 </div>
               </div>
@@ -248,7 +248,7 @@ export default function TeacherHalaqaPage() {
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
                   filter === f
                     ? "bg-tahfidz-green text-white"
                     : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
@@ -258,7 +258,7 @@ export default function TeacherHalaqaPage() {
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
             <select
               value={filterGroup}
               onChange={(e) => setFilterGroup(e.target.value)}
@@ -328,7 +328,7 @@ export default function TeacherHalaqaPage() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.04 }}
-                className="bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-100 dark:border-gray-800 hover:shadow-md transition"
+                className="bg-white dark:bg-gray-900 rounded-xl p-4 sm:p-5 border border-gray-100 dark:border-gray-800 hover:shadow-md transition"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex-1">
@@ -361,25 +361,25 @@ export default function TeacherHalaqaPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     {session.status === "SCHEDULED" && (
                       <>
                         <Link
                           href={`/teacher/halaqa/${session.id}/edit`}
-                          className="px-4 py-2 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium rounded-lg transition"
+                          className="px-3 py-1.5 sm:px-4 sm:py-2 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium rounded-lg transition"
                         >
                           {t("edit") || "Modifier"}
                         </Link>
                         <Link
                           href={`/teacher/halaqa/new?duplicate=${session.id}`}
-                          className="px-4 py-2 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium rounded-lg transition"
+                          className="px-3 py-1.5 sm:px-4 sm:py-2 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium rounded-lg transition"
                         >
                           <Copy size={16} className={`inline ${isRTL ? "ml-1" : "mr-1"}`} />
                           {t("duplicate") || "Dupliquer"}
                         </Link>
                         <Link
                           href={`/teacher/halaqa/${session.id}`}
-                          className="px-4 py-2 bg-tahfidz-green hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition"
+                          className="px-3 py-1.5 sm:px-4 sm:py-2 bg-tahfidz-green hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition"
                         >
                           <Play size={16} className={`inline ${isRTL ? "ml-1" : "mr-1"}`} />
                           {t("start")}
@@ -387,7 +387,7 @@ export default function TeacherHalaqaPage() {
                         <button
                           onClick={() => cancelSession(session.id)}
                           disabled={cancellingId === session.id}
-                          className="px-4 py-2 border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm font-medium rounded-lg transition disabled:opacity-60"
+                          className="px-3 py-1.5 sm:px-4 sm:py-2 border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm font-medium rounded-lg transition disabled:opacity-60"
                         >
                           {cancellingId === session.id ? (
                             <span className="inline-block w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
@@ -401,7 +401,7 @@ export default function TeacherHalaqaPage() {
                     {session.status === "LIVE" && (
                       <Link
                         href={`/teacher/halaqa/${session.id}`}
-                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition animate-pulse"
+                        className="px-3 py-1.5 sm:px-4 sm:py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition animate-pulse"
                       >
                         <Video size={16} className={`inline ${isRTL ? "ml-1" : "mr-1"}`} />
                         {t("join")}
@@ -411,7 +411,7 @@ export default function TeacherHalaqaPage() {
                       <>
                         <Link
                           href={`/teacher/halaqa/new?duplicate=${session.id}`}
-                          className="px-4 py-2 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium rounded-lg transition"
+                          className="px-3 py-1.5 sm:px-4 sm:py-2 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium rounded-lg transition"
                         >
                           <Copy size={16} className={`inline ${isRTL ? "ml-1" : "mr-1"}`} />
                           {t("duplicate") || "Dupliquer"}
@@ -421,7 +421,7 @@ export default function TeacherHalaqaPage() {
                             href={session.recordingUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition"
+                            className="px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition"
                           >
                             <FileVideo size={16} className={`inline ${isRTL ? "ml-1" : "mr-1"}`} />
                             {t("replay")}
@@ -429,7 +429,7 @@ export default function TeacherHalaqaPage() {
                         )}
                         <Link
                           href={`/teacher/halaqa/${session.id}/evaluation`}
-                          className="px-4 py-2 bg-purple-100 dark:bg-purple-900/20 hover:bg-purple-200 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm font-medium rounded-lg transition"
+                          className="px-3 py-1.5 sm:px-4 sm:py-2 bg-purple-100 dark:bg-purple-900/20 hover:bg-purple-200 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm font-medium rounded-lg transition"
                         >
                           <BarChart3 size={16} className={`inline ${isRTL ? "ml-1" : "mr-1"}`} />
                           {t("rate")}

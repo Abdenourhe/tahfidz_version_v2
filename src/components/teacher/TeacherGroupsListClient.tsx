@@ -55,7 +55,7 @@ export function TeacherGroupsListClient({ groups }: Props) {
               : 0
 
             return (
-              <div key={group.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 card-hover">
+              <div key={group.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 sm:p-5 card-hover">
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <div className="flex items-center gap-2 mb-0.5">
@@ -67,16 +67,16 @@ export function TeacherGroupsListClient({ groups }: Props) {
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 mb-4">
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2.5 text-center">
-                    <p className="text-lg font-bold text-blue-600">{group._count.students}</p>
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2 sm:p-2.5 text-center">
+                    <p className="text-base sm:text-lg font-bold text-blue-600">{group._count.students}</p>
                     <p className="text-xs text-gray-400">{t("students")}</p>
                   </div>
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2.5 text-center">
-                    <p className="text-lg font-bold text-tahfidz-green">{avgMemorized}</p>
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2 sm:p-2.5 text-center">
+                    <p className="text-base sm:text-lg font-bold text-tahfidz-green">{avgMemorized}</p>
                     <p className="text-xs text-gray-400">{t("avgSurahs")}</p>
                   </div>
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2.5 text-center">
-                    <p className="text-lg font-bold text-gray-600 dark:text-gray-300">{group.maxCapacity}</p>
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2 sm:p-2.5 text-center">
+                    <p className="text-base sm:text-lg font-bold text-gray-600 dark:text-gray-300">{group.maxCapacity}</p>
                     <p className="text-xs text-gray-400">{t("max")}</p>
                   </div>
                 </div>
@@ -86,7 +86,7 @@ export function TeacherGroupsListClient({ groups }: Props) {
                     <span>{t("occupation")}</span>
                     <span className={capacityPct >= 90 ? "text-red-500 font-medium" : ""}>{group._count.students}/{group.maxCapacity}</span>
                   </div>
-                  <div className="progress-bar">
+                  <div className="progress-bar h-1.5">
                     <div className={`h-full rounded-full ${capacityPct >= 90 ? "bg-red-400" : capacityPct >= 70 ? "bg-yellow-400" : "bg-tahfidz-green"}`}
                       style={{ width: `${Math.min(capacityPct, 100)}%` }} />
                   </div>
@@ -95,12 +95,12 @@ export function TeacherGroupsListClient({ groups }: Props) {
                 <div className="flex items-center gap-2 mb-4">
                   <div className="flex -space-x-2">
                     {group.students.slice(0, 5).map(s => (
-                      <div key={s.id} className="w-7 h-7 rounded-full gradient-tahfidz border-2 border-white dark:border-gray-900 flex items-center justify-center">
+                      <div key={s.id} className="w-6 h-6 sm:w-7 sm:h-7 rounded-full gradient-tahfidz border-2 border-white dark:border-gray-900 flex items-center justify-center">
                         <span className="text-white text-xs font-bold">{s.user.fullName.charAt(0)}</span>
                       </div>
                     ))}
                     {group.students.length > 5 && (
-                      <div className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700 border-2 border-white dark:border-gray-900 flex items-center justify-center">
+                      <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gray-200 dark:bg-gray-700 border-2 border-white dark:border-gray-900 flex items-center justify-center">
                         <span className="text-gray-500 dark:text-gray-300 text-xs font-bold">+{group.students.length - 5}</span>
                       </div>
                     )}
@@ -109,7 +109,7 @@ export function TeacherGroupsListClient({ groups }: Props) {
                 </div>
 
                 <Link href={`/teacher/groups/${group.id}`}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 gradient-tahfidz text-white text-sm font-medium rounded-lg hover:opacity-90 transition">
+                  className="w-full flex items-center justify-center gap-2 py-2 sm:py-2.5 gradient-tahfidz text-white text-sm font-medium rounded-lg hover:opacity-90 transition">
                   <Users size={15} /> {t("manage")}
                 </Link>
               </div>

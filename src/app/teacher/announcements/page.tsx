@@ -54,8 +54,10 @@ export default function TeacherAnnouncementsPage() {
           <p className="text-sm text-gray-500 mt-1">Toutes les annonces publiées</p>
         </div>
         <Link href="/teacher/announcements/new"
-          className="flex items-center gap-2 px-4 py-2.5 gradient-tahfidz text-white text-sm font-medium rounded-lg hover:opacity-90 transition">
-          <Plus size={16}/>Nouvelle annonce
+          className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 gradient-tahfidz text-white text-sm font-medium rounded-lg hover:opacity-90 transition">
+          <Plus size={16}/>
+          <span className="sm:hidden">Nouvelle</span>
+          <span className="hidden sm:inline">Nouvelle annonce</span>
         </Link>
       </div>
 
@@ -73,11 +75,11 @@ export default function TeacherAnnouncementsPage() {
             const tc=TC[ann.type]??TC.GENERAL
             const expired=ann.expiresAt&&new Date(ann.expiresAt)<new Date()
             return(
-              <div key={ann.id} className={`bg-white rounded-xl border p-5 ${ann.isPinned?"border-tahfidz-green":"border-gray-100"} ${expired?"opacity-60":""}`}>
-                <div className="flex items-start gap-4">
-                  {ann.isPinned&&<Pin size={15} className="text-tahfidz-green flex-shrink-0 mt-0.5"/>}
+              <div key={ann.id} className={`bg-white rounded-xl border p-4 sm:p-5 ${ann.isPinned?"border-tahfidz-green":"border-gray-100"} ${expired?"opacity-60":""}`}>
+                <div className="flex flex-col sm:flex-row sm:items-start gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
+                      {ann.isPinned&&<Pin size={15} className="text-tahfidz-green flex-shrink-0"/>}
                       <h3 className="font-semibold text-gray-900">{ann.title}</h3>
                       {ann.titleAr&&<span className="arabic text-sm text-gray-400">{ann.titleAr}</span>}
                       <span className={`text-xs px-2 py-0.5 rounded-full ${tc.color}`}>{tc.label}</span>
@@ -93,7 +95,7 @@ export default function TeacherAnnouncementsPage() {
                       {ann.targetGroups.length>0&&<span>· {ann.targetGroups.map(tg=>tg.group.name).join(", ")}</span>}
                     </div>
                   </div>
-                  <div className="flex gap-2 flex-shrink-0">
+                  <div className="flex gap-2 mt-3 sm:mt-0 sm:flex-shrink-0">
                     <Link href={`/admin/announcements/${ann.id}/edit`}
                       className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition">
                       <Pencil size={12}/>Modifier

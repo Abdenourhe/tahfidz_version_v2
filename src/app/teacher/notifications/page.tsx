@@ -113,14 +113,14 @@ export default function TeacherNotificationsPage() {
           {unreadCount > 0 && (
             <button onClick={markAll}
               className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-tahfidz-green transition px-3 py-1.5 rounded-lg hover:bg-gray-50 border border-gray-200 dark:border-gray-700">
-              <CheckCheck size={14} /> {t("markAllRead")}
+              <CheckCheck size={14} /> <span className="hidden sm:inline">{t("markAllRead")}</span>
             </button>
           )}
           {notifications.length > 0 && (
             <button onClick={deleteAll} disabled={deletingAll}
               className="flex items-center gap-1.5 text-sm text-red-500 hover:text-red-700 transition px-3 py-1.5 border border-red-200 rounded-lg hover:bg-red-50 disabled:opacity-50">
               {deletingAll ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-              {t("deleteAll")}
+              <span className="hidden sm:inline">{t("deleteAll")}</span>
             </button>
           )}
         </div>
@@ -141,13 +141,13 @@ export default function TeacherNotificationsPage() {
             const tc = TYPE_CONFIG[notif.type] ?? TYPE_CONFIG.reminder
             return (
               <div key={notif.id}
-                className={`relative rounded-2xl border p-4 flex gap-4 group transition cursor-pointer ${!notif.isRead ? "border-tahfidz-green/40 bg-tahfidz-green-light/20 dark:bg-emerald-900/20 dark:border-emerald-500/40 shadow-sm" : "border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-200 dark:hover:border-gray-600 hover:shadow-md"}`}
+                className={`relative rounded-2xl border p-3 sm:p-4 flex gap-4 group transition cursor-pointer ${!notif.isRead ? "border-tahfidz-green/40 bg-tahfidz-green-light/20 dark:bg-emerald-900/20 dark:border-emerald-500/40 shadow-sm" : "border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-200 dark:hover:border-gray-600 hover:shadow-md"}`}
                 onClick={() => {
                   if (!notif.isRead) markRead(notif.id)
                   if (notif.data?.url) router.push(notif.data.url)
                 }}>
                 {!notif.isRead && <div className="absolute left-0 top-4 bottom-4 w-1 rounded-r-full bg-tahfidz-green dark:bg-emerald-400" />}
-                <div className={`w-11 h-11 rounded-xl ${tc.bg} dark:bg-gray-700 flex items-center justify-center flex-shrink-0 shadow-sm`}>
+                <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl ${tc.bg} dark:bg-gray-700 flex items-center justify-center flex-shrink-0 shadow-sm`}>
                   <tc.icon size={20} className={tc.color} />
                 </div>
                 <div className="flex-1 min-w-0">

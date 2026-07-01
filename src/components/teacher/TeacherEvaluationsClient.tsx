@@ -94,7 +94,7 @@ export function TeacherEvaluationsClient({ evaluations, stats, students }: Props
             <button
               key={stat.key}
               onClick={() => setFilter(stat.key === "evaluations" ? "all" : stat.key as any)}
-              className={`bg-white dark:bg-gray-900 rounded-xl border p-4 text-left transition-all hover:shadow-md ${
+              className={`bg-white dark:bg-gray-900 rounded-xl border p-3 sm:p-4 text-left transition-all hover:shadow-md ${
                 (stat.key === "evaluations" && filter === "all") ||
                 (stat.key === "approved" && filter === "approved") ||
                 (stat.key === "pending" && filter === "revision") ||
@@ -103,7 +103,7 @@ export function TeacherEvaluationsClient({ evaluations, stats, students }: Props
                   : "border-gray-200 dark:border-gray-800"
               }`}
             >
-              <div className={`w-8 h-8 rounded-lg ${stat.color} flex items-center justify-center mb-2`}>
+              <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg ${stat.color} flex items-center justify-center mb-2`}>
                 <Icon size={16} className="text-white" />
               </div>
               <p className="text-xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
@@ -115,12 +115,12 @@ export function TeacherEvaluationsClient({ evaluations, stats, students }: Props
 
       {/* Filters + Search */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {(["all", "approved", "revision", "rejected"] as const).map(f => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition ${
                 filter === f
                   ? "bg-tahfidz-green text-white"
                   : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -141,7 +141,7 @@ export function TeacherEvaluationsClient({ evaluations, stats, students }: Props
             placeholder={locale === "ar" ? "بحث..." : locale === "en" ? "Search..." : "Rechercher..."}
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="pl-9 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/20"
+            className="pl-9 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-sm w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/20"
           />
         </div>
       </div>
@@ -149,7 +149,7 @@ export function TeacherEvaluationsClient({ evaluations, stats, students }: Props
       {/* Evaluations List */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
         {filtered.length === 0 ? (
-          <div className="p-16 text-center">
+          <div className="p-12 sm:p-16 text-center">
             <Award size={48} className="mx-auto text-gray-300 dark:text-gray-700 mb-4" />
             <p className="text-gray-500 dark:text-gray-400 font-medium">{t("noEval")}</p>
             <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">{t("noEvalDesc")}</p>
@@ -178,12 +178,12 @@ export function TeacherEvaluationsClient({ evaluations, stats, students }: Props
               return (
                 <div
                   key={eval_.id}
-                  className="grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition items-center"
+                  className="grid grid-cols-1 md:grid-cols-12 gap-4 px-4 py-3 sm:px-6 sm:py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition items-center"
                 >
                   {/* Student */}
                   <div className="col-span-3 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-tahfidz-green/10 flex items-center justify-center">
-                      <User size={16} className="text-tahfidz-green" />
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-tahfidz-green/10 flex items-center justify-center">
+                      <User size={14} className="text-tahfidz-green" />
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">{eval_.student.user.fullName}</p>

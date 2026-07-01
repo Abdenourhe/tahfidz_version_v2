@@ -183,7 +183,7 @@ export function MobileHeader({
   return (
     <>
       <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-800/50 safe-area-pt">
-        <div className="flex items-center justify-between px-4 h-14">
+        <div className="flex items-center justify-between px-4 h-12">
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="p-2 -ml-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors active:scale-95 tap-feedback"
@@ -203,11 +203,11 @@ export function MobileHeader({
           </button>
 
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-tahfidz-green flex items-center justify-center overflow-hidden">
+            <div className="w-7 h-7 rounded-lg bg-tahfidz-green flex items-center justify-center overflow-hidden">
               {logo ? (
                 <Image src={logo} alt={displayName} width={32} height={32} className="w-full h-full object-cover" />
               ) : (
-                <Logo variant="icon" size={28} priority />
+                <Logo variant="icon" size={24} priority />
               )}
             </div>
             <div className="flex flex-col">
