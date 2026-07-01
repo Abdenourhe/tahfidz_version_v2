@@ -366,7 +366,7 @@ const CONTACT_FR = {
   metaDescription: "Contactez l'équipe TAHFIDZ pour une question, un support ou une demande de démo.",
   intro: "Une question ? Besoin d'assistance ou d'une démonstration ? Notre équipe vous répond.",
   contactCards: [
-    { icon: 'Mail', title: 'Email', value: 'abdenour.hellas@uqat.ca', href: 'mailto:abdenour.hellas@uqat.ca' },
+    { icon: 'Mail', title: 'Email', value: 'contact@tahfidz.com', href: 'mailto:contact@tahfidz.com' },
     { icon: 'Clock', title: 'Disponibilité', value: 'Lun - Ven, 9h - 18h' },
     { icon: 'MapPin', title: 'Siège social', value: 'Canada' },
   ],
@@ -388,7 +388,7 @@ const CONTACT_EN = {
   metaDescription: 'Contact the TAHFIDZ team for a question, support, or a demo request.',
   intro: 'Have a question? Need assistance or a demo? Our team is here to help.',
   contactCards: [
-    { icon: 'Mail', title: 'Email', value: 'abdenour.hellas@uqat.ca', href: 'mailto:abdenour.hellas@uqat.ca' },
+    { icon: 'Mail', title: 'Email', value: 'contact@tahfidz.com', href: 'mailto:contact@tahfidz.com' },
     { icon: 'Clock', title: 'Availability', value: 'Mon - Fri, 9am - 6pm' },
     { icon: 'MapPin', title: 'Headquarters', value: 'Canada' },
   ],
@@ -410,7 +410,7 @@ const CONTACT_AR = {
   metaDescription: 'تواصل مع فريق TAHFIDZ للاستفسار أو الدعم أو طلب عرض توضيحي.',
   intro: 'هل لديك سؤال؟ تحتاج إلى مساعدة أو عرض توضيحي؟ فريقنا جاهز لمساعدتك.',
   contactCards: [
-    { icon: 'Mail', title: 'البريد الإلكتروني', value: 'abdenour.hellas@uqat.ca', href: 'mailto:abdenour.hellas@uqat.ca' },
+    { icon: 'Mail', title: 'البريد الإلكتروني', value: 'contact@tahfidz.com', href: 'mailto:contact@tahfidz.com' },
     { icon: 'Clock', title: 'التواجد', value: 'الإثنين - الجمعة، ٩ ص - ٦ م' },
     { icon: 'MapPin', title: 'المقر الرئيسي', value: 'كندا' },
   ],

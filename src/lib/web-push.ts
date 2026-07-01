@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma"
 
 const publicKey = process.env.VAPID_PUBLIC_KEY
 const privateKey = process.env.VAPID_PRIVATE_KEY
-const subject = process.env.VAPID_SUBJECT || "mailto:abdenour.hellas@uqat.ca"
+const subject = process.env.VAPID_SUBJECT || "mailto:contact@tahfidz.app"
 
 let configured = false
 function configure() {
