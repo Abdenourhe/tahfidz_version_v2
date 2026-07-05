@@ -349,9 +349,9 @@ function StudentCardContent({
       {/* Corps : infos + photo */}
       <div
         className="absolute left-0 right-0 flex"
-        style={{ top: "23mm", height: "25mm", paddingLeft: "3mm", paddingRight: "3mm" }}
+        style={{ top: "21mm", height: "21mm", paddingLeft: "3mm", paddingRight: "3mm" }}
       >
-        <div className="flex flex-col" style={{ flex: 1, gap: "1.2mm", paddingTop: "1mm" }}>
+        <div className="flex flex-col" style={{ flex: 1, gap: "0.8mm", paddingTop: "0.5mm" }}>
           <IdInfoRow label={t("studentCode", locale)} value={student.studentCode} />
           <IdInfoRow label={t("group", locale)} value={student.group?.name || "—"} />
           <IdInfoRow label="Email" value={student.email || "—"} />
@@ -387,11 +387,11 @@ function StudentCardContent({
       </div>
 
       {/* Code-barres */}
-      <div style={{ position: "absolute", left: "3mm", bottom: "3.5mm" }}>
+      <div style={{ position: "absolute", left: "3mm", bottom: "2mm" }}>
         <Barcode
           value={student.studentCode}
           width={1.2}
-          height={16}
+          height={10}
           fontSize={7}
           background="#ffffff"
           lineColor="#000000"
