@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { QRCodeSVG } from "qrcode.react"
+import Barcode from "react-barcode"
 import Image from "next/image"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { ArrowLeft, Printer, RefreshCw, Loader2, AlertCircle } from "lucide-react"
@@ -47,6 +48,7 @@ const TEXTS: Record<string, Record<string, string>> = {
   loading:       { fr: "Chargement...", en: "Loading...", ar: "جاري التحميل..." },
   error:         { fr: "Erreur", en: "Error", ar: "خطأ" },
   cardTitle:     { fr: "CARTE D'ÉTUDIANT", en: "STUDENT CARD", ar: "بطاقة الطالب" },
+  student:       { fr: "Élève", en: "Student", ar: "طالب" },
   issuedOn:      { fr: "Émise le", en: "Issued on", ar: "تاريخ الإصدار" },
   previewInfo:   { fr: "Format d'impression : 86 × 54 mm (taille carte de crédit)", en: "Print format: 86 × 54 mm (credit card size)", ar: "تنسيق الطباعة: 86 × 54 ملم (حجم بطاقة الائتمان)" },
 }
@@ -252,7 +254,6 @@ export default function StudentCardPage() {
 function StudentCardContent({
   student,
   school,
-  qrCodeUrl,
   displayDate,
   locale,
   logoUrl,
@@ -275,72 +276,97 @@ function StudentCardContent({
         fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       }}
     >
-      {/* Bandeau supérieur */}
+      {/* Coins décoratifs haut droit */}
       <div
-        className="absolute top-0 left-0 right-0 flex items-center justify-center"
-        style={{ height: "9mm", backgroundColor: "#1e1b4b" }}
+        style={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+          width: "22mm",
+          height: "14mm",
+          background: "#0e76a8",
+          clipPath: "polygon(100% 0, 0 0, 100% 100%)",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+          width: "14mm",
+          height: "9mm",
+          background: "#085c8c",
+          clipPath: "polygon(100% 0, 0 0, 100% 100%)",
+        }}
+      />
+
+      {/* En-tête : logo + école */}
+      <div
+        className="absolute left-0 right-0 flex items-center"
+        style={{ top: 0, height: "10mm", paddingLeft: "3mm", paddingRight: "3mm", gap: "2mm" }}
       >
-        <span
-          className="font-bold uppercase"
-          style={{ color: "#ffffff", fontSize: "3mm", letterSpacing: "0.25em", lineHeight: 1 }}
+        <div
+          style={{
+            width: "6mm",
+            height: "6mm",
+            borderRadius: "50%",
+            overflow: "hidden",
+            background: "#fff",
+            boxShadow: "0 0 0 0.3mm rgba(0,0,0,0.08)",
+            flexShrink: 0,
+          }}
         >
-          {t("cardTitle", locale)}
-        </span>
+          <Image src={logoUrl} alt={school.name} width={48} height={48} className="object-contain w-full h-full" unoptimized />
+        </div>
+        <div>
+          <p className="truncate" style={{ fontSize: "2.4mm", fontWeight: 700, color: "#1f2937", lineHeight: 1.1 }}>
+            {school.name}
+          </p>
+          <p style={{ fontSize: "1.5mm", color: "#6b7280", lineHeight: 1.1, marginTop: "0.3mm" }}>
+            {school.slug}
+          </p>
+        </div>
       </div>
 
-      {/* Ligne école : logo + nom/slug à gauche, ville à droite */}
+      {/* Bandeau bleu avec nom */}
       <div
-        className="absolute left-0 right-0 flex items-center justify-between"
-        style={{ top: "10mm", height: "7mm", paddingLeft: "3.5mm", paddingRight: "3.5mm" }}
+        className="absolute left-0 right-0 flex items-center"
+        style={{ top: "10mm", height: "11mm", background: "#0e76a8", paddingLeft: "3mm", paddingRight: "3mm" }}
       >
-        <div className="flex items-center gap-[1.5mm]">
-          {/* Logo */}
-          <div
-            className="flex items-center justify-center overflow-hidden"
-            style={{
-              width: "6mm",
-              height: "6mm",
-              backgroundColor: "#ffffff",
-              borderRadius: "50%",
-              boxShadow: "0 0 0 0.3mm rgba(0,0,0,0.08)",
-              flexShrink: 0,
-            }}
+        <div style={{ maxWidth: "80%" }}>
+          <p
+            className="uppercase truncate"
+            style={{ fontSize: "4mm", fontWeight: 800, color: "#ffffff", letterSpacing: "0.03em", lineHeight: 1.1 }}
           >
-            <Image src={logoUrl} alt={school.name} width={48} height={48} className="object-contain w-full h-full" unoptimized />
-          </div>
+            {student.fullName}
+          </p>
+          <p style={{ fontSize: "2.2mm", color: "#dbeafe", lineHeight: 1.1, marginTop: "0.8mm" }}>
+            {t("student", locale)}
+          </p>
+        </div>
+      </div>
 
-          {/* Nom + slug */}
-          <div className="flex flex-col justify-center">
-            <p className="truncate" style={{ color: "#1f2937", fontWeight: 700, fontSize: "2.4mm", lineHeight: 1.15 }}>
-              {school.name}
-            </p>
-            <p className="truncate" style={{ color: "#6b7280", fontSize: "1.6mm", lineHeight: 1.15, marginTop: "0.3mm" }}>
-              {school.slug}
-            </p>
-          </div>
+      {/* Corps : infos + photo */}
+      <div
+        className="absolute left-0 right-0 flex"
+        style={{ top: "23mm", height: "25mm", paddingLeft: "3mm", paddingRight: "3mm" }}
+      >
+        <div className="flex flex-col" style={{ flex: 1, gap: "1.2mm", paddingTop: "1mm" }}>
+          <IdInfoRow label={t("studentCode", locale)} value={student.studentCode} />
+          <IdInfoRow label={t("group", locale)} value={student.group?.name || "—"} />
+          <IdInfoRow label="Email" value={student.email || "—"} />
+          {student.phone && <IdInfoRow label={t("phone", locale)} value={student.phone} />}
         </div>
 
-        {/* Ville */}
-        {school.city && (
-          <p className="truncate" style={{ color: "#6b7280", fontSize: "1.9mm", lineHeight: 1.2, maxWidth: "25mm", textAlign: "right" }}>
-            {school.city}
-          </p>
-        )}
-      </div>
-
-      {/* Corps : photo + infos + QR */}
-      <div
-        className="absolute left-0 right-0 flex items-start justify-between"
-        style={{ top: "18mm", height: "26mm", paddingLeft: "3.5mm", paddingRight: "3.5mm" }}
-      >
         {/* Photo */}
         <div
-          className="overflow-hidden flex items-center justify-center flex-shrink-0"
+          className="flex items-center justify-center overflow-hidden flex-shrink-0"
           style={{
-            width: "22mm",
-            height: "26mm",
-            backgroundColor: "#f8fafc",
-            border: "0.35mm solid #e2e8f0",
+            width: "19mm",
+            height: "23mm",
+            border: "0.5mm solid #0e76a8",
+            background: "#f8fafc",
+            marginLeft: "2mm",
           }}
         >
           {student.avatar ? (
@@ -353,123 +379,69 @@ function StudentCardContent({
               unoptimized
             />
           ) : (
-            <span style={{ color: "#cbd5e1", fontWeight: 700, fontSize: "10mm" }}>
+            <span style={{ color: "#cbd5e1", fontWeight: 700, fontSize: "8mm" }}>
               {student.fullName.charAt(0)}
             </span>
           )}
         </div>
-
-        {/* Infos */}
-        <div
-          className="flex flex-col"
-          style={{ width: "31mm", height: "26mm", justifyContent: "space-between" }}
-        >
-          <InfoRow
-            label={t("studentCode", locale)}
-            value={student.studentCode}
-            valueClassName="font-mono"
-          />
-          <InfoRow
-            label={locale === "ar" ? "الاسم" : "Nom"}
-            value={locale === "ar" ? student.fullNameAr || student.fullName : student.fullName}
-            isArabic={locale === "ar"}
-            valueStyle={{ fontWeight: 700, fontSize: "2.8mm" }}
-          />
-          <InfoRow
-            label={t("group", locale)}
-            value={student.group?.name || "—"}
-          />
-          <InfoRow
-            label={t("teacher", locale)}
-            value={student.teacher?.user?.fullName || "—"}
-          />
-        </div>
-
-        {/* QR Code */}
-        <div
-          className="flex items-center justify-center flex-shrink-0"
-          style={{ width: "20mm", height: "20mm", padding: "1.5mm", backgroundColor: "#ffffff", border: "0.35mm solid #e2e8f0" }}
-        >
-          <QRCodeSVG
-            value={qrCodeUrl}
-            size={68}
-            level="H"
-            includeMargin={false}
-            imageSettings={{
-              src: logoUrl,
-              height: 14,
-              width: 14,
-              excavate: true,
-            }}
-          />
-        </div>
       </div>
 
-      {/* Bandeau inférieur */}
-      <div
-        className="absolute left-0 right-0 flex items-center justify-center"
-        style={{ bottom: 0, height: "6mm", backgroundColor: "#7c3aed", paddingLeft: "4mm", paddingRight: "4mm" }}
-      >
-        <span
-          className="uppercase text-center truncate"
-          style={{ color: "#ffffff", fontWeight: 900, fontSize: "3.2mm", letterSpacing: "0.12em", lineHeight: 1 }}
-        >
-          {school.name}
-        </span>
+      {/* Code-barres */}
+      <div style={{ position: "absolute", left: "3mm", bottom: "3.5mm" }}>
+        <Barcode
+          value={student.studentCode}
+          width={1.2}
+          height={16}
+          fontSize={7}
+          background="#ffffff"
+          lineColor="#000000"
+          margin={0}
+          displayValue
+        />
       </div>
 
       {/* Date d'émission */}
       <div
         className="absolute"
-        style={{ right: "4mm", bottom: "1.5mm", color: "#ffffff", fontWeight: 500, fontSize: "1.5mm", lineHeight: 1 }}
+        style={{ right: "3mm", bottom: "2.5mm", color: "#6b7280", fontWeight: 500, fontSize: "1.4mm", lineHeight: 1 }}
       >
         {displayDate}
       </div>
+
+      {/* Bandeau inférieur */}
+      <div className="absolute left-0 right-0" style={{ bottom: 0, height: "1.5mm", background: "#0e76a8" }} />
     </div>
   )
 }
 
-function InfoRow({
-  label,
-  value,
-  valueClassName,
-  valueStyle,
-  isArabic,
-}: {
-  label: string
-  value: string
-  valueClassName?: string
-  valueStyle?: React.CSSProperties
-  isArabic?: boolean
-}) {
+function IdInfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ marginBottom: "0.8mm" }}>
-      <div
-        className="font-bold uppercase"
+    <div>
+      <p
         style={{
-          backgroundColor: "#dbeafe",
-          color: "#1e40af",
-          fontSize: "1.7mm",
-          letterSpacing: "0.06em",
-          padding: "0.5mm 1.2mm 0.4mm 1.2mm",
+          fontSize: "1.4mm",
+          color: "#6b7280",
+          fontWeight: 700,
+          textTransform: "uppercase",
           lineHeight: 1,
+          letterSpacing: "0.04em",
         }}
       >
         {label}
-      </div>
-      <div
-        className={`truncate ${valueClassName || ""} ${isArabic ? "arabic" : ""}`}
+      </p>
+      <p
+        className="truncate"
         style={{
+          fontSize: "2.2mm",
           color: "#111827",
-          fontWeight: 600,
-          fontSize: "2.4mm",
-          padding: "0.6mm 1.2mm 0 1.2mm",
+          fontWeight: 700,
           lineHeight: 1.2,
-          ...valueStyle,
+          maxWidth: "52mm",
+          marginTop: "0.3mm",
         }}
       >
         {value}
-      </div>
+      </p>
     </div>
   )
 }
