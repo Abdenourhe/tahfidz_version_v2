@@ -32,6 +32,12 @@ export async function verifyQrPayload(
     return verifyBarcodePayloadObject(barcodePayload, teacherUserId, teacherRole)
   }
 
+  // Fallback : code étudiant seul (format plus court et plus fiable pour les codes-barres)
+  const studentCode = encoded.trim()
+  if (studentCode) {
+    return verifyStudentCodePayloadObject(studentCode, teacherUserId, teacherRole)
+  }
+
   return { ok: false, status: "INVALID_TOKEN", reason: "Payload invalide" }
 }
 
@@ -88,6 +94,56 @@ export async function verifyQrPayloadObject(
   }
 
   // Vérifier que l'enseignant est responsable de l'élève
+  if (teacherRole === "TEACHER") {
+    const isAssignedTeacher = student.teacherId === teacher?.id
+    const isGroupTeacher = student.group?.teacherId === teacher?.id
+    if (!isAssignedTeacher && !isGroupTeacher) {
+      return { ok: false, status: "UNAUTHORIZED_TEACHER", reason: "Cet élève n'est pas dans votre groupe" }
+    }
+  }
+
+  return { ok: true, student: student as NonNullable<typeof student> }
+}
+
+/**
+ * Vérifie un code étudiant seul scanné sur une carte.
+ * L'école est déduite de l'utilisateur (prof/admin) qui scanne.
+ */
+export async function verifyStudentCodePayloadObject(
+  studentCode: string,
+  teacherUserId: string,
+  teacherRole: string
+): Promise<VerifyResult> {
+  const user = await prisma.user.findUnique({
+    where: { id: teacherUserId },
+    select: { schoolId: true, role: true },
+  })
+  if (!user?.schoolId) {
+    return { ok: false, status: "UNAUTHORIZED", reason: "École de l'utilisateur non trouvée" }
+  }
+
+  const teacher = await prisma.teacher.findUnique({
+    where: { userId: teacherUserId },
+    select: { id: true },
+  })
+
+  if (!teacher && teacherRole === "TEACHER") {
+    return { ok: false, status: "UNAUTHORIZED_TEACHER", reason: "Profil enseignant introuvable" }
+  }
+
+  const student = await prisma.student.findFirst({
+    where: { studentCode, user: { schoolId: user.schoolId } },
+    include: studentInclude,
+  })
+
+  if (!student) {
+    return { ok: false, status: "INVALID_TOKEN", reason: "Code étudiant invalide" }
+  }
+
+  if (!student.user.isActive) {
+    return { ok: false, status: "INVALID_TOKEN", reason: "Compte élève inactif" }
+  }
+
   if (teacherRole === "TEACHER") {
     const isAssignedTeacher = student.teacherId === teacher?.id
     const isGroupTeacher = student.group?.teacherId === teacher?.id
