@@ -163,6 +163,28 @@ export function generateStudentQrUrl(
 }
 
 /**
+ * Payload d'un code-barres scanné sur une carte étudiant.
+ * Format : schoolSlug:studentCode
+ */
+export interface BarcodePayload {
+  s: string // schoolSlug
+  c: string // studentCode
+}
+
+/**
+ * Décode une valeur code-barres (schoolSlug:studentCode).
+ * Retourne null si le format est invalide.
+ */
+export function decodeBarcodeValue(value: string): BarcodePayload | null {
+  const trimmed = value.trim()
+  const parts = trimmed.split(":")
+  if (parts.length !== 2) return null
+  const [s, c] = parts
+  if (!s || !c) return null
+  return { s, c }
+}
+
+/**
  * Vérifie qu'un HMAC fourni correspond au secret et à la date du jour.
  * Utilise timingSafeEqual pour éviter les attaques par timing.
  */

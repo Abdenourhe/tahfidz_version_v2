@@ -2,14 +2,14 @@
 
 import { useEffect, useRef, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { Html5Qrcode, type CameraDevice } from "html5-qrcode"
+import { Html5Qrcode, Html5QrcodeSupportedFormats, type CameraDevice } from "html5-qrcode"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { decodeAnyQrValue } from "@/lib/qr-code"
 import { Loader2, AlertCircle, Camera, RefreshCw, ScanLine, CheckCircle2 } from "lucide-react"
 
 const TEXTS: Record<string, Record<string, string>> = {
   title:         { fr: "Scanner une carte", en: "Scan a card", ar: "مسح بطاقة" },
-  subtitle:      { fr: "Placez le QR code de l'élève dans le cadre", en: "Position the student's QR code in the frame", ar: "ضع رمز QR للطالب في الإطار" },
+  subtitle:      { fr: "Placez le QR code ou le code-barres de l'élève dans le cadre", en: "Position the student's QR code or barcode in the frame", ar: "ضع رمز QR أو الباركود للطالب في الإطار" },
   starting:      { fr: "Démarrage de la caméra...", en: "Starting camera...", ar: "جاري تشغيل الكاميرا..." },
   error:         { fr: "Impossible d'accéder à la caméra", en: "Unable to access camera", ar: "تعذر الوصول إلى الكاميرا" },
   noCamera:      { fr: "Aucune caméra détectée", en: "No camera detected", ar: "لم يتم اكتشاف كاميرا" },
@@ -19,7 +19,7 @@ const TEXTS: Record<string, Record<string, string>> = {
   camera:        { fr: "Caméra", en: "Camera", ar: "الكاميرا" },
   permission:    { fr: "Autorisez l'accès à la caméra pour scanner", en: "Allow camera access to scan", ar: "اسمح بالوصول إلى الكاميرا للمسح" },
   scanned:       { fr: "QR code détecté", en: "QR code detected", ar: "تم اكتشاف رمز QR" },
-  invalidQr:     { fr: "QR non reconnu, réessayez", en: "QR not recognized, try again", ar: "رمز QR غير معروف، حاول مرة أخرى" },
+  invalidQr:     { fr: "Code non reconnu, réessayez", en: "Code not recognized, try again", ar: "الرمز غير معروف، حاول مرة أخرى" },
 }
 
 function t(key: string, locale: string): string {
@@ -129,7 +129,15 @@ export default function TeacherScanPage() {
   }, [facingMode, selectedCameraId, handleDecoded, stopScanner, L])
 
   useEffect(() => {
-    const scanner = new Html5Qrcode("qr-reader")
+    const scanner = new Html5Qrcode("qr-reader", {
+      verbose: false,
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.QR_CODE,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.EAN_13,
+      ],
+    })
     scannerRef.current = scanner
 
     Html5Qrcode.getCameras()

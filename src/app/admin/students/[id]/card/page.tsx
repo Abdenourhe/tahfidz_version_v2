@@ -389,7 +389,7 @@ function StudentCardContent({
       {/* Code-barres */}
       <div style={{ position: "absolute", left: "3mm", bottom: "2mm" }}>
         <Barcode
-          value={student.studentCode}
+          value={`${school.slug}:${student.studentCode}`}
           width={1.2}
           height={10}
           fontSize={7}
