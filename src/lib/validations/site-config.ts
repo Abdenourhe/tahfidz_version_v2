@@ -131,11 +131,17 @@ const emailTemplateSchema = z.object({
   body: z.string().min(1),
 })
 
+const emailLocaleTemplateSchema = z.object({
+  fr: emailTemplateSchema,
+  en: emailTemplateSchema,
+  ar: emailTemplateSchema,
+})
+
 export const siteConfigGlobalSchema = z.object({
   emails: z.object({
-    welcome: emailTemplateSchema,
-    "reset-password": emailTemplateSchema,
-    "invite-parent": emailTemplateSchema,
+    welcome: emailLocaleTemplateSchema,
+    "reset-password": emailLocaleTemplateSchema,
+    "invite-parent": emailLocaleTemplateSchema,
   }),
   banner: z.object({
     enabled: z.boolean(),

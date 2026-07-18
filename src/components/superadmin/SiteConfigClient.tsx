@@ -20,6 +20,7 @@ import type {
   ContactCard,
 } from '@/lib/site-config/page-types'
 import { defaultPageContents } from '@/lib/site-config/page-defaults'
+import { migrateEmailTemplatesToMultilingual, type EmailTemplatesConfig } from '@/lib/email-templates'
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -30,7 +31,7 @@ type EmailTemplate = { subject: string; body: string }
 type BannerType = 'info' | 'warning' | 'success' | 'error'
 
 type GlobalContent = {
-  emails: Record<'welcome' | 'reset-password' | 'invite-parent', EmailTemplate>
+  emails: EmailTemplatesConfig
   banner: {
     enabled: boolean
     message: string
@@ -48,22 +49,13 @@ interface SiteConfigClientProps {
 // ── Helpers de normalisation ───────────────────────────────────────
 
 function normalizeGlobal(raw: any): GlobalContent {
-  const template = (key: 'welcome' | 'reset-password' | 'invite-parent'): EmailTemplate => ({
-    subject: raw?.emails?.[key]?.subject ?? '',
-    body: raw?.emails?.[key]?.body ?? '',
-  })
-
   const bannerType = raw?.banner?.type
   const validBannerType: BannerType = ['info', 'warning', 'success', 'error'].includes(bannerType)
     ? bannerType
     : 'info'
 
   return {
-    emails: {
-      welcome: template('welcome'),
-      'reset-password': template('reset-password'),
-      'invite-parent': template('invite-parent'),
-    },
+    emails: migrateEmailTemplatesToMultilingual(raw?.emails),
     banner: {
       enabled: raw?.banner?.enabled ?? false,
       message: raw?.banner?.message ?? '',
@@ -895,6 +887,82 @@ function LandingEditor({
 
 // ── Éditeur des contenus globaux ───────────────────────────────────
 
+function EmailTemplateEditor({
+  label,
+  template,
+  variables,
+  onChange,
+}: {
+  label: string
+  template: { fr: EmailTemplate; en: EmailTemplate; ar: EmailTemplate }
+  variables: string[]
+  onChange: (template: { fr: EmailTemplate; en: EmailTemplate; ar: EmailTemplate }) => void
+}) {
+  const [activeLang, setActiveLang] = useState<Lang>('fr')
+  const langLabels: Record<Lang, string> = { fr: 'FR', en: 'EN', ar: 'AR' }
+  const isAr = activeLang === 'ar'
+
+  function updateTemplate(field: keyof EmailTemplate, value: string) {
+    onChange({
+      ...template,
+      [activeLang]: { ...template[activeLang], [field]: value },
+    })
+  }
+
+  return (
+    <div className='p-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800/50 space-y-3'>
+      <div className='flex items-center justify-between'>
+        <h4 className='text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider'>
+          {label}
+        </h4>
+        <div className='flex items-center gap-1'>
+          {(Object.keys(langLabels) as Lang[]).map((lang) => (
+            <button
+              key={lang}
+              onClick={() => setActiveLang(lang)}
+              className={cn(
+                'px-2.5 py-1 text-xs font-medium rounded-md transition',
+                activeLang === lang
+                  ? 'bg-tahfidz-green text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              )}
+            >
+              {langLabels[lang]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div dir={isAr ? 'rtl' : 'ltr'}>
+        <Field
+          label={isAr ? 'الموضوع' : activeLang === 'en' ? 'Subject' : 'Sujet'}
+          value={template[activeLang].subject}
+          onChange={(v) => updateTemplate('subject', v)}
+        />
+      </div>
+
+      <div dir={isAr ? 'rtl' : 'ltr'}>
+        <Field
+          label={isAr ? 'المحتوى' : activeLang === 'en' ? 'Body' : 'Corps'}
+          value={template[activeLang].body}
+          onChange={(v) => updateTemplate('body', v)}
+          textarea
+          rows={6}
+        />
+      </div>
+
+      <div className='flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400'>
+        <span>{isAr ? 'المتغيرات المتاحة :' : activeLang === 'en' ? 'Available variables:' : 'Variables disponibles :'}</span>
+        {variables.map((v) => (
+          <code key={v} className='px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-200'>
+            {v}
+          </code>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function GlobalEditor({
   global,
   onChange,
@@ -916,11 +984,10 @@ function GlobalEditor({
 
   function updateEmail(
     key: keyof GlobalContent['emails'],
-    field: keyof EmailTemplate,
-    value: string
+    template: { fr: EmailTemplate; en: EmailTemplate; ar: EmailTemplate }
   ) {
     const next = { ...global.emails }
-    next[key] = { ...next[key], [field]: value }
+    next[key] = template
     onChange({ ...global, emails: next })
   }
 
@@ -946,34 +1013,13 @@ function GlobalEditor({
           Modèles d&apos;emails
         </h3>
         {(Object.keys(emailLabels) as Array<keyof GlobalContent['emails']>).map((key) => (
-          <div
+          <EmailTemplateEditor
             key={key}
-            className='p-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800/50 space-y-3'
-          >
-            <h4 className='text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider'>
-              {emailLabels[key]}
-            </h4>
-            <Field
-              label='Sujet'
-              value={global.emails[key].subject}
-              onChange={(v) => updateEmail(key, 'subject', v)}
-            />
-            <Field
-              label='Corps'
-              value={global.emails[key].body}
-              onChange={(v) => updateEmail(key, 'body', v)}
-              textarea
-              rows={6}
-            />
-            <div className='flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400'>
-              <span>Variables disponibles :</span>
-              {emailVariables[key].map((v) => (
-                <code key={v} className='px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-200'>
-                  {v}
-                </code>
-              ))}
-            </div>
-          </div>
+            label={emailLabels[key]}
+            template={global.emails[key]}
+            variables={emailVariables[key]}
+            onChange={(template) => updateEmail(key, template)}
+          />
         ))}
       </div>
 

@@ -9,6 +9,7 @@ import {
   commonVariables,
   baseTemplate,
   type EmailTemplateKey,
+  type EmailLocale,
 } from "@/lib/email-templates"
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
@@ -16,21 +17,14 @@ const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "TAHFIDZ"
 
 export { baseTemplate }
 
-function infoRow(label: string, value: string, isAr = false): string {
-  return `<tr>
-    <td style="padding:8px 12px;background:#F9FAFB;font-size:13px;color:#6B7280;width:40%;border-radius:6px;">${label}</td>
-    <td style="padding:8px 12px;font-size:13px;color:#111827;font-weight:600;${isAr ? "direction:rtl;text-align:right;" : ""}">${value}</td>
-  </tr>`
-}
-
 // ─── Helpers de rendu des templates éditables ─────────────────────────────────
 
 async function renderTemplatedEmail(
   key: EmailTemplateKey,
   variables: Record<string, string | number | undefined | null>,
-  locale: "fr" | "ar" = "fr"
+  locale: EmailLocale = "fr"
 ) {
-  const tpl = await getEmailTemplate(key)
+  const tpl = await getEmailTemplate(key, locale)
   const allVars = { ...commonVariables(), ...variables }
   const subject = renderTemplate(tpl.subject, allVars)
   const body = renderTemplate(tpl.body, allVars)
@@ -58,7 +52,7 @@ export async function sendWelcomeEmail({
   role: string
   schoolName?: string | null
   schoolSlug?: string | null
-  locale?: "fr" | "en" | "ar"
+  locale?: EmailLocale
 }) {
   const roleLabels: Record<string, Record<string, string>> = {
     fr: { ADMIN: "Administrateur", TEACHER: "Enseignant", PARENT: "Parent", STUDENT: "Élève" },
@@ -70,95 +64,40 @@ export async function sendWelcomeEmail({
     ? `${APP_URL}/login?schoolSlug=${encodeURIComponent(schoolSlug.trim())}`
     : `${APP_URL}/login`
 
-  // Le template éditable est actuellement en français.
-  // Pour les autres langues, on utilise un fallback codé en dur professionnel.
-  if (locale === "fr") {
-    try {
-      const { subject, html, text } = await renderTemplatedEmail(
-        "welcome",
-        {
-          fullName,
-          email,
-          password: password ?? "",
-          role: roleLabels.fr[role] ?? role,
-          schoolName: schoolName ?? "",
-          schoolSlug: schoolSlug ?? "",
-          loginUrl,
-        },
-        locale
-      )
+  try {
+    const { subject, html, text } = await renderTemplatedEmail(
+      "welcome",
+      {
+        fullName,
+        email,
+        password: password ?? "",
+        role: roleLabels[locale]?.[role] ?? role,
+        schoolName: schoolName ?? "",
+        schoolSlug: schoolSlug ?? "",
+        loginUrl,
+      },
+      locale
+    )
 
-      console.log(`[sendWelcomeEmail] Envoi à ${to} — Sujet: ${subject}`)
-      const result = await sendMail({ to, subject, html, text })
-      console.log(`[sendWelcomeEmail] Résultat pour ${to}:`, result)
-      return result
-    } catch (error) {
-      console.error("[sendWelcomeEmail] Échec rendu template:", error)
-    }
+    console.log(`[sendWelcomeEmail] Envoi à ${to} — Sujet: ${subject}`)
+    const result = await sendMail({ to, subject, html, text })
+    console.log(`[sendWelcomeEmail] Résultat pour ${to}:`, result)
+    return result
+  } catch (error) {
+    console.error("[sendWelcomeEmail] Échec rendu template:", error)
   }
 
-  // Fallback : template codé en dur selon la langue
-  const t = {
-    fr: {
-      greeting: `Salam Alaykoum ${fullName} 👋`,
-      schoolCreated: schoolName ? `Votre école <strong>${schoolName}</strong> a été créée avec succès et est prête à être configurée.` : `Votre compte <strong>${APP_NAME}</strong> vient d'être créé.`,
-      schoolSlug: schoolSlug ? `Identifiant de votre école : <strong style="color:#1D9E75;">${schoolSlug}</strong>` : "",
-      credentials: "Vos identifiants de connexion",
-      role: "Rôle",
-      emailLabel: "Email",
-      password: "Mot de passe",
-      cta: "Accéder à mon compte",
-      warning: "⚠️ Pensez à changer votre mot de passe lors de votre première connexion.",
-      subject: `Bienvenue sur ${APP_NAME} 🌟`,
-    },
-    en: {
-      greeting: `Dear ${fullName},`,
-      schoolCreated: schoolName ? `Your school <strong>${schoolName}</strong> has been successfully created and is ready to be configured.` : `Your <strong>${APP_NAME}</strong> account has been successfully created.`,
-      schoolSlug: schoolSlug ? `Your school identifier: <strong style="color:#1D9E75;">${schoolSlug}</strong>` : "",
-      credentials: "Your login credentials",
-      role: "Role",
-      emailLabel: "Email address",
-      password: "Password",
-      cta: "Access my account",
-      warning: "⚠️ Please change your password upon your first login for security reasons.",
-      subject: `Welcome to ${APP_NAME} 🌟`,
-    },
-    ar: {
-      greeting: `السلام عليكم ${fullName} 👋`,
-      schoolCreated: schoolName ? `تم إنشاء مدرستك <strong>${schoolName}</strong> بنجاح وهي جاهزة للتهيئة.` : `تم إنشاء حسابك في <strong>${APP_NAME}</strong> بنجاح.`,
-      schoolSlug: schoolSlug ? `معرف المدرسة : <strong style="color:#1D9E75;">${schoolSlug}</strong>` : "",
-      credentials: "بيانات الدخول",
-      role: "الدور",
-      emailLabel: "البريد الإلكتروني",
-      password: "كلمة المرور",
-      cta: "الدخول إلى حسابي",
-      warning: "⚠️ يُرجى تغيير كلمة المرور عند أول تسجيل دخول.",
-      subject: `مرحباً بك في ${APP_NAME} 🌟`,
-    },
-  }[locale]
-
-  const isRtl = locale === "ar"
-  const content = `
-    <p style="font-size:18px;color:#1D9E75;font-weight:700;margin-bottom:4px;">${t.greeting}</p>
-    <p style="color:#6B7280;font-size:14px;margin-top:0;">${t.schoolCreated}</p>
-    ${t.schoolSlug ? `<p style="color:#6B7280;font-size:14px;margin-top:0;">${t.schoolSlug}</p>` : ""}
-    <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:20px;margin:20px 0;">
-      <p style="margin:0 0 12px;font-size:13px;font-weight:600;color:#374151;">${t.credentials}</p>
-      <table width="100%" cellpadding="0" cellspacing="0" style="border-spacing:0 6px;">
-        ${infoRow(t.role, roleLabels[locale]?.[role] ?? role, isRtl)}
-        ${infoRow(t.emailLabel, email, isRtl)}
-        ${password ? infoRow(t.password, password, isRtl) : ""}
-      </table>
-    </div>
-    <div style="text-align:center;margin:24px 0;">
-      <a href="${loginUrl}" style="display:inline-block;padding:14px 32px;background:#1D9E75;color:#fff;text-decoration:none;border-radius:10px;font-size:15px;font-weight:600;">${t.cta}</a>
-    </div>
-    <p style="color:#EF4444;font-size:13px;">${t.warning}</p>
-  `
+  // Fallback minimal en cas d'erreur de rendu
+  const isAr = locale === "ar"
+  const content = isAr
+    ? `<p>السلام عليكم ${fullName}،</p><p>تم إنشاء حسابك. <a href="${loginUrl}">الدخول</a></p>`
+    : locale === "en"
+      ? `<p>Dear ${fullName},</p><p>Your account has been created. <a href="${loginUrl}">Log in</a></p>`
+      : `<p>Salam Alaykoum ${fullName},</p><p>Votre compte a été créé. <a href="${loginUrl}">Se connecter</a></p>`
 
   return sendMail({
     to,
-    subject: t.subject,
+    subject: isAr ? `مرحباً بك في ${APP_NAME}` : locale === "en" ? `Welcome to ${APP_NAME}` : `Bienvenue sur ${APP_NAME}`,
     html: baseTemplate(content, locale),
   })
 }
@@ -179,7 +118,7 @@ export async function sendMemorizationApprovedEmail({
   surahNameAr: string
   score: number
   stars: number
-  locale?: "fr" | "ar"
+  locale?: EmailLocale
 }) {
   const isAr = locale === "ar"
   const starsHtml = "⭐".repeat(stars)
@@ -229,7 +168,7 @@ export async function sendEvaluationResultEmail({
   score: number
   decision: string
   teacherNotes?: string
-  locale?: "fr" | "ar"
+  locale?: EmailLocale
 }) {
   const isAr = locale === "ar"
 
@@ -239,6 +178,11 @@ export async function sendEvaluationResultEmail({
       NEEDS_REVISION: { label: "↺ Révision requise", color: "#D97706", bg: "#FEFCE8" },
       REJECTED: { label: "✗ Rejeté", color: "#DC2626", bg: "#FEF2F2" },
     },
+    en: {
+      APPROVED: { label: "✅ Approved", color: "#1D9E75", bg: "#E1F5EE" },
+      NEEDS_REVISION: { label: "↺ Revision needed", color: "#D97706", bg: "#FEFCE8" },
+      REJECTED: { label: "✗ Rejected", color: "#DC2626", bg: "#FEF2F2" },
+    },
     ar: {
       APPROVED: { label: "✅ مقبول", color: "#1D9E75", bg: "#E1F5EE" },
       NEEDS_REVISION: { label: "↺ يحتاج مراجعة", color: "#D97706", bg: "#FEFCE8" },
@@ -246,7 +190,7 @@ export async function sendEvaluationResultEmail({
     },
   }
 
-  const dc = decisionConfig[locale][decision as keyof typeof decisionConfig.fr] ?? decisionConfig[locale].APPROVED
+  const dc = decisionConfig[locale]?.[decision as keyof typeof decisionConfig.fr] ?? decisionConfig[locale].APPROVED
 
   const content = isAr ? `
     <p style="font-size:18px;color:#111827;font-weight:700;margin-bottom:4px;">السلام عليكم ${fullName}</p>
@@ -283,7 +227,7 @@ export async function sendPasswordResetEmail({
   to: string
   fullName: string
   resetToken: string
-  locale?: "fr" | "ar"
+  locale?: EmailLocale
 }) {
   const resetUrl = `${APP_URL}/reset-password?token=${resetToken}`
 
@@ -293,7 +237,7 @@ export async function sendPasswordResetEmail({
       {
         fullName,
         resetUrl,
-        link: resetUrl, // alias pour compatibilité avec l'ancien template
+        link: resetUrl,
       },
       locale
     )
@@ -303,27 +247,17 @@ export async function sendPasswordResetEmail({
     console.error("[sendPasswordResetEmail] Échec rendu template:", error)
   }
 
-  // Fallback : template codé en dur
+  // Fallback
   const isAr = locale === "ar"
-  const content = isAr ? `
-    <p style="font-size:18px;color:#111827;font-weight:700;margin-bottom:4px;">السلام عليكم ${fullName}</p>
-    <p style="color:#6B7280;font-size:14px;margin-top:0;">طلبتَ إعادة تعيين كلمة المرور. انقر على الزر أدناه لإتمام العملية.</p>
-    <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:16px;margin:20px 0;">
-      <p style="margin:0;color:#DC2626;font-size:13px;">⚠️ هذا الرابط صالح لمدة 20 دقيقة فقط.</p>
-    </div>
-    <p style="text-align:center;color:#9CA3AF;font-size:12px;">إذا لم تطلب ذلك، تجاهل هذا البريد الإلكتروني.</p>
-  ` : `
-    <p style="font-size:18px;color:#111827;font-weight:700;margin-bottom:4px;">Salam Alaykoum ${fullName}</p>
-    <p style="color:#6B7280;font-size:14px;margin-top:0;">Vous avez demandé une réinitialisation de votre mot de passe. Cliquez sur le bouton ci-dessous pour continuer.</p>
-    <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:16px;margin:20px 0;">
-      <p style="margin:0;color:#DC2626;font-size:13px;">⚠️ Ce lien est valable pendant 20 minutes seulement.</p>
-    </div>
-    <p style="text-align:center;color:#9CA3AF;font-size:12px;">Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>
-  `
+  const content = isAr
+    ? `<p>السلام عليكم ${fullName}،</p><p>اضغط على الرابط لإعادة تعيين كلمة المرور : <a href="${resetUrl}">${resetUrl}</a></p><p>الرابط صالح لمدة 20 دقيقة.</p>`
+    : locale === "en"
+      ? `<p>Dear ${fullName},</p><p>Click the link to reset your password: <a href="${resetUrl}">${resetUrl}</a></p><p>Valid for 20 minutes.</p>`
+      : `<p>Salam Alaykoum ${fullName},</p><p>Cliquez sur ce lien pour réinitialiser votre mot de passe : <a href="${resetUrl}">${resetUrl}</a></p><p>Valable 20 minutes.</p>`
 
   return sendMail({
     to,
-    subject: isAr ? "إعادة تعيين كلمة المرور" : "Réinitialisation de votre mot de passe",
+    subject: isAr ? "إعادة تعيين كلمة المرور" : locale === "en" ? "Reset your password" : "Réinitialisation de votre mot de passe",
     html: baseTemplate(content, locale),
   })
 }
@@ -340,7 +274,7 @@ export async function sendParentInviteEmail({
   fullName?: string | null
   studentName: string
   inviteUrl: string
-  locale?: "fr" | "ar"
+  locale?: EmailLocale
 }) {
   try {
     const { subject, html, text } = await renderTemplatedEmail(
@@ -349,7 +283,7 @@ export async function sendParentInviteEmail({
         fullName: fullName ?? "",
         studentName,
         inviteUrl,
-        link: inviteUrl, // alias pour compatibilité avec l'ancien template
+        link: inviteUrl,
       },
       locale
     )
@@ -377,7 +311,7 @@ export async function sendBadgeEarnedEmail({
   badgeNameAr: string
   badgeIcon: string
   badgeRarity: string
-  locale?: "fr" | "ar"
+  locale?: EmailLocale
 }) {
   const isAr = locale === "ar"
   const rarityColors: Record<string, string> = {
@@ -388,10 +322,11 @@ export async function sendBadgeEarnedEmail({
   }
   const rarityLabels = {
     fr: { COMMON: "Commun", RARE: "Rare", EPIC: "Épique", LEGENDARY: "Légendaire" },
+    en: { COMMON: "Common", RARE: "Rare", EPIC: "Epic", LEGENDARY: "Legendary" },
     ar: { COMMON: "عادي", RARE: "نادر", EPIC: "ملحمي", LEGENDARY: "أسطوري" },
   }
   const color = rarityColors[badgeRarity] ?? "#6B7280"
-  const rarityLabel = rarityLabels[locale][badgeRarity as keyof typeof rarityLabels.fr] ?? badgeRarity
+  const rarityLabel = rarityLabels[locale]?.[badgeRarity as keyof typeof rarityLabels.fr] ?? badgeRarity
 
   const content = isAr ? `
     <p style="font-size:18px;color:#111827;font-weight:700;margin-bottom:4px;">مبروك ${fullName}! 🏅</p>
