@@ -150,7 +150,15 @@ const bannerSchema = z.object({
   }
 )
 
-export const siteConfigGlobalSchema = z.object({
+function isBannerFlat(value: unknown): value is { enabled?: boolean; message?: string; link?: string; type?: string } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    ("enabled" in value || "message" in value || "type" in value)
+  )
+}
+
+const globalContentSchema = z.object({
   emails: z.object({
     welcome: emailLocaleTemplateSchema,
     "reset-password": emailLocaleTemplateSchema,
@@ -161,6 +169,26 @@ export const siteConfigGlobalSchema = z.object({
     bannerSchema
   ),
 })
+
+export const siteConfigGlobalSchema = z.preprocess(
+  (input) => {
+    if (typeof input !== "object" || input === null) return input
+    const data = input as Record<string, unknown>
+    if (data.banner && isBannerFlat(data.banner)) {
+      const flatBanner = data.banner as { enabled?: boolean; message?: string; link?: string; type?: string }
+      return {
+        ...data,
+        banner: {
+          fr: flatBanner,
+          en: flatBanner,
+          ar: flatBanner,
+        },
+      }
+    }
+    return input
+  },
+  globalContentSchema
+)
 
 export type SiteConfigLandingInput = z.infer<typeof siteConfigLandingSchema>
 export type SiteConfigGlobalInput = z.infer<typeof siteConfigGlobalSchema>
