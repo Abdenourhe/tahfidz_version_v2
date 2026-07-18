@@ -5,6 +5,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { sendWelcomeEmail } from "@/lib/email"
+import { isMailConfigured } from "@/lib/mail"
 import bcrypt from "bcryptjs"
 import crypto from "crypto"
 
@@ -289,6 +291,21 @@ export async function POST(req: NextRequest) {
     }
 
     const inviteUrl = `${APP_URL}/parent/register?invite=${result.inviteCode}&student=${result.studentCode}`
+
+    // Envoyer l'email de bienvenue si le mail est configuré (ne bloque pas la création)
+    if (isMailConfigured()) {
+      try {
+        await sendWelcomeEmail({
+          to: email,
+          fullName,
+          email,
+          password,
+          role: "STUDENT",
+        })
+      } catch (mailError) {
+        console.error("[STUDENT POST] Échec envoi email de bienvenue:", mailError)
+      }
+    }
 
     return NextResponse.json({
       message: "Élève créé avec succès",

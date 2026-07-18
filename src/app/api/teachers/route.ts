@@ -1,6 +1,8 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { checkTeacherLimit } from "@/lib/halaqa-quota"
+import { sendWelcomeEmail } from "@/lib/email"
+import { isMailConfigured } from "@/lib/mail"
 import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 
@@ -126,6 +128,21 @@ export async function POST(req: Request) {
       },
       include: { teacherProfile: true },
     })
+
+    // Envoyer l'email de bienvenue si le mail est configuré (ne bloque pas la création)
+    if (isMailConfigured()) {
+      try {
+        await sendWelcomeEmail({
+          to: email,
+          fullName,
+          email: email.toLowerCase().trim(),
+          password,
+          role: "TEACHER",
+        })
+      } catch (mailError) {
+        console.error("[TEACHERS POST] Échec envoi email de bienvenue:", mailError)
+      }
+    }
 
     return NextResponse.json({ teacher }, { status: 201 })
   } catch (error: any) {

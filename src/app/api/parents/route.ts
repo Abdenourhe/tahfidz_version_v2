@@ -1,6 +1,8 @@
 // src/app/api/parents/route.ts
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { sendWelcomeEmail } from "@/lib/email"
+import { isMailConfigured } from "@/lib/mail"
 import { NextResponse } from "next/server"
 import { createUserSchema } from "@/lib/validations/auth"
 import bcrypt from "bcryptjs"
@@ -116,6 +118,21 @@ export async function POST(req: Request) {
       },
       include: { parentProfile: true },
     })
+
+    // Envoyer l'email de bienvenue si le mail est configuré (ne bloque pas la création)
+    if (isMailConfigured()) {
+      try {
+        await sendWelcomeEmail({
+          to: email,
+          fullName,
+          email: email.toLowerCase().trim(),
+          password,
+          role: "PARENT",
+        })
+      } catch (mailError) {
+        console.error("[PARENTS POST] Échec envoi email de bienvenue:", mailError)
+      }
+    }
 
     return NextResponse.json({ parent }, { status: 201 })
   } catch (error) {

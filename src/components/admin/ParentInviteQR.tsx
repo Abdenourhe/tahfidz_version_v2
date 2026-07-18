@@ -6,7 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext"
 import { QRCodeSVG } from "qrcode.react"
 import {
   QrCode, X, Copy, CheckCircle2, Share2, RefreshCw,
-  Loader2, UserPlus, CheckCircle, AlertTriangle,
+  Loader2, UserPlus, CheckCircle, AlertTriangle, Mail,
 } from "lucide-react"
 
 interface InviteData {
@@ -39,6 +39,15 @@ const TEXTS: Record<string, Record<string, string>> = {
   close:         { fr: "Fermer", en: "Close", ar: "إغلاق" },
   loading:       { fr: "Chargement…", en: "Loading…", ar: "جارٍ التحميل…" },
   error:         { fr: "Erreur lors du chargement", en: "Loading error", ar: "خطأ في التحميل" },
+  // Nouvelles clés pour l'envoi par email
+  sendByEmail:   { fr: "Envoyer par email", en: "Send by email", ar: "إرسال بالبريد الإلكتروني" },
+  parentEmail:   { fr: "Email du parent", en: "Parent email", ar: "بريد ولي الأمر" },
+  parentName:    { fr: "Nom du parent (optionnel)", en: "Parent name (optional)", ar: "اسم ولي الأمر (اختياري)" },
+  send:          { fr: "Envoyer", en: "Send", ar: "إرسال" },
+  sending:       { fr: "Envoi…", en: "Sending…", ar: "جارٍ الإرسال…" },
+  sentSuccess:   { fr: "Invitation envoyée !", en: "Invitation sent!", ar: "تم إرسال الدعوة!" },
+  emailError:    { fr: "Erreur lors de l'envoi", en: "Sending error", ar: "خطأ في الإرسال" },
+  emailNotConfigured: { fr: "Envoi d'emails non configuré", en: "Email sending not configured", ar: "إرسال البريد غير مهيأ" },
 }
 
 function t(key: string, locale: string = "fr"): string {
@@ -56,9 +65,15 @@ export function ParentInviteQR({ studentId, studentName }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
+  const [parentEmail, setParentEmail] = useState("")
+  const [parentName, setParentName] = useState("")
+  const [sendingEmail, setSendingEmail] = useState(false)
+  const [emailResult, setEmailResult] = useState<{ type: "success" | "error"; message: string } | null>(null)
+
   const fetchInvite = useCallback(async () => {
     setLoading(true)
     setError(null)
+    setEmailResult(null)
     try {
       const res = await fetch(`/api/students/${studentId}/parent-invite`)
       const data = await res.json().catch(() => ({}))
@@ -102,13 +117,41 @@ export function ParentInviteQR({ studentId, studentName }: Props) {
   const handleRegenerate = async () => {
     setLoading(true)
     try {
-      // The GET endpoint already regenerates expired invites;
-      // to force regeneration we can call it again after deleting the current one.
-      // But the simplest is to just call fetchInvite again if expired.
-      // For explicit regenerate, let's call the API which handles it.
       await fetchInvite()
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSendEmail = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!parentEmail || !invite?.inviteUrl) return
+
+    setSendingEmail(true)
+    setEmailResult(null)
+    try {
+      const res = await fetch(`/api/students/${studentId}/parent-invite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ parentEmail, parentName }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        if (res.status === 503) {
+          throw new Error(t("emailNotConfigured", L))
+        }
+        throw new Error(data.error || t("emailError", L))
+      }
+      setEmailResult({ type: "success", message: t("sentSuccess", L) })
+      setParentEmail("")
+      setParentName("")
+    } catch (err) {
+      setEmailResult({
+        type: "error",
+        message: err instanceof Error ? err.message : t("emailError", L),
+      })
+    } finally {
+      setSendingEmail(false)
     }
   }
 
@@ -131,7 +174,7 @@ export function ParentInviteQR({ studentId, studentName }: Props) {
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" dir={isRtl ? "rtl" : "ltr"}>
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6 w-full max-w-md">
+          <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setOpen(false)}
               className="absolute top-4 right-4 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
@@ -158,7 +201,7 @@ export function ParentInviteQR({ studentId, studentName }: Props) {
                 {error}
               </div>
             ) : invite ? (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 {invite.used ? (
                   <div className="p-4 bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-800 rounded-xl text-center">
                     <CheckCircle size={32} className="text-green-600 mx-auto mb-2" />
@@ -206,6 +249,52 @@ export function ParentInviteQR({ studentId, studentName }: Props) {
                         </button>
                       </div>
                     </div>
+
+                    {/* Envoi par email */}
+                    <form onSubmit={handleSendEmail} className="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-800">
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-200 flex items-center gap-2">
+                        <Mail size={16} className="text-purple-600" />
+                        {t("sendByEmail", L)}
+                      </p>
+
+                      <input
+                        type="text"
+                        value={parentName}
+                        onChange={(e) => setParentName(e.target.value)}
+                        placeholder={t("parentName", L)}
+                        className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-200 placeholder:text-gray-400"
+                      />
+
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="email"
+                          required
+                          value={parentEmail}
+                          onChange={(e) => setParentEmail(e.target.value)}
+                          placeholder={t("parentEmail", L)}
+                          className="flex-1 px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-200 placeholder:text-gray-400"
+                        />
+                        <button
+                          type="submit"
+                          disabled={sendingEmail || !parentEmail}
+                          className="flex items-center gap-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition"
+                        >
+                          {sendingEmail ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
+                          {sendingEmail ? t("sending", L) : t("send", L)}
+                        </button>
+                      </div>
+
+                      {emailResult && (
+                        <div className={`flex items-center gap-2 p-2.5 rounded-lg text-sm ${
+                          emailResult.type === "success"
+                            ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-100 dark:border-green-800"
+                            : "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-100 dark:border-red-800"
+                        }`}>
+                          {emailResult.type === "success" ? <CheckCircle size={14} /> : <AlertTriangle size={14} />}
+                          {emailResult.message}
+                        </div>
+                      )}
+                    </form>
 
                     <div className="flex items-center justify-between text-xs text-gray-400">
                       <span>{t("expires", L)} : {fmtDate(invite.expiresAt)}</span>

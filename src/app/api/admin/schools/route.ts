@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { applyPlanConfig, PLAN_CONFIG } from "@/lib/halaqa-quota"
+import { sendWelcomeEmail } from "@/lib/email"
+import { isMailConfigured } from "@/lib/mail"
 import { SchoolPlan } from "@prisma/client"
 import bcrypt from "bcryptjs"
 
@@ -95,6 +97,23 @@ export async function POST(req: NextRequest) {
 
   await applyPlanConfig(school.id, selectedPlan)
 
+  // Envoyer l'email de bienvenue si le mail est configuré (ne bloque pas la création)
+  if (isMailConfigured()) {
+    try {
+      await sendWelcomeEmail({
+        to: adminEmail,
+        fullName: adminName,
+        email: adminEmail,
+        password: adminPassword,
+        role: "ADMIN",
+        schoolName,
+        schoolSlug,
+      })
+    } catch (mailError) {
+      console.error("[ADMIN SCHOOLS POST] Échec envoi email de bienvenue:", mailError)
+    }
+  }
+
   return NextResponse.json({ school }, { status: 201 })
 }
 
@@ -179,6 +198,26 @@ export async function PATCH(req: NextRequest) {
       where: { id: body.requestId },
       data:  { status: "APPROVED", slug, processedAt: new Date() },
     })
+
+    // Envoyer l'email de bienvenue si le mail est configuré (ne bloque pas l'approbation)
+    if (isMailConfigured()) {
+      try {
+        console.log(`[ADMIN SCHOOLS APPROVE] Envoi bienvenue à ${request.adminEmail}`)
+        const mailResult = await sendWelcomeEmail({
+          to: request.adminEmail,
+          fullName: request.adminName,
+          email: request.adminEmail,
+          role: "ADMIN",
+          schoolName: request.schoolName,
+          schoolSlug: slug,
+        })
+        console.log("[ADMIN SCHOOLS APPROVE] Résultat envoi:", mailResult)
+      } catch (mailError) {
+        console.error("[ADMIN SCHOOLS APPROVE] Échec envoi email de bienvenue:", mailError)
+      }
+    } else {
+      console.warn("[ADMIN SCHOOLS APPROVE] Mail non configuré — email de bienvenue non envoyé")
+    }
 
     return NextResponse.json({
       ok: true, slug, plan, schoolId: school.id,

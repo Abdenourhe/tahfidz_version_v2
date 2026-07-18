@@ -17,16 +17,16 @@ export async function seedSiteConfig() {
   const globalConfig = {
     emails: {
       welcome: {
-        subject: "Bienvenue sur TAHFIDZ",
-        body: "Bonjour {{fullName}},\n\nBienvenue sur TAHFIDZ. Votre école est maintenant prête à être configurée.",
+        subject: "Bienvenue sur {{appName}}",
+        body: "Bonjour {{fullName}},\n\nBienvenue sur {{appName}}.{{#schoolName}} Votre école {{schoolName}} est maintenant prête à être configurée.{{/schoolName}}{{^schoolName}} Votre compte a été créé avec succès.{{/schoolName}}\n\n{{#password}}Voici vos identifiants de connexion :\n• Email : {{email}}\n• Mot de passe : {{password}}\n• Rôle : {{role}}\n\n{{/password}}Connectez-vous ici : {{loginUrl}}\n\nPensez à changer votre mot de passe lors de votre première connexion.",
       },
       "reset-password": {
         subject: "Réinitialisation de votre mot de passe",
-        body: "Bonjour {{fullName}},\n\nCliquez sur le lien suivant pour réinitialiser votre mot de passe : {{link}}\n\nCe lien est valable 24 heures.",
+        body: "Bonjour {{fullName}},\n\nVous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le lien suivant pour choisir un nouveau mot de passe :\n\n{{resetUrl}}\n\nCe lien est valable 1 heure. Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.",
       },
       "invite-parent": {
-        subject: "Invitation à rejoindre TAHFIDZ",
-        body: "Bonjour,{{#studentName}}\n\nVous avez été invité à suivre la progression de {{studentName}} sur TAHFIDZ.{{/studentName}}\n\nCliquez ici pour activer votre compte : {{link}}",
+        subject: "Invitation à rejoindre {{appName}}",
+        body: "Bonjour{{#fullName}} {{fullName}},{{/fullName}}\n\nVous avez été invité à suivre la progression de {{studentName}} sur {{appName}}.\n\nCliquez sur le lien suivant pour activer votre compte :\n\n{{inviteUrl}}\n\nCe lien est valable 30 jours.",
       },
     },
     banner: {

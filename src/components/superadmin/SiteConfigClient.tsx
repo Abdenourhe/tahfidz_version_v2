@@ -908,6 +908,12 @@ function GlobalEditor({
     'invite-parent': 'Invitation parent',
   }
 
+  const emailVariables: Record<keyof GlobalContent['emails'], string[]> = {
+    welcome: ['{{fullName}}', '{{email}}', '{{password}}', '{{role}}', '{{schoolName}}', '{{schoolSlug}}', '{{loginUrl}}', '{{appName}}'],
+    'reset-password': ['{{fullName}}', '{{resetUrl}}', '{{loginUrl}}', '{{appName}}'],
+    'invite-parent': ['{{fullName}}', '{{studentName}}', '{{inviteUrl}}', '{{loginUrl}}', '{{appName}}'],
+  }
+
   function updateEmail(
     key: keyof GlobalContent['emails'],
     field: keyof EmailTemplate,
@@ -959,6 +965,14 @@ function GlobalEditor({
               textarea
               rows={6}
             />
+            <div className='flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400'>
+              <span>Variables disponibles :</span>
+              {emailVariables[key].map((v) => (
+                <code key={v} className='px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-200'>
+                  {v}
+                </code>
+              ))}
+            </div>
           </div>
         ))}
       </div>

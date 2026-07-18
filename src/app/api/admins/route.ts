@@ -1,6 +1,8 @@
 // src/app/api/admins/route.ts
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { sendWelcomeEmail } from "@/lib/email"
+import { isMailConfigured } from "@/lib/mail"
 import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { z } from "zod"
@@ -79,6 +81,21 @@ export async function POST(req: Request) {
       newValues: { email, fullName } as any,
     } as any,
   })
+
+  // Envoyer l'email de bienvenue si le mail est configuré (ne bloque pas la création)
+  if (isMailConfigured()) {
+    try {
+      await sendWelcomeEmail({
+        to: email,
+        fullName,
+        email,
+        password,
+        role: "ADMIN",
+      })
+    } catch (mailError) {
+      console.error("[ADMINS POST] Échec envoi email de bienvenue:", mailError)
+    }
+  }
 
   return NextResponse.json({ user: { id: user.id, email, fullName } }, { status: 201 })
 }

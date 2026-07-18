@@ -1,7 +1,8 @@
 // src/app/api/forgot-password/route.ts — Demande de reinitialisation mot de passe
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { sendMail, isMailConfigured } from "@/lib/mail"
+import { sendPasswordResetEmail } from "@/lib/email"
+import { isMailConfigured } from "@/lib/mail"
 import { z } from "zod"
 import { SignJWT } from "jose"
 
@@ -52,40 +53,28 @@ export async function POST(req: NextRequest) {
       .setIssuedAt()
       .sign(secret)
 
-    // Construire le lien de reinitialisation
+    // Construire le lien de reinitialisation (fallback si email non configure)
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
     const resetUrl = `${baseUrl}/reset-password?token=${encodeURIComponent(token)}`
 
     let mailResult: { success: boolean; error?: string } | undefined
 
-    // Envoyer l'email si configure
+    // Envoyer l'email si configure (utilise le template editable depuis SiteConfig)
     if (isMailConfigured()) {
-      mailResult = await sendMail({
+      mailResult = await sendPasswordResetEmail({
         to: email,
-        subject: "Reinitialisation de votre mot de passe TAHFIDZ",
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
-            <h2 style="color: #059669;">Reinitialisation de mot de passe</h2>
-            <p>Bonjour ${user.fullName || ""},</p>
-            <p>Vous avez demande la reinitialisation de votre mot de passe pour l'ecole <strong>${school.name}</strong>.</p>
-            <p>Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe :</p>
-            <a href="${resetUrl}" style="display: inline-block; background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; margin: 16px 0;">Reinitialiser mon mot de passe</a>
-            <p style="color: #666; font-size: 12px;">Ce lien est valide pendant 1 heure. Si vous n'etes pas a l'origine de cette demande, ignorez cet email.</p>
-            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-            <p style="color: #999; font-size: 11px;">TAHFIDZ Platform — <a href="${baseUrl}">${baseUrl}</a></p>
-          </div>
-        `,
-        text: `Bonjour,\n\nVous avez demande la reinitialisation de votre mot de passe pour ${school.name}.\n\nCliquez sur ce lien : ${resetUrl}\n\nCe lien est valide pendant 1 heure.\n\nTAHFIDZ Platform`,
+        fullName: user.fullName || "",
+        resetToken: token,
       })
-      if (!mailResult.success) {
-        console.error("[forgot-password] Echec envoi email:", mailResult.error)
+
+      if (!mailResult?.success) {
+        console.error("[forgot-password] Echec envoi email:", mailResult?.error)
         return NextResponse.json({
           success: false,
-          error: `Echec de l'envoi de l'email: ${mailResult.error}`,
+          error: `Echec de l'envoi de l'email: ${mailResult?.error}`,
           resetUrl,
         }, { status: 502 })
       }
-    } else {
     }
 
     // Audit log
