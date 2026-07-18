@@ -65,6 +65,10 @@ export async function sendWelcomeEmail({
     ar: { ADMIN: "مدير", TEACHER: "معلم", PARENT: "ولي أمر", STUDENT: "طالب" },
   }
 
+  const loginUrl = schoolSlug?.trim()
+    ? `${APP_URL}/login?schoolSlug=${encodeURIComponent(schoolSlug.trim())}`
+    : `${APP_URL}/login`
+
   try {
     const { subject, html, text } = await renderTemplatedEmail(
       "welcome",
@@ -75,6 +79,7 @@ export async function sendWelcomeEmail({
         role: roleLabels[locale]?.[role] ?? role,
         schoolName: schoolName ?? "",
         schoolSlug: schoolSlug ?? "",
+        loginUrl,
       },
       locale
     )
@@ -89,9 +94,24 @@ export async function sendWelcomeEmail({
 
   // Fallback : template codé en dur
   const isAr = locale === "ar"
+  const schoolInfo = schoolName?.trim()
+    ? isAr
+      ? `<p style="color:#6B7280;font-size:14px;margin-top:0;">تم إنشاء مدرستك <strong>${schoolName}</strong> بنجاح وهي جاهزة للتهيئة.</p>`
+      : `<p style="color:#6B7280;font-size:14px;margin-top:0;">Votre école <strong>${schoolName}</strong> a été créée avec succès et est prête à être configurée.</p>`
+    : isAr
+      ? `<p style="color:#6B7280;font-size:14px;margin-top:0;">تم إنشاء حسابك في <strong>${APP_NAME}</strong> بنجاح.</p>`
+      : `<p style="color:#6B7280;font-size:14px;margin-top:0;">Votre compte <strong>${APP_NAME}</strong> vient d'être créé.</p>`
+
+  const slugInfo = schoolSlug?.trim()
+    ? isAr
+      ? `<p style="color:#6B7280;font-size:14px;margin-top:0;">معرف المدرسة : <strong style="color:#1D9E75;">${schoolSlug}</strong></p>`
+      : `<p style="color:#6B7280;font-size:14px;margin-top:0;">Identifiant de votre école : <strong style="color:#1D9E75;">${schoolSlug}</strong></p>`
+    : ""
+
   const content = isAr ? `
     <p style="font-size:18px;color:#1D9E75;font-weight:700;margin-bottom:4px;">السلام عليكم ${fullName} 👋</p>
-    <p style="color:#6B7280;font-size:14px;margin-top:0;">تم إنشاء حسابك في <strong>${APP_NAME}</strong>. نسأل الله أن يُيسّر لك حفظ القرآن الكريم.</p>
+    ${schoolInfo}
+    ${slugInfo}
     <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:20px;margin:20px 0;">
       <p style="margin:0 0 12px;font-size:13px;font-weight:600;color:#374151;">بيانات الدخول</p>
       <table width="100%" cellpadding="0" cellspacing="0" style="border-spacing:0 6px;">
@@ -100,10 +120,14 @@ export async function sendWelcomeEmail({
         ${password ? infoRow("كلمة المرور", password, true) : ""}
       </table>
     </div>
+    <div style="text-align:center;margin:24px 0;">
+      <a href="${loginUrl}" style="display:inline-block;padding:14px 32px;background:#1D9E75;color:#fff;text-decoration:none;border-radius:10px;font-size:15px;font-weight:600;">الدخول إلى حسابي</a>
+    </div>
     <p style="color:#EF4444;font-size:13px;">⚠️ يُرجى تغيير كلمة المرور عند أول تسجيل دخول.</p>
   ` : `
     <p style="font-size:18px;color:#1D9E75;font-weight:700;margin-bottom:4px;">Salam Alaykoum ${fullName} 👋</p>
-    <p style="color:#6B7280;font-size:14px;margin-top:0;">Votre compte <strong>${APP_NAME}</strong> vient d'être créé. Que Allah vous facilite la mémorisation du Saint Coran.</p>
+    ${schoolInfo}
+    ${slugInfo}
     <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:20px;margin:20px 0;">
       <p style="margin:0 0 12px;font-size:13px;font-weight:600;color:#374151;">Vos identifiants de connexion</p>
       <table width="100%" cellpadding="0" cellspacing="0" style="border-spacing:0 6px;">
@@ -111,6 +135,9 @@ export async function sendWelcomeEmail({
         ${infoRow("Email", email)}
         ${password ? infoRow("Mot de passe", password) : ""}
       </table>
+    </div>
+    <div style="text-align:center;margin:24px 0;">
+      <a href="${loginUrl}" style="display:inline-block;padding:14px 32px;background:#1D9E75;color:#fff;text-decoration:none;border-radius:10px;font-size:15px;font-weight:600;">Accéder à mon compte</a>
     </div>
     <p style="color:#EF4444;font-size:13px;">⚠️ Pensez à changer votre mot de passe lors de votre première connexion.</p>
   `

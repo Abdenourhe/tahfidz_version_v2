@@ -21,6 +21,8 @@ export const defaultEmailTemplates: Record<EmailTemplateKey, EmailTemplate> = {
 
 Nous avons le plaisir de vous accueillir sur {{appName}}.{{#schoolName}} Votre école {{schoolName}} a été créée avec succès et est prête à être configurée.{{/schoolName}}{{^schoolName}} Votre compte a été créé avec succès.{{/schoolName}}
 
+{{#schoolSlug}}Identifiant de votre école : {{schoolSlug}}
+{{/schoolSlug}}
 {{#password}}Voici vos identifiants de connexion :
 • Adresse email : {{email}}
 • Mot de passe temporaire : {{password}}
@@ -57,6 +59,28 @@ const legacyDefaultTemplates: Record<EmailTemplateKey, EmailTemplate[]> = {
     {
       subject: "Bienvenue sur {{appName}}",
       body: "Bonjour {{fullName}},\n\nBienvenue sur {{appName}}. Votre école est maintenant prête à être configurée.",
+    },
+    {
+      subject: "Bienvenue sur {{appName}}",
+      body: `Bonjour {{fullName}},
+
+Nous avons le plaisir de vous accueillir sur {{appName}}.{{#schoolName}} Votre école {{schoolName}} a été créée avec succès et est prête à être configurée.{{/schoolName}}{{^schoolName}} Votre compte a été créé avec succès.{{/schoolName}}
+
+{{#password}}Voici vos identifiants de connexion :
+• Adresse email : {{email}}
+• Mot de passe temporaire : {{password}}
+• Profil : {{role}}
+
+Pour des raisons de sécurité, nous vous invitons à modifier votre mot de passe dès votre première connexion.{{/password}}
+{{^password}}Vous pouvez dès maintenant vous connecter à votre espace administrateur à l'aide de l'adresse email que vous nous avez communiquée lors de votre inscription.{{/password}}
+
+Cliquez sur le lien ci-dessous pour accéder à la plateforme :
+{{loginUrl}}
+
+Si vous avez la moindre question, notre équipe reste à votre disposition.
+
+Cordialement,
+L'équipe {{appName}}`,
     },
   ],
   "reset-password": [],

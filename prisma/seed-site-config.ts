@@ -22,6 +22,8 @@ export async function seedSiteConfig() {
 
 Nous avons le plaisir de vous accueillir sur {{appName}}.{{#schoolName}} Votre école {{schoolName}} a été créée avec succès et est prête à être configurée.{{/schoolName}}{{^schoolName}} Votre compte a été créé avec succès.{{/schoolName}}
 
+{{#schoolSlug}}Identifiant de votre école : {{schoolSlug}}
+{{/schoolSlug}}
 {{#password}}Voici vos identifiants de connexion :
 • Adresse email : {{email}}
 • Mot de passe temporaire : {{password}}
