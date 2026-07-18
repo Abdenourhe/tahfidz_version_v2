@@ -30,14 +30,16 @@ type Landing = Record<Lang, LandingContent>
 type EmailTemplate = { subject: string; body: string }
 type BannerType = 'info' | 'warning' | 'success' | 'error'
 
+type Banner = {
+  enabled: boolean
+  message: string
+  link: string
+  type: BannerType
+}
+
 type GlobalContent = {
   emails: EmailTemplatesConfig
-  banner: {
-    enabled: boolean
-    message: string
-    link: string
-    type: BannerType
-  }
+  banner: Record<Lang, Banner>
 }
 
 interface SiteConfigClientProps {
@@ -48,20 +50,37 @@ interface SiteConfigClientProps {
 
 // ── Helpers de normalisation ───────────────────────────────────────
 
-function normalizeGlobal(raw: any): GlobalContent {
-  const bannerType = raw?.banner?.type
-  const validBannerType: BannerType = ['info', 'warning', 'success', 'error'].includes(bannerType)
-    ? bannerType
-    : 'info'
+function normalizeBanner(raw: any): Record<Lang, Banner> {
+  // Ancien format plat (non multilingue)
+  if (raw && ('enabled' in raw || 'message' in raw || 'type' in raw)) {
+    const bannerType = raw?.type
+    const validBannerType: BannerType = ['info', 'warning', 'success', 'error'].includes(bannerType)
+      ? bannerType
+      : 'info'
+    const banner: Banner = {
+      enabled: raw?.enabled ?? false,
+      message: raw?.message ?? '',
+      link: raw?.link ?? '',
+      type: validBannerType,
+    }
+    return { fr: banner, en: banner, ar: banner }
+  }
+
+  const defaultBanner: Banner = { enabled: false, message: '', link: '', type: 'info' }
+  const validType = (type: any): BannerType =>
+    ['info', 'warning', 'success', 'error'].includes(type) ? type : 'info'
 
   return {
+    fr: { ...defaultBanner, ...(raw?.fr ?? {}), type: validType(raw?.fr?.type) },
+    en: { ...defaultBanner, ...(raw?.en ?? {}), type: validType(raw?.en?.type) },
+    ar: { ...defaultBanner, ...(raw?.ar ?? {}), type: validType(raw?.ar?.type) },
+  }
+}
+
+function normalizeGlobal(raw: any): GlobalContent {
+  return {
     emails: migrateEmailTemplatesToMultilingual(raw?.emails),
-    banner: {
-      enabled: raw?.banner?.enabled ?? false,
-      message: raw?.banner?.message ?? '',
-      link: raw?.banner?.link ?? '',
-      type: validBannerType,
-    },
+    banner: normalizeBanner(raw?.banner),
   }
 }
 
@@ -965,9 +984,11 @@ function EmailTemplateEditor({
 
 function GlobalEditor({
   global,
+  lang,
   onChange,
 }: {
   global: GlobalContent
+  lang: Lang
   onChange: (global: GlobalContent) => void
 }) {
   const emailLabels: Record<keyof GlobalContent['emails'], string> = {
@@ -991,9 +1012,8 @@ function GlobalEditor({
     onChange({ ...global, emails: next })
   }
 
-  function updateBanner<K extends keyof GlobalContent['banner']>(field: K, value: GlobalContent['banner'][K]) {
-    const next = { ...global.banner }
-    next[field] = value
+  function updateBanner<K extends keyof Banner>(field: K, value: Banner[K]) {
+    const next = { ...global.banner, [lang]: { ...global.banner[lang], [field]: value } }
     onChange({ ...global, banner: next })
   }
 
@@ -1030,10 +1050,15 @@ function GlobalEditor({
           Bannière
         </h3>
 
+        <div className='flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-1'>
+          <Globe className='w-3.5 h-3.5' />
+          <span>Langue : {lang.toUpperCase()}</span>
+        </div>
+
         <label className='flex items-center gap-3 cursor-pointer'>
           <input
             type='checkbox'
-            checked={global.banner.enabled}
+            checked={global.banner[lang].enabled}
             onChange={(e) => updateBanner('enabled', e.target.checked)}
             className={cn(
               'w-4 h-4 rounded border-gray-300 accent-tahfidz-green',
@@ -1045,21 +1070,21 @@ function GlobalEditor({
 
         <Field
           label='Message'
-          value={global.banner.message}
+          value={global.banner[lang].message}
           onChange={(v) => updateBanner('message', v)}
         />
         <Field
           label='Lien'
-          value={global.banner.link}
+          value={global.banner[lang].link}
           onChange={(v) => updateBanner('link', v)}
         />
 
         <div className='space-y-1.5'>
           <label className='block text-xs font-medium text-gray-600 dark:text-gray-400'>Type</label>
           <div className='flex items-center gap-2'>
-            {typeIcons[global.banner.type]}
+            {typeIcons[global.banner[lang].type]}
             <select
-              value={global.banner.type}
+              value={global.banner[lang].type}
               onChange={(e) => updateBanner('type', e.target.value as BannerType)}
               className={cn(
                 'flex-1 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700',
@@ -1542,7 +1567,25 @@ export function SiteConfigClient({ initialLanding, initialGlobal, initialPages }
         {/* Contenu Global */}
         {activeTab === 'global' && (
           <div className='space-y-6'>
-            <GlobalEditor global={global} onChange={setGlobal} />
+            <div className='flex items-center gap-2'>
+              {(['fr', 'en', 'ar'] as const).map((lang) => (
+                <button
+                  key={lang}
+                  type='button'
+                  onClick={() => setActiveLang(lang)}
+                  className={cn(
+                    'px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors',
+                    activeLang === lang
+                      ? 'bg-tahfidz-green text-white border-tahfidz-green'
+                      : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  )}
+                >
+                  {langLabel[lang]}
+                </button>
+              ))}
+            </div>
+
+            <GlobalEditor global={global} lang={activeLang} onChange={setGlobal} />
 
             <div className='flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700'>
               <button type='button' onClick={() => window.open('/', '_blank')} className={secondaryBtn}>

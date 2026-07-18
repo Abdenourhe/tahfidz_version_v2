@@ -14,14 +14,20 @@ export async function seedSiteConfig() {
   })
   console.log("✅ SiteConfig : landing")
 
-  // Configuration globale par défaut : templates d'emails multilingues et bannière
+  // Configuration globale par défaut : templates d'emails multilingues et bannière multilingue
+  const banner = {
+    enabled: true,
+    message: "🎉 Découvrez la nouvelle Halaqa Online électronique sur TAHFIDZ !",
+    link: "/register-school",
+    type: "info" as const,
+  }
+
   const globalConfig = {
     emails: defaultEmailTemplates,
     banner: {
-      enabled: true,
-      message: "🎉 Découvrez la nouvelle Halaqa Online électronique sur TAHFIDZ !",
-      link: "/register-school",
-      type: "info",
+      fr: banner,
+      en: { ...banner, message: "🎉 Discover the new electronic Halaqa Online on TAHFIDZ!" },
+      ar: { ...banner, message: "🎉 اكتشف حلقة التلاوة الإلكترونية الجديدة على TAHFIDZ!" },
     },
   }
 

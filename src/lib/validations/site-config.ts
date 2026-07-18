@@ -143,12 +143,15 @@ export const siteConfigGlobalSchema = z.object({
     "reset-password": emailLocaleTemplateSchema,
     "invite-parent": emailLocaleTemplateSchema,
   }),
-  banner: z.object({
-    enabled: z.boolean(),
-    message: z.string().min(1),
-    link: z.string(),
-    type: z.enum(["info", "warning", "success", "error"]),
-  }),
+  banner: z.record(
+    z.enum(["fr", "en", "ar"]),
+    z.object({
+      enabled: z.boolean(),
+      message: z.string().min(1),
+      link: z.string(),
+      type: z.enum(["info", "warning", "success", "error"]),
+    })
+  ),
 })
 
 export type SiteConfigLandingInput = z.infer<typeof siteConfigLandingSchema>
