@@ -183,9 +183,12 @@ export function baseTemplate(content: string, locale: "fr" | "ar" = "fr"): strin
         <!-- Header -->
         <tr>
           <td style="background:linear-gradient(135deg,#1D9E75,#0F6E56);padding:32px 40px;text-align:center;">
-            <div style="display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;background:rgba(255,255,255,.2);border-radius:12px;margin-bottom:12px;">
-              <span style="color:#fff;font-size:20px;font-weight:700;">TH</span>
-            </div>
+            <img
+              src="${APP_URL}/images/logo_full_dark.png"
+              alt="${APP_NAME}"
+              width="160"
+              style="display:block;margin:0 auto 12px;max-width:160px;height:auto;"
+            />
             <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">${APP_NAME}</h1>
             <p style="margin:4px 0 0;color:rgba(255,255,255,.8);font-size:14px;">
               ${isAr ? "منصة تحفيظ القرآن الكريم" : "Plateforme de mémorisation du Coran"}
