@@ -213,8 +213,7 @@ export function baseTemplate(content: string, locale: "fr" | "ar" = "fr"): strin
               width="160"
               style="display:block;margin:0 auto 12px;max-width:160px;height:auto;"
             />
-            <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">${APP_NAME}</h1>
-            <p style="margin:4px 0 0;color:rgba(255,255,255,.8);font-size:14px;">
+            <p style="margin:8px 0 0;color:rgba(255,255,255,.9);font-size:18px;font-weight:600;">
               ${isAr ? "منصة تحفيظ القرآن الكريم" : "Plateforme de mémorisation du Coran"}
             </p>
           </td>
