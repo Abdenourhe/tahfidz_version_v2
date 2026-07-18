@@ -1030,6 +1030,7 @@ model SchoolRequest {
   adminPhone       String?
   teachersCount    Int
   logo             String?
+  locale           String        @default("fr")
   status           RequestStatus @default(PENDING)
   slug             String?
   rejectionReason  String?

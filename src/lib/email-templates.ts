@@ -41,7 +41,7 @@ L'équipe {{appName}}`,
   },
   "reset-password": {
     subject: "Réinitialisation de votre mot de passe",
-    body: "Bonjour {{fullName}},\n\nVous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le lien suivant pour choisir un nouveau mot de passe :\n\n{{resetUrl}}\n\nCe lien est valable 1 heure. Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.\n\nCordialement,\nL'équipe {{appName}}",
+    body: "Bonjour {{fullName}},\n\nVous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le lien suivant pour choisir un nouveau mot de passe :\n\n{{resetUrl}}\n\nCe lien est valable 20 minutes. Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.\n\nCordialement,\nL'équipe {{appName}}",
   },
   "invite-parent": {
     subject: "Invitation à rejoindre {{appName}}",
@@ -93,6 +93,27 @@ function normalizeTemplate(tpl: EmailTemplate): string {
 
 function isLegacyTemplate(key: EmailTemplateKey, tpl: EmailTemplate): boolean {
   return legacyDefaultTemplates[key].some((legacy) => normalizeTemplate(legacy) === normalizeTemplate(tpl))
+}
+
+/**
+ * Migre les templates d'emails stockés qui correspondent exactement à un ancien
+ * modèle par défaut vers le nouveau modèle par défaut.
+ * Utile pour mettre à jour l'affichage dans l'éditeur SuperAdmin sans toucher
+ * aux templates personnalisés par l'utilisateur.
+ */
+export function migrateEmailTemplatesIfDefault(
+  emails: Partial<Record<EmailTemplateKey, EmailTemplate>> | undefined | null
+): Record<EmailTemplateKey, EmailTemplate> {
+  const result: Record<EmailTemplateKey, EmailTemplate> = { ...defaultEmailTemplates }
+  if (!emails) return result
+  for (const key of Object.keys(defaultEmailTemplates) as EmailTemplateKey[]) {
+    const stored = emails[key]
+    if (stored?.subject?.trim() && stored?.body?.trim()) {
+      const cleaned = { subject: stored.subject.trim(), body: stored.body.trim() }
+      result[key] = isLegacyTemplate(key, cleaned) ? defaultEmailTemplates[key] : cleaned
+    }
+  }
+  return result
 }
 
 /**
@@ -171,7 +192,7 @@ function autoLink(text: string): string {
  * Convertit un corps de mail (texte brut) en HTML sûr, puis l'encapsule
  * dans le template de base de l'application.
  */
-export function bodyToHtml(body: string, locale: "fr" | "ar" = "fr"): string {
+export function bodyToHtml(body: string, locale: "fr" | "en" | "ar" = "fr"): string {
   const escaped = body
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -184,7 +205,7 @@ export function bodyToHtml(body: string, locale: "fr" | "ar" = "fr"): string {
 /**
  * Template HTML de base commun à tous les emails (branding TAHFIDZ).
  */
-export function baseTemplate(content: string, locale: "fr" | "ar" = "fr"): string {
+export function baseTemplate(content: string, locale: "fr" | "en" | "ar" = "fr"): string {
   const isAr = locale === "ar"
   const dir = isAr ? "rtl" : "ltr"
   const fontFamily = isAr

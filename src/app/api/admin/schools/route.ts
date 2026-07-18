@@ -210,6 +210,7 @@ export async function PATCH(req: NextRequest) {
           role: "ADMIN",
           schoolName: request.schoolName,
           schoolSlug: slug,
+          locale: (request.locale as "fr" | "en" | "ar") ?? "fr",
         })
         console.log("[ADMIN SCHOOLS APPROVE] Résultat envoi:", mailResult)
       } catch (mailError) {

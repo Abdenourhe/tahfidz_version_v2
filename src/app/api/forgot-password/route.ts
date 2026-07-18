@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     const secret = new TextEncoder().encode(secretKey)
     const token = await new SignJWT({ email: email.toLowerCase(), schoolId: school.id, userId: user.id })
       .setProtectedHeader({ alg: "HS256" })
-      .setExpirationTime("1h")
+      .setExpirationTime("20m")
       .setIssuedAt()
       .sign(secret)
 

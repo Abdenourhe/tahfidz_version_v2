@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma"
 import { SiteConfigClient } from "@/components/superadmin/SiteConfigClient"
 import { defaultLandingContent } from "@/lib/landing/default-content"
 import { defaultPageContents } from "@/lib/site-config/page-defaults"
+import { migrateEmailTemplatesIfDefault, type EmailTemplate, type EmailTemplateKey } from "@/lib/email-templates"
 import type { LandingContent } from "@/lib/landing/default-content"
 import type { SitePageConfig, SitePageKey } from "@/lib/site-config/page-types"
 
@@ -40,13 +41,22 @@ export default async function SiteConfigPage() {
     "fr" | "en" | "ar",
     LandingContent
   >
-  const globalValue = globalConfig?.value ?? {
+  const rawGlobalValue = globalConfig?.value ?? {
     emails: {
       welcome: { subject: "", body: "" },
       "reset-password": { subject: "", body: "" },
       "invite-parent": { subject: "", body: "" },
     },
     banner: { enabled: false, message: "", link: "", type: "info" },
+  }
+
+  const migratedEmails = migrateEmailTemplatesIfDefault(
+    (rawGlobalValue as any)?.emails as Partial<Record<EmailTemplateKey, EmailTemplate>>
+  )
+
+  const globalValue = {
+    ...(rawGlobalValue as any),
+    emails: migratedEmails,
   }
 
   const pageConfigsMap = Object.fromEntries(

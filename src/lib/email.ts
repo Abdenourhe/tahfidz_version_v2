@@ -58,10 +58,11 @@ export async function sendWelcomeEmail({
   role: string
   schoolName?: string | null
   schoolSlug?: string | null
-  locale?: "fr" | "ar"
+  locale?: "fr" | "en" | "ar"
 }) {
   const roleLabels: Record<string, Record<string, string>> = {
     fr: { ADMIN: "Administrateur", TEACHER: "Enseignant", PARENT: "Parent", STUDENT: "Élève" },
+    en: { ADMIN: "Administrator", TEACHER: "Teacher", PARENT: "Parent", STUDENT: "Student" },
     ar: { ADMIN: "مدير", TEACHER: "معلم", PARENT: "ولي أمر", STUDENT: "طالب" },
   }
 
@@ -69,82 +70,95 @@ export async function sendWelcomeEmail({
     ? `${APP_URL}/login?schoolSlug=${encodeURIComponent(schoolSlug.trim())}`
     : `${APP_URL}/login`
 
-  try {
-    const { subject, html, text } = await renderTemplatedEmail(
-      "welcome",
-      {
-        fullName,
-        email,
-        password: password ?? "",
-        role: roleLabels[locale]?.[role] ?? role,
-        schoolName: schoolName ?? "",
-        schoolSlug: schoolSlug ?? "",
-        loginUrl,
-      },
-      locale
-    )
+  // Le template éditable est actuellement en français.
+  // Pour les autres langues, on utilise un fallback codé en dur professionnel.
+  if (locale === "fr") {
+    try {
+      const { subject, html, text } = await renderTemplatedEmail(
+        "welcome",
+        {
+          fullName,
+          email,
+          password: password ?? "",
+          role: roleLabels.fr[role] ?? role,
+          schoolName: schoolName ?? "",
+          schoolSlug: schoolSlug ?? "",
+          loginUrl,
+        },
+        locale
+      )
 
-    console.log(`[sendWelcomeEmail] Envoi à ${to} — Sujet: ${subject}`)
-    const result = await sendMail({ to, subject, html, text })
-    console.log(`[sendWelcomeEmail] Résultat pour ${to}:`, result)
-    return result
-  } catch (error) {
-    console.error("[sendWelcomeEmail] Échec rendu template:", error)
+      console.log(`[sendWelcomeEmail] Envoi à ${to} — Sujet: ${subject}`)
+      const result = await sendMail({ to, subject, html, text })
+      console.log(`[sendWelcomeEmail] Résultat pour ${to}:`, result)
+      return result
+    } catch (error) {
+      console.error("[sendWelcomeEmail] Échec rendu template:", error)
+    }
   }
 
-  // Fallback : template codé en dur
-  const isAr = locale === "ar"
-  const schoolInfo = schoolName?.trim()
-    ? isAr
-      ? `<p style="color:#6B7280;font-size:14px;margin-top:0;">تم إنشاء مدرستك <strong>${schoolName}</strong> بنجاح وهي جاهزة للتهيئة.</p>`
-      : `<p style="color:#6B7280;font-size:14px;margin-top:0;">Votre école <strong>${schoolName}</strong> a été créée avec succès et est prête à être configurée.</p>`
-    : isAr
-      ? `<p style="color:#6B7280;font-size:14px;margin-top:0;">تم إنشاء حسابك في <strong>${APP_NAME}</strong> بنجاح.</p>`
-      : `<p style="color:#6B7280;font-size:14px;margin-top:0;">Votre compte <strong>${APP_NAME}</strong> vient d'être créé.</p>`
+  // Fallback : template codé en dur selon la langue
+  const t = {
+    fr: {
+      greeting: `Salam Alaykoum ${fullName} 👋`,
+      schoolCreated: schoolName ? `Votre école <strong>${schoolName}</strong> a été créée avec succès et est prête à être configurée.` : `Votre compte <strong>${APP_NAME}</strong> vient d'être créé.`,
+      schoolSlug: schoolSlug ? `Identifiant de votre école : <strong style="color:#1D9E75;">${schoolSlug}</strong>` : "",
+      credentials: "Vos identifiants de connexion",
+      role: "Rôle",
+      emailLabel: "Email",
+      password: "Mot de passe",
+      cta: "Accéder à mon compte",
+      warning: "⚠️ Pensez à changer votre mot de passe lors de votre première connexion.",
+      subject: `Bienvenue sur ${APP_NAME} 🌟`,
+    },
+    en: {
+      greeting: `Dear ${fullName},`,
+      schoolCreated: schoolName ? `Your school <strong>${schoolName}</strong> has been successfully created and is ready to be configured.` : `Your <strong>${APP_NAME}</strong> account has been successfully created.`,
+      schoolSlug: schoolSlug ? `Your school identifier: <strong style="color:#1D9E75;">${schoolSlug}</strong>` : "",
+      credentials: "Your login credentials",
+      role: "Role",
+      emailLabel: "Email address",
+      password: "Password",
+      cta: "Access my account",
+      warning: "⚠️ Please change your password upon your first login for security reasons.",
+      subject: `Welcome to ${APP_NAME} 🌟`,
+    },
+    ar: {
+      greeting: `السلام عليكم ${fullName} 👋`,
+      schoolCreated: schoolName ? `تم إنشاء مدرستك <strong>${schoolName}</strong> بنجاح وهي جاهزة للتهيئة.` : `تم إنشاء حسابك في <strong>${APP_NAME}</strong> بنجاح.`,
+      schoolSlug: schoolSlug ? `معرف المدرسة : <strong style="color:#1D9E75;">${schoolSlug}</strong>` : "",
+      credentials: "بيانات الدخول",
+      role: "الدور",
+      emailLabel: "البريد الإلكتروني",
+      password: "كلمة المرور",
+      cta: "الدخول إلى حسابي",
+      warning: "⚠️ يُرجى تغيير كلمة المرور عند أول تسجيل دخول.",
+      subject: `مرحباً بك في ${APP_NAME} 🌟`,
+    },
+  }[locale]
 
-  const slugInfo = schoolSlug?.trim()
-    ? isAr
-      ? `<p style="color:#6B7280;font-size:14px;margin-top:0;">معرف المدرسة : <strong style="color:#1D9E75;">${schoolSlug}</strong></p>`
-      : `<p style="color:#6B7280;font-size:14px;margin-top:0;">Identifiant de votre école : <strong style="color:#1D9E75;">${schoolSlug}</strong></p>`
-    : ""
-
-  const content = isAr ? `
-    <p style="font-size:18px;color:#1D9E75;font-weight:700;margin-bottom:4px;">السلام عليكم ${fullName} 👋</p>
-    ${schoolInfo}
-    ${slugInfo}
+  const isRtl = locale === "ar"
+  const content = `
+    <p style="font-size:18px;color:#1D9E75;font-weight:700;margin-bottom:4px;">${t.greeting}</p>
+    <p style="color:#6B7280;font-size:14px;margin-top:0;">${t.schoolCreated}</p>
+    ${t.schoolSlug ? `<p style="color:#6B7280;font-size:14px;margin-top:0;">${t.schoolSlug}</p>` : ""}
     <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:20px;margin:20px 0;">
-      <p style="margin:0 0 12px;font-size:13px;font-weight:600;color:#374151;">بيانات الدخول</p>
+      <p style="margin:0 0 12px;font-size:13px;font-weight:600;color:#374151;">${t.credentials}</p>
       <table width="100%" cellpadding="0" cellspacing="0" style="border-spacing:0 6px;">
-        ${infoRow("الدور", roleLabels.ar[role] ?? role, true)}
-        ${infoRow("البريد الإلكتروني", email, true)}
-        ${password ? infoRow("كلمة المرور", password, true) : ""}
+        ${infoRow(t.role, roleLabels[locale]?.[role] ?? role, isRtl)}
+        ${infoRow(t.emailLabel, email, isRtl)}
+        ${password ? infoRow(t.password, password, isRtl) : ""}
       </table>
     </div>
     <div style="text-align:center;margin:24px 0;">
-      <a href="${loginUrl}" style="display:inline-block;padding:14px 32px;background:#1D9E75;color:#fff;text-decoration:none;border-radius:10px;font-size:15px;font-weight:600;">الدخول إلى حسابي</a>
+      <a href="${loginUrl}" style="display:inline-block;padding:14px 32px;background:#1D9E75;color:#fff;text-decoration:none;border-radius:10px;font-size:15px;font-weight:600;">${t.cta}</a>
     </div>
-    <p style="color:#EF4444;font-size:13px;">⚠️ يُرجى تغيير كلمة المرور عند أول تسجيل دخول.</p>
-  ` : `
-    <p style="font-size:18px;color:#1D9E75;font-weight:700;margin-bottom:4px;">Salam Alaykoum ${fullName} 👋</p>
-    ${schoolInfo}
-    ${slugInfo}
-    <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:20px;margin:20px 0;">
-      <p style="margin:0 0 12px;font-size:13px;font-weight:600;color:#374151;">Vos identifiants de connexion</p>
-      <table width="100%" cellpadding="0" cellspacing="0" style="border-spacing:0 6px;">
-        ${infoRow("Rôle", roleLabels.fr[role] ?? role)}
-        ${infoRow("Email", email)}
-        ${password ? infoRow("Mot de passe", password) : ""}
-      </table>
-    </div>
-    <div style="text-align:center;margin:24px 0;">
-      <a href="${loginUrl}" style="display:inline-block;padding:14px 32px;background:#1D9E75;color:#fff;text-decoration:none;border-radius:10px;font-size:15px;font-weight:600;">Accéder à mon compte</a>
-    </div>
-    <p style="color:#EF4444;font-size:13px;">⚠️ Pensez à changer votre mot de passe lors de votre première connexion.</p>
+    <p style="color:#EF4444;font-size:13px;">${t.warning}</p>
   `
 
   return sendMail({
     to,
-    subject: isAr ? `مرحباً بك في ${APP_NAME} 🌟` : `Bienvenue sur ${APP_NAME} 🌟`,
+    subject: t.subject,
     html: baseTemplate(content, locale),
   })
 }
@@ -295,14 +309,14 @@ export async function sendPasswordResetEmail({
     <p style="font-size:18px;color:#111827;font-weight:700;margin-bottom:4px;">السلام عليكم ${fullName}</p>
     <p style="color:#6B7280;font-size:14px;margin-top:0;">طلبتَ إعادة تعيين كلمة المرور. انقر على الزر أدناه لإتمام العملية.</p>
     <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:16px;margin:20px 0;">
-      <p style="margin:0;color:#DC2626;font-size:13px;">⚠️ هذا الرابط صالح لمدة ساعة واحدة فقط.</p>
+      <p style="margin:0;color:#DC2626;font-size:13px;">⚠️ هذا الرابط صالح لمدة 20 دقيقة فقط.</p>
     </div>
     <p style="text-align:center;color:#9CA3AF;font-size:12px;">إذا لم تطلب ذلك، تجاهل هذا البريد الإلكتروني.</p>
   ` : `
     <p style="font-size:18px;color:#111827;font-weight:700;margin-bottom:4px;">Salam Alaykoum ${fullName}</p>
     <p style="color:#6B7280;font-size:14px;margin-top:0;">Vous avez demandé une réinitialisation de votre mot de passe. Cliquez sur le bouton ci-dessous pour continuer.</p>
     <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:16px;margin:20px 0;">
-      <p style="margin:0;color:#DC2626;font-size:13px;">⚠️ Ce lien est valable pendant 1 heure seulement.</p>
+      <p style="margin:0;color:#DC2626;font-size:13px;">⚠️ Ce lien est valable pendant 20 minutes seulement.</p>
     </div>
     <p style="text-align:center;color:#9CA3AF;font-size:12px;">Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>
   `

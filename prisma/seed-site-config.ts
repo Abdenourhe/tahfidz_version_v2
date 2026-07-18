@@ -42,7 +42,7 @@ L'équipe {{appName}}`,
       },
       "reset-password": {
         subject: "Réinitialisation de votre mot de passe",
-        body: "Bonjour {{fullName}},\n\nVous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le lien suivant pour choisir un nouveau mot de passe :\n\n{{resetUrl}}\n\nCe lien est valable 1 heure. Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.\n\nCordialement,\nL'équipe {{appName}}",
+        body: "Bonjour {{fullName}},\n\nVous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le lien suivant pour choisir un nouveau mot de passe :\n\n{{resetUrl}}\n\nCe lien est valable 20 minutes. Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.\n\nCordialement,\nL'équipe {{appName}}",
       },
       "invite-parent": {
         subject: "Invitation à rejoindre {{appName}}",

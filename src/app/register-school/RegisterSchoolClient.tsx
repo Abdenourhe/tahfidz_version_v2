@@ -180,6 +180,7 @@ export default function RegisterSchoolClient() {
           plan:             form.plan,
           billingCycle:     form.billingCycle,
           halaqaSessionDuration: Number(form.halaqaSessionDuration),
+          locale:           locale === "ar" ? "ar" : locale === "en" ? "en" : "fr",
           logo,
         }),
       })

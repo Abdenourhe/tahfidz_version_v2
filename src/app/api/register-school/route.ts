@@ -19,6 +19,7 @@ const schema = z.object({
   plan:             z.enum(["FREE", "STARTER", "ECONOMIQUE", "PRO", "ENTERPRISE"]).default("FREE"),
   billingCycle:     z.enum(["MONTHLY", "YEARLY"]).default("MONTHLY"),
   halaqaSessionDuration: z.coerce.number().int().min(15).max(180).optional(),
+  locale:           z.enum(["fr", "en", "ar"]).default("fr"),
   logo:             z.string().optional(),
 })
 
@@ -65,6 +66,7 @@ export async function POST(req: NextRequest) {
         billingCycle:     d.billingCycle,
         halaqaSessionDuration: d.halaqaSessionDuration ?? null,
         logo:             d.logo ?? null,
+        locale:           d.locale,
         status:           "PENDING",
       },
     })
