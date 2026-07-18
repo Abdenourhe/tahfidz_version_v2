@@ -137,6 +137,19 @@ const emailLocaleTemplateSchema = z.object({
   ar: emailTemplateSchema,
 })
 
+const bannerSchema = z.object({
+  enabled: z.boolean(),
+  message: z.string(),
+  link: z.string(),
+  type: z.enum(["info", "warning", "success", "error"]),
+}).refine(
+  (data) => !data.enabled || data.message.trim().length > 0,
+  {
+    message: "Le message est requis lorsque la bannière est activée.",
+    path: ["message"],
+  }
+)
+
 export const siteConfigGlobalSchema = z.object({
   emails: z.object({
     welcome: emailLocaleTemplateSchema,
@@ -145,12 +158,7 @@ export const siteConfigGlobalSchema = z.object({
   }),
   banner: z.record(
     z.enum(["fr", "en", "ar"]),
-    z.object({
-      enabled: z.boolean(),
-      message: z.string().min(1),
-      link: z.string(),
-      type: z.enum(["info", "warning", "success", "error"]),
-    })
+    bannerSchema
   ),
 })
 

@@ -1371,7 +1371,9 @@ export function SiteConfigClient({ initialLanding, initialGlobal, initialPages }
         body: JSON.stringify(global),
       })
       if (!res.ok) {
-        throw new Error(`Erreur ${res.status} lors de la sauvegarde.`)
+        const data = await res.json().catch(() => ({}))
+        const details = data.details ? JSON.stringify(data.details).slice(0, 200) : data.error || ''
+        throw new Error(`Erreur ${res.status} lors de la sauvegarde. ${details}`)
       }
       setStatus({ type: 'success', message: 'Contenus globaux sauvegardés avec succès.' })
     } catch (err) {
