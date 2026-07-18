@@ -18,13 +18,34 @@ async function requireSuperAdmin() {
 
 const PAGE_KEYS = ['privacy', 'terms', 'security', 'contact', 'updates', 'help', 'docs', 'api-docs'] as const
 
+function isBannerFlat(value: unknown): value is { enabled?: boolean; message?: string; link?: string; type?: string } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    ("enabled" in value || "message" in value || "type" in value)
+  )
+}
+
+function normalizeGlobalInput(data: unknown): unknown {
+  if (typeof data !== "object" || data === null) return data
+  const record = data as Record<string, unknown>
+  if (record.banner && isBannerFlat(record.banner)) {
+    const flatBanner = record.banner
+    return {
+      ...record,
+      banner: { fr: flatBanner, en: flatBanner, ar: flatBanner },
+    }
+  }
+  return data
+}
+
 const VALIDATORS: Record<string, (data: unknown) => { success: boolean; data?: any; error?: any }> = {
   landing: (data) => {
     const result = siteConfigLandingSchema.safeParse(data)
     return result.success ? { success: true, data: result.data } : { success: false, error: result.error.format() }
   },
   global: (data) => {
-    const result = siteConfigGlobalSchema.safeParse(data)
+    const result = siteConfigGlobalSchema.safeParse(normalizeGlobalInput(data))
     return result.success ? { success: true, data: result.data } : { success: false, error: result.error.format() }
   },
   ...Object.fromEntries(
