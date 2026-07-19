@@ -255,6 +255,7 @@ export default function TeacherScanPage() {
             if (raw && !processingRef.current) {
               console.log("[BarcodeDetector] detected:", raw)
               processingRef.current = true
+              try { scannerRef.current?.pause(true) } catch {}
               await processDecodedRef.current?.(raw, "scan")
             }
           }
@@ -295,6 +296,7 @@ export default function TeacherScanPage() {
         (decodedText) => {
           if (processingRef.current) return
           processingRef.current = true
+          try { scannerRef.current?.pause(true) } catch {}
           processDecodedRef.current?.(decodedText, "scan")
         },
         (errorMessage) => {
