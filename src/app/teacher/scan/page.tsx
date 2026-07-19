@@ -94,6 +94,7 @@ export default function TeacherScanPage() {
 
   const scannerRef = useRef<Html5Qrcode | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const barcodeLoopRef = useRef<number | null>(null)
   const processingRef = useRef(false)
   const autoConfirmRef = useRef(true)
   const continuousScanRef = useRef(true)
@@ -189,6 +190,10 @@ export default function TeacherScanPage() {
   }, [])
 
   const stopScanner = useCallback(async () => {
+    if (barcodeLoopRef.current) {
+      clearInterval(barcodeLoopRef.current)
+      barcodeLoopRef.current = null
+    }
     if (scannerRef.current?.isScanning) {
       try { await scannerRef.current.stop() } catch {}
     }
@@ -238,6 +243,9 @@ export default function TeacherScanPage() {
       } catch {
         // contraintes avancées optionnelles
       }
+
+      // Démarrer le décodeur natif en parallèle pour de meilleures performances sur mobile
+      startBarcodeDetectorLoop()
     } catch (err: any) {
       console.error("[Scan] start error:", err)
       const errorName = err?.name || ""
@@ -260,7 +268,7 @@ export default function TeacherScanPage() {
     } finally {
       setLoading(false)
     }
-  }, [facingMode, selectedCameraId, stopScanner, t])
+  }, [facingMode, selectedCameraId, stopScanner, startBarcodeDetectorLoop, t])
 
   const restartScanner = useCallback(async () => {
     setScanned(false)
@@ -272,6 +280,39 @@ export default function TeacherScanPage() {
     // Sur mobile, un redémarrage complet est plus stable que resume()
     await startScanner()
   }, [startScanner])
+
+  const startBarcodeDetectorLoop = useCallback(() => {
+    const BarcodeDetectorCls = (window as any).BarcodeDetector
+    if (!BarcodeDetectorCls) return
+
+    const video = document.querySelector("#qr-reader video") as HTMLVideoElement | null
+    if (!video) return
+
+    try {
+      const detector = new BarcodeDetectorCls({
+        formats: ["code_128", "code_39", "ean_13", "ean_8", "upc_a", "upc_e", "qr_code"],
+      })
+
+      if (barcodeLoopRef.current) clearInterval(barcodeLoopRef.current)
+      barcodeLoopRef.current = window.setInterval(async () => {
+        try {
+          const results = await detector.detect(video)
+          if (results && results.length > 0) {
+            const raw = results[0].rawValue
+            if (raw && !processingRef.current) {
+              processingRef.current = true
+              console.log("[BarcodeDetector] detected:", raw)
+              await processDecodedRef.current?.(raw, "scan")
+            }
+          }
+        } catch {
+          // Ignorer les erreurs de détection intermédiaires
+        }
+      }, 300)
+    } catch {
+      // BarcodeDetector non supporté ou erreur d'init
+    }
+  }, [])
 
   const processDecoded = useCallback(async (raw: string, method: "scan" | "manual") => {
     const trimmed = raw.trim()
