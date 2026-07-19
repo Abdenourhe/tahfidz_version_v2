@@ -2880,6 +2880,10 @@ export const translations = {
     captureError:     { fr: "Aucun code détecté, réessayez",     en: "No code detected, try again",  ar: "لم يتم اكتشاف رمز، أعد المحاولة" },
     uploadImage:      { fr: "Importer",                          en: "Upload image",                 ar: "استيراد صورة" },
     uploadError:      { fr: "Aucun code détecté sur l'image",    en: "No code detected on image",    ar: "لم يتم اكتشاف رمز في الصورة" },
+    permissionDenied: { fr: "Permission caméra refusée",         en: "Camera permission denied",     ar: "تم رفض إذن الكاميرا" },
+    cameraInUse:      { fr: "Caméra déjà utilisée",              en: "Camera already in use",        ar: "الكاميرا قيد الاستخدام" },
+    cameraNotSupported:{ fr: "Caméra incompatible",              en: "Camera not supported",         ar: "الكاميرا غير مدعومة" },
+    retry:            { fr: "Réessayer",                         en: "Retry",                        ar: "إعادة المحاولة" },
   },
 
 } as const

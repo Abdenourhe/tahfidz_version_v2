@@ -213,9 +213,18 @@ export default function TeacherScanPage() {
         // Lancer le décodeur natif en parallèle pour améliorer la détection des codes-barres.
         await startBarcodeDetectorLoop()
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err)
-      setError(t("error"))
+      const errorName = err?.name || ""
+      if (errorName === "NotAllowedError" || errorName === "PermissionDeniedError") {
+        setError(t("permissionDenied"))
+      } else if (errorName === "NotReadableError" || errorName === "TrackStartError") {
+        setError(t("cameraInUse"))
+      } else if (errorName === "OverconstrainedError" || errorName === "ConstraintNotSatisfiedError") {
+        setError(t("cameraNotSupported"))
+      } else {
+        setError(t("error"))
+      }
     } finally {
       setLoading(false)
     }
@@ -245,6 +254,9 @@ export default function TeacherScanPage() {
           return
         }
         const back = devices.find((d) => isBackCamera(d.label))
+        if (!back) {
+          setFacingMode("user")
+        }
         setSelectedCameraId((back ?? devices[devices.length - 1]).id)
       })
       .catch((err) => {
@@ -409,7 +421,14 @@ export default function TeacherScanPage() {
             <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white p-6 text-center">
               <AlertCircle size={40} className="text-red-400 mb-3" />
               <p className="font-semibold">{error}</p>
-              <p className="text-sm text-white/70 mt-2">{t("permission")}</p>
+              <p className="text-sm text-white/70 mt-2 mb-4">{t("permission")}</p>
+              <button
+                onClick={() => startScanner()}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-900 rounded-lg text-sm font-medium hover:bg-gray-100 transition"
+              >
+                <RefreshCw size={16} />
+                {t("retry")}
+              </button>
             </div>
           )}
         </div>
