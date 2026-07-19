@@ -216,6 +216,14 @@ export default function TeacherScanPage() {
     } catch (err: any) {
       console.error(err)
       const errorName = err?.name || ""
+      const errorMessage = err?.message || ""
+
+      // Si html5-qrcode est encore en transition, réessayer automatiquement.
+      if (errorMessage.toLowerCase().includes("transition")) {
+        setTimeout(() => startScanner(), 800)
+        return
+      }
+
       if (errorName === "NotAllowedError" || errorName === "PermissionDeniedError") {
         setError(t("permissionDenied"))
       } else if (errorName === "NotReadableError" || errorName === "TrackStartError") {
@@ -273,7 +281,10 @@ export default function TeacherScanPage() {
 
   useEffect(() => {
     if (selectedCameraId !== null) {
-      startScanner()
+      // Petit délai au montage pour laisser le navigateur libérer la caméra
+      // quand on revient de la page de vérification.
+      const timer = setTimeout(() => startScanner(), 400)
+      return () => clearTimeout(timer)
     }
   }, [selectedCameraId, startScanner])
 
