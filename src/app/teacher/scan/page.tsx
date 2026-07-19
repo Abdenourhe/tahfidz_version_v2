@@ -120,19 +120,12 @@ export default function TeacherScanPage() {
     try {
       await stopScanner()
 
-      // Contraintes vidéo : privilégier la caméra arrière et une haute résolution
-      // pour améliorer la lecture des codes-barres 1D.
-      const videoConstraints: MediaTrackConstraints & { focusMode?: { ideal: string } } = {
-        width: { min: 1280, ideal: 1920, max: 1920 },
-        height: { min: 720, ideal: 1080, max: 1080 },
-        focusMode: { ideal: "continuous" },
-      }
-
-      let cameraConfig: string | MediaTrackConstraints
+      // html5-qrcode impose un objet avec exactement 1 clé : deviceId ou facingMode.
+      let cameraConfig: string | { facingMode: string }
       if (selectedCameraId) {
-        cameraConfig = { ...videoConstraints, deviceId: { exact: selectedCameraId }, facingMode: { ideal: "environment" } }
+        cameraConfig = selectedCameraId
       } else {
-        cameraConfig = { ...videoConstraints, facingMode: { ideal: facingMode } }
+        cameraConfig = { facingMode }
       }
 
       // Zone de scan rectangulaire pour les codes-barres horizontaux,
@@ -154,6 +147,17 @@ export default function TeacherScanPage() {
           console.debug("[Scan] error:", errorMessage)
         }
       )
+
+      // Appliquer une résolution plus élevée et le focus continu après démarrage.
+      try {
+        await (scannerRef.current as any).applyVideoConstraints({
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+          focusMode: { ideal: "continuous" },
+        })
+      } catch (constraintErr) {
+        console.warn("[Scan] contraintes avancées non appliquées", constraintErr)
+      }
 
       // Stocker la référence vidéo pour les captures et la lampe
       const video = document.querySelector("#qr-reader video") as HTMLVideoElement | null
@@ -225,8 +229,7 @@ export default function TeacherScanPage() {
     if (!scannerRef.current) return
     try {
       const next = !torchOn
-      // @ts-expect-error — applyVideoConstraints est présent mais typé librement
-      await scannerRef.current.applyVideoConstraints({ advanced: [{ torch: next }] })
+      await (scannerRef.current as any).applyVideoConstraints({ advanced: [{ torch: next }] })
       setTorchOn(next)
     } catch (err) {
       console.warn("[Scan] torch non supporté", err)
