@@ -352,7 +352,7 @@ export default function TeacherScanPage() {
     // Cooldown pour éviter les doubles scans
     const recentTs = recentScansRef.current.get(encoded)
     if (recentTs && Date.now() - recentTs < RECENT_WINDOW_MS) {
-      showToast("error", t("alreadyScanned"))
+      showToast("info", t("alreadyScanned"))
       await restartScanner()
       return
     }
@@ -368,7 +368,7 @@ export default function TeacherScanPage() {
         const data = await res.json()
 
         if (res.status === 409 || data.code === "ALREADY_PRESENT") {
-          showToast("error", t("alreadyPresent"), t("alreadyPresentMessage").replace("{name}", data.studentName || ""))
+          showToast("info", t("alreadyPresent"), t("alreadyPresentMessage").replace("{name}", data.studentName || ""))
           await restartScanner()
           return
         }
@@ -456,7 +456,7 @@ export default function TeacherScanPage() {
       const data = await res.json()
 
       if (res.status === 409 || data.code === "ALREADY_PRESENT") {
-        showToast("error", t("alreadyPresent"), t("alreadyPresentMessage").replace("{name}", data.studentName || pendingStudent?.fullName || ""))
+        showToast("info", t("alreadyPresent"), t("alreadyPresentMessage").replace("{name}", data.studentName || pendingStudent?.fullName || ""))
         setShowConfirm(false)
         await restartScanner()
         return
