@@ -1,30 +1,15 @@
 "use client"
 
 import { useEffect, useRef, useState, useCallback } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Html5Qrcode, Html5QrcodeSupportedFormats, type CameraDevice } from "html5-qrcode"
-import { useLanguage } from "@/contexts/LanguageContext"
-import { decodeAnyQrValue } from "@/lib/qr-code"
-import { Loader2, AlertCircle, Camera, RefreshCw, ScanLine, CheckCircle2 } from "lucide-react"
-
-const TEXTS: Record<string, Record<string, string>> = {
-  title:         { fr: "Scanner une carte", en: "Scan a card", ar: "مسح بطاقة" },
-  subtitle:      { fr: "Placez le QR code ou le code-barres de l'élève dans le cadre", en: "Position the student's QR code or barcode in the frame", ar: "ضع رمز QR أو الباركود للطالب في الإطار" },
-  starting:      { fr: "Démarrage de la caméra...", en: "Starting camera...", ar: "جاري تشغيل الكاميرا..." },
-  error:         { fr: "Impossible d'accéder à la caméra", en: "Unable to access camera", ar: "تعذر الوصول إلى الكاميرا" },
-  noCamera:      { fr: "Aucune caméra détectée", en: "No camera detected", ar: "لم يتم اكتشاف كاميرا" },
-  switchCamera:  { fr: "Inverser", en: "Switch", ar: "تبديل" },
-  frontCamera:   { fr: "Frontale", en: "Front", ar: "أمامية" },
-  backCamera:    { fr: "Arrière", en: "Back", ar: "خلفية" },
-  camera:        { fr: "Caméra", en: "Camera", ar: "الكاميرا" },
-  permission:    { fr: "Autorisez l'accès à la caméra pour scanner", en: "Allow camera access to scan", ar: "اسمح بالوصول إلى الكاميرا للمسح" },
-  scanned:       { fr: "QR code détecté", en: "QR code detected", ar: "تم اكتشاف رمز QR" },
-  invalidQr:     { fr: "Code non reconnu, réessayez", en: "Code not recognized, try again", ar: "الرمز غير معروف، حاول مرة أخرى" },
-}
-
-function t(key: string, locale: string): string {
-  return TEXTS[key]?.[locale] || TEXTS[key]?.fr || key
-}
+import { useLanguage, useT } from "@/contexts/LanguageContext"
+import { decodeAnyQrValue, decodeBarcodeValue } from "@/lib/qr-code"
+import {
+  Loader2, AlertCircle, Camera, RefreshCw, ScanLine, CheckCircle2,
+  ArrowLeft, Keyboard, Search
+} from "lucide-react"
 
 function isBackCamera(label: string): boolean {
   const lower = label.toLowerCase()
@@ -58,8 +43,8 @@ function triggerVibration() {
 }
 
 export default function TeacherScanPage() {
-  const { locale, dir } = useLanguage()
-  const L = locale
+  const { dir } = useLanguage()
+  const t = useT("teacherScan")
   const router = useRouter()
   const scannerRef = useRef<Html5Qrcode | null>(null)
 
@@ -69,6 +54,7 @@ export default function TeacherScanPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [scanned, setScanned] = useState(false)
+  const [manualCode, setManualCode] = useState("")
 
   const stopScanner = useCallback(async () => {
     if (scannerRef.current?.isScanning) {
@@ -77,25 +63,49 @@ export default function TeacherScanPage() {
   }, [])
 
   const handleDecoded = useCallback((decodedText: string) => {
-    console.log("[QR Scan] decoded:", decodedText)
-    const payload = decodeAnyQrValue(decodedText)
+    const trimmed = decodedText.trim()
+    console.log("[Scan] decoded:", trimmed)
 
-    if (!payload) {
-      console.log("[QR Scan] payload non reconnu")
-      setError(t("invalidQr", L))
-      setTimeout(() => setError(null), 2000)
-      scannerRef.current?.resume()
+    let encoded: string | null = null
+
+    // QR code / payload compact
+    const qrPayload = decodeAnyQrValue(trimmed)
+    if (qrPayload) {
+      encoded = `${qrPayload.s}:${qrPayload.t}:${qrPayload.h}`
+    }
+
+    // Code-barres au format schoolSlug:studentCode
+    if (!encoded) {
+      const barcodePayload = decodeBarcodeValue(trimmed)
+      if (barcodePayload) {
+        encoded = trimmed
+      }
+    }
+
+    // Code étudiant seul (ex: TAH-2026-0001)
+    if (!encoded && trimmed.length >= 3) {
+      encoded = trimmed
+    }
+
+    if (encoded) {
+      setScanned(true)
+      playBeep()
+      triggerVibration()
+      router.push(`/teacher/scan/verify?d=${encodeURIComponent(encoded)}`)
       return
     }
 
-    console.log("[QR Scan] payload valide:", payload.s, payload.t)
-    setScanned(true)
-    playBeep()
-    triggerVibration()
+    console.log("[Scan] payload non reconnu")
+    setError(t("invalidQr"))
+    setTimeout(() => setError(null), 2000)
+    scannerRef.current?.resume()
+  }, [router, t])
 
-    const encoded = encodeURIComponent(`${payload.s}:${payload.t}:${payload.h}`)
-    router.push(`/teacher/scan/verify?d=${encoded}`)
-  }, [L, router])
+  const handleManualVerify = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!manualCode.trim()) return
+    handleDecoded(manualCode)
+  }
 
   const startScanner = useCallback(async () => {
     if (!scannerRef.current) return
@@ -108,25 +118,28 @@ export default function TeacherScanPage() {
       await stopScanner()
       const cameraConfig = selectedCameraId ? selectedCameraId : { facingMode }
 
+      // Zone de scan rectangulaire pour les codes-barres horizontaux
+      const qrbox = { width: 320, height: 160 }
+
       await scannerRef.current.start(
         cameraConfig as any,
-        { fps: 15, qrbox: { width: 240, height: 240 }, aspectRatio: 1.0 },
+        { fps: 15, qrbox, aspectRatio: 1.777778 },
         (decodedText) => {
           scannerRef.current?.pause(true)
           handleDecoded(decodedText)
         },
         (errorMessage) => {
           // Ignorer les erreurs de scan intermédiaires
-          console.debug("[QR Scan] error:", errorMessage)
+          console.debug("[Scan] error:", errorMessage)
         }
       )
     } catch (err) {
       console.error(err)
-      setError(t("error", L))
+      setError(t("error"))
     } finally {
       setLoading(false)
     }
-  }, [facingMode, selectedCameraId, handleDecoded, stopScanner, L])
+  }, [facingMode, selectedCameraId, handleDecoded, stopScanner, t])
 
   useEffect(() => {
     const scanner = new Html5Qrcode("qr-reader", {
@@ -136,6 +149,9 @@ export default function TeacherScanPage() {
         Html5QrcodeSupportedFormats.CODE_128,
         Html5QrcodeSupportedFormats.CODE_39,
         Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E,
       ],
     })
     scannerRef.current = scanner
@@ -144,7 +160,7 @@ export default function TeacherScanPage() {
       .then((devices) => {
         setCameras(devices)
         if (devices.length === 0) {
-          setError(t("noCamera", L))
+          setError(t("noCamera"))
           setLoading(false)
           return
         }
@@ -153,7 +169,7 @@ export default function TeacherScanPage() {
       })
       .catch((err) => {
         console.error(err)
-        setError(t("error", L))
+        setError(t("error"))
         setLoading(false)
       })
 
@@ -161,7 +177,7 @@ export default function TeacherScanPage() {
       stopScanner()
       try { scanner.clear() } catch {}
     }
-  }, [L, stopScanner])
+  }, [t, stopScanner])
 
   useEffect(() => {
     if (selectedCameraId !== null) {
@@ -181,40 +197,58 @@ export default function TeacherScanPage() {
   }
 
   return (
-    <div className="max-w-lg mx-auto p-4 md:p-8" dir={dir}>
+    <div className="max-w-2xl mx-auto p-4 md:p-8" dir={dir}>
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <Link
+          href="/teacher/dashboard"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-tahfidz-green transition"
+        >
+          <ArrowLeft size={16} />
+          {t("back")}
+        </Link>
+      </div>
+
       <div className="text-center mb-6">
         <div className="w-14 h-14 bg-tahfidz-green/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
           <ScanLine size={28} className="text-tahfidz-green" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("title", L)}</h1>
-        <p className="text-sm text-gray-500 mt-1">{t("subtitle", L)}</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("title")}</h1>
+        <p className="text-sm text-gray-500 mt-1">{t("subtitle")}</p>
       </div>
 
       <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 p-4">
-        <div className="relative bg-black rounded-2xl overflow-hidden aspect-square">
+        <div className="relative bg-black rounded-2xl overflow-hidden aspect-video">
           <div id="qr-reader" className="w-full h-full" />
 
-          {/* Cadre de scan */}
-          <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-            <div className="w-56 h-56 border-2 border-white/40 rounded-2xl relative">
-              <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-s-4 border-tahfidz-green rounded-tl-xl" />
-              <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-e-4 border-tahfidz-green rounded-tr-xl" />
-              <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-s-4 border-tahfidz-green rounded-bl-xl" />
-              <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-e-4 border-tahfidz-green rounded-br-xl" />
+          {/* Masque autour du cadre de scan */}
+          <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
+            <div className="w-full max-w-[85%] h-36 relative">
+              {/* Bords transparents (masque) */}
+              <div className="absolute inset-0 bg-black/40 rounded-xl" />
+              {/* Zone de scan transparente */}
+              <div className="absolute inset-0 rounded-xl ring-2 ring-white/30 ring-offset-0" />
+              {/* Coins */}
+              <div className="absolute -top-1 -left-1 w-10 h-10 border-t-4 border-s-4 border-tahfidz-green rounded-tl-xl" />
+              <div className="absolute -top-1 -right-1 w-10 h-10 border-t-4 border-e-4 border-tahfidz-green rounded-tr-xl" />
+              <div className="absolute -bottom-1 -left-1 w-10 h-10 border-b-4 border-s-4 border-tahfidz-green rounded-bl-xl" />
+              <div className="absolute -bottom-1 -right-1 w-10 h-10 border-b-4 border-e-4 border-tahfidz-green rounded-br-xl" />
+              {/* Ligne laser animée */}
+              <div className="absolute left-0 right-0 h-0.5 bg-tahfidz-green/80 shadow-[0_0_10px_rgba(16,185,129,0.8)] animate-scan-laser" />
             </div>
           </div>
 
           {loading && !scanned && (
             <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white">
               <Loader2 size={32} className="animate-spin mb-2" />
-              <p className="text-sm">{t("starting", L)}</p>
+              <p className="text-sm">{t("starting")}</p>
             </div>
           )}
 
           {scanned && (
             <div className="absolute inset-0 bg-tahfidz-green/90 flex flex-col items-center justify-center text-white">
               <CheckCircle2 size={56} className="mb-2" />
-              <p className="text-lg font-semibold">{t("scanned", L)}</p>
+              <p className="text-lg font-semibold">{t("scanned")}</p>
             </div>
           )}
 
@@ -222,7 +256,7 @@ export default function TeacherScanPage() {
             <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white p-6 text-center">
               <AlertCircle size={40} className="text-red-400 mb-3" />
               <p className="font-semibold">{error}</p>
-              <p className="text-sm text-white/70 mt-2">{t("permission", L)}</p>
+              <p className="text-sm text-white/70 mt-2">{t("permission")}</p>
             </div>
           )}
         </div>
@@ -234,7 +268,7 @@ export default function TeacherScanPage() {
             className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl text-sm font-medium transition"
           >
             <RefreshCw size={16} />
-            {t("switchCamera", L)}
+            {t("switchCamera")}
           </button>
         </div>
 
@@ -248,14 +282,53 @@ export default function TeacherScanPage() {
             >
               {cameras.map((camera) => (
                 <option key={camera.id} value={camera.id}>
-                  {camera.label || `${t("camera", L)} ${camera.id.slice(0, 8)}`}
-                  {isBackCamera(camera.label) ? ` (${t("backCamera", L)})` : ` (${t("frontCamera", L)})`}
+                  {camera.label || `${t("camera")} ${camera.id.slice(0, 8)}`}
+                  {isBackCamera(camera.label) ? ` (${t("backCamera")})` : ` (${t("frontCamera")})`}
                 </option>
               ))}
             </select>
           </div>
         )}
+
+        {/* Saisie manuelle */}
+        <form onSubmit={handleManualVerify} className="mt-5 pt-5 border-t border-gray-100 dark:border-gray-800">
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <Keyboard size={12} />
+            {t("orEnterCode")}
+          </p>
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={manualCode}
+                onChange={(e) => setManualCode(e.target.value)}
+                placeholder={t("enterCode")}
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green dark:text-white"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={!manualCode.trim()}
+              className="px-4 py-2.5 bg-tahfidz-green text-white text-sm font-medium rounded-xl hover:bg-tahfidz-green/90 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+              {t("verify")}
+            </button>
+          </div>
+        </form>
       </div>
+
+      <style jsx>{`
+        @keyframes scan-laser {
+          0%, 100% { top: 0; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { top: 100%; opacity: 0; }
+        }
+        .animate-scan-laser {
+          animation: scan-laser 2s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   )
 }

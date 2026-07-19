@@ -2847,6 +2847,34 @@ export const translations = {
     termsNote:          { fr: "En soumettant, vous acceptez que l'Administration TAHFIDZ examine votre demande. Aucune carte bancaire requise.", en: "By submitting, you agree that the TAHFIDZ Administration will review your request. No credit card required.", ar: "بإرسالك هذا النموذج، فإنك توافق على قيام إدارة تحفيظ بمراجعة طلبك. لا حاجة لبطاقة مصرفية." },
   },
 
+  // ─── Scanner carte enseignant (src/app/teacher/scan/page.tsx) ─────────────────────────────
+  teacherScan: {
+    title:            { fr: "Scanner une carte",                 en: "Scan a card",                  ar: "مسح بطاقة" },
+    subtitle:         { fr: "Placez le QR code ou le code-barres de l'élève dans le cadre", en: "Position the student's QR code or barcode in the frame", ar: "ضع رمز QR أو الباركود للطالب في الإطار" },
+    orEnterCode:      { fr: "Ou saisissez le code de l'élève",   en: "Or enter the student code",    ar: "أو أدخل رمز الطالب" },
+    enterCode:        { fr: "Code de l'élève",                   en: "Student code",                 ar: "رمز الطالب" },
+    verify:           { fr: "Vérifier",                          en: "Verify",                       ar: "تحقق" },
+    starting:         { fr: "Démarrage de la caméra...",         en: "Starting camera...",           ar: "جاري تشغيل الكاميرا..." },
+    error:            { fr: "Impossible d'accéder à la caméra",  en: "Unable to access camera",      ar: "تعذر الوصول إلى الكاميرا" },
+    noCamera:         { fr: "Aucune caméra détectée",            en: "No camera detected",           ar: "لم يتم اكتشاف كاميرا" },
+    switchCamera:     { fr: "Changer de caméra",                 en: "Switch camera",                ar: "تبديل الكاميرا" },
+    frontCamera:      { fr: "Frontale",                          en: "Front",                        ar: "أمامية" },
+    backCamera:       { fr: "Arrière",                           en: "Back",                         ar: "خلفية" },
+    camera:           { fr: "Caméra",                            en: "Camera",                       ar: "الكاميرا" },
+    permission:       { fr: "Autorisez l'accès à la caméra pour scanner", en: "Allow camera access to scan", ar: "اسمح بالوصول إلى الكاميرا للمسح" },
+    scanned:          { fr: "Code détecté",                      en: "Code detected",                ar: "تم اكتشاف الرمز" },
+    invalidQr:        { fr: "Code non reconnu, réessayez",       en: "Code not recognized, try again", ar: "الرمز غير معروف، حاول مرة أخرى" },
+    verifying:        { fr: "Vérification...",                   en: "Verifying...",                 ar: "جاري التحقق..." },
+    invalidCode:      { fr: "Code invalide",                     en: "Invalid code",                 ar: "رمز غير صالح" },
+    confirm:          { fr: "Confirmer la présence",             en: "Confirm attendance",           ar: "تأكيد الحضور" },
+    cancel:           { fr: "Annuler",                           en: "Cancel",                       ar: "إلغاء" },
+    student:          { fr: "Élève",                             en: "Student",                      ar: "الطالب" },
+    group:            { fr: "Groupe",                            en: "Group",                        ar: "المجموعة" },
+    success:          { fr: "Présence validée",                  en: "Attendance validated",         ar: "تم تسجيل الحضور" },
+    verifyError:      { fr: "Erreur",                            en: "Error",                        ar: "خطأ" },
+    back:             { fr: "Retour",                            en: "Back",                         ar: "رجوع" },
+  },
+
 } as const
 
 // Type helpers
