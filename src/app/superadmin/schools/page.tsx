@@ -1,5 +1,5 @@
 // src/app/superadmin/schools/page.tsx
-// Gestion des écoles et quotas Halaqa — SuperAdmin
+// Gestion des écoles et quotas Halaqa — Administration TAHFIDZ
 
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
@@ -7,7 +7,7 @@ import { redirect } from "next/navigation"
 import { SchoolsQuotaClient } from "@/components/superadmin/SchoolsQuotaClient"
 
 export const metadata = {
-  title: "Écoles & Quotas Halaqa — SuperAdmin",
+  title: "Écoles & Quotas Halaqa — Administration TAHFIDZ",
   description: "Gestion des quotas Halaqa par école",
 }
 

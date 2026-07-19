@@ -132,7 +132,7 @@ export function getStatusStyle(status: string): { color: string; bg: string } {
 /** Rôle en français */
 export function roleLabel(role: string): string {
   const map: Record<string, string> = {
-    SUPERADMIN: "Super Admin",
+    SUPERADMIN: "Administration TAHFIDZ",
     ADMIN:      "Administrateur",
     TEACHER:    "Enseignant",
     PARENT:     "Parent",

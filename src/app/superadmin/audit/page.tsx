@@ -1,5 +1,5 @@
 // src/app/superadmin/audit/page.tsx
-// Page Audit SuperAdmin — serveur + données initiales
+// Page Audit Administration TAHFIDZ — serveur + données initiales
 
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
@@ -7,7 +7,7 @@ import { redirect } from "next/navigation"
 import { AuditLogClient } from "@/components/superadmin/AuditLogClient"
 
 export const metadata = {
-  title: "Audit & Logs — SuperAdmin",
+  title: "Audit & Logs — Administration TAHFIDZ",
   description: "Historique complet des actions sur la plateforme",
 }
 

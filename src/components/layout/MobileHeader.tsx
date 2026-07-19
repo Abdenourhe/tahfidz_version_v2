@@ -26,7 +26,7 @@ const ROLE_LABELS: Record<string, string> = {
   TEACHER: "Enseignant",
   STUDENT: "Élève",
   PARENT: "Parent",
-  SUPERADMIN: "Super Admin",
+  SUPERADMIN: "Administration TAHFIDZ",
 }
 
 // ─── Navigation config with optional icon colors ────────────────────────────

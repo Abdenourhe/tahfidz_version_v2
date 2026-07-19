@@ -1,4 +1,4 @@
-// src/app/api/admin/schools/route.ts — Super-Admin uniquement
+// src/app/api/admin/schools/route.ts — Administration TAHFIDZ uniquement
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"

@@ -304,11 +304,11 @@ export const translations = {
     forgotPassword: { fr: "Mot de passe oublie ?", en: "Forgot password?", ar: "نسيت كلمة المرور؟" },
     loginBtn:       { fr: "Se connecter", en: "Sign in", ar: "تسجيل الدخول" },
     loggingIn:      { fr: "Connexion...", en: "Signing in...", ar: "جارٍ تسجيل الدخول..." },
-    // Super Admin
-    superAdminMode: { fr: "Mode Super Admin", en: "Super Admin Mode", ar: "وضع المشرف العام" },
-    superAdminEmail:{ fr: "Email Super Admin", en: "Super Admin Email", ar: "بريد المشرف العام" },
-    superAdminPlaceholder:{ fr: "superadmin@tahfidz.com", en: "superadmin@tahfidz.com", ar: "superadmin@tahfidz.com" },
-    superAdminBtn:  { fr: "Acceder au Super Admin", en: "Access Super Admin", ar: "الوصول إلى المشرف العام" },
+    // Administration TAHFIDZ
+    superAdminMode: { fr: "Mode Administration TAHFIDZ", en: "TAHFIDZ Administration Mode", ar: "وضع إدارة تحفيظ" },
+    superAdminEmail:{ fr: "Email Administration TAHFIDZ", en: "TAHFIDZ Administration Email", ar: "بريد إدارة تحفيظ" },
+    superAdminPlaceholder:{ fr: "admin@tahfidz.com", en: "admin@tahfidz.com", ar: "admin@tahfidz.com" },
+    superAdminBtn:  { fr: "Accéder à l'Administration TAHFIDZ", en: "Access TAHFIDZ Administration", ar: "الوصول إلى إدارة تحفيظ" },
     // Inscription
     noSchool:       { fr: "Vous n'avez pas encore d'ecole sur TAHFIDZ ?", en: "Don't have a school on TAHFIDZ yet?", ar: "ليس لديك مدرسة على تحفيظ بعد؟" },
     registerSchool: { fr: "Inscrire mon ecole gratuitement", en: "Register my school for free", ar: "تسجيل مدرستي مجاناً" },
@@ -699,7 +699,7 @@ export const translations = {
     sending:         { fr: "Envoi...", en: "Sending...", ar: "جاري الإرسال..." },
     cancel:          { fr: "Annuler", en: "Cancel", ar: "إلغاء" },
     successTitle:    { fr: "Merci !", en: "Thank you!", ar: "شكراً!" },
-    successMessage:  { fr: "Votre message a été envoyé au SuperAdmin. Nous vous répondrons rapidement.", en: "Your message has been sent to the SuperAdmin. We will reply soon.", ar: "تم إرسال رسالتك إلى المشرف. سنجيبك قريباً." },
+    successMessage:  { fr: "Votre message a été envoyé à l'Administration TAHFIDZ. Nous vous répondrons rapidement.", en: "Your message has been sent to the TAHFIDZ Administration. We will reply soon.", ar: "تم إرسال رسالتك إلى إدارة تحفيظ. سنجيبك قريباً." },
     close:           { fr: "Fermer", en: "Close", ar: "إغلاق" },
     error:           { fr: "Erreur", en: "Error", ar: "خطأ" },
   },
@@ -2267,7 +2267,7 @@ export const translations = {
   // ─── superadminProfileClient (components/superadmin/SuperadminProfileClient.tsx) ─────────────────────────────────────────────
   superadminProfileClient: {
     title:           { fr: "Mon profil", en: "My profile", ar: "ملفي الشخصي" },
-    superadmin:      { fr: "Super Administrateur", en: "Super Administrator", ar: "المشرف العام" },
+    superadmin:      { fr: "Administration TAHFIDZ", en: "TAHFIDZ Administration", ar: "إدارة تحفيظ" },
     memberSince:     { fr: "Membre depuis", en: "Member since", ar: "عضو منذ" },
     lastLogin:       { fr: "Dernière connexion", en: "Last login", ar: "آخر تسجيل دخول" },
     schools:         { fr: "Écoles", en: "Schools", ar: "المدارس" },
@@ -2757,14 +2757,14 @@ export const translations = {
     successTitle:       { fr: "Demande envoyée !",                            en: "Request sent!",                          ar: "تم إرسال الطلب!" },
     successMessage:     { fr: "Votre demande d'inscription pour ",            en: "Your registration request for ",         ar: "طلب تسجيل " },
     successMessage2:    { fr: " est en cours de validation.",                 en: " is being validated.",                   ar: " قيد المراجعة." },
-    successDetail:      { fr: "Le Super-Admin examinera votre demande et vous enverra un email de confirmation avec vos identifiants de connexion.", en: "The Super-Admin will review your request and send you a confirmation email with your login credentials.", ar: "سيقوم المشرف العام بمراجعة طلبك وإرسال بريد إلكتروني للتأكيد يحتوي على بيانات اعتماد تسجيل الدخول." },
+    successDetail:      { fr: "L'Administration TAHFIDZ examinera votre demande et vous enverra un email de confirmation avec vos identifiants de connexion.", en: "The TAHFIDZ Administration will review your request and send you a confirmation email with your login credentials.", ar: "ستقوم إدارة تحفيظ بمراجعة طلبك وإرسال بريد إلكتروني للتأكيد يحتوي على بيانات اعتماد تسجيل الدخول." },
     emailRegistered:    { fr: "Email enregistré :",                           en: "Email registered:",                      ar: "البريد الإلكتروني المسجل:" },
     login:              { fr: "Se connecter",                                 en: "Sign in",                                ar: "تسجيل الدخول" },
     // Header & hero
     alreadyRegistered:  { fr: "Déjà inscrit ? Se connecter",                  en: "Already registered? Sign in",            ar: "هل سبق لك التسجيل؟ سجّل الدخول" },
     freeBadge:          { fr: "Inscription gratuite",                         en: "Free registration",                      ar: "تسجيل مجاني" },
     title:              { fr: "Inscrire mon école",                           en: "Register my school",                     ar: "سجّل مدرستي" },
-    subtitle:           { fr: "Remplissez le formulaire ci-dessous. Le Super-Admin validera votre demande sous 24h.", en: "Fill out the form below. The Super-Admin will validate your request within 24 hours.", ar: "املأ النموذج أدناه. سيقوم المشرف العام بالتحقق من طلبك خلال 24 ساعة." },
+    subtitle:           { fr: "Remplissez le formulaire ci-dessous. L'Administration TAHFIDZ validera votre demande sous 24h.", en: "Fill out the form below. The TAHFIDZ Administration will validate your request within 24 hours.", ar: "املأ النموذج أدناه. ستقوم إدارة تحفيظ بالتحقق من طلبك خلال 24 ساعة." },
     planSelected:       { fr: "Plan sélectionné :",                           en: "Selected plan:",                         ar: "الخطة المختارة:" },
     monthly:            { fr: "Mensuel",                                      en: "Monthly",                                ar: "شهري" },
     yearly:             { fr: "Annuel",                                       en: "Yearly",                                 ar: "سنوي" },
@@ -2819,7 +2819,7 @@ export const translations = {
     teachersPlaceholder:{ fr: "4",                                            en: "4",                                      ar: "4" },
     sessionDurationLabel:{ fr: "Durée moyenne d'une séance Halaqa (min)",     en: "Average Halaqa session duration (min)",  ar: "مدة حلقة متوسطة (دقيقة)" },
     sessionDurationPlaceholder:{ fr: "45",                                     en: "45",                                     ar: "45" },
-    sessionDurationHint:{ fr: "Indiquez la durée moyenne souhaitée pour vos séances Halaqa. Le Super-Admin pourra l'ajuster à la validation.", en: "Indicate the desired average duration for your Halaqa sessions. The Super-Admin can adjust it upon validation.", ar: "أدخل المدة المتوسطة المطلوبة لحلقاتك. يمكن للمشرف العام تعديلها عند التحقق." },
+    sessionDurationHint:{ fr: "Indiquez la durée moyenne souhaitée pour vos séances Halaqa. L'Administration TAHFIDZ pourra l'ajuster à la validation.", en: "Indicate the desired average duration for your Halaqa sessions. The TAHFIDZ Administration can adjust it upon validation.", ar: "أدخل المدة المتوسطة المطلوبة لحلقاتك. يمكن لإدارة تحفيظ تعديلها عند التحقق." },
     totalEstimate:      { fr: "Estimation :",                                 en: "Estimate:",                              ar: "التقدير:" },
     totalStudents:      { fr: "élèves au total",                              en: "students total",                         ar: "طالباً إجمالاً" },
     // Capacity warning
@@ -2844,7 +2844,7 @@ export const translations = {
     next:               { fr: "Suivant",                                      en: "Next",                                   ar: "التالي" },
     sending:            { fr: "Envoi…",                                       en: "Sending…",                               ar: "جارٍ الإرسال…" },
     submit:             { fr: "Soumettre ma demande",                         en: "Submit my request",                      ar: "إرسال طلبي" },
-    termsNote:          { fr: "En soumettant, vous acceptez que le Super-Admin examine votre demande. Aucune carte bancaire requise.", en: "By submitting, you agree that the Super-Admin will review your request. No credit card required.", ar: "بإرسالك هذا النموذج، فإنك توافق على قيام المشرف العام بمراجعة طلبك. لا حاجة لبطاقة مصرفية." },
+    termsNote:          { fr: "En soumettant, vous acceptez que l'Administration TAHFIDZ examine votre demande. Aucune carte bancaire requise.", en: "By submitting, you agree that the TAHFIDZ Administration will review your request. No credit card required.", ar: "بإرسالك هذا النموذج، فإنك توافق على قيام إدارة تحفيظ بمراجعة طلبك. لا حاجة لبطاقة مصرفية." },
   },
 
 } as const

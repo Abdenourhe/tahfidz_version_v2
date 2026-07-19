@@ -62,7 +62,7 @@ export default function ForgotPasswordPage() {
             </div>
             <h2 className="text-2xl font-bold text-white mb-3">Recuperation de mot de passe</h2>
             <p className="text-emerald-100/70 text-sm leading-relaxed">
-              Pas de panique ! Envoyez une demande de reinitialisation au Super Admin de votre plateforme.
+              Pas de panique ! Envoyez une demande de réinitialisation à l&apos;Administration TAHFIDZ de votre plateforme.
             </p>
           </motion.div>
         </div>

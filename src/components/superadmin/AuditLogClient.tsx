@@ -293,7 +293,7 @@ export function AuditLogClient({ logs, totalCount, currentPage, pageSize, stats,
                 className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
               >
                 <option value="all">Tous les rôles</option>
-                <option value="SUPERADMIN">SuperAdmin</option>
+                <option value="SUPERADMIN">Administration TAHFIDZ</option>
                 <option value="ADMIN">Admin</option>
                 <option value="TEACHER">Enseignant</option>
                 <option value="PARENT">Parent</option>
