@@ -386,26 +386,26 @@ function StudentCardContent({
         </div>
       </div>
 
+      {/* Date d'émission */}
+      <div
+        className="absolute"
+        style={{ right: "3mm", bottom: "14mm", color: "#6b7280", fontWeight: 500, fontSize: "1.4mm", lineHeight: 1 }}
+      >
+        {displayDate}
+      </div>
+
       {/* Code-barres */}
-      <div style={{ position: "absolute", left: "3mm", bottom: "2mm" }}>
+      <div style={{ position: "absolute", left: "3mm", right: "3mm", bottom: "2mm" }}>
         <Barcode
           value={student.studentCode}
           width={1.2}
-          height={10}
-          fontSize={7}
+          height={40}
+          fontSize={10}
           background="#ffffff"
           lineColor="#000000"
           margin={0}
           displayValue
         />
-      </div>
-
-      {/* Date d'émission */}
-      <div
-        className="absolute"
-        style={{ right: "3mm", bottom: "2.5mm", color: "#6b7280", fontWeight: 500, fontSize: "1.4mm", lineHeight: 1 }}
-      >
-        {displayDate}
       </div>
 
       {/* Bandeau inférieur */}

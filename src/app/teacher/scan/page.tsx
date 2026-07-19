@@ -7,8 +7,8 @@ import { Html5Qrcode, Html5QrcodeSupportedFormats, type CameraDevice } from "htm
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { decodeAnyQrValue, decodeBarcodeValue } from "@/lib/qr-code"
 import {
-  Loader2, AlertCircle, Camera, RefreshCw, ScanLine, CheckCircle2,
-  ArrowLeft, Keyboard, Search
+  Loader2, AlertCircle, RefreshCw, ScanLine, CheckCircle2,
+  ArrowLeft, Keyboard, Search, Zap, Camera
 } from "lucide-react"
 
 function isBackCamera(label: string): boolean {
@@ -47,6 +47,7 @@ export default function TeacherScanPage() {
   const t = useT("teacherScan")
   const router = useRouter()
   const scannerRef = useRef<Html5Qrcode | null>(null)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
 
   const [cameras, setCameras] = useState<CameraDevice[]>([])
   const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null)
@@ -55,6 +56,8 @@ export default function TeacherScanPage() {
   const [error, setError] = useState<string | null>(null)
   const [scanned, setScanned] = useState(false)
   const [manualCode, setManualCode] = useState("")
+  const [torchOn, setTorchOn] = useState(false)
+  const [captureBusy, setCaptureBusy] = useState(false)
 
   const stopScanner = useCallback(async () => {
     if (scannerRef.current?.isScanning) {
@@ -116,14 +119,32 @@ export default function TeacherScanPage() {
 
     try {
       await stopScanner()
-      const cameraConfig = selectedCameraId ? selectedCameraId : { facingMode }
 
-      // Zone de scan rectangulaire pour les codes-barres horizontaux
-      const qrbox = { width: 320, height: 160 }
+      // Contraintes vidéo : privilégier la caméra arrière et une haute résolution
+      // pour améliorer la lecture des codes-barres 1D.
+      const videoConstraints: MediaTrackConstraints & { focusMode?: { ideal: string } } = {
+        width: { min: 1280, ideal: 1920, max: 1920 },
+        height: { min: 720, ideal: 1080, max: 1080 },
+        focusMode: { ideal: "continuous" },
+      }
+
+      let cameraConfig: string | MediaTrackConstraints
+      if (selectedCameraId) {
+        cameraConfig = { ...videoConstraints, deviceId: { exact: selectedCameraId }, facingMode: { ideal: "environment" } }
+      } else {
+        cameraConfig = { ...videoConstraints, facingMode: { ideal: facingMode } }
+      }
+
+      // Zone de scan rectangulaire pour les codes-barres horizontaux,
+      // adaptée dynamiquement à la taille du lecteur.
+      const qrbox = (viewfinderWidth: number, viewfinderHeight: number) => ({
+        width: Math.min(640, Math.round(viewfinderWidth * 0.75)),
+        height: Math.min(320, Math.round(viewfinderHeight * 0.45)),
+      })
 
       await scannerRef.current.start(
         cameraConfig as any,
-        { fps: 15, qrbox, aspectRatio: 1.777778 },
+        { fps: 25, qrbox, aspectRatio: 1.777778, disableFlip: false },
         (decodedText) => {
           scannerRef.current?.pause(true)
           handleDecoded(decodedText)
@@ -133,6 +154,10 @@ export default function TeacherScanPage() {
           console.debug("[Scan] error:", errorMessage)
         }
       )
+
+      // Stocker la référence vidéo pour les captures et la lampe
+      const video = document.querySelector("#qr-reader video") as HTMLVideoElement | null
+      if (video) videoRef.current = video
     } catch (err) {
       console.error(err)
       setError(t("error"))
@@ -193,6 +218,56 @@ export default function TeacherScanPage() {
     } else {
       setFacingMode((prev) => (prev === "environment" ? "user" : "environment"))
       setSelectedCameraId(null)
+    }
+  }
+
+  const handleToggleTorch = async () => {
+    if (!scannerRef.current) return
+    try {
+      const next = !torchOn
+      // @ts-expect-error — applyVideoConstraints est présent mais typé librement
+      await scannerRef.current.applyVideoConstraints({ advanced: [{ torch: next }] })
+      setTorchOn(next)
+    } catch (err) {
+      console.warn("[Scan] torch non supporté", err)
+      setError(t("torchUnavailable"))
+      setTimeout(() => setError(null), 2000)
+    }
+  }
+
+  const handleCapture = async () => {
+    const video = videoRef.current
+    const scanner = scannerRef.current
+    if (!video || !scanner || captureBusy) return
+
+    setCaptureBusy(true)
+    try {
+      await scanner.pause(true)
+
+      const canvas = document.createElement("canvas")
+      canvas.width = video.videoWidth || 1280
+      canvas.height = video.videoHeight || 720
+      const ctx = canvas.getContext("2d")
+      if (!ctx) throw new Error("Canvas non disponible")
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"))
+      if (!blob) throw new Error("Capture impossible")
+
+      const file = new File([blob], "scan.png", { type: "image/png" })
+      const decodedText = await scanner.scanFile(file, false)
+      if (decodedText) {
+        handleDecoded(decodedText)
+        return
+      }
+      throw new Error("Aucun code détecté")
+    } catch (err) {
+      console.warn("[Scan] capture échouée", err)
+      setError(t("captureError"))
+      setTimeout(() => setError(null), 2500)
+      try { await scanner.resume() } catch {}
+    } finally {
+      setCaptureBusy(false)
     }
   }
 
@@ -261,34 +336,40 @@ export default function TeacherScanPage() {
           )}
         </div>
 
-        {/* Contrôles */}
+        {/* Contrôles simplifiés */}
         <div className="mt-4 flex items-center gap-3">
           <button
             onClick={handleSwitchCamera}
-            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl text-sm font-medium transition"
+            title={t("switchCamera")}
+            className="inline-flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl text-sm font-medium transition"
           >
             <RefreshCw size={16} />
-            {t("switchCamera")}
+            <span className="hidden sm:inline">{t("switchCamera")}</span>
+          </button>
+
+          <button
+            onClick={handleToggleTorch}
+            title={t("torch")}
+            className={`inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition ${
+              torchOn
+                ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300"
+                : "bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+            }`}
+          >
+            <Zap size={16} className={torchOn ? "fill-current" : ""} />
+            <span className="hidden sm:inline">{t(torchOn ? "torchOn" : "torch")}</span>
+          </button>
+
+          <button
+            onClick={handleCapture}
+            disabled={captureBusy || loading}
+            title={t("capture")}
+            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-tahfidz-green hover:bg-tahfidz-green/90 text-white rounded-xl text-sm font-medium transition disabled:opacity-60"
+          >
+            {captureBusy ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
+            {t("capture")}
           </button>
         </div>
-
-        {cameras.length > 0 && (
-          <div className="mt-3 relative">
-            <Camera size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <select
-              value={selectedCameraId ?? "facing-" + facingMode}
-              onChange={(e) => setSelectedCameraId(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green"
-            >
-              {cameras.map((camera) => (
-                <option key={camera.id} value={camera.id}>
-                  {camera.label || `${t("camera")} ${camera.id.slice(0, 8)}`}
-                  {isBackCamera(camera.label) ? ` (${t("backCamera")})` : ` (${t("frontCamera")})`}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
 
         {/* Saisie manuelle */}
         <form onSubmit={handleManualVerify} className="mt-5 pt-5 border-t border-gray-100 dark:border-gray-800">

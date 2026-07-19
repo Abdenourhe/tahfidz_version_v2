@@ -2873,6 +2873,11 @@ export const translations = {
     success:          { fr: "Présence validée",                  en: "Attendance validated",         ar: "تم تسجيل الحضور" },
     verifyError:      { fr: "Erreur",                            en: "Error",                        ar: "خطأ" },
     back:             { fr: "Retour",                            en: "Back",                         ar: "رجوع" },
+    torch:            { fr: "Lampe",                             en: "Flashlight",                   ar: "فلاش" },
+    torchOn:          { fr: "Lampe allumée",                     en: "Flashlight on",                ar: "الفلاش مُفعّل" },
+    torchUnavailable: { fr: "Lampe non disponible",              en: "Flashlight unavailable",       ar: "الفلاش غير متوفر" },
+    capture:          { fr: "Capturer",                          en: "Capture",                      ar: "التقاط" },
+    captureError:     { fr: "Aucun code détecté, réessayez",     en: "No code detected, try again",  ar: "لم يتم اكتشاف رمز، أعد المحاولة" },
   },
 
 } as const
