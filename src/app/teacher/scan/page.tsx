@@ -90,6 +90,27 @@ export default function TeacherScanPage() {
   const processingRef = useRef(false)
   const autoConfirmRef = useRef(true)
   const continuousScanRef = useRef(true)
+  const recentScansRef = useRef<Map<string, number>>(new Map())
+  const RECENT_WINDOW_MS = 5000
+
+  function isRecentlyScanned(key: string) {
+    const ts = recentScansRef.current.get(key)
+    if (!ts) return false
+    if (Date.now() - ts > RECENT_WINDOW_MS) {
+      recentScansRef.current.delete(key)
+      return false
+    }
+    return true
+  }
+
+  function markRecentlyScanned(key: string) {
+    recentScansRef.current.set(key, Date.now())
+    // Nettoyer les anciennes entrées
+    const cutoff = Date.now() - RECENT_WINDOW_MS
+    for (const [k, v] of recentScansRef.current.entries()) {
+      if (v < cutoff) recentScansRef.current.delete(k)
+    }
+  }
 
   const [cameras, setCameras] = useState<CameraDevice[]>([])
   const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null)
@@ -337,6 +358,18 @@ export default function TeacherScanPage() {
       return
     }
 
+    // Ignorer les codes scannés dans les dernières secondes (évite les doubles scans)
+    if (isRecentlyScanned(encoded)) {
+      showToast("error", t("alreadyScanned"))
+      if (continuousScanRef.current) {
+        setTimeout(() => resumeScanning(), 1200)
+      } else {
+        setScanned(true)
+      }
+      return
+    }
+    markRecentlyScanned(encoded)
+
     if (autoConfirmRef.current) {
       // Mode validation automatique : marquer la présence directement
       try {
@@ -346,6 +379,17 @@ export default function TeacherScanPage() {
           body: JSON.stringify({ payload: encoded }),
         })
         const data = await res.json()
+
+        if (res.status === 409 || data.code === "ALREADY_PRESENT") {
+          showToast("error", t("alreadyPresent"), t("alreadyPresentMessage").replace("{name}", data.studentName || ""))
+          if (continuousScanRef.current) {
+            setTimeout(() => resumeScanning(), 1800)
+          } else {
+            setScanned(true)
+          }
+          return
+        }
+
         if (!res.ok) throw new Error(data.error || t("verifyError"))
 
         addHistory({
@@ -426,6 +470,20 @@ export default function TeacherScanPage() {
         body: JSON.stringify({ payload: pendingEncoded }),
       })
       const data = await res.json()
+
+      if (res.status === 409 || data.code === "ALREADY_PRESENT") {
+        showToast("error", t("alreadyPresent"), t("alreadyPresentMessage").replace("{name}", data.studentName || pendingStudent?.fullName || ""))
+        setShowConfirm(false)
+        setPendingStudent(null)
+        setPendingEncoded(null)
+        if (continuousScanRef.current) {
+          setTimeout(() => resumeScanning(), 1800)
+        } else {
+          setScanned(true)
+        }
+        return
+      }
+
       if (!res.ok) throw new Error(data.error || t("verifyError"))
 
       addHistory({

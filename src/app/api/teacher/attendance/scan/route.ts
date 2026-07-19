@@ -34,6 +34,31 @@ export async function POST(req: Request) {
 
     const student = result.student
 
+    const today = new Date()
+    today.setUTCHours(0, 0, 0, 0)
+
+    // Vérifier si l'élève est déjà marqué présent aujourd'hui
+    const existingAttendance = await prisma.attendance.findFirst({
+      where: {
+        studentId: student.id,
+        date: today,
+        status: "PRESENT",
+      },
+    })
+
+    if (existingAttendance) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: "ALREADY_PRESENT",
+          error: `${student.user.fullName} est déjà marqué présent aujourd'hui`,
+          studentId: student.id,
+          studentName: student.user.fullName,
+        },
+        { status: 409 }
+      )
+    }
+
     // Rate limiting par élève
     const rateLimit = checkQrScanRateLimit(student.id)
     if (!rateLimit.success) {
@@ -55,9 +80,6 @@ export async function POST(req: Request) {
         { status: 429 }
       )
     }
-
-    const today = new Date()
-    today.setUTCHours(0, 0, 0, 0)
 
     // Créer le log de scan
     const qrScanLog = await prisma.qrScanLog.create({
@@ -125,6 +147,7 @@ export async function POST(req: Request) {
       success: true,
       message: `Présence de ${student.user.fullName} validée`,
       attendanceId: attendance.id,
+      studentId: student.id,
       studentName: student.user.fullName,
     })
   } catch (error) {

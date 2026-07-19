@@ -2897,6 +2897,9 @@ export const translations = {
     minutesAgo:       { fr: "il y a {n} min",                    en: "{n} min ago",                  ar: "منذ {n} دقيقة" },
     studentDetected:  { fr: "Élève détecté",                     en: "Student detected",             ar: "تم اكتشاف الطالب" },
     confirmToValidate:{ fr: "Confirmez pour valider la présence", en: "Confirm to validate attendance", ar: "أكد لتسجيل الحضور" },
+    alreadyPresent:   { fr: "Déjà présent",                      en: "Already present",              ar: "موجود بالفعل" },
+    alreadyPresentMessage:{ fr: "{name} est déjà marqué présent aujourd'hui", en: "{name} is already marked present today", ar: "تم تسجيل {name} كحاضر اليوم" },
+    alreadyScanned:   { fr: "Code déjà scanné",                  en: "Code already scanned",         ar: "تم مسح الرمز بالفعل" },
   },
 
 } as const
