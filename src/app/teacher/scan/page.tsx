@@ -176,10 +176,10 @@ export default function TeacherScanPage() {
       }
 
       // Zone de scan rectangulaire pour les codes-barres horizontaux,
-      // adaptée dynamiquement à la taille du lecteur.
+      // adaptée dynamiquement à la taille du lecteur (min 100×50 px).
       const qrbox = (viewfinderWidth: number, viewfinderHeight: number) => ({
-        width: Math.min(640, Math.round(viewfinderWidth * 0.75)),
-        height: Math.min(320, Math.round(viewfinderHeight * 0.45)),
+        width: Math.max(100, Math.min(640, Math.round(viewfinderWidth * 0.75))),
+        height: Math.max(50, Math.min(320, Math.round(viewfinderHeight * 0.45))),
       })
 
       await scannerRef.current.start(
@@ -195,12 +195,12 @@ export default function TeacherScanPage() {
         }
       )
 
-      // Appliquer une résolution plus élevée et le focus continu après démarrage.
+      // Appliquer une résolution plus élevée après démarrage.
+      // (focusMode est retiré car il provoque une OverconstrainedError sur certains navigateurs.)
       try {
         await (scannerRef.current as any).applyVideoConstraints({
           width: { ideal: 1920 },
           height: { ideal: 1080 },
-          focusMode: { ideal: "continuous" },
         })
       } catch (constraintErr) {
         console.warn("[Scan] contraintes avancées non appliquées", constraintErr)
