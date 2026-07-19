@@ -2878,6 +2878,8 @@ export const translations = {
     torchUnavailable: { fr: "Lampe non disponible",              en: "Flashlight unavailable",       ar: "الفلاش غير متوفر" },
     capture:          { fr: "Capturer",                          en: "Capture",                      ar: "التقاط" },
     captureError:     { fr: "Aucun code détecté, réessayez",     en: "No code detected, try again",  ar: "لم يتم اكتشاف رمز، أعد المحاولة" },
+    uploadImage:      { fr: "Importer",                          en: "Upload image",                 ar: "استيراد صورة" },
+    uploadError:      { fr: "Aucun code détecté sur l'image",    en: "No code detected on image",    ar: "لم يتم اكتشاف رمز في الصورة" },
   },
 
 } as const

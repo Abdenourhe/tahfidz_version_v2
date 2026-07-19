@@ -8,7 +8,7 @@ import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { decodeAnyQrValue, decodeBarcodeValue } from "@/lib/qr-code"
 import {
   Loader2, AlertCircle, RefreshCw, ScanLine, CheckCircle2,
-  ArrowLeft, Keyboard, Search, Zap, Camera
+  ArrowLeft, Keyboard, Search, Zap, Camera, Upload
 } from "lucide-react"
 
 function isBackCamera(label: string): boolean {
@@ -58,6 +58,7 @@ export default function TeacherScanPage() {
   const [manualCode, setManualCode] = useState("")
   const [torchOn, setTorchOn] = useState(false)
   const [captureBusy, setCaptureBusy] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const stopScanner = useCallback(async () => {
     if (scannerRef.current?.isScanning) {
@@ -225,6 +226,30 @@ export default function TeacherScanPage() {
     }
   }
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !scannerRef.current) return
+
+    try {
+      setLoading(true)
+      await stopScanner()
+      const decodedText = await (scannerRef.current as any).scanFile(file, false)
+      if (decodedText) {
+        handleDecoded(decodedText)
+        return
+      }
+      throw new Error("Aucun code détecté")
+    } catch (err) {
+      console.warn("[Scan] upload échoué", err)
+      setError(t("uploadError"))
+      setTimeout(() => setError(null), 2500)
+      await startScanner()
+    } finally {
+      setLoading(false)
+      e.target.value = ""
+    }
+  }
+
   const handleToggleTorch = async () => {
     if (!scannerRef.current) return
     try {
@@ -367,11 +392,28 @@ export default function TeacherScanPage() {
             onClick={handleCapture}
             disabled={captureBusy || loading}
             title={t("capture")}
-            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-tahfidz-green hover:bg-tahfidz-green/90 text-white rounded-xl text-sm font-medium transition disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-2 px-4 py-3 bg-tahfidz-green hover:bg-tahfidz-green/90 text-white rounded-xl text-sm font-medium transition disabled:opacity-60"
           >
             {captureBusy ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
-            {t("capture")}
+            <span className="hidden sm:inline">{t("capture")}</span>
           </button>
+
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={loading}
+            title={t("uploadImage")}
+            className="inline-flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl text-sm font-medium transition disabled:opacity-60"
+          >
+            <Upload size={16} />
+            <span className="hidden sm:inline">{t("uploadImage")}</span>
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
         </div>
 
         {/* Saisie manuelle */}

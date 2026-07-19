@@ -254,6 +254,7 @@ export default function StudentCardPage() {
 function StudentCardContent({
   student,
   school,
+  qrCodeUrl,
   displayDate,
   locale,
   logoUrl,
@@ -303,7 +304,7 @@ function StudentCardContent({
       {/* En-tête : logo + école */}
       <div
         className="absolute left-0 right-0 flex items-center"
-        style={{ top: 0, height: "10mm", paddingLeft: "3mm", paddingRight: "3mm", gap: "2mm" }}
+        style={{ top: 0, height: "9mm", paddingLeft: "3mm", paddingRight: "3mm", gap: "2mm" }}
       >
         <div
           style={{
@@ -331,7 +332,7 @@ function StudentCardContent({
       {/* Bandeau bleu avec nom */}
       <div
         className="absolute left-0 right-0 flex items-center"
-        style={{ top: "10mm", height: "11mm", background: "#0e76a8", paddingLeft: "3mm", paddingRight: "3mm" }}
+        style={{ top: "9mm", height: "10mm", background: "#0e76a8", paddingLeft: "3mm", paddingRight: "3mm" }}
       >
         <div style={{ maxWidth: "80%" }}>
           <p
@@ -349,9 +350,9 @@ function StudentCardContent({
       {/* Corps : infos + photo */}
       <div
         className="absolute left-0 right-0 flex"
-        style={{ top: "21mm", height: "21mm", paddingLeft: "3mm", paddingRight: "3mm" }}
+        style={{ top: "19mm", height: "16mm", paddingLeft: "3mm", paddingRight: "3mm" }}
       >
-        <div className="flex flex-col" style={{ flex: 1, gap: "0.8mm", paddingTop: "0.5mm" }}>
+        <div className="flex flex-col" style={{ flex: 1, gap: "0.7mm", paddingTop: "0.5mm" }}>
           <IdInfoRow label={t("studentCode", locale)} value={student.studentCode} />
           <IdInfoRow label={t("group", locale)} value={student.group?.name || "—"} />
           <IdInfoRow label="Email" value={student.email || "—"} />
@@ -363,7 +364,7 @@ function StudentCardContent({
           className="flex items-center justify-center overflow-hidden flex-shrink-0"
           style={{
             width: "19mm",
-            height: "23mm",
+            height: "16mm",
             border: "0.5mm solid #0e76a8",
             background: "#f8fafc",
             marginLeft: "2mm",
@@ -389,23 +390,31 @@ function StudentCardContent({
       {/* Date d'émission */}
       <div
         className="absolute"
-        style={{ right: "3mm", bottom: "14mm", color: "#6b7280", fontWeight: 500, fontSize: "1.4mm", lineHeight: 1 }}
+        style={{ left: "3mm", bottom: "10.5mm", color: "#6b7280", fontWeight: 500, fontSize: "1.4mm", lineHeight: 1 }}
       >
         {displayDate}
       </div>
 
       {/* Code-barres */}
-      <div style={{ position: "absolute", left: "3mm", right: "3mm", bottom: "2mm" }}>
+      <div style={{ position: "absolute", left: "3mm", width: "52mm", bottom: "1mm" }}>
         <Barcode
           value={student.studentCode}
-          width={1.2}
-          height={40}
-          fontSize={10}
+          width={1.1}
+          height={32}
+          fontSize={9}
           background="#ffffff"
           lineColor="#000000"
           margin={0}
           displayValue
         />
+      </div>
+
+      {/* QR code */}
+      <div
+        className="flex items-center justify-center bg-white"
+        style={{ position: "absolute", right: "3mm", bottom: "1mm", width: "20mm", height: "20mm" }}
+      >
+        <QRCodeSVG value={qrCodeUrl} size={76} level="M" bgColor="#ffffff" fgColor="#000000" />
       </div>
 
       {/* Bandeau inférieur */}
