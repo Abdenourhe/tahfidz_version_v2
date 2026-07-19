@@ -59,8 +59,13 @@ export default function TeacherScanPage() {
   const [torchOn, setTorchOn] = useState(false)
   const [captureBusy, setCaptureBusy] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const barcodeLoopRef = useRef<number | null>(null)
 
   const stopScanner = useCallback(async () => {
+    if (barcodeLoopRef.current) {
+      clearInterval(barcodeLoopRef.current)
+      barcodeLoopRef.current = null
+    }
     if (scannerRef.current?.isScanning) {
       try { await scannerRef.current.stop() } catch {}
     }
@@ -110,6 +115,47 @@ export default function TeacherScanPage() {
     if (!manualCode.trim()) return
     handleDecoded(manualCode)
   }
+
+  // Décodeur natif du navigateur, souvent bien meilleur que zxing pour les
+  // codes-barres 1D (CODE_128, EAN, etc.) sur webcam frontale.
+  const startBarcodeDetectorLoop = useCallback(async () => {
+    const video = videoRef.current
+    if (!video) return
+
+    const BarcodeDetectorCls = (window as any).BarcodeDetector
+    if (!BarcodeDetectorCls) {
+      console.log("[Scan] BarcodeDetector non disponible")
+      return
+    }
+
+    try {
+      const detector = new BarcodeDetectorCls({
+        formats: ["code_128", "code_39", "ean_13", "ean_8", "upc_a", "upc_e", "qr_code"],
+      })
+
+      barcodeLoopRef.current = window.setInterval(async () => {
+        try {
+          const results = await detector.detect(video)
+          if (results && results.length > 0) {
+            const raw = results[0].rawValue
+            if (raw && !scanned) {
+              console.log("[BarcodeDetector] detected:", raw)
+              if (barcodeLoopRef.current) {
+                clearInterval(barcodeLoopRef.current)
+                barcodeLoopRef.current = null
+              }
+              await stopScanner()
+              handleDecoded(raw)
+            }
+          }
+        } catch (err) {
+          console.debug("[BarcodeDetector] detect error", err)
+        }
+      }, 250)
+    } catch (err) {
+      console.warn("[BarcodeDetector] init error", err)
+    }
+  }, [handleDecoded, scanned, stopScanner])
 
   const startScanner = useCallback(async () => {
     if (!scannerRef.current) return
@@ -162,14 +208,18 @@ export default function TeacherScanPage() {
 
       // Stocker la référence vidéo pour les captures et la lampe
       const video = document.querySelector("#qr-reader video") as HTMLVideoElement | null
-      if (video) videoRef.current = video
+      if (video) {
+        videoRef.current = video
+        // Lancer le décodeur natif en parallèle pour améliorer la détection des codes-barres.
+        await startBarcodeDetectorLoop()
+      }
     } catch (err) {
       console.error(err)
       setError(t("error"))
     } finally {
       setLoading(false)
     }
-  }, [facingMode, selectedCameraId, handleDecoded, stopScanner, t])
+  }, [facingMode, selectedCameraId, handleDecoded, stopScanner, startBarcodeDetectorLoop, t])
 
   useEffect(() => {
     const scanner = new Html5Qrcode("qr-reader", {
