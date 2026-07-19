@@ -55,6 +55,10 @@ function isSameDay(a: Date, b: Date) {
   return a.getDate() === b.getDate() && a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear()
 }
 
+function generateId() {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36)
+}
+
 const HISTORY_KEY = "tahfidz:teacher-scan-history"
 const PREFS_KEY = "tahfidz:teacher-scan-prefs"
 
@@ -89,33 +93,12 @@ export default function TeacherScanPage() {
   const t = useT("teacherScan")
 
   const scannerRef = useRef<Html5Qrcode | null>(null)
-  const videoRef = useRef<HTMLVideoElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
-  const barcodeLoopRef = useRef<number | null>(null)
   const processingRef = useRef(false)
   const autoConfirmRef = useRef(true)
   const continuousScanRef = useRef(true)
   const recentScansRef = useRef<Map<string, number>>(new Map())
-  const RECENT_WINDOW_MS = 5000
-
-  function isRecentlyScanned(key: string) {
-    const ts = recentScansRef.current.get(key)
-    if (!ts) return false
-    if (Date.now() - ts > RECENT_WINDOW_MS) {
-      recentScansRef.current.delete(key)
-      return false
-    }
-    return true
-  }
-
-  function markRecentlyScanned(key: string) {
-    recentScansRef.current.set(key, Date.now())
-    // Nettoyer les anciennes entrées
-    const cutoff = Date.now() - RECENT_WINDOW_MS
-    for (const [k, v] of recentScansRef.current.entries()) {
-      if (v < cutoff) recentScansRef.current.delete(k)
-    }
-  }
+  const RECENT_WINDOW_MS = 8000
 
   const [cameras, setCameras] = useState<CameraDevice[]>([])
   const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null)
@@ -135,7 +118,7 @@ export default function TeacherScanPage() {
   const [confirmBusy, setConfirmBusy] = useState(false)
   const [toast, setToast] = useState<Toast | null>(null)
 
-  // Synchroniser les refs avec les states pour les callbacks stables
+  // Synchroniser les refs avec les states
   useEffect(() => { autoConfirmRef.current = autoConfirm }, [autoConfirm])
   useEffect(() => { continuousScanRef.current = continuousScan }, [continuousScan])
 
@@ -155,7 +138,6 @@ export default function TeacherScanPage() {
       if (rawHistory) {
         const parsed = JSON.parse(rawHistory) as ScanHistoryItem[]
         if (Array.isArray(parsed)) {
-          // Vider automatiquement si la dernière entrée n'est pas d'aujourd'hui (nouvelle séance)
           const last = parsed[0]
           if (last && !isSameDay(new Date(last.timestamp), new Date())) {
             localStorage.removeItem(HISTORY_KEY)
@@ -175,7 +157,7 @@ export default function TeacherScanPage() {
     } catch {}
   }, [autoConfirm, continuousScan])
 
-  // Vider l'historique automatiquement au changement de jour (toutes les minutes)
+  // Vider l'historique automatiquement au changement de jour
   useEffect(() => {
     const interval = setInterval(() => {
       setHistory((prev) => {
@@ -191,7 +173,7 @@ export default function TeacherScanPage() {
   }, [])
 
   const showToast = useCallback((type: "success" | "error" | "info", title: string, message?: string, badge?: string) => {
-    const id = Math.random().toString(36).slice(2)
+    const id = generateId()
     setToast({ id, type, title, message, badge })
     window.setTimeout(() => {
       setToast((current) => (current?.id === id ? null : current))
@@ -207,64 +189,8 @@ export default function TeacherScanPage() {
   }, [])
 
   const stopScanner = useCallback(async () => {
-    if (barcodeLoopRef.current) {
-      clearInterval(barcodeLoopRef.current)
-      barcodeLoopRef.current = null
-    }
     if (scannerRef.current?.isScanning) {
       try { await scannerRef.current.stop() } catch {}
-    }
-  }, [])
-
-  const resumeScanning = useCallback(async () => {
-    setScanned(false)
-    setShowConfirm(false)
-    setPendingStudent(null)
-    setPendingEncoded(null)
-    processingRef.current = false
-    setError(null)
-    try {
-      await scannerRef.current?.resume()
-    } catch {
-      await startScannerRef.current?.()
-    }
-  }, [])
-
-  const startScannerRef = useRef<(() => Promise<void>) | null>(null)
-
-  const startBarcodeDetectorLoop = useCallback(() => {
-    const video = videoRef.current
-    if (!video) return
-
-    const BarcodeDetectorCls = (window as any).BarcodeDetector
-    if (!BarcodeDetectorCls) {
-      console.log("[Scan] BarcodeDetector non disponible")
-      return
-    }
-
-    try {
-      const detector = new BarcodeDetectorCls({
-        formats: ["code_128", "code_39", "ean_13", "ean_8", "upc_a", "upc_e", "qr_code"],
-      })
-
-      barcodeLoopRef.current = window.setInterval(async () => {
-        try {
-          const results = await detector.detect(video)
-          if (results && results.length > 0) {
-            const raw = results[0].rawValue
-            if (raw && !processingRef.current) {
-              console.log("[BarcodeDetector] detected:", raw)
-              processingRef.current = true
-              try { scannerRef.current?.pause(true) } catch {}
-              await processDecodedRef.current?.(raw, "scan")
-            }
-          }
-        } catch (err) {
-          console.debug("[BarcodeDetector] detect error", err)
-        }
-      }, 250)
-    } catch (err) {
-      console.warn("[BarcodeDetector] init error", err)
     }
   }, [])
 
@@ -274,6 +200,7 @@ export default function TeacherScanPage() {
     setLoading(true)
     setError(null)
     setScanned(false)
+    processingRef.current = false
 
     try {
       await stopScanner()
@@ -286,21 +213,20 @@ export default function TeacherScanPage() {
       }
 
       const qrbox = (viewfinderWidth: number, viewfinderHeight: number) => ({
-        width: Math.max(100, Math.min(640, Math.round(viewfinderWidth * 0.75))),
-        height: Math.max(50, Math.min(320, Math.round(viewfinderHeight * 0.45))),
+        width: Math.max(120, Math.min(640, Math.round(viewfinderWidth * 0.8))),
+        height: Math.max(60, Math.min(360, Math.round(viewfinderHeight * 0.5))),
       })
 
       await scannerRef.current.start(
         cameraConfig as any,
-        { fps: 25, qrbox, aspectRatio: 1.777778, disableFlip: false },
+        { fps: 20, qrbox, aspectRatio: 1.777778, disableFlip: false },
         (decodedText) => {
           if (processingRef.current) return
           processingRef.current = true
-          try { scannerRef.current?.pause(true) } catch {}
           processDecodedRef.current?.(decodedText, "scan")
         },
-        (errorMessage) => {
-          console.debug("[Scan] error:", errorMessage)
+        () => {
+          // Ignorer les erreurs de scan intermédiaires
         }
       )
 
@@ -309,22 +235,16 @@ export default function TeacherScanPage() {
           width: { ideal: 1920 },
           height: { ideal: 1080 },
         })
-      } catch (constraintErr) {
-        console.warn("[Scan] contraintes avancées non appliquées", constraintErr)
-      }
-
-      const video = document.querySelector("#qr-reader video") as HTMLVideoElement | null
-      if (video) {
-        videoRef.current = video
-        startBarcodeDetectorLoop()
+      } catch {
+        // contraintes avancées optionnelles
       }
     } catch (err: any) {
-      console.error(err)
+      console.error("[Scan] start error:", err)
       const errorName = err?.name || ""
       const errorMessage = err?.message || ""
 
       if (errorMessage.toLowerCase().includes("transition")) {
-        setTimeout(() => startScannerRef.current?.(), 800)
+        setTimeout(() => startScanner(), 800)
         return
       }
 
@@ -340,20 +260,20 @@ export default function TeacherScanPage() {
     } finally {
       setLoading(false)
     }
-  }, [facingMode, selectedCameraId, stopScanner, startBarcodeDetectorLoop, t])
+  }, [facingMode, selectedCameraId, stopScanner, t])
 
-  useEffect(() => {
-    startScannerRef.current = startScanner
+  const restartScanner = useCallback(async () => {
+    setScanned(false)
+    setShowConfirm(false)
+    setPendingStudent(null)
+    setPendingEncoded(null)
+    processingRef.current = false
+    setError(null)
+    // Sur mobile, un redémarrage complet est plus stable que resume()
+    await startScanner()
   }, [startScanner])
 
   const processDecoded = useCallback(async (raw: string, method: "scan" | "manual") => {
-    if (processingRef.current) return
-    processingRef.current = true
-
-    try {
-      // Pause immédiatement le scanner
-      try { await scannerRef.current?.pause(true) } catch {}
-
     const trimmed = raw.trim()
     let encoded: string | null = null
 
@@ -376,35 +296,27 @@ export default function TeacherScanPage() {
     if (!encoded) {
       showToast("error", t("invalidQr"))
       addHistory({
-        id: crypto.randomUUID(),
+        id: generateId(),
         timestamp: Date.now(),
         studentName: trimmed || "—",
         status: "error",
         error: t("invalidQr"),
         method,
       })
-      if (continuousScanRef.current) {
-        setTimeout(() => resumeScanning(), 1600)
-      } else {
-        setScanned(true)
-      }
+      await restartScanner()
       return
     }
 
-    // Ignorer les codes scannés dans les dernières secondes (évite les doubles scans)
-    if (isRecentlyScanned(encoded)) {
+    // Cooldown pour éviter les doubles scans
+    const recentTs = recentScansRef.current.get(encoded)
+    if (recentTs && Date.now() - recentTs < RECENT_WINDOW_MS) {
       showToast("error", t("alreadyScanned"))
-      if (continuousScanRef.current) {
-        setTimeout(() => resumeScanning(), 1200)
-      } else {
-        setScanned(true)
-      }
+      await restartScanner()
       return
     }
-    markRecentlyScanned(encoded)
+    recentScansRef.current.set(encoded, Date.now())
 
     if (autoConfirmRef.current) {
-      // Mode validation automatique : marquer la présence directement
       try {
         const res = await fetch("/api/teacher/attendance/scan", {
           method: "POST",
@@ -415,18 +327,14 @@ export default function TeacherScanPage() {
 
         if (res.status === 409 || data.code === "ALREADY_PRESENT") {
           showToast("error", t("alreadyPresent"), t("alreadyPresentMessage").replace("{name}", data.studentName || ""))
-          if (continuousScanRef.current) {
-            setTimeout(() => resumeScanning(), 1800)
-          } else {
-            setScanned(true)
-          }
+          await restartScanner()
           return
         }
 
         if (!res.ok) throw new Error(data.error || t("verifyError"))
 
         addHistory({
-          id: crypto.randomUUID(),
+          id: generateId(),
           timestamp: Date.now(),
           studentName: data.studentName || "—",
           status: "success",
@@ -437,14 +345,14 @@ export default function TeacherScanPage() {
         showToast("success", data.studentName || t("attendanceConfirmed"), data.message, t("presentBadge"))
 
         if (continuousScanRef.current) {
-          setTimeout(() => resumeScanning(), 1200)
+          setTimeout(() => restartScanner(), 1200)
         } else {
           setScanned(true)
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : t("verifyError")
         addHistory({
-          id: crypto.randomUUID(),
+          id: generateId(),
           timestamp: Date.now(),
           studentName: "—",
           status: "error",
@@ -453,13 +361,13 @@ export default function TeacherScanPage() {
         })
         showToast("error", message)
         if (continuousScanRef.current) {
-          setTimeout(() => resumeScanning(), 1800)
+          setTimeout(() => restartScanner(), 1500)
         } else {
           setScanned(true)
         }
       }
     } else {
-      // Mode manuel : vérifier puis demander confirmation inline
+      // Mode manuel
       try {
         const res = await fetch(`/api/teacher/scan/verify?d=${encodeURIComponent(encoded)}`)
         const data = await res.json()
@@ -473,7 +381,7 @@ export default function TeacherScanPage() {
       } catch (err) {
         const message = err instanceof Error ? err.message : t("invalidCode")
         addHistory({
-          id: crypto.randomUUID(),
+          id: generateId(),
           timestamp: Date.now(),
           studentName: "—",
           status: "error",
@@ -482,22 +390,13 @@ export default function TeacherScanPage() {
         })
         showToast("error", message)
         if (continuousScanRef.current) {
-          setTimeout(() => resumeScanning(), 1800)
+          setTimeout(() => restartScanner(), 1500)
         } else {
           setScanned(true)
         }
       }
     }
-    } catch (unexpected) {
-      console.error("[Scan] unexpected error in processDecoded", unexpected)
-      showToast("error", t("verifyError"))
-      if (continuousScanRef.current) {
-        setTimeout(() => resumeScanning(), 1500)
-      } else {
-        setScanned(true)
-      }
-    }
-  }, [addHistory, resumeScanning, showToast, t])
+  }, [addHistory, restartScanner, showToast, t])
 
   const processDecodedRef = useRef(processDecoded)
   useEffect(() => { processDecodedRef.current = processDecoded }, [processDecoded])
@@ -516,20 +415,14 @@ export default function TeacherScanPage() {
       if (res.status === 409 || data.code === "ALREADY_PRESENT") {
         showToast("error", t("alreadyPresent"), t("alreadyPresentMessage").replace("{name}", data.studentName || pendingStudent?.fullName || ""))
         setShowConfirm(false)
-        setPendingStudent(null)
-        setPendingEncoded(null)
-        if (continuousScanRef.current) {
-          setTimeout(() => resumeScanning(), 1800)
-        } else {
-          setScanned(true)
-        }
+        await restartScanner()
         return
       }
 
       if (!res.ok) throw new Error(data.error || t("verifyError"))
 
       addHistory({
-        id: crypto.randomUUID(),
+        id: generateId(),
         timestamp: Date.now(),
         studentName: data.studentName || pendingStudent?.fullName || "—",
         groupName: pendingStudent?.groupName,
@@ -539,18 +432,16 @@ export default function TeacherScanPage() {
       })
       showToast("success", data.studentName || t("attendanceConfirmed"), data.message, t("presentBadge"))
       setShowConfirm(false)
-      setPendingStudent(null)
-      setPendingEncoded(null)
 
       if (continuousScanRef.current) {
-        setTimeout(() => resumeScanning(), 1200)
+        setTimeout(() => restartScanner(), 1200)
       } else {
         setScanned(true)
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : t("verifyError")
       addHistory({
-        id: crypto.randomUUID(),
+        id: generateId(),
         timestamp: Date.now(),
         studentName: pendingStudent?.fullName || "—",
         groupName: pendingStudent?.groupName,
@@ -562,14 +453,14 @@ export default function TeacherScanPage() {
       showToast("error", message)
       setShowConfirm(false)
       if (continuousScanRef.current) {
-        setTimeout(() => resumeScanning(), 1800)
+        setTimeout(() => restartScanner(), 1500)
       } else {
         setScanned(true)
       }
     } finally {
       setConfirmBusy(false)
     }
-  }, [addHistory, pendingEncoded, pendingStudent, resumeScanning, showToast, t])
+  }, [addHistory, pendingEncoded, pendingStudent, restartScanner, showToast, t])
 
   useEffect(() => {
     const scanner = new Html5Qrcode("qr-reader", {
@@ -595,9 +486,7 @@ export default function TeacherScanPage() {
           return
         }
         const back = devices.find((d) => isBackCamera(d.label))
-        if (!back) {
-          setFacingMode("user")
-        }
+        if (!back) setFacingMode("user")
         setSelectedCameraId((back ?? devices[devices.length - 1]).id)
       })
       .catch((err) => {
@@ -614,7 +503,7 @@ export default function TeacherScanPage() {
 
   useEffect(() => {
     if (selectedCameraId !== null) {
-      const timer = setTimeout(() => startScanner(), 400)
+      const timer = setTimeout(() => startScanner(), 300)
       return () => clearTimeout(timer)
     }
   }, [selectedCameraId, startScanner])
@@ -630,13 +519,23 @@ export default function TeacherScanPage() {
     }
   }
 
+  const handleToggleTorch = async () => {
+    if (!scannerRef.current) return
+    try {
+      const next = !torchOn
+      await (scannerRef.current as any).applyVideoConstraints({ advanced: [{ torch: next }] })
+      setTorchOn(next)
+    } catch {
+      showToast("error", t("torchUnavailable"))
+    }
+  }
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !scannerRef.current) return
 
     try {
       setLoading(true)
-      await stopScanner()
       const decodedText = await (scannerRef.current as any).scanFile(file, false)
       if (decodedText) {
         await processDecoded(decodedText, "scan")
@@ -644,35 +543,23 @@ export default function TeacherScanPage() {
       }
       throw new Error("Aucun code détecté")
     } catch (err) {
-      console.warn("[Scan] upload échoué", err)
+      console.warn("[Scan] upload failed", err)
       showToast("error", t("uploadError"))
-      await resumeScanning()
+      await restartScanner()
     } finally {
       setLoading(false)
       e.target.value = ""
     }
   }
 
-  const handleToggleTorch = async () => {
-    if (!scannerRef.current) return
-    try {
-      const next = !torchOn
-      await (scannerRef.current as any).applyVideoConstraints({ advanced: [{ torch: next }] })
-      setTorchOn(next)
-    } catch (err) {
-      console.warn("[Scan] torch non supporté", err)
-      showToast("error", t("torchUnavailable"))
-    }
-  }
-
   const handleCapture = async () => {
-    const video = videoRef.current
     const scanner = scannerRef.current
-    if (!video || !scanner || captureBusy) return
+    if (!scanner || captureBusy) return
 
     setCaptureBusy(true)
     try {
-      await scanner.pause(true)
+      const video = document.querySelector("#qr-reader video") as HTMLVideoElement | null
+      if (!video) throw new Error("Vidéo non disponible")
 
       const canvas = document.createElement("canvas")
       canvas.width = video.videoWidth || 1280
@@ -692,9 +579,8 @@ export default function TeacherScanPage() {
       }
       throw new Error("Aucun code détecté")
     } catch (err) {
-      console.warn("[Scan] capture échouée", err)
+      console.warn("[Scan] capture failed", err)
       showToast("error", t("captureError"))
-      try { await scanner.resume() } catch {}
     } finally {
       setCaptureBusy(false)
     }
@@ -745,7 +631,7 @@ export default function TeacherScanPage() {
 
           {/* Overlay de scan */}
           <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
-            <div className="w-full max-w-[85%] h-40 relative">
+            <div className="w-full max-w-[85%] h-44 relative">
               <div className="absolute inset-0 bg-black/40 rounded-xl" />
               <div className="absolute inset-0 rounded-xl ring-2 ring-white/30 ring-offset-0" />
               <div className="absolute -top-1 -left-1 w-10 h-10 border-t-4 border-s-4 border-tahfidz-green rounded-tl-xl" />
@@ -768,7 +654,7 @@ export default function TeacherScanPage() {
               <CheckCircle2 size={56} className="text-tahfidz-green mb-3" />
               <p className="text-lg font-semibold mb-4">{t("scanned")}</p>
               <button
-                onClick={() => resumeScanning()}
+                onClick={() => restartScanner()}
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-tahfidz-green hover:bg-tahfidz-green/90 text-white rounded-xl text-sm font-medium transition"
               >
                 <RefreshCw size={16} />
@@ -835,7 +721,7 @@ export default function TeacherScanPage() {
                     {t("confirm")}
                   </button>
                   <button
-                    onClick={() => resumeScanning()}
+                    onClick={() => restartScanner()}
                     disabled={confirmBusy}
                     className="w-full py-3.5 px-4 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
                   >
@@ -850,11 +736,11 @@ export default function TeacherScanPage() {
 
         {/* Contrôles */}
         <div className="p-4 space-y-4">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <button
               onClick={handleSwitchCamera}
               title={t("switchCamera")}
-              className="inline-flex flex-1 min-w-[7rem] items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl text-sm font-medium transition"
+              className="inline-flex items-center justify-center gap-2 px-3 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl text-sm font-medium transition"
             >
               <RefreshCw size={16} />
               <span className="hidden sm:inline">{t("switchCamera")}</span>
@@ -863,7 +749,7 @@ export default function TeacherScanPage() {
             <button
               onClick={handleToggleTorch}
               title={t("torch")}
-              className={`inline-flex flex-1 min-w-[7rem] items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition ${
+              className={`inline-flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-sm font-medium transition ${
                 torchOn
                   ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300"
                   : "bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
@@ -877,7 +763,7 @@ export default function TeacherScanPage() {
               onClick={handleCapture}
               disabled={captureBusy || loading}
               title={t("capture")}
-              className="inline-flex flex-1 min-w-[7rem] items-center justify-center gap-2 px-4 py-3 bg-tahfidz-green hover:bg-tahfidz-green/90 text-white rounded-xl text-sm font-medium transition disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 px-3 py-3 bg-tahfidz-green hover:bg-tahfidz-green/90 text-white rounded-xl text-sm font-medium transition disabled:opacity-60"
             >
               {captureBusy ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
               <span className="hidden sm:inline">{t("capture")}</span>
@@ -887,7 +773,7 @@ export default function TeacherScanPage() {
               onClick={() => fileInputRef.current?.click()}
               disabled={loading}
               title={t("uploadImage")}
-              className="inline-flex flex-1 min-w-[7rem] items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl text-sm font-medium transition disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 px-3 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl text-sm font-medium transition disabled:opacity-60"
             >
               <Upload size={16} />
               <span className="hidden sm:inline">{t("uploadImage")}</span>
