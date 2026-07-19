@@ -2,13 +2,15 @@
 
 import { useEffect, useRef, useState, useCallback } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { Html5Qrcode, Html5QrcodeSupportedFormats, type CameraDevice } from "html5-qrcode"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import { decodeAnyQrValue, decodeBarcodeValue } from "@/lib/qr-code"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   Loader2, AlertCircle, RefreshCw, ScanLine, CheckCircle2,
-  ArrowLeft, Keyboard, Search, Zap, Camera, Upload
+  ArrowLeft, Keyboard, Search, Zap, Camera, Upload, History,
+  User, Users, X, ShieldCheck, ToggleLeft, ToggleRight,
+  Clock, CheckCircle
 } from "lucide-react"
 
 function isBackCamera(label: string): boolean {
@@ -42,12 +44,52 @@ function triggerVibration() {
   }
 }
 
+function formatTimeAgo(timestamp: number, t: (key: string) => string) {
+  const diffMs = Date.now() - timestamp
+  const diffMin = Math.floor(diffMs / 60000)
+  if (diffMin < 1) return t("justNow")
+  return t("minutesAgo").replace("{n}", String(diffMin))
+}
+
+const HISTORY_KEY = "tahfidz:teacher-scan-history"
+const PREFS_KEY = "tahfidz:teacher-scan-prefs"
+
+type ScanHistoryItem = {
+  id: string
+  timestamp: number
+  studentName: string
+  groupName?: string | null
+  avatar?: string | null
+  status: "success" | "error"
+  error?: string
+  method: "scan" | "manual"
+}
+
+type PendingStudent = {
+  id: string
+  fullName: string
+  avatar?: string | null
+  groupName?: string | null
+}
+
+type Toast = {
+  id: string
+  type: "success" | "error"
+  title: string
+  message?: string
+}
+
 export default function TeacherScanPage() {
   const { dir } = useLanguage()
   const t = useT("teacherScan")
-  const router = useRouter()
+
   const scannerRef = useRef<Html5Qrcode | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const barcodeLoopRef = useRef<number | null>(null)
+  const processingRef = useRef(false)
+  const autoConfirmRef = useRef(true)
+  const continuousScanRef = useRef(true)
 
   const [cameras, setCameras] = useState<CameraDevice[]>([])
   const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null)
@@ -58,8 +100,61 @@ export default function TeacherScanPage() {
   const [manualCode, setManualCode] = useState("")
   const [torchOn, setTorchOn] = useState(false)
   const [captureBusy, setCaptureBusy] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
-  const barcodeLoopRef = useRef<number | null>(null)
+  const [autoConfirm, setAutoConfirm] = useState(true)
+  const [continuousScan, setContinuousScan] = useState(true)
+  const [history, setHistory] = useState<ScanHistoryItem[]>([])
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [pendingStudent, setPendingStudent] = useState<PendingStudent | null>(null)
+  const [pendingEncoded, setPendingEncoded] = useState<string | null>(null)
+  const [confirmBusy, setConfirmBusy] = useState(false)
+  const [toast, setToast] = useState<Toast | null>(null)
+
+  // Synchroniser les refs avec les states pour les callbacks stables
+  useEffect(() => { autoConfirmRef.current = autoConfirm }, [autoConfirm])
+  useEffect(() => { continuousScanRef.current = continuousScan }, [continuousScan])
+
+  // Charger préférences et historique
+  useEffect(() => {
+    try {
+      const rawPrefs = localStorage.getItem(PREFS_KEY)
+      if (rawPrefs) {
+        const prefs = JSON.parse(rawPrefs)
+        if (typeof prefs.autoConfirm === "boolean") setAutoConfirm(prefs.autoConfirm)
+        if (typeof prefs.continuousScan === "boolean") setContinuousScan(prefs.continuousScan)
+      }
+    } catch {}
+
+    try {
+      const rawHistory = localStorage.getItem(HISTORY_KEY)
+      if (rawHistory) {
+        const parsed = JSON.parse(rawHistory)
+        if (Array.isArray(parsed)) setHistory(parsed.slice(0, 50))
+      }
+    } catch {}
+  }, [])
+
+  // Persister les préférences
+  useEffect(() => {
+    try {
+      localStorage.setItem(PREFS_KEY, JSON.stringify({ autoConfirm, continuousScan }))
+    } catch {}
+  }, [autoConfirm, continuousScan])
+
+  const showToast = useCallback((type: "success" | "error", title: string, message?: string) => {
+    const id = Math.random().toString(36).slice(2)
+    setToast({ id, type, title, message })
+    window.setTimeout(() => {
+      setToast((current) => (current?.id === id ? null : current))
+    }, 4000)
+  }, [])
+
+  const addHistory = useCallback((item: ScanHistoryItem) => {
+    setHistory((prev) => {
+      const next = [item, ...prev].slice(0, 50)
+      try { localStorage.setItem(HISTORY_KEY, JSON.stringify(next)) } catch {}
+      return next
+    })
+  }, [])
 
   const stopScanner = useCallback(async () => {
     if (barcodeLoopRef.current) {
@@ -71,54 +166,23 @@ export default function TeacherScanPage() {
     }
   }, [])
 
-  const handleDecoded = useCallback((decodedText: string) => {
-    const trimmed = decodedText.trim()
-    console.log("[Scan] decoded:", trimmed)
-
-    let encoded: string | null = null
-
-    // QR code / payload compact
-    const qrPayload = decodeAnyQrValue(trimmed)
-    if (qrPayload) {
-      encoded = `${qrPayload.s}:${qrPayload.t}:${qrPayload.h}`
+  const resumeScanning = useCallback(async () => {
+    setScanned(false)
+    setShowConfirm(false)
+    setPendingStudent(null)
+    setPendingEncoded(null)
+    processingRef.current = false
+    setError(null)
+    try {
+      await scannerRef.current?.resume()
+    } catch {
+      await startScannerRef.current?.()
     }
+  }, [])
 
-    // Code-barres au format schoolSlug:studentCode
-    if (!encoded) {
-      const barcodePayload = decodeBarcodeValue(trimmed)
-      if (barcodePayload) {
-        encoded = trimmed
-      }
-    }
+  const startScannerRef = useRef<(() => Promise<void>) | null>(null)
 
-    // Code étudiant seul (ex: TAH-2026-0001)
-    if (!encoded && trimmed.length >= 3) {
-      encoded = trimmed
-    }
-
-    if (encoded) {
-      setScanned(true)
-      playBeep()
-      triggerVibration()
-      router.push(`/teacher/scan/verify?d=${encodeURIComponent(encoded)}`)
-      return
-    }
-
-    console.log("[Scan] payload non reconnu")
-    setError(t("invalidQr"))
-    setTimeout(() => setError(null), 2000)
-    scannerRef.current?.resume()
-  }, [router, t])
-
-  const handleManualVerify = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!manualCode.trim()) return
-    handleDecoded(manualCode)
-  }
-
-  // Décodeur natif du navigateur, souvent bien meilleur que zxing pour les
-  // codes-barres 1D (CODE_128, EAN, etc.) sur webcam frontale.
-  const startBarcodeDetectorLoop = useCallback(async () => {
+  const startBarcodeDetectorLoop = useCallback(() => {
     const video = videoRef.current
     if (!video) return
 
@@ -138,14 +202,9 @@ export default function TeacherScanPage() {
           const results = await detector.detect(video)
           if (results && results.length > 0) {
             const raw = results[0].rawValue
-            if (raw && !scanned) {
+            if (raw && !processingRef.current) {
               console.log("[BarcodeDetector] detected:", raw)
-              if (barcodeLoopRef.current) {
-                clearInterval(barcodeLoopRef.current)
-                barcodeLoopRef.current = null
-              }
-              await stopScanner()
-              handleDecoded(raw)
+              await processDecodedRef.current?.(raw, "scan")
             }
           }
         } catch (err) {
@@ -155,7 +214,7 @@ export default function TeacherScanPage() {
     } catch (err) {
       console.warn("[BarcodeDetector] init error", err)
     }
-  }, [handleDecoded, scanned, stopScanner])
+  }, [])
 
   const startScanner = useCallback(async () => {
     if (!scannerRef.current) return
@@ -167,7 +226,6 @@ export default function TeacherScanPage() {
     try {
       await stopScanner()
 
-      // html5-qrcode impose un objet avec exactement 1 clé : deviceId ou facingMode.
       let cameraConfig: string | { facingMode: string }
       if (selectedCameraId) {
         cameraConfig = selectedCameraId
@@ -175,8 +233,6 @@ export default function TeacherScanPage() {
         cameraConfig = { facingMode }
       }
 
-      // Zone de scan rectangulaire pour les codes-barres horizontaux,
-      // adaptée dynamiquement à la taille du lecteur (min 100×50 px).
       const qrbox = (viewfinderWidth: number, viewfinderHeight: number) => ({
         width: Math.max(100, Math.min(640, Math.round(viewfinderWidth * 0.75))),
         height: Math.max(50, Math.min(320, Math.round(viewfinderHeight * 0.45))),
@@ -186,17 +242,15 @@ export default function TeacherScanPage() {
         cameraConfig as any,
         { fps: 25, qrbox, aspectRatio: 1.777778, disableFlip: false },
         (decodedText) => {
-          scannerRef.current?.pause(true)
-          handleDecoded(decodedText)
+          if (!processingRef.current) {
+            processDecodedRef.current?.(decodedText, "scan")
+          }
         },
         (errorMessage) => {
-          // Ignorer les erreurs de scan intermédiaires
           console.debug("[Scan] error:", errorMessage)
         }
       )
 
-      // Appliquer une résolution plus élevée après démarrage.
-      // (focusMode est retiré car il provoque une OverconstrainedError sur certains navigateurs.)
       try {
         await (scannerRef.current as any).applyVideoConstraints({
           width: { ideal: 1920 },
@@ -206,21 +260,18 @@ export default function TeacherScanPage() {
         console.warn("[Scan] contraintes avancées non appliquées", constraintErr)
       }
 
-      // Stocker la référence vidéo pour les captures et la lampe
       const video = document.querySelector("#qr-reader video") as HTMLVideoElement | null
       if (video) {
         videoRef.current = video
-        // Lancer le décodeur natif en parallèle pour améliorer la détection des codes-barres.
-        await startBarcodeDetectorLoop()
+        startBarcodeDetectorLoop()
       }
     } catch (err: any) {
       console.error(err)
       const errorName = err?.name || ""
       const errorMessage = err?.message || ""
 
-      // Si html5-qrcode est encore en transition, réessayer automatiquement.
       if (errorMessage.toLowerCase().includes("transition")) {
-        setTimeout(() => startScanner(), 800)
+        setTimeout(() => startScannerRef.current?.(), 800)
         return
       }
 
@@ -236,7 +287,189 @@ export default function TeacherScanPage() {
     } finally {
       setLoading(false)
     }
-  }, [facingMode, selectedCameraId, handleDecoded, stopScanner, startBarcodeDetectorLoop, t])
+  }, [facingMode, selectedCameraId, stopScanner, startBarcodeDetectorLoop, t])
+
+  useEffect(() => {
+    startScannerRef.current = startScanner
+  }, [startScanner])
+
+  const processDecoded = useCallback(async (raw: string, method: "scan" | "manual") => {
+    if (processingRef.current) return
+    processingRef.current = true
+
+    // Pause immédiatement le scanner
+    try { await scannerRef.current?.pause(true) } catch {}
+
+    const trimmed = raw.trim()
+    let encoded: string | null = null
+
+    const qrPayload = decodeAnyQrValue(trimmed)
+    if (qrPayload) {
+      encoded = `${qrPayload.s}:${qrPayload.t}:${qrPayload.h}`
+    }
+
+    if (!encoded) {
+      const barcodePayload = decodeBarcodeValue(trimmed)
+      if (barcodePayload) {
+        encoded = trimmed
+      }
+    }
+
+    if (!encoded && trimmed.length >= 3) {
+      encoded = trimmed
+    }
+
+    if (!encoded) {
+      showToast("error", t("invalidQr"))
+      addHistory({
+        id: crypto.randomUUID(),
+        timestamp: Date.now(),
+        studentName: trimmed || "—",
+        status: "error",
+        error: t("invalidQr"),
+        method,
+      })
+      if (continuousScanRef.current) {
+        setTimeout(() => resumeScanning(), 1600)
+      } else {
+        setScanned(true)
+      }
+      return
+    }
+
+    if (autoConfirmRef.current) {
+      // Mode validation automatique : marquer la présence directement
+      try {
+        const res = await fetch("/api/teacher/attendance/scan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ payload: encoded }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || t("verifyError"))
+
+        addHistory({
+          id: crypto.randomUUID(),
+          timestamp: Date.now(),
+          studentName: data.studentName || "—",
+          status: "success",
+          method,
+        })
+        playBeep()
+        triggerVibration()
+        showToast("success", data.studentName || t("attendanceConfirmed"), data.message)
+
+        if (continuousScanRef.current) {
+          setTimeout(() => resumeScanning(), 1200)
+        } else {
+          setScanned(true)
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : t("verifyError")
+        addHistory({
+          id: crypto.randomUUID(),
+          timestamp: Date.now(),
+          studentName: "—",
+          status: "error",
+          error: message,
+          method,
+        })
+        showToast("error", message)
+        if (continuousScanRef.current) {
+          setTimeout(() => resumeScanning(), 1800)
+        } else {
+          setScanned(true)
+        }
+      }
+    } else {
+      // Mode manuel : vérifier puis demander confirmation inline
+      try {
+        const res = await fetch(`/api/teacher/scan/verify?d=${encodeURIComponent(encoded)}`)
+        const data = await res.json()
+        if (!res.ok || !data.valid) throw new Error(data.error || t("invalidCode"))
+
+        setPendingStudent(data.student)
+        setPendingEncoded(encoded)
+        setShowConfirm(true)
+        playBeep()
+        triggerVibration()
+      } catch (err) {
+        const message = err instanceof Error ? err.message : t("invalidCode")
+        addHistory({
+          id: crypto.randomUUID(),
+          timestamp: Date.now(),
+          studentName: "—",
+          status: "error",
+          error: message,
+          method,
+        })
+        showToast("error", message)
+        if (continuousScanRef.current) {
+          setTimeout(() => resumeScanning(), 1800)
+        } else {
+          setScanned(true)
+        }
+      }
+    }
+  }, [addHistory, resumeScanning, showToast, t])
+
+  const processDecodedRef = useRef(processDecoded)
+  useEffect(() => { processDecodedRef.current = processDecoded }, [processDecoded])
+
+  const confirmPending = useCallback(async () => {
+    if (!pendingEncoded) return
+    setConfirmBusy(true)
+    try {
+      const res = await fetch("/api/teacher/attendance/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ payload: pendingEncoded }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || t("verifyError"))
+
+      addHistory({
+        id: crypto.randomUUID(),
+        timestamp: Date.now(),
+        studentName: data.studentName || pendingStudent?.fullName || "—",
+        groupName: pendingStudent?.groupName,
+        avatar: pendingStudent?.avatar,
+        status: "success",
+        method: "scan",
+      })
+      showToast("success", data.studentName || t("attendanceConfirmed"), data.message)
+      setShowConfirm(false)
+      setPendingStudent(null)
+      setPendingEncoded(null)
+
+      if (continuousScanRef.current) {
+        setTimeout(() => resumeScanning(), 1200)
+      } else {
+        setScanned(true)
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t("verifyError")
+      addHistory({
+        id: crypto.randomUUID(),
+        timestamp: Date.now(),
+        studentName: pendingStudent?.fullName || "—",
+        groupName: pendingStudent?.groupName,
+        avatar: pendingStudent?.avatar,
+        status: "error",
+        error: message,
+        method: "scan",
+      })
+      showToast("error", message)
+      setShowConfirm(false)
+      if (continuousScanRef.current) {
+        setTimeout(() => resumeScanning(), 1800)
+      } else {
+        setScanned(true)
+      }
+    } finally {
+      setConfirmBusy(false)
+    }
+  }, [addHistory, pendingEncoded, pendingStudent, resumeScanning, showToast, t])
 
   useEffect(() => {
     const scanner = new Html5Qrcode("qr-reader", {
@@ -281,8 +514,6 @@ export default function TeacherScanPage() {
 
   useEffect(() => {
     if (selectedCameraId !== null) {
-      // Petit délai au montage pour laisser le navigateur libérer la caméra
-      // quand on revient de la page de vérification.
       const timer = setTimeout(() => startScanner(), 400)
       return () => clearTimeout(timer)
     }
@@ -308,15 +539,14 @@ export default function TeacherScanPage() {
       await stopScanner()
       const decodedText = await (scannerRef.current as any).scanFile(file, false)
       if (decodedText) {
-        handleDecoded(decodedText)
+        await processDecoded(decodedText, "scan")
         return
       }
       throw new Error("Aucun code détecté")
     } catch (err) {
       console.warn("[Scan] upload échoué", err)
-      setError(t("uploadError"))
-      setTimeout(() => setError(null), 2500)
-      await startScanner()
+      showToast("error", t("uploadError"))
+      await resumeScanning()
     } finally {
       setLoading(false)
       e.target.value = ""
@@ -331,8 +561,7 @@ export default function TeacherScanPage() {
       setTorchOn(next)
     } catch (err) {
       console.warn("[Scan] torch non supporté", err)
-      setError(t("torchUnavailable"))
-      setTimeout(() => setError(null), 2000)
+      showToast("error", t("torchUnavailable"))
     }
   }
 
@@ -358,24 +587,36 @@ export default function TeacherScanPage() {
       const file = new File([blob], "scan.png", { type: "image/png" })
       const decodedText = await scanner.scanFile(file, false)
       if (decodedText) {
-        handleDecoded(decodedText)
+        await processDecoded(decodedText, "scan")
         return
       }
       throw new Error("Aucun code détecté")
     } catch (err) {
       console.warn("[Scan] capture échouée", err)
-      setError(t("captureError"))
-      setTimeout(() => setError(null), 2500)
+      showToast("error", t("captureError"))
       try { await scanner.resume() } catch {}
     } finally {
       setCaptureBusy(false)
     }
   }
 
+  const handleManualVerify = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!manualCode.trim()) return
+    processDecoded(manualCode, "manual")
+    setManualCode("")
+  }
+
+  const todayHistory = history.filter((h) => {
+    const d = new Date(h.timestamp)
+    const now = new Date()
+    return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+  })
+
   return (
-    <div className="max-w-2xl mx-auto p-4 md:p-8" dir={dir}>
+    <div className="max-w-3xl mx-auto p-4 md:p-8" dir={dir}>
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center justify-between mb-6">
         <Link
           href="/teacher/dashboard"
           className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-tahfidz-green transition"
@@ -383,52 +624,57 @@ export default function TeacherScanPage() {
           <ArrowLeft size={16} />
           {t("back")}
         </Link>
-      </div>
-
-      <div className="text-center mb-6">
-        <div className="w-14 h-14 bg-tahfidz-green/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
-          <ScanLine size={28} className="text-tahfidz-green" />
+        <div className="flex items-center gap-2">
+          <div className="w-10 h-10 bg-tahfidz-green/10 rounded-xl flex items-center justify-center">
+            <ScanLine size={20} className="text-tahfidz-green" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">{t("title")}</h1>
+            <p className="text-xs text-gray-500">{t("subtitle")}</p>
+          </div>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("title")}</h1>
-        <p className="text-sm text-gray-500 mt-1">{t("subtitle")}</p>
       </div>
 
-      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 p-4">
-        <div className="relative bg-black rounded-2xl overflow-hidden aspect-video">
+      {/* Scanner */}
+      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+        <div className="relative bg-black overflow-hidden aspect-video">
           <div id="qr-reader" className="w-full h-full" />
 
-          {/* Masque autour du cadre de scan */}
+          {/* Overlay de scan */}
           <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
-            <div className="w-full max-w-[85%] h-36 relative">
-              {/* Bords transparents (masque) */}
+            <div className="w-full max-w-[85%] h-40 relative">
               <div className="absolute inset-0 bg-black/40 rounded-xl" />
-              {/* Zone de scan transparente */}
               <div className="absolute inset-0 rounded-xl ring-2 ring-white/30 ring-offset-0" />
-              {/* Coins */}
               <div className="absolute -top-1 -left-1 w-10 h-10 border-t-4 border-s-4 border-tahfidz-green rounded-tl-xl" />
               <div className="absolute -top-1 -right-1 w-10 h-10 border-t-4 border-e-4 border-tahfidz-green rounded-tr-xl" />
               <div className="absolute -bottom-1 -left-1 w-10 h-10 border-b-4 border-s-4 border-tahfidz-green rounded-bl-xl" />
               <div className="absolute -bottom-1 -right-1 w-10 h-10 border-b-4 border-e-4 border-tahfidz-green rounded-br-xl" />
-              {/* Ligne laser animée */}
               <div className="absolute left-0 right-0 h-0.5 bg-tahfidz-green/80 shadow-[0_0_10px_rgba(16,185,129,0.8)] animate-scan-laser" />
             </div>
           </div>
 
-          {loading && !scanned && (
+          {loading && !scanned && !showConfirm && (
             <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white">
               <Loader2 size={32} className="animate-spin mb-2" />
               <p className="text-sm">{t("starting")}</p>
             </div>
           )}
 
-          {scanned && (
-            <div className="absolute inset-0 bg-tahfidz-green/90 flex flex-col items-center justify-center text-white">
-              <CheckCircle2 size={56} className="mb-2" />
-              <p className="text-lg font-semibold">{t("scanned")}</p>
+          {scanned && !showConfirm && (
+            <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white p-6 text-center">
+              <CheckCircle2 size={56} className="text-tahfidz-green mb-3" />
+              <p className="text-lg font-semibold mb-4">{t("scanned")}</p>
+              <button
+                onClick={() => resumeScanning()}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-tahfidz-green hover:bg-tahfidz-green/90 text-white rounded-xl text-sm font-medium transition"
+              >
+                <RefreshCw size={16} />
+                {t("resumeScan")}
+              </button>
             </div>
           )}
 
-          {error && !scanned && (
+          {error && !scanned && !showConfirm && (
             <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white p-6 text-center">
               <AlertCircle size={40} className="text-red-400 mb-3" />
               <p className="font-semibold">{error}</p>
@@ -442,87 +688,246 @@ export default function TeacherScanPage() {
               </button>
             </div>
           )}
+
+          {/* Overlay de confirmation inline */}
+          <AnimatePresence>
+            {showConfirm && pendingStudent && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="absolute inset-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center"
+              >
+                <div className="w-20 h-20 mx-auto rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden mb-4 ring-4 ring-tahfidz-green/10">
+                  {pendingStudent.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={pendingStudent.avatar} alt={pendingStudent.fullName} className="w-full h-full object-cover" />
+                  ) : (
+                    <User size={36} className="text-gray-400" />
+                  )}
+                </div>
+
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-tahfidz-green/10 text-tahfidz-green text-xs font-medium mb-2">
+                  <ShieldCheck size={12} />
+                  {t("studentDetected")}
+                </div>
+
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{pendingStudent.fullName}</h2>
+                {pendingStudent.groupName && (
+                  <div className="flex items-center justify-center gap-2 mt-1 text-gray-500 text-sm">
+                    <Users size={14} />
+                    <span>{pendingStudent.groupName}</span>
+                  </div>
+                )}
+
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-4 mb-5">{t("confirmToValidate")}</p>
+
+                <div className="w-full max-w-xs space-y-3">
+                  <button
+                    onClick={confirmPending}
+                    disabled={confirmBusy}
+                    className="w-full py-3.5 px-4 bg-tahfidz-green hover:bg-tahfidz-green/90 text-white font-semibold rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {confirmBusy ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle size={18} />}
+                    {t("confirm")}
+                  </button>
+                  <button
+                    onClick={() => resumeScanning()}
+                    disabled={confirmBusy}
+                    className="w-full py-3.5 px-4 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    <X size={18} />
+                    {t("cancel")}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* Contrôles simplifiés */}
-        <div className="mt-4 flex items-center gap-3">
-          <button
-            onClick={handleSwitchCamera}
-            title={t("switchCamera")}
-            className="inline-flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl text-sm font-medium transition"
-          >
-            <RefreshCw size={16} />
-            <span className="hidden sm:inline">{t("switchCamera")}</span>
-          </button>
-
-          <button
-            onClick={handleToggleTorch}
-            title={t("torch")}
-            className={`inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition ${
-              torchOn
-                ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300"
-                : "bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
-            }`}
-          >
-            <Zap size={16} className={torchOn ? "fill-current" : ""} />
-            <span className="hidden sm:inline">{t(torchOn ? "torchOn" : "torch")}</span>
-          </button>
-
-          <button
-            onClick={handleCapture}
-            disabled={captureBusy || loading}
-            title={t("capture")}
-            className="inline-flex items-center justify-center gap-2 px-4 py-3 bg-tahfidz-green hover:bg-tahfidz-green/90 text-white rounded-xl text-sm font-medium transition disabled:opacity-60"
-          >
-            {captureBusy ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
-            <span className="hidden sm:inline">{t("capture")}</span>
-          </button>
-
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={loading}
-            title={t("uploadImage")}
-            className="inline-flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl text-sm font-medium transition disabled:opacity-60"
-          >
-            <Upload size={16} />
-            <span className="hidden sm:inline">{t("uploadImage")}</span>
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleFileUpload}
-          />
-        </div>
-
-        {/* Saisie manuelle */}
-        <form onSubmit={handleManualVerify} className="mt-5 pt-5 border-t border-gray-100 dark:border-gray-800">
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <Keyboard size={12} />
-            {t("orEnterCode")}
-          </p>
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                value={manualCode}
-                onChange={(e) => setManualCode(e.target.value)}
-                placeholder={t("enterCode")}
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green dark:text-white"
-              />
-            </div>
+        {/* Contrôles */}
+        <div className="p-4 space-y-4">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
-              type="submit"
-              disabled={!manualCode.trim()}
-              className="px-4 py-2.5 bg-tahfidz-green text-white text-sm font-medium rounded-xl hover:bg-tahfidz-green/90 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              onClick={handleSwitchCamera}
+              title={t("switchCamera")}
+              className="inline-flex flex-1 min-w-[7rem] items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl text-sm font-medium transition"
             >
-              {t("verify")}
+              <RefreshCw size={16} />
+              <span className="hidden sm:inline">{t("switchCamera")}</span>
+            </button>
+
+            <button
+              onClick={handleToggleTorch}
+              title={t("torch")}
+              className={`inline-flex flex-1 min-w-[7rem] items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition ${
+                torchOn
+                  ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300"
+                  : "bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+              }`}
+            >
+              <Zap size={16} className={torchOn ? "fill-current" : ""} />
+              <span className="hidden sm:inline">{t(torchOn ? "torchOn" : "torch")}</span>
+            </button>
+
+            <button
+              onClick={handleCapture}
+              disabled={captureBusy || loading}
+              title={t("capture")}
+              className="inline-flex flex-1 min-w-[7rem] items-center justify-center gap-2 px-4 py-3 bg-tahfidz-green hover:bg-tahfidz-green/90 text-white rounded-xl text-sm font-medium transition disabled:opacity-60"
+            >
+              {captureBusy ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
+              <span className="hidden sm:inline">{t("capture")}</span>
+            </button>
+
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={loading}
+              title={t("uploadImage")}
+              className="inline-flex flex-1 min-w-[7rem] items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl text-sm font-medium transition disabled:opacity-60"
+            >
+              <Upload size={16} />
+              <span className="hidden sm:inline">{t("uploadImage")}</span>
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileUpload}
+            />
+          </div>
+
+          {/* Toggles */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              onClick={() => setAutoConfirm((v) => !v)}
+              className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl border text-left transition ${
+                autoConfirm
+                  ? "bg-tahfidz-green/5 border-tahfidz-green/20 dark:bg-tahfidz-green/10 dark:border-tahfidz-green/30"
+                  : "bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-700"
+              }`}
+            >
+              <div>
+                <p className={`text-sm font-semibold ${autoConfirm ? "text-tahfidz-green" : "text-gray-700 dark:text-gray-200"}`}>
+                  {t("autoConfirm")}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{t("autoConfirmHint")}</p>
+              </div>
+              {autoConfirm ? <ToggleRight size={28} className="text-tahfidz-green shrink-0" /> : <ToggleLeft size={28} className="text-gray-400 shrink-0" />}
+            </button>
+
+            <button
+              onClick={() => setContinuousScan((v) => !v)}
+              className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl border text-left transition ${
+                continuousScan
+                  ? "bg-tahfidz-green/5 border-tahfidz-green/20 dark:bg-tahfidz-green/10 dark:border-tahfidz-green/30"
+                  : "bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-700"
+              }`}
+            >
+              <div>
+                <p className={`text-sm font-semibold ${continuousScan ? "text-tahfidz-green" : "text-gray-700 dark:text-gray-200"}`}>
+                  {t("continuousScan")}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{t("continuousScanHint")}</p>
+              </div>
+              {continuousScan ? <ToggleRight size={28} className="text-tahfidz-green shrink-0" /> : <ToggleLeft size={28} className="text-gray-400 shrink-0" />}
             </button>
           </div>
-        </form>
+
+          {/* Saisie manuelle */}
+          <form onSubmit={handleManualVerify} className="pt-2 border-t border-gray-100 dark:border-gray-800">
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <Keyboard size={12} />
+              {t("orEnterCode")}
+            </p>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  value={manualCode}
+                  onChange={(e) => setManualCode(e.target.value)}
+                  placeholder={t("enterCode")}
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-tahfidz-green dark:text-white"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={!manualCode.trim()}
+                className="px-4 py-2.5 bg-tahfidz-green text-white text-sm font-medium rounded-xl hover:bg-tahfidz-green/90 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                {t("verify")}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
+
+      {/* Historique */}
+      <div className="mt-6">
+        <div className="flex items-center gap-2 mb-3">
+          <History size={18} className="text-gray-500" />
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">{t("history")}</h2>
+          <span className="ml-auto text-xs text-gray-400">{todayHistory.length}</span>
+        </div>
+
+        {todayHistory.length === 0 ? (
+          <div className="bg-gray-50 dark:bg-gray-900 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 p-6 text-center text-sm text-gray-500">
+            {t("historyEmpty")}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {todayHistory.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm"
+              >
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                  item.status === "success" ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-300" : "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-300"
+                }`}>
+                  {item.status === "success" ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.studentName}</p>
+                  {item.groupName && <p className="text-xs text-gray-500 truncate">{item.groupName}</p>}
+                  {item.status === "error" && item.error && (
+                    <p className="text-xs text-red-500 truncate">{item.error}</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 text-xs text-gray-400 shrink-0">
+                  <Clock size={12} />
+                  {formatTimeAgo(item.timestamp, t)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 min-w-[16rem] max-w-[90vw] ${
+              toast.type === "success" ? "bg-gray-900 text-white" : "bg-white dark:bg-gray-900 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800"
+            }`}
+          >
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+              toast.type === "success" ? "bg-green-500/20 text-green-400" : "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-300"
+            }`}>
+              {toast.type === "success" ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold truncate">{toast.title}</p>
+              {toast.message && <p className="text-xs opacity-80 truncate">{toast.message}</p>}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <style jsx>{`
         @keyframes scan-laser {
