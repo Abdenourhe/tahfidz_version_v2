@@ -10,7 +10,7 @@ import {
   Loader2, AlertCircle, RefreshCw, ScanLine, CheckCircle2,
   ArrowLeft, Keyboard, Search, Zap, Camera, Upload, History,
   User, Users, X, ShieldCheck, ToggleLeft, ToggleRight,
-  Clock, CheckCircle
+  Clock, CheckCircle, Trash2
 } from "lucide-react"
 
 function isBackCamera(label: string): boolean {
@@ -51,6 +51,10 @@ function formatTimeAgo(timestamp: number, t: (key: string) => string) {
   return t("minutesAgo").replace("{n}", String(diffMin))
 }
 
+function isSameDay(a: Date, b: Date) {
+  return a.getDate() === b.getDate() && a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear()
+}
+
 const HISTORY_KEY = "tahfidz:teacher-scan-history"
 const PREFS_KEY = "tahfidz:teacher-scan-prefs"
 
@@ -74,9 +78,10 @@ type PendingStudent = {
 
 type Toast = {
   id: string
-  type: "success" | "error"
+  type: "success" | "error" | "info"
   title: string
   message?: string
+  badge?: string
 }
 
 export default function TeacherScanPage() {
@@ -148,8 +153,17 @@ export default function TeacherScanPage() {
     try {
       const rawHistory = localStorage.getItem(HISTORY_KEY)
       if (rawHistory) {
-        const parsed = JSON.parse(rawHistory)
-        if (Array.isArray(parsed)) setHistory(parsed.slice(0, 50))
+        const parsed = JSON.parse(rawHistory) as ScanHistoryItem[]
+        if (Array.isArray(parsed)) {
+          // Vider automatiquement si la dernière entrée n'est pas d'aujourd'hui (nouvelle séance)
+          const last = parsed[0]
+          if (last && !isSameDay(new Date(last.timestamp), new Date())) {
+            localStorage.removeItem(HISTORY_KEY)
+            setHistory([])
+          } else {
+            setHistory(parsed.slice(0, 50))
+          }
+        }
       }
     } catch {}
   }, [])
@@ -161,9 +175,24 @@ export default function TeacherScanPage() {
     } catch {}
   }, [autoConfirm, continuousScan])
 
-  const showToast = useCallback((type: "success" | "error", title: string, message?: string) => {
+  // Vider l'historique automatiquement au changement de jour (toutes les minutes)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setHistory((prev) => {
+        if (prev.length === 0) return prev
+        if (!isSameDay(new Date(prev[0].timestamp), new Date())) {
+          try { localStorage.removeItem(HISTORY_KEY) } catch {}
+          return []
+        }
+        return prev
+      })
+    }, 60000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const showToast = useCallback((type: "success" | "error" | "info", title: string, message?: string, badge?: string) => {
     const id = Math.random().toString(36).slice(2)
-    setToast({ id, type, title, message })
+    setToast({ id, type, title, message, badge })
     window.setTimeout(() => {
       setToast((current) => (current?.id === id ? null : current))
     }, 4000)
@@ -401,7 +430,7 @@ export default function TeacherScanPage() {
         })
         playBeep()
         triggerVibration()
-        showToast("success", data.studentName || t("attendanceConfirmed"), data.message)
+        showToast("success", data.studentName || t("attendanceConfirmed"), data.message, t("presentBadge"))
 
         if (continuousScanRef.current) {
           setTimeout(() => resumeScanning(), 1200)
@@ -495,7 +524,7 @@ export default function TeacherScanPage() {
         status: "success",
         method: "scan",
       })
-      showToast("success", data.studentName || t("attendanceConfirmed"), data.message)
+      showToast("success", data.studentName || t("attendanceConfirmed"), data.message, t("presentBadge"))
       setShowConfirm(false)
       setPendingStudent(null)
       setPendingEncoded(null)
@@ -665,11 +694,14 @@ export default function TeacherScanPage() {
     setManualCode("")
   }
 
-  const todayHistory = history.filter((h) => {
-    const d = new Date(h.timestamp)
-    const now = new Date()
-    return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
-  })
+  const handleEndSession = () => {
+    if (typeof window !== "undefined" && !window.confirm(t("confirmEndSession"))) return
+    setHistory([])
+    try { localStorage.removeItem(HISTORY_KEY) } catch {}
+    showToast("info", t("sessionEnded"))
+  }
+
+  const todayHistory = history.filter((h) => isSameDay(new Date(h.timestamp), new Date()))
 
   return (
     <div className="max-w-3xl mx-auto p-4 md:p-8" dir={dir}>
@@ -927,7 +959,19 @@ export default function TeacherScanPage() {
         <div className="flex items-center gap-2 mb-3">
           <History size={18} className="text-gray-500" />
           <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">{t("history")}</h2>
-          <span className="ml-auto text-xs text-gray-400">{todayHistory.length}</span>
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-xs text-gray-400">{todayHistory.length}</span>
+            {todayHistory.length > 0 && (
+              <button
+                onClick={handleEndSession}
+                title={t("endSession")}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-300 dark:hover:bg-red-900/30 rounded-lg transition"
+              >
+                <Trash2 size={12} />
+                {t("endSession")}
+              </button>
+            )}
+          </div>
         </div>
 
         {todayHistory.length === 0 ? (
@@ -963,25 +1007,45 @@ export default function TeacherScanPage() {
         )}
       </div>
 
-      {/* Toast */}
+      {/* Toast / étiquette rapide */}
       <AnimatePresence>
         {toast && (
           <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 min-w-[16rem] max-w-[90vw] ${
-              toast.type === "success" ? "bg-gray-900 text-white" : "bg-white dark:bg-gray-900 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800"
+            className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 shadow-2xl flex flex-col items-center text-center min-w-[18rem] max-w-[92vw] overflow-hidden ${
+              toast.type === "success"
+                ? "bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-3xl"
+                : toast.type === "info"
+                ? "bg-gray-900 text-white rounded-2xl"
+                : "bg-white dark:bg-gray-900 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-2xl"
             }`}
           >
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-              toast.type === "success" ? "bg-green-500/20 text-green-400" : "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-300"
-            }`}>
-              {toast.type === "success" ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold truncate">{toast.title}</p>
-              {toast.message && <p className="text-xs opacity-80 truncate">{toast.message}</p>}
+            {toast.type === "success" && (
+              <div className="w-full bg-white/10 py-2 px-4 flex items-center justify-center gap-2">
+                <CheckCircle2 size={16} className="text-white" />
+                {toast.badge && (
+                  <span className="text-xs font-bold tracking-widest bg-white/20 px-2 py-0.5 rounded-full">
+                    {toast.badge}
+                  </span>
+                )}
+              </div>
+            )}
+            <div className="px-6 py-4 flex items-center gap-3">
+              {toast.type !== "success" && (
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
+                  toast.type === "info"
+                    ? "bg-blue-500/20 text-blue-300"
+                    : "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-300"
+                }`}>
+                  {toast.type === "info" ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className={`font-semibold truncate ${toast.type === "success" ? "text-lg" : "text-sm"}`}>{toast.title}</p>
+                {toast.message && <p className="text-xs opacity-90 truncate mt-0.5">{toast.message}</p>}
+              </div>
             </div>
           </motion.div>
         )}

@@ -2900,6 +2900,10 @@ export const translations = {
     alreadyPresent:   { fr: "Déjà présent",                      en: "Already present",              ar: "موجود بالفعل" },
     alreadyPresentMessage:{ fr: "{name} est déjà marqué présent aujourd'hui", en: "{name} is already marked present today", ar: "تم تسجيل {name} كحاضر اليوم" },
     alreadyScanned:   { fr: "Code déjà scanné",                  en: "Code already scanned",         ar: "تم مسح الرمز بالفعل" },
+    presentBadge:     { fr: "PRÉSENT",                           en: "PRESENT",                      ar: "حاضر" },
+    endSession:       { fr: "Terminer la séance",                en: "End session",                  ar: "إنهاء الجلسة" },
+    sessionEnded:     { fr: "Séance terminée",                   en: "Session ended",                ar: "تم إنهاء الجلسة" },
+    confirmEndSession:{ fr: "Vider la liste des scans d'aujourd'hui ?", en: "Clear today's scan list?", ar: "مسح قائمة المسح لهذا اليوم؟" },
   },
 
 } as const
