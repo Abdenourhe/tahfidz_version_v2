@@ -331,10 +331,10 @@ function StudentCardContent({
 
       {/* Bandeau bleu avec nom */}
       <div
-        className="absolute left-0 right-0 flex items-center"
+        className="absolute left-0 right-0 flex items-center justify-between"
         style={{ top: "9mm", height: "10mm", background: "#0e76a8", paddingLeft: "3mm", paddingRight: "3mm" }}
       >
-        <div style={{ maxWidth: "80%" }}>
+        <div style={{ maxWidth: "75%" }}>
           <p
             className="uppercase truncate"
             style={{ fontSize: "4mm", fontWeight: 800, color: "#ffffff", letterSpacing: "0.03em", lineHeight: 1.1 }}
@@ -344,6 +344,13 @@ function StudentCardContent({
           <p style={{ fontSize: "2.2mm", color: "#dbeafe", lineHeight: 1.1, marginTop: "0.8mm" }}>
             {t("student", locale)}
           </p>
+        </div>
+        <div
+          className="text-right"
+          style={{ color: "rgba(255,255,255,0.85)", fontWeight: 500, fontSize: "1.3mm", lineHeight: 1.2 }}
+        >
+          <p style={{ fontSize: "1.1mm", opacity: 0.8, textTransform: "uppercase" }}>{t("issuedOn", locale)}</p>
+          <p>{displayDate}</p>
         </div>
       </div>
 
@@ -387,20 +394,12 @@ function StudentCardContent({
         </div>
       </div>
 
-      {/* Date d'émission */}
-      <div
-        className="absolute"
-        style={{ left: "3mm", bottom: "10.5mm", color: "#6b7280", fontWeight: 500, fontSize: "1.4mm", lineHeight: 1 }}
-      >
-        {displayDate}
-      </div>
-
       {/* Code-barres */}
-      <div style={{ position: "absolute", left: "3mm", width: "52mm", bottom: "1mm" }}>
+      <div style={{ position: "absolute", left: "3mm", width: "52mm", bottom: "2mm" }}>
         <Barcode
           value={student.studentCode}
           width={1.1}
-          height={32}
+          height={28}
           fontSize={9}
           background="#ffffff"
           lineColor="#000000"
@@ -412,7 +411,7 @@ function StudentCardContent({
       {/* QR code */}
       <div
         className="flex items-center justify-center bg-white"
-        style={{ position: "absolute", right: "3mm", bottom: "1mm", width: "20mm", height: "20mm" }}
+        style={{ position: "absolute", right: "3mm", bottom: "2mm", width: "20mm", height: "20mm" }}
       >
         <QRCodeSVG value={qrCodeUrl} size={76} level="M" bgColor="#ffffff" fgColor="#000000" />
       </div>
