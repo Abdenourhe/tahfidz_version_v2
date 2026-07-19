@@ -12,7 +12,7 @@ import {
 import Link from "next/link"
 import { Logo } from "@/components/ui/Logo"
 import { PLAN_CONFIG, PLANS, PlanLocale } from "@/lib/halaqa-quota"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { useLanguage, useT } from "@/contexts/LanguageContext"
 import type { LandingContent } from "@/lib/landing/default-content"
 
 /* ─── Types ──────────────────────────────────────────────── */
@@ -39,11 +39,6 @@ interface FormData {
 type LandingPlan = LandingContent["pricing"]["plans"][number]
 
 /* ─── Step config ────────────────────────────────────────── */
-const steps = [
-  { num: 1, label: "Ecole", icon: Building2 },
-  { num: 2, label: "Administrateur", icon: User },
-  { num: 3, label: "Capacite", icon: Users },
-]
 
 type SchoolPlanKey = keyof typeof PLANS
 const planOrder: SchoolPlanKey[] = ["FREE", "STARTER", "ECONOMIQUE", "PRO", "ENTERPRISE"]
@@ -76,6 +71,13 @@ export default function RegisterSchoolClient() {
   const billingCycleParam = periodParam === "month" ? "MONTHLY" : "YEARLY"
   const { locale } = useLanguage()
   const lang: PlanLocale = (locale === "ar" ? "ar" : locale === "en" ? "en" : "fr") as PlanLocale
+  const t = useT("registerSchool")
+
+  const steps = [
+    { num: 1, label: t("stepSchool"), icon: Building2 },
+    { num: 2, label: t("stepAdmin"), icon: User },
+    { num: 3, label: t("stepCapacity"), icon: Users },
+  ]
 
   const [landingPlans, setLandingPlans] = useState<LandingPlan[]>([])
   const [landingCurrency, setLandingCurrency] = useState("CAD")
@@ -130,11 +132,11 @@ export default function RegisterSchoolClient() {
 
   const next = () => {
     if (step === 2 && form.adminPassword !== form.confirmPassword) {
-      setError("Les mots de passe ne correspondent pas.")
+      setError(t("passwordMismatch"))
       return
     }
     if (step === 2 && form.adminPassword.length < 8) {
-      setError("Le mot de passe doit contenir au moins 8 caracteres.")
+      setError(t("passwordMinLength"))
       return
     }
     if (step < 3) setStep((s => (s + 1) as Step))
@@ -186,12 +188,12 @@ export default function RegisterSchoolClient() {
       })
       if (!res.ok) {
         const err = await res.json()
-        setError(err.error || "Erreur lors de la soumission.")
+        setError(err.error || t("submitError"))
       } else {
         setSuccess(true)
       }
     } catch {
-      setError("Une erreur reseau est survenue.")
+      setError(t("networkError"))
     }
     setLoading(false)
   }
@@ -212,18 +214,18 @@ export default function RegisterSchoolClient() {
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-tahfidz-green/10 mb-6">
             <CheckCircle2 size={44} className="text-tahfidz-green" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Demande envoyee !</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">{t("successTitle")}</h1>
           <p className="text-gray-600 dark:text-gray-300 mb-2">
-            Votre demande d&apos;inscription pour <strong>{form.schoolName}</strong> est en cours de validation.
+            {t("successMessage")}<strong>{form.schoolName}</strong>{t("successMessage2")}
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
-            Le Super-Admin examinera votre demande et vous enverra un email de confirmation avec vos identifiants de connexion.
+            {t("successDetail")}
           </p>
           <div className="p-4 bg-tahfidz-green-light dark:bg-emerald-900/20 rounded-xl text-sm text-tahfidz-green font-medium mb-6">
-            Email enregistre : {form.adminEmail}
+            {t("emailRegistered")} {form.adminEmail}
           </div>
           <Link href="/login" className="inline-flex items-center gap-2 px-6 py-3 bg-tahfidz-green text-white font-semibold rounded-xl hover:bg-emerald-700 transition shadow-lg shadow-tahfidz-green/20">
-            Se connecter
+            {t("login")}
           </Link>
         </motion.div>
       </div>
@@ -240,7 +242,7 @@ export default function RegisterSchoolClient() {
             <Logo variant="full" width={75} height={20} priority className="h-5 w-auto" />
           </Link>
           <Link href="/login" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-tahfidz-green transition">
-            <ArrowLeft size={14} /> Deja inscrit ? Se connecter
+            <ArrowLeft size={14} /> {t("alreadyRegistered")}
           </Link>
         </div>
       </div>
@@ -254,27 +256,27 @@ export default function RegisterSchoolClient() {
         >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-tahfidz-green-light dark:bg-emerald-900/20 text-tahfidz-green text-xs font-semibold mb-4">
             <Sparkles size={14} />
-            Inscription gratuite
+            {t("freeBadge")}
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-3">
-            Inscrire mon ecole
+            {t("title")}
           </h1>
           <p className="text-gray-500 dark:text-gray-400 max-w-lg mx-auto">
-            Remplissez le formulaire ci-dessous. Le Super-Admin validera votre demande sous 24h.
+            {t("subtitle")}
           </p>
 
           {form.plan && (
             <div className="mt-5 inline-flex flex-wrap items-center justify-center gap-2">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-tahfidz-green/10 to-emerald-500/10 dark:from-emerald-900/20 dark:to-emerald-800/20 border border-tahfidz-green/20 dark:border-emerald-800/30">
-                <span className="text-xs text-gray-500 dark:text-gray-400">Plan selectionne :</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">{t("planSelected")}</span>
                 <span className="text-sm font-bold text-tahfidz-green">
-                  {form.plan ? planLabel(form.plan as SchoolPlanKey, landingPlans, lang) : form.plan} · {form.billingCycle === "MONTHLY" ? "Mensuel" : "Annuel"}
+                  {form.plan ? planLabel(form.plan as SchoolPlanKey, landingPlans, lang) : form.plan} · {form.billingCycle === "MONTHLY" ? t("monthly") : t("yearly")}
                 </span>
               </div>
               {form.halaqaSessionDuration && (
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/30 text-blue-700 dark:text-blue-300">
                   <Clock size={12} />
-                  <span className="text-xs font-medium">Durée de seance : {form.halaqaSessionDuration} min</span>
+                  <span className="text-xs font-medium">{t("sessionDuration")} {form.halaqaSessionDuration} {t("minutes")}</span>
                 </div>
               )}
             </div>
@@ -334,21 +336,21 @@ export default function RegisterSchoolClient() {
                         <Building2 size={20} />
                       </div>
                       <div>
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Informations de l&apos;ecole</h2>
-                        <p className="text-xs text-gray-500">Etape 1 sur 3</p>
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t("schoolInfoTitle")}</h2>
+                        <p className="text-xs text-gray-500">{t("stepIndicator").replace("{0}", "1").replace("{1}", "3")}</p>
                       </div>
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                        Nom de l&apos;ecole <span className="text-red-500">*</span>
+                        {t("schoolNameLabel")} <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
                         <School size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                           value={form.schoolName}
                           onChange={(e) => update("schoolName", e.target.value)}
-                          placeholder="Medersa Al-Nour"
+                          placeholder={t("schoolNamePlaceholder")}
                           className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white"
                         />
                       </div>
@@ -357,7 +359,7 @@ export default function RegisterSchoolClient() {
                     {/* Logo upload */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                        Logo de l&apos;ecole <span className="text-gray-400 font-normal">(optionnel)</span>
+                        {t("logoLabel")} <span className="text-gray-400 font-normal">{t("optional")}</span>
                       </label>
                       <div className="flex items-center gap-4">
                         <div className="w-14 h-14 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-center bg-gray-50 dark:bg-gray-800 overflow-hidden shrink-0">
@@ -376,7 +378,7 @@ export default function RegisterSchoolClient() {
                             onChange={(e) => {
                               const file = e.target.files?.[0]
                               if (!file) return
-                              if (file.size > 2 * 1024 * 1024) { setError("Le logo ne doit pas depasser 2 Mo."); return }
+                              if (file.size > 2 * 1024 * 1024) { setError(t("logoSizeError")); return }
                               setLogoFile(file)
                               const reader = new FileReader()
                               reader.onload = () => setLogoPreview(reader.result as string)
@@ -386,27 +388,27 @@ export default function RegisterSchoolClient() {
                           />
                           <label htmlFor="logo-upload"
                             className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer">
-                            {logoFile ? logoFile.name : "Choisir un logo"}
+                            {logoFile ? logoFile.name : t("chooseLogo")}
                           </label>
                           {logoFile && (
                             <button type="button" onClick={() => { setLogoFile(null); setLogoPreview(null); }}
                               className="ml-2 text-xs text-red-400 hover:text-red-600 inline-flex items-center gap-1">
-                              <X size={11} /> Retirer
+                              <X size={11} /> {t("remove")}
                             </button>
                           )}
-                          <p className="text-[10px] text-gray-400 mt-1">PNG, JPG, WEBP ou SVG — Max 2 Mo</p>
+                          <p className="text-[10px] text-gray-400 mt-1">{t("logoHint")}</p>
                         </div>
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Adresse</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("addressLabel")}</label>
                       <div className="relative">
                         <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                           value={form.address}
                           onChange={(e) => update("address", e.target.value)}
-                          placeholder="Rue, quartier, commune..."
+                          placeholder={t("addressPlaceholder")}
                           className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white"
                         />
                       </div>
@@ -414,19 +416,19 @@ export default function RegisterSchoolClient() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Ville</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("cityLabel")}</label>
                         <div className="relative">
                           <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                           <input
                             value={form.city}
                             onChange={(e) => update("city", e.target.value)}
-                            placeholder="Alger"
+                            placeholder={t("cityPlaceholder")}
                             className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white"
                           />
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Pays</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("countryLabel")}</label>
                         <div className="relative">
                           <Globe size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                           <select
@@ -434,14 +436,14 @@ export default function RegisterSchoolClient() {
                             onChange={(e) => update("country", e.target.value)}
                             className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white appearance-none"
                           >
-                            <option value="DZ">Algerie</option>
-                            <option value="MA">Maroc</option>
-                            <option value="TN">Tunisie</option>
-                            <option value="FR">France</option>
-                            <option value="BE">Belgique</option>
-                            <option value="CA">Canada</option>
-                            <option value="SA">Arabie Saoudite</option>
-                            <option value="OTHER">Autre</option>
+                            <option value="DZ">{t("countryDZ")}</option>
+                            <option value="MA">{t("countryMA")}</option>
+                            <option value="TN">{t("countryTN")}</option>
+                            <option value="FR">{t("countryFR")}</option>
+                            <option value="BE">{t("countryBE")}</option>
+                            <option value="CA">{t("countryCA")}</option>
+                            <option value="SA">{t("countrySA")}</option>
+                            <option value="OTHER">{t("countryOther")}</option>
                           </select>
                         </div>
                       </div>
@@ -462,21 +464,21 @@ export default function RegisterSchoolClient() {
                         <User size={20} />
                       </div>
                       <div>
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Compte administrateur</h2>
-                        <p className="text-xs text-gray-500">Etape 2 sur 3</p>
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t("adminTitle")}</h2>
+                        <p className="text-xs text-gray-500">{t("stepIndicator").replace("{0}", "2").replace("{1}", "3")}</p>
                       </div>
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                        Nom complet <span className="text-red-500">*</span>
+                        {t("fullNameLabel")} <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
                         <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                           value={form.adminName}
                           onChange={(e) => update("adminName", e.target.value)}
-                          placeholder="Sheikh Mohammed Benali"
+                          placeholder={t("fullNamePlaceholder")}
                           className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white"
                         />
                       </div>
@@ -485,7 +487,7 @@ export default function RegisterSchoolClient() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                          Email <span className="text-red-500">*</span>
+                          {t("emailLabel")} <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
                           <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -493,20 +495,20 @@ export default function RegisterSchoolClient() {
                             type="email"
                             value={form.adminEmail}
                             onChange={(e) => update("adminEmail", e.target.value)}
-                            placeholder="directeur@ecole.com"
+                            placeholder={t("emailPlaceholder")}
                             className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white"
                           />
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Telephone</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("phoneLabel")}</label>
                         <div className="relative">
                           <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                           <input
                             type="tel"
                             value={form.adminPhone}
                             onChange={(e) => update("adminPhone", e.target.value)}
-                            placeholder="(+213) 6xx xxx xxxx"
+                            placeholder={t("phonePlaceholder")}
                             className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white"
                           />
                         </div>
@@ -516,7 +518,7 @@ export default function RegisterSchoolClient() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                          Mot de passe <span className="text-red-500">*</span>
+                          {t("passwordLabel")} <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
                           <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -524,7 +526,7 @@ export default function RegisterSchoolClient() {
                             type={showPwd ? "text" : "password"}
                             value={form.adminPassword}
                             onChange={(e) => update("adminPassword", e.target.value)}
-                            placeholder="min. 8 caracteres"
+                            placeholder={t("passwordPlaceholder")}
                             className="w-full pl-11 pr-11 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white"
                           />
                           <button type="button" onClick={() => setShowPwd(!showPwd)}
@@ -535,7 +537,7 @@ export default function RegisterSchoolClient() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                          Confirmer <span className="text-red-500">*</span>
+                          {t("confirmLabel")} <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
                           <ShieldCheck size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -543,7 +545,7 @@ export default function RegisterSchoolClient() {
                             type={showConfirm ? "text" : "password"}
                             value={form.confirmPassword}
                             onChange={(e) => update("confirmPassword", e.target.value)}
-                            placeholder="repeter"
+                            placeholder={t("confirmPlaceholder")}
                             className="w-full pl-11 pr-11 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white"
                           />
                           <button type="button" onClick={() => setShowConfirm(!showConfirm)}
@@ -569,15 +571,15 @@ export default function RegisterSchoolClient() {
                         <GraduationCap size={20} />
                       </div>
                       <div>
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Capacite prevue</h2>
-                        <p className="text-xs text-gray-500">Etape 3 sur 3</p>
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t("capacityTitle")}</h2>
+                        <p className="text-xs text-gray-500">{t("stepIndicator").replace("{0}", "3").replace("{1}", "3")}</p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-3 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                          Classes <span className="text-red-500">*</span>
+                          {t("classesLabel")} <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="number"
@@ -585,13 +587,13 @@ export default function RegisterSchoolClient() {
                           max={100}
                           value={form.classCount}
                           onChange={(e) => update("classCount", e.target.value)}
-                          placeholder="5"
+                          placeholder={t("classesPlaceholder")}
                           className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white"
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                          Eleves/classe <span className="text-red-500">*</span>
+                          {t("studentsPerClassLabel")} <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="number"
@@ -599,13 +601,13 @@ export default function RegisterSchoolClient() {
                           max={100}
                           value={form.studentsPerClass}
                           onChange={(e) => update("studentsPerClass", e.target.value)}
-                          placeholder="15"
+                          placeholder={t("studentsPerClassPlaceholder")}
                           className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white"
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                          Enseignants <span className="text-red-500">*</span>
+                          {t("teachersLabel")} <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="number"
@@ -613,7 +615,7 @@ export default function RegisterSchoolClient() {
                           max={200}
                           value={form.teachersCount}
                           onChange={(e) => update("teachersCount", e.target.value)}
-                          placeholder="4"
+                          placeholder={t("teachersPlaceholder")}
                           className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white"
                         />
                       </div>
@@ -622,7 +624,7 @@ export default function RegisterSchoolClient() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                         <Clock size={14} className="inline mr-1" />
-                        Duree moyenne d&apos;une seance Halaqa (min) <span className="text-red-500">*</span>
+                        {t("sessionDurationLabel")} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="number"
@@ -630,11 +632,11 @@ export default function RegisterSchoolClient() {
                         max={180}
                         value={form.halaqaSessionDuration}
                         onChange={(e) => update("halaqaSessionDuration", e.target.value)}
-                        placeholder="45"
+                        placeholder={t("sessionDurationPlaceholder")}
                         className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white"
                       />
                       <p className="text-xs text-gray-400 mt-1.5">
-                        Indiquez la duree moyenne souhaitee pour vos seances Halaqa. Le Super-Admin pourra l&apos;ajuster a la validation.
+                        {t("sessionDurationHint")}
                       </p>
                     </div>
 
@@ -646,7 +648,7 @@ export default function RegisterSchoolClient() {
                       >
                         <div className="flex items-center gap-2 text-sm text-tahfidz-green font-semibold">
                           <BookOpen size={16} />
-                          Estimation : {totalStudents} eleves au total
+                          {t("totalEstimate")} {totalStudents} {t("totalStudents")}
                         </div>
                       </motion.div>
                     )}
@@ -673,18 +675,18 @@ export default function RegisterSchoolClient() {
                           <div className="flex items-start gap-2 text-sm text-amber-800 dark:text-amber-200 mb-3">
                             <span className="mt-0.5">⚠</span>
                             <div>
-                              <p className="font-semibold">Capacité dépassée pour le plan {planLabel(currentPlan, landingPlans, lang)}</p>
+                              <p className="font-semibold">{t("capacityExceeded")} {planLabel(currentPlan, landingPlans, lang)}</p>
                               {overStudents && (
-                                <p>Le plan {planLabel(currentPlan, landingPlans, lang)} permet max {currentConfig.maxStudents} élèves, vous en avez estimé {totalStudents}.</p>
+                                <p>{t("maxStudentsExceeded").replace("{plan}", planLabel(currentPlan, landingPlans, lang)).replace("{max}", String(currentConfig.maxStudents)).replace("{count}", String(totalStudents))}</p>
                               )}
                               {overTeachers && (
-                                <p>Le plan {planLabel(currentPlan, landingPlans, lang)} permet max {currentConfig.maxTeachers} enseignants, vous en avez indiqué {form.teachersCount}.</p>
+                                <p>{t("maxTeachersExceeded").replace("{plan}", planLabel(currentPlan, landingPlans, lang)).replace("{max}", String(currentConfig.maxTeachers)).replace("{count}", String(form.teachersCount))}</p>
                               )}
-                              <p className="mt-1 font-medium">Nous vous recommandons le plan {planLabel(recommended, landingPlans, lang)} ou supérieur.</p>
+                              <p className="mt-1 font-medium">{t("recommendPlan").replace("{plan}", planLabel(recommended, landingPlans, lang))}</p>
                             </div>
                           </div>
 
-                          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Choisir une offre adaptee</p>
+                          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{t("chooseOffer")}</p>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {planOrder
                               .slice(recommendedIndex)
@@ -711,7 +713,7 @@ export default function RegisterSchoolClient() {
                                 >
                                   {isRecommended && (
                                     <span className="absolute -top-2 left-3 px-2 py-0.5 bg-tahfidz-green text-white text-[10px] font-bold rounded-full">
-                                      Recommande
+                                      {t("recommended")}
                                     </span>
                                   )}
                                   <div className="flex items-baseline justify-between gap-2 mb-1">
@@ -728,11 +730,11 @@ export default function RegisterSchoolClient() {
                                     ))}
                                   </ul>
                                   <p className="text-xs text-tahfidz-green mt-2 font-medium">
-                                    {config.monthlyHalaqas === null ? "Halaqas illimitees" : `${config.monthlyHalaqas} Halaqas/mois`} · {config.halaqaMaxDuration} min max
+                                    {config.monthlyHalaqas === null ? t("unlimitedHalaqas") : `${config.monthlyHalaqas} ${t("halaqasPerMonth")}`} · {config.halaqaMaxDuration} {t("maxDuration")}
                                   </p>
                                   {isSelected && (
                                     <div className="mt-2 text-xs font-semibold text-tahfidz-green">
-                                      Selectionne
+                                      {t("selected")}
                                     </div>
                                   )}
                                 </button>
@@ -766,7 +768,7 @@ export default function RegisterSchoolClient() {
                 disabled={step === 1}
                 className="px-5 py-2.5 text-sm font-semibold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-white dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
               >
-                Retour
+                {t("back")}
               </button>
 
               {step < 3 ? (
@@ -776,7 +778,7 @@ export default function RegisterSchoolClient() {
                   disabled={!canGoNext()}
                   className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-white bg-tahfidz-green rounded-xl hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-lg shadow-tahfidz-green/20"
                 >
-                  Suivant
+                  {t("next")}
                   <ChevronRight size={16} />
                 </button>
               ) : (
@@ -786,14 +788,14 @@ export default function RegisterSchoolClient() {
                   disabled={loading || !canGoNext()}
                   className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-white bg-tahfidz-green rounded-xl hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-lg shadow-tahfidz-green/20"
                 >
-                  {loading ? <><Loader2 size={16} className="animate-spin" /> Envoi...</> : <>Soumettre ma demande</>}
+                  {loading ? <><Loader2 size={16} className="animate-spin" /> {t("sending")}</> : <>{t("submit")}</>}
                 </button>
               )}
             </div>
           </div>
 
           <p className="text-center text-xs text-gray-400 mt-6">
-            En soumettant, vous acceptez que le Super-Admin examine votre demande. Aucune carte bancaire requise.
+            {t("termsNote")}
           </p>
         </motion.div>
       </div>
