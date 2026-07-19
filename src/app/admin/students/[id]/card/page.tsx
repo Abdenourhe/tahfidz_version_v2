@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from "react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
-import { QRCodeSVG } from "qrcode.react"
 import Barcode from "react-barcode"
 import Image from "next/image"
 import { useLanguage } from "@/contexts/LanguageContext"
@@ -254,7 +253,7 @@ export default function StudentCardPage() {
 function StudentCardContent({
   student,
   school,
-  qrCodeUrl,
+  qrCodeUrl: _qrCodeUrl,
   displayDate,
   locale,
   logoUrl,
@@ -395,25 +394,26 @@ function StudentCardContent({
       </div>
 
       {/* Code-barres */}
-      <div style={{ position: "absolute", left: "3mm", width: "52mm", bottom: "2mm" }}>
+      <div
+        style={{
+          position: "absolute",
+          left: "3mm",
+          right: "3mm",
+          bottom: "2mm",
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
         <Barcode
           value={student.studentCode}
-          width={1.1}
-          height={28}
-          fontSize={9}
+          width={1.2}
+          height={36}
+          fontSize={10}
           background="#ffffff"
           lineColor="#000000"
           margin={0}
           displayValue
         />
-      </div>
-
-      {/* QR code */}
-      <div
-        className="flex items-center justify-center bg-white"
-        style={{ position: "absolute", right: "3mm", bottom: "2mm", width: "20mm", height: "20mm" }}
-      >
-        <QRCodeSVG value={qrCodeUrl} size={76} level="M" bgColor="#ffffff" fgColor="#000000" />
       </div>
 
       {/* Bandeau inférieur */}
