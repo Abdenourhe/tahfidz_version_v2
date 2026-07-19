@@ -254,6 +254,7 @@ export default function TeacherScanPage() {
             const raw = results[0].rawValue
             if (raw && !processingRef.current) {
               console.log("[BarcodeDetector] detected:", raw)
+              processingRef.current = true
               await processDecodedRef.current?.(raw, "scan")
             }
           }
@@ -292,9 +293,9 @@ export default function TeacherScanPage() {
         cameraConfig as any,
         { fps: 25, qrbox, aspectRatio: 1.777778, disableFlip: false },
         (decodedText) => {
-          if (!processingRef.current) {
-            processDecodedRef.current?.(decodedText, "scan")
-          }
+          if (processingRef.current) return
+          processingRef.current = true
+          processDecodedRef.current?.(decodedText, "scan")
         },
         (errorMessage) => {
           console.debug("[Scan] error:", errorMessage)
@@ -347,8 +348,9 @@ export default function TeacherScanPage() {
     if (processingRef.current) return
     processingRef.current = true
 
-    // Pause immédiatement le scanner
-    try { await scannerRef.current?.pause(true) } catch {}
+    try {
+      // Pause immédiatement le scanner
+      try { await scannerRef.current?.pause(true) } catch {}
 
     const trimmed = raw.trim()
     let encoded: string | null = null
@@ -482,6 +484,15 @@ export default function TeacherScanPage() {
         } else {
           setScanned(true)
         }
+      }
+    }
+    } catch (unexpected) {
+      console.error("[Scan] unexpected error in processDecoded", unexpected)
+      showToast("error", t("verifyError"))
+      if (continuousScanRef.current) {
+        setTimeout(() => resumeScanning(), 1500)
+      } else {
+        setScanned(true)
       }
     }
   }, [addHistory, resumeScanning, showToast, t])
@@ -979,25 +990,25 @@ export default function TeacherScanPage() {
             {t("historyEmpty")}
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2 max-h-[24rem] overflow-y-auto pr-1">
             {todayHistory.map((item) => (
               <div
                 key={item.id}
-                className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm"
+                className="flex items-start gap-3 p-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm"
               >
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                <div className={`w-10 h-10 mt-0.5 rounded-full flex items-center justify-center shrink-0 ${
                   item.status === "success" ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-300" : "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-300"
                 }`}>
                   {item.status === "success" ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.studentName}</p>
-                  {item.groupName && <p className="text-xs text-gray-500 truncate">{item.groupName}</p>}
+                <div className="flex-1 min-w-0 overflow-hidden">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white break-words leading-snug">{item.studentName}</p>
+                  {item.groupName && <p className="text-xs text-gray-500 break-words leading-snug">{item.groupName}</p>}
                   {item.status === "error" && item.error && (
-                    <p className="text-xs text-red-500 truncate">{item.error}</p>
+                    <p className="text-xs text-red-500 break-words leading-snug">{item.error}</p>
                   )}
                 </div>
-                <div className="flex items-center gap-1 text-xs text-gray-400 shrink-0">
+                <div className="flex items-center gap-1 text-xs text-gray-400 shrink-0 pt-1">
                   <Clock size={12} />
                   {formatTimeAgo(item.timestamp, t)}
                 </div>
