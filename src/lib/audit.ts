@@ -1,4 +1,3 @@
-"use server"
 // src/lib/audit.ts
 // Service d'audit complet avec middleware Prisma + logs manuels
 
