@@ -19,6 +19,8 @@ export const prisma =
   })
 
 // ── Activer le middleware audit ────────────────────────────────────
+import { setupAuditMiddleware } from "@/lib/audit"
+setupAuditMiddleware(prisma)
 // setupAuditMiddleware(prisma)
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma

@@ -1,11 +1,24 @@
 // src/app/api/reset-password/route.ts — Validation token + changement mot de passe
 import { NextRequest, NextResponse } from "next/server"
+import { checkRateLimit } from "@/lib/rate-limit"
 import { prisma } from "@/lib/prisma"
 import { jwtVerify } from "jose"
 import bcrypt from "bcryptjs"
 
+function getClientIp(req: NextRequest): string {
+  const forwarded = req.headers.get("x-forwarded-for")
+  return forwarded?.split(",")[0]?.trim() ?? "unknown"
+}
+
 export async function POST(req: NextRequest) {
   try {
+    // Rate limiting : 5 requêtes par 60 min max par IP
+    const ip = getClientIp(req)
+    const rate = checkRateLimit(`reset-password:${ip}`, 5, 3600)
+    if (!rate.success) {
+      return NextResponse.json({ error: "Trop de requêtes, veuillez réessayer plus tard." }, { status: 429 })
+    }
+
     const { token, password } = await req.json()
 
     if (!token || !password || password.length < 8) {

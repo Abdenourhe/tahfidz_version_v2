@@ -1,5 +1,6 @@
 // src/app/api/register-school/route.ts
 import { NextRequest, NextResponse } from "next/server"
+import { checkRateLimit } from "@/lib/rate-limit"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { z } from "zod"
@@ -23,8 +24,20 @@ const schema = z.object({
   logo:             z.string().optional(),
 })
 
+function getClientIp(req: NextRequest): string {
+  const forwarded = req.headers.get("x-forwarded-for")
+  return forwarded?.split(",")[0]?.trim() ?? "unknown"
+}
+
 export async function POST(req: NextRequest) {
   try {
+    // Rate limiting : 3 requêtes par 60 min max par IP
+    const ip = getClientIp(req)
+    const rate = checkRateLimit(`register-school:${ip}`, 3, 3600)
+    if (!rate.success) {
+      return NextResponse.json({ error: "Trop de requêtes, veuillez réessayer plus tard." }, { status: 429 })
+    }
+
     const body   = await req.json()
     const parsed = schema.safeParse(body)
 

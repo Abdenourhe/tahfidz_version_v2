@@ -6,10 +6,17 @@
 import { prisma } from "@/lib/prisma"
 
 
-// Tables soumises à l'isolation tenant
+// Tables soumises à l'isolation tenant (CORRIGÉ : toutes les tables avec schoolId)
 const TENANT_TABLES = new Set([
   "user", "group", "announcement", "notification",
   "auditLog", "exam", "directMessage", "badge",
+  "student", "teacher", "parent", "admin",
+  "attendance", "qrScanLog", "memorizationProgress", "evaluation",
+  "dailyProgressLog", "halaqaSession", "halaqaEvaluation",
+  "libraryContent", "libraryCollection", "libraryCategory",
+  "feedback", "broadcast", "parentAttendance",
+  "schoolRequest", "schoolUpdateRequest",
+  "certificateTemplate", "uploadedFile",
 ])
 
 /**

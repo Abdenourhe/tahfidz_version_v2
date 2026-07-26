@@ -227,6 +227,7 @@ model Session {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@map("sessions")
 }
 
@@ -547,6 +548,7 @@ model DailyProgressLog {
 
   @@unique([studentId, date])
   @@index([studentId, date])
+  @@index([createdById])
   @@map("daily_progress_logs")
 }
 
@@ -869,6 +871,7 @@ model ErrorLog {
 
   @@index([createdAt])
   @@index([severity])
+  @@index([source])
   @@map("error_logs")
 }
 
@@ -987,6 +990,7 @@ model DirectMessage {
 
   @@index([schoolId, toUserId, isRead])
   @@index([schoolId, sentAt])
+  @@index([fromUserId])
   @@map("direct_messages")
 }
 

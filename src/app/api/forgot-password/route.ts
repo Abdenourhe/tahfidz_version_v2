@@ -1,5 +1,6 @@
 // src/app/api/forgot-password/route.ts — Demande de reinitialisation mot de passe
 import { NextRequest, NextResponse } from "next/server"
+import { checkRateLimit } from "@/lib/rate-limit"
 import { prisma } from "@/lib/prisma"
 import { sendPasswordResetEmail } from "@/lib/email"
 import { isMailConfigured } from "@/lib/mail"
@@ -11,8 +12,20 @@ const schema = z.object({
   schoolSlug: z.string().min(2, "Identifiant ecole requis"),
 })
 
+function getClientIp(req: NextRequest): string {
+  const forwarded = req.headers.get("x-forwarded-for")
+  return forwarded?.split(",")[0]?.trim() ?? "unknown"
+}
+
 export async function POST(req: NextRequest) {
   try {
+    // Rate limiting : 5 requêtes par 60 min max par IP
+    const ip = getClientIp(req)
+    const rate = checkRateLimit(`forgot-password:${ip}`, 5, 3600)
+    if (!rate.success) {
+      return NextResponse.json({ error: "Trop de requêtes, veuillez réessayer plus tard." }, { status: 429 })
+    }
+
     const body = await req.json()
     const parsed = schema.safeParse(body)
     if (!parsed.success) {
