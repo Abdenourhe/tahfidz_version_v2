@@ -19,7 +19,7 @@ export const prisma =
   })
 
 // ── Activer le middleware audit ────────────────────────────────────
-import { setupAuditMiddleware } from "@/lib/audit"
+import { setupAuditMiddleware } from "@/lib/audit-middleware"
 setupAuditMiddleware(prisma)
 // setupAuditMiddleware(prisma)
 
