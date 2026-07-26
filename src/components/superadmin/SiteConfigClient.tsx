@@ -1320,6 +1320,7 @@ export function SiteConfigClient({ initialLanding, initialGlobal, initialPages }
   const [saving, setSaving] = useState<'landing' | 'global' | SitePageKey | null>(null)
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isFirstLandingRender = useRef(true)
+  const saveLandingRef = useRef<() => Promise<void>>(async () => {})
 
   // Auto-save landing avec debounce de 1s
   useEffect(() => {
@@ -1329,7 +1330,7 @@ export function SiteConfigClient({ initialLanding, initialGlobal, initialPages }
     }
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
     autoSaveTimer.current = setTimeout(() => {
-      void saveLanding()
+      void saveLandingRef.current()
     }, 1000)
     return () => {
       if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
@@ -1358,6 +1359,7 @@ export function SiteConfigClient({ initialLanding, initialGlobal, initialPages }
       setSaving(null)
     }
   }
+  saveLandingRef.current = saveLanding
 
   async function saveGlobal() {
     setSaving('global')

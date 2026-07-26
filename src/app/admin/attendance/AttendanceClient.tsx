@@ -107,10 +107,6 @@ function escapeHtml(s: string) {
     .replace(/"/g, "&quot;")
 }
 
-function _containsArabic(s: string) {
-  return /[\u0600-\u06FF]/.test(s)
-}
-
 function toDateKey(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
 }

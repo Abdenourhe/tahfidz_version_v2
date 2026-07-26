@@ -90,14 +90,12 @@ export function SuperAdminSchoolsClient({ schools }: Props) {
   const tc = (k: string) => useT("common", k)
   const planLocale = (locale === "ar" ? "ar" : locale === "en" ? "en" : "fr") as keyof typeof PLANS.FREE.name
   const [landingPlans, setLandingPlans] = useState<LandingPlan[]>([])
-  const [landingCurrency, setLandingCurrency] = useState("CAD")
 
   useEffect(() => {
     fetch(`/api/site-config/landing/plans?lang=${planLocale}`)
       .then((res) => res.json())
-      .then((data: { plans?: LandingPlan[]; currency?: string }) => {
+      .then((data: { plans?: LandingPlan[] }) => {
         setLandingPlans(data.plans ?? [])
-        setLandingCurrency(data.currency ?? "CAD")
       })
       .catch(() => setLandingPlans([]))
   }, [planLocale])

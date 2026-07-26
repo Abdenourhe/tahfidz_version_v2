@@ -2,7 +2,7 @@
 // src/components/admin/AdminSettingsClient.tsx
 
 import { useState, useEffect, useRef } from "react"
-import { Loader2, Save, CheckCircle2, Eye, EyeOff, User, Lock, Globe, Bell, Database, Moon, Sun, ExternalLink, Building2, Upload, Trash2, Image } from "lucide-react"
+import { Loader2, Save, CheckCircle2, Eye, EyeOff, User, Lock, Globe, Bell, Database, Moon, Sun, ExternalLink, Building2, Upload, Trash2, Image as ImageIcon } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { useLanguage } from "@/contexts/LanguageContext"
 import type { Locale } from "@/lib/i18n/translations"
@@ -552,7 +552,7 @@ export function AdminSettingsClient({ user, school }: Props) {
                       <img src={logoPreview} alt="Logo école" className="w-full h-full object-contain p-2" />
                     ) : (
                       <div className="text-center text-gray-400">
-                        <Image size={28} className="mx-auto mb-1" />
+                        <ImageIcon size={28} className="mx-auto mb-1" aria-hidden="true" />
                         <p className="text-xs">{tS("noLogo")}</p>
                       </div>
                     )}

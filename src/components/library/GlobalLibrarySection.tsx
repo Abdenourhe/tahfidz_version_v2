@@ -17,10 +17,9 @@ interface Content {
 interface Props {
   contents: Content[]
   basePath: string
-  _emptyMessage?: string
 }
 
-export function GlobalLibrarySection({ contents, basePath, _emptyMessage = "Aucune ressource de la plateforme pour le moment." }: Props) {
+export function GlobalLibrarySection({ contents, basePath }: Props) {
   if (contents.length === 0) return null
 
   return (
