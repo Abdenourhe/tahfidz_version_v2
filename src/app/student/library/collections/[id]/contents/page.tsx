@@ -4,7 +4,7 @@ import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { CollectionContentsClient } from "@/components/library/CollectionContentsClient"
-import { canAccessCollection, canAccessContent } from "@/lib/library/permissions"
+import { canAccessCollection } from "@/lib/library/permissions"
 import { getUserProgressMap } from "@/lib/library/access"
 
 type Params = { params: Promise<{ id: string }> }

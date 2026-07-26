@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { libraryCollectionSchema } from "@/lib/validations/library"
-import { canAccessCollection, canEditLibraryResource, canManageLibrary } from "@/lib/library/permissions"
+import { canManageLibrary, canEditLibraryResource } from "@/lib/library/permissions"
 
 type Params = { params: Promise<{ id: string }> }
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Globe, BookOpen } from "lucide-react"
+import { Globe } from "lucide-react"
 import { ContentCard } from "./ContentCard"
 
 interface Content {
@@ -17,10 +17,10 @@ interface Content {
 interface Props {
   contents: Content[]
   basePath: string
-  emptyMessage?: string
+  _emptyMessage?: string
 }
 
-export function GlobalLibrarySection({ contents, basePath, emptyMessage = "Aucune ressource de la plateforme pour le moment." }: Props) {
+export function GlobalLibrarySection({ contents, basePath, _emptyMessage = "Aucune ressource de la plateforme pour le moment." }: Props) {
   if (contents.length === 0) return null
 
   return (

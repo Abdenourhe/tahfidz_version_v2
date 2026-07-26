@@ -14,12 +14,10 @@ import { SUPPORTED_CURRENCIES, getCurrencyLabel } from '@/lib/landing/currencies
 import type {
   SitePageConfig,
   SitePageKey,
-  SitePageLang,
   PageContent,
   PageSection,
   ContactCard,
 } from '@/lib/site-config/page-types'
-import { defaultPageContents } from '@/lib/site-config/page-defaults'
 import { migrateEmailTemplatesToMultilingual, type EmailTemplatesConfig } from '@/lib/email-templates'
 
 // ── Types ──────────────────────────────────────────────────────────

@@ -107,7 +107,7 @@ function escapeHtml(s: string) {
     .replace(/"/g, "&quot;")
 }
 
-function containsArabic(s: string) {
+function _containsArabic(s: string) {
   return /[\u0600-\u06FF]/.test(s)
 }
 
