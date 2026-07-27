@@ -8,17 +8,21 @@ const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user?.schoolId || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
   }
+  const { schoolId } = session.user
+
   const parent = await prisma.parent.findUnique({
     where: { id: (await params).id },
     include: {
-      user: { select: { id:true, fullName:true, fullNameAr:true, email:true, phone:true, isActive:true } },
-      childrenLinks: { where:{isVerified:true}, include:{student:{include:{user:{select:{fullName:true}}}}} },
+      user: { select: { id:true, fullName:true, fullNameAr:true, email:true, phone:true, isActive:true, schoolId:true } },
+      childrenLinks: { where:{isVerified:true}, include:{student:{include:{user:{select:{fullName:true, schoolId:true}}}}} },
     },
   })
-  if (!parent) return NextResponse.json({ error: "Introuvable" }, { status: 404 })
+  if (!parent || parent.user.schoolId !== schoolId) {
+    return NextResponse.json({ error: "Introuvable" }, { status: 404 })
+  }
   return NextResponse.json({ parent: { ...parent, id: parent.user.id } })
 }
 

@@ -28,11 +28,15 @@ export async function DELETE(
     const student = await prisma.student.findUnique({
       where: { id: studentId },
       include: {
+        user: { select: { schoolId: true } },
         teacher: { select: { userId: true } },
       },
     })
     if (!student) {
       return NextResponse.json({ error: "Élève introuvable" }, { status: 404 })
+    }
+    if (session.user.role !== "SUPERADMIN" && student.user.schoolId !== session.user.schoolId) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
     }
 
     const canClear =

@@ -45,7 +45,7 @@ export function tenantPrisma(schoolId: string) {
           }
 
           // Lectures
-          if (["findMany", "findFirst", "findUnique", "count", "aggregate", "groupBy"].includes(operation)) {
+          if (["findMany", "findFirst", "findFirstOrThrow", "findUnique", "findUniqueOrThrow", "count", "aggregate", "groupBy"].includes(operation)) {
             args = { ...args, where: { ...(args.where as object ?? {}), schoolId } }
           }
 
@@ -58,6 +58,15 @@ export function tenantPrisma(schoolId: string) {
             args = {
               ...args,
               data: (args.data as Record<string, unknown>[]).map(d => ({ ...d, schoolId })),
+            }
+          }
+
+          // Upsert : sécuriser where + create
+          if (operation === "upsert") {
+            args = {
+              ...args,
+              where: { ...(args.where as object ?? {}), schoolId },
+              create: { ...(args.create as object ?? {}), schoolId },
             }
           }
 

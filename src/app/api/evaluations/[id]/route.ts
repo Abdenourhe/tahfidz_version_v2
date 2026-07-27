@@ -55,9 +55,13 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
 
   const existing = await prisma.evaluation.findUnique({
     where: { id },
-    include: { student: { select: { teacherId: true } } },
+    include: { student: { include: { user: { select: { schoolId: true, id: true } } } } },
   })
   if (!existing) return NextResponse.json({ error: "Introuvable" }, { status: 404 })
+
+  if (session.user.role !== "SUPERADMIN" && existing.student.user.schoolId !== session.user.schoolId) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
+  }
 
   let teacherId: string | null = null
   if (session.user.role === "TEACHER") {

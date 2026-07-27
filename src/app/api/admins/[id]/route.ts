@@ -5,24 +5,27 @@ import { NextResponse } from "next/server"
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user?.schoolId || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
   }
+  const schoolId = session.user.schoolId
 
   // Prevent deleting self
   if ((await params).id === session.user.id) {
     return NextResponse.json({ error: "Vous ne pouvez pas supprimer votre propre compte" }, { status: 400 })
   }
 
-  // Ensure at least one admin remains
-  const adminCount = await prisma.user.count({ where: { role: "ADMIN", isActive: true } })
+  // Ensure at least one admin remains in the school
+  const adminCount = await prisma.user.count({
+    where: { role: "ADMIN", isActive: true, schoolId },
+  })
   if (adminCount <= 1) {
     return NextResponse.json({ error: "Au moins un administrateur doit rester actif" }, { status: 400 })
   }
 
-  // Soft delete
+  // Soft delete only within the same school
   await prisma.user.update({
-    where: { id: (await params).id },
+    where: { id: (await params).id, schoolId },
     data:  { isActive: false },
   })
 

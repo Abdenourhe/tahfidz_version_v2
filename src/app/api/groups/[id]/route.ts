@@ -16,10 +16,11 @@ const patchSchema = z.object({
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
-  if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+  if (!session?.user?.schoolId) return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+  const schoolId = session.user.schoolId
 
   const group = await prisma.group.findUnique({
-    where: { id: (await params).id },
+    where: { id: (await params).id, schoolId },
     include: {
       teacher: { include: { user: { select: { fullName: true, email: true } } } },
       students: { include: { user: { select: { fullName: true } } } },
@@ -36,9 +37,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user?.schoolId || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
   }
+  const schoolId = session.user.schoolId
 
   let body: unknown
   try { body = await req.json() } catch { return NextResponse.json({ error: "Corps invalide" }, { status: 400 }) }
@@ -49,11 +51,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   const groupId = (await params).id
-  const existing = await prisma.group.findUnique({ where: { id: groupId } })
+  const existing = await prisma.group.findUnique({ where: { id: groupId, schoolId } })
   if (!existing) return NextResponse.json({ error: "Introuvable" }, { status: 404 })
 
   const updated = await prisma.group.update({
-    where: { id: groupId },
+    where: { id: groupId, schoolId },
     data: parsed.data,
   })
 
@@ -82,20 +84,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user?.schoolId || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
   }
+  const schoolId = session.user.schoolId
 
   const groupId = (await params).id
-  const studentCount = await prisma.student.count({ where: { groupId } })
+  const studentCount = await prisma.student.count({ where: { groupId, group: { schoolId } } })
   if (studentCount > 0) {
     return NextResponse.json({ error: `Impossible : ${studentCount} élève(s) dans ce groupe. Transférez-les d'abord.` }, { status: 400 })
   }
 
-  const existing = await prisma.group.findUnique({ where: { id: groupId } })
+  const existing = await prisma.group.findUnique({ where: { id: groupId, schoolId } })
   if (!existing) return NextResponse.json({ error: "Introuvable" }, { status: 404 })
 
-  await prisma.group.delete({ where: { id: groupId } })
+  await prisma.group.delete({ where: { id: groupId, schoolId } })
 
   // Audit log
   await prisma.auditLog.create({

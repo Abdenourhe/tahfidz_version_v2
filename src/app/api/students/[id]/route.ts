@@ -147,6 +147,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       if (!["ADMIN", "SUPERADMIN"].includes(session.user.role)) {
         return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
       }
+      if (!session.user.schoolId) {
+        return NextResponse.json({ error: "École non identifiée" }, { status: 401 })
+      }
 
       const { newGroupId, reason } = await req.json()
       if (!newGroupId) return NextResponse.json({ error: "Nouveau groupe requis" }, { status: 400 })
@@ -154,7 +157,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       const student = await prisma.student.findUnique({
         where: { id },
         include: {
-          user: { select: { id: true, fullName: true } },
+          user: { select: { id: true, fullName: true, schoolId: true } },
           group: { select: { id: true, name: true } },
           teacher: { include: { user: { select: { id: true, fullName: true } } } },
           parentLinks: {
@@ -164,6 +167,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         },
       })
       if (!student) return NextResponse.json({ error: "Élève introuvable" }, { status: 404 })
+      if (student.user.schoolId !== schoolId) {
+        return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
+      }
 
       const newGroup = await prisma.group.findUnique({
         where: { id: newGroupId, schoolId },
@@ -368,15 +374,15 @@ export async function DELETE(req: NextRequest, { params }: Params) {
 
     // ✅ CORRIGÉ : Timeout augmenté à 10000ms pour éviter l'erreur transaction
     await prisma.$transaction(async (tx) => {
-      await tx.statusHistory.deleteMany({ where: { progress: { studentId: id } } }).catch(() => {})
-      await tx.evaluation.deleteMany({ where: { studentId: id } }).catch(() => {})
-      await tx.memorizationProgress.deleteMany({ where: { studentId: id } }).catch(() => {})
-      await tx.memorizedSurah.deleteMany({ where: { studentId: id } }).catch(() => {})
-      await tx.attendance.deleteMany({ where: { studentId: id } }).catch(() => {})
-      await tx.studentBadge.deleteMany({ where: { studentId: id } }).catch(() => {})
-      await tx.parentStudentLink.deleteMany({ where: { studentId: id } }).catch(() => {})
-      await tx.starsLog.deleteMany({ where: { studentId: id } }).catch(() => {})
-      await tx.studentStats.deleteMany({ where: { studentId: id } }).catch(() => {})
+      await tx.statusHistory.deleteMany({ where: { progress: { studentId: id } } })
+      await tx.evaluation.deleteMany({ where: { studentId: id } })
+      await tx.memorizationProgress.deleteMany({ where: { studentId: id } })
+      await tx.memorizedSurah.deleteMany({ where: { studentId: id } })
+      await tx.attendance.deleteMany({ where: { studentId: id } })
+      await tx.studentBadge.deleteMany({ where: { studentId: id } })
+      await tx.parentStudentLink.deleteMany({ where: { studentId: id } })
+      await tx.starsLog.deleteMany({ where: { studentId: id } })
+      await tx.studentStats.deleteMany({ where: { studentId: id } })
       await tx.student.delete({ where: { id } })
       await tx.user.delete({ where: { id: student.user.id } })
     }, { maxWait: 5000, timeout: 10000 })  // ← AJOUTÉ : timeout 10000ms

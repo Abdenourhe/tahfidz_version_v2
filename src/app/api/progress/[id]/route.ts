@@ -17,6 +17,7 @@ export async function PATCH(
 ) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+  const sessionSchoolId = session.user.schoolId
 
   const body   = await req.json()
   const parsed = patchSchema.safeParse(body)
@@ -28,17 +29,21 @@ export async function PATCH(
       surah:   { select: { verseCount: true, nameFr: true, nameAr: true } },
       student: {
         include: {
-          user:    { select: { id: true, fullName: true } },
+          user:    { select: { id: true, fullName: true, schoolId: true } },
           teacher: { include: { user: { select: { id: true } } } },
           parentLinks: {
             where: { isVerified: true },
-            include: { parent: { include: { user: { select: { id: true } } } } },
+            include: { parent: { include: { user: { select: { id: true, schoolId: true } } } } },
           },
         },
       },
     },
   })
   if (!prog) return NextResponse.json({ error: "Introuvable" }, { status: 404 })
+
+  if (session.user.role !== "SUPERADMIN" && prog.student.user.schoolId !== sessionSchoolId) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
+  }
 
   const isOwner   = prog.student.userId === session.user.id
   const isTeacher = ["TEACHER","ADMIN"].includes(session.user.role)

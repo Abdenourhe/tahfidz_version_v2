@@ -21,12 +21,16 @@ export async function DELETE(
     const comment = await prisma.dailyLogComment.findUnique({
       where: { id: commentId },
       include: {
-        dailyLog: { include: { student: { include: { teacher: { select: { userId: true } } } } } },
+        dailyLog: { include: { student: { include: { user: { select: { schoolId: true } }, teacher: { select: { userId: true } } } } } },
       },
     })
     const attachmentKey = comment?.attachmentKey
     if (!comment) {
       return NextResponse.json({ error: "Commentaire introuvable" }, { status: 404 })
+    }
+
+    if (session.user.role !== "SUPERADMIN" && comment.dailyLog.student.user.schoolId !== session.user.schoolId) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
     }
 
     const canDelete =
