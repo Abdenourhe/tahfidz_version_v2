@@ -24,7 +24,9 @@ export async function GET(_req: Request) {
     : null
 
   const exams = await prisma.exam.findMany({
-    where: teacher ? { teacherId: teacher.id } : {},
+    where: teacher
+      ? { teacherId: teacher.id, group: { schoolId: session.user.schoolId } }
+      : { group: { schoolId: session.user.schoolId } },
     include: {
       group:   { select: { name: true } },
       teacher: { include: { user: { select: { fullName: true } } } },
@@ -58,16 +60,25 @@ export async function POST(req: Request) {
 
   const { title, titleAr, description, groupId, examDate, duration } = parsed.data
 
+  const schoolId = session.user.schoolId
+  if (!schoolId) return NextResponse.json({ error: "École non identifiée" }, { status: 401 })
+
   // Find teacherId: teacher profile → or group's teacher
   let teacherId: string | null = null
 
-  const teacherProfile = await prisma.teacher.findUnique({ where: { userId: session.user.id } })
+  const teacherProfile = await prisma.teacher.findUnique({
+    where: { userId: session.user.id },
+    include: { user: { select: { schoolId: true } } },
+  })
+  if (teacherProfile && teacherProfile.user.schoolId !== schoolId) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
+  }
   if (teacherProfile) {
     teacherId = teacherProfile.id
   } else {
     // Admin: get the group's teacher
     const group = await prisma.group.findUnique({
-      where: { id: groupId },
+      where: { id: groupId, schoolId },
       select: { teacherId: true },
     })
     teacherId = group?.teacherId ?? null
@@ -77,8 +88,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Ce groupe n'a pas d'enseignant assigné. Veuillez assigner un enseignant au groupe d'abord." }, { status: 400 })
   }
 
-  // Validate group exists
-  const groupExists = await prisma.group.findUnique({ where: { id: groupId } })
+  // Validate group exists in the school
+  const groupExists = await prisma.group.findUnique({ where: { id: groupId, schoolId } })
   if (!groupExists) {
     return NextResponse.json({ error: "Groupe introuvable" }, { status: 404 })
   }
@@ -98,6 +109,7 @@ export async function POST(req: Request) {
       description: description || null,
       groupId,
       teacherId,
+      schoolId,
       examDate:    examDateObj,
       duration,
       surahIds:    [],
@@ -108,14 +120,14 @@ export async function POST(req: Request) {
     },
   })
 
-  // Notify all students in group + their parents
+  // Notify all students in group + their parents (same school only)
   const students = await prisma.student.findMany({
-    where: { groupId },
+    where: { groupId, user: { schoolId } },
     include: {
       user: { select: { id: true } },
       parentLinks: {
         where: { isVerified: true },
-        include: { parent: { include: { user: { select: { id: true } } } } },
+        include: { parent: { include: { user: { select: { id: true, schoolId: true } } } } },
       },
     },
   })
@@ -127,13 +139,15 @@ export async function POST(req: Request) {
   const recipientMap = new Map<string, "STUDENT" | "PARENT">()
   students.forEach(s => {
     recipientMap.set(s.user.id, "STUDENT")
-    s.parentLinks.forEach(l => recipientMap.set(l.parent.user.id, "PARENT"))
+    s.parentLinks.forEach(l => {
+      if (l.parent.user.schoolId === schoolId) recipientMap.set(l.parent.user.id, "PARENT")
+    })
   })
   const recipientIds = Array.from(recipientMap.keys())
 
   if (recipientIds.length > 0) {
     const users = await prisma.user.findMany({
-      where: { id: { in: recipientIds } },
+      where: { id: { in: recipientIds }, schoolId },
       select: { id: true, evaluationNotifications: true },
     })
     const allowedIds = new Set(users.filter(u => u.evaluationNotifications !== false).map(u => u.id))
@@ -167,6 +181,15 @@ export async function DELETE(req: Request) {
   const { searchParams } = new URL(req.url)
   const id = searchParams.get("id")
   if (!id) return NextResponse.json({ error: "id requis" }, { status: 400 })
+
+  const existing = await prisma.exam.findUnique({
+    where: { id },
+    include: { group: { select: { schoolId: true } } },
+  })
+  if (!existing) return NextResponse.json({ error: "Examen introuvable" }, { status: 404 })
+  if (existing.group.schoolId !== session.user.schoolId) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
+  }
 
   await prisma.exam.delete({ where: { id } })
   return NextResponse.json({ success: true })

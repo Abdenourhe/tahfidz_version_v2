@@ -35,11 +35,19 @@ export async function POST(req: Request) {
     if (!halaqaSession) {
       return NextResponse.json({ error: "Session non trouvée" }, { status: 404 })
     }
+    if (halaqaSession.schoolId !== session.user.schoolId) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
+    }
 
     const isTeacher = halaqaSession.teacherId === userId
     const isAdmin = ["ADMIN", "SUPERADMIN"].includes(role)
     if (!isTeacher && !isAdmin) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
+    }
+
+    // Vérifier que l'élève appartient à la session et à l'école
+    if (!halaqaSession.studentIds.includes(data.studentId)) {
+      return NextResponse.json({ error: "Élève non invité à cette session" }, { status: 403 })
     }
 
     const evaluation = await prisma.halaqaEvaluation.upsert({

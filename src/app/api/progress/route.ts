@@ -51,12 +51,28 @@ export async function GET(req: Request) {
     if (!isChild) return NextResponse.json({ error: "Accès non autorisé" }, { status: 403 })
   }
 
-  if (!targetStudentId && session.user.role !== "PARENT") {
+  // Vérifier que l'élève cible appartient à l'école (sauf superadmin qui a accès global)
+  if (targetStudentId && session.user.role !== "SUPERADMIN") {
+    const targetStudent = await prisma.student.findUnique({
+      where: { id: targetStudentId },
+      include: { user: { select: { schoolId: true } } },
+    })
+    if (!targetStudent || targetStudent.user.schoolId !== session.user.schoolId) {
+      return NextResponse.json({ error: "Accès non autorisé" }, { status: 403 })
+    }
+  }
+
+  if (!targetStudentId && session.user.role !== "PARENT" && session.user.role !== "SUPERADMIN") {
     return NextResponse.json({ error: "studentId requis" }, { status: 400 })
   }
 
   const where: Record<string,unknown> = { studentId: targetStudentId }
   if (statusFilter) where.status = statusFilter
+
+  // Restreindre à l'école pour tous les rôles sauf superadmin
+  if (session.user.role !== "SUPERADMIN") {
+    where.student = { user: { schoolId: session.user.schoolId } }
+  }
 
   const progress = await prisma.memorizationProgress.findMany({
     where,
@@ -84,15 +100,23 @@ export async function POST(req: Request) {
   }
 
   const { studentId, surahId, status, currentVerse, note } = parsed.data
+  const schoolId = session.user.schoolId
+  if (!schoolId) return NextResponse.json({ error: "École non identifiée" }, { status: 401 })
+
+  // Vérifier que l'élève appartient à l'école de l'utilisateur
+  const targetStudent = await prisma.student.findUnique({
+    where: { id: studentId },
+    include: { user: { select: { schoolId: true } } },
+  })
+  if (!targetStudent) return NextResponse.json({ error: "Élève introuvable" }, { status: 404 })
+  if (targetStudent.user.schoolId !== schoolId) {
+    return NextResponse.json({ error: "Élève non autorisé" }, { status: 403 })
+  }
 
   // Teacher can only assign/update progress for their own students
   if (session.user.role === "TEACHER") {
     const teacher = await prisma.teacher.findUnique({ where: { userId: session.user.id } })
     if (!teacher) return NextResponse.json({ error: "Profil enseignant introuvable" }, { status: 404 })
-    const targetStudent = await prisma.student.findUnique({
-      where: { id: studentId }, select: { teacherId: true },
-    })
-    if (!targetStudent) return NextResponse.json({ error: "Élève introuvable" }, { status: 404 })
     if (targetStudent.teacherId !== teacher.id) {
       return NextResponse.json({ error: "Vous ne pouvez gérer que vos propres élèves" }, { status: 403 })
     }

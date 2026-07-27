@@ -47,6 +47,11 @@ export async function GET(req: Request) {
     where.student = { user: { schoolId: session.user.schoolId } }
   }
 
+  // Tous les rôles doivent restreindre à leur école (superadmin géré ci-dessus)
+  if (session.user.role !== "SUPERADMIN" && !where.student) {
+    where.student = { user: { schoolId: session.user.schoolId } }
+  }
+
   const [evaluations, total] = await Promise.all([
     prisma.evaluation.findMany({
       where,
@@ -78,19 +83,44 @@ export async function POST(req: Request) {
   }
 
   const data = parsed.data
+  const schoolId = session.user.schoolId
+  if (!schoolId) {
+    return NextResponse.json({ error: "École non identifiée" }, { status: 401 })
+  }
 
-  // Récupérer l'ID du teacher
-  const teacher = await prisma.teacher.findUnique({ where: { userId: session.user.id } })
+  // Récupérer l'ID du teacher et vérifier qu'il appartient à l'école
+  const teacher = await prisma.teacher.findUnique({
+    where: { userId: session.user.id },
+    include: { user: { select: { schoolId: true } } },
+  })
+  if (teacher && teacher.user.schoolId !== schoolId) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
+  }
   if (!teacher && session.user.role === "TEACHER") {
     return NextResponse.json({ error: "Profil enseignant introuvable" }, { status: 404 })
   }
 
+  // Vérifier que l'élève et la progression appartiennent à l'école
+  const targetStudent = await prisma.student.findUnique({
+    where: { id: data.studentId },
+    include: { user: { select: { schoolId: true, id: true } } },
+  })
+  if (!targetStudent) return NextResponse.json({ error: "Élève introuvable" }, { status: 404 })
+  if (targetStudent.user.schoolId !== schoolId) {
+    return NextResponse.json({ error: "Élève non autorisé" }, { status: 403 })
+  }
+
+  const targetProgress = await prisma.memorizationProgress.findUnique({
+    where: { id: data.progressId },
+    include: { student: { include: { user: { select: { schoolId: true } } } } },
+  })
+  if (!targetProgress) return NextResponse.json({ error: "Progression introuvable" }, { status: 404 })
+  if (targetProgress.student.user.schoolId !== schoolId) {
+    return NextResponse.json({ error: "Progression non autorisée" }, { status: 403 })
+  }
+
   // Teacher can only evaluate their own students
   if (session.user.role === "TEACHER" && teacher) {
-    const targetStudent = await prisma.student.findUnique({
-      where: { id: data.studentId }, select: { teacherId: true },
-    })
-    if (!targetStudent) return NextResponse.json({ error: "Élève introuvable" }, { status: 404 })
     if (targetStudent.teacherId !== teacher.id) {
       return NextResponse.json({ error: "Vous ne pouvez évaluer que vos propres élèves" }, { status: 403 })
     }

@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   const limit = parseInt(searchParams.get("limit") || "100")
   const role  = session.user.role
 
-  const where: Record<string,unknown> = { isPublished: true }
+  const where: Record<string,unknown> = { isPublished: true, schoolId: session.user.schoolId }
 
   // ADMIN sees all. TEACHER sees all (to manage). Others see only targeted to their role.
   if (!["ADMIN","TEACHER"].includes(role)) {
@@ -55,6 +55,20 @@ export async function POST(req: Request) {
   }
 
   const { targetGroupIds, ...data } = parsed.data
+  const schoolId = session.user.schoolId
+
+  if (!schoolId) {
+    return NextResponse.json({ error: "École non identifiée" }, { status: 401 })
+  }
+
+  if (targetGroupIds.length > 0) {
+    const validGroups = await prisma.group.count({
+      where: { id: { in: targetGroupIds }, schoolId },
+    })
+    if (validGroups !== targetGroupIds.length) {
+      return NextResponse.json({ error: "Groupe(s) cible invalide(s)" }, { status: 400 })
+    }
+  }
 
   // Create announcement
   const announcement = await prisma.announcement.create({
@@ -68,7 +82,7 @@ export async function POST(req: Request) {
       isPinned:    data.isPinned,
       isPublished: data.isPublished,
       expiresAt:   data.expiresAt ? new Date(data.expiresAt) : null,
-      schoolId:    session.user.schoolId,
+      schoolId,
       createdBy:   session.user.id,
       targetGroups: targetGroupIds.length > 0 ? {
         create: targetGroupIds.map(groupId => ({ groupId })),
@@ -83,26 +97,28 @@ export async function POST(req: Request) {
     // If groups specified, only users in those groups; else all users matching roles
     if (targetGroupIds.length > 0) {
       const students = await prisma.student.findMany({
-        where: { groupId: { in: targetGroupIds } },
+        where: { groupId: { in: targetGroupIds }, user: { schoolId } },
         include: {
           user: { select: { id: true, role: true } },
-          parentLinks: { where: { isVerified: true }, include: { parent: { include: { user: { select: { id: true } } } } } },
-          teacher: { include: { user: { select: { id: true, role: true } } } },
+          parentLinks: { where: { isVerified: true }, include: { parent: { include: { user: { select: { id: true, schoolId: true } } } } } },
+          teacher: { include: { user: { select: { id: true, role: true, schoolId: true } } } },
         },
       })
       students.forEach(s => {
         if (data.targetRoles.includes("STUDENT")) targetUserIds.push(s.user.id)
         if (data.targetRoles.includes("PARENT")) {
-          s.parentLinks.forEach(l => targetUserIds.push(l.parent.user.id))
+          s.parentLinks.forEach(l => {
+            if (l.parent.user.schoolId === schoolId) targetUserIds.push(l.parent.user.id)
+          })
         }
-        if (data.targetRoles.includes("TEACHER") && s.teacher) {
+        if (data.targetRoles.includes("TEACHER") && s.teacher && s.teacher.user.schoolId === schoolId) {
           targetUserIds.push(s.teacher.user.id)
         }
       })
     } else {
-      // Broadcast to all users matching the roles
+      // Broadcast to all users matching the roles in the same school
       const users = await prisma.user.findMany({
-        where: { role: { in: data.targetRoles as any[] }, isActive: true },
+        where: { role: { in: data.targetRoles as any[] }, isActive: true, schoolId },
         select: { id: true },
       })
       users.forEach(u => targetUserIds.push(u.id))
@@ -112,7 +128,7 @@ export async function POST(req: Request) {
     if (uniqueIds.length > 0) {
       // Respect message notification preferences (used as fallback for announcements)
       const users = await prisma.user.findMany({
-        where: { id: { in: uniqueIds } },
+        where: { id: { in: uniqueIds }, schoolId },
         select: { id: true, role: true, messageNotifications: true },
       })
       const enabledUsers = users.filter(u => u.messageNotifications !== false)

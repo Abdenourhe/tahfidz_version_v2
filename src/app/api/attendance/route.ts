@@ -176,9 +176,17 @@ export async function POST(req: Request) {
   if (session.user.role === "TEACHER") {
     const teacher = await prisma.teacher.findUnique({ where: { userId: session.user.id } })
     if (!teacher) return NextResponse.json({ error: "Profil enseignant introuvable" }, { status: 404 })
-    const group = await prisma.group.findUnique({ where: { id: groupId }, select: { teacherId: true } })
+    const group = await prisma.group.findUnique({ where: { id: groupId, schoolId }, select: { teacherId: true } })
     if (!group || group.teacherId !== teacher.id) {
       return NextResponse.json({ error: "Vous ne pouvez gérer que votre groupe" }, { status: 403 })
+    }
+  }
+
+  // Verify access for ADMIN: group must belong to the school
+  if (session.user.role === "ADMIN") {
+    const group = await prisma.group.findUnique({ where: { id: groupId, schoolId }, select: { id: true } })
+    if (!group) {
+      return NextResponse.json({ error: "Groupe introuvable" }, { status: 404 })
     }
   }
 

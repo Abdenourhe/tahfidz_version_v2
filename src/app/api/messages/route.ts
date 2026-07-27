@@ -51,6 +51,7 @@ export async function GET(req: Request) {
 
   const where: any = {
     deletedAt: null,
+    schoolId: session.user.schoolId,
     AND: [userFilter, conversationFilter],
   }
 
@@ -89,13 +90,19 @@ export async function POST(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
 
   const { toUserId, subject, body: msgBody, replyToId, studentId } = parsed.data
-  const toUser = await prisma.user.findUnique({ where: { id: toUserId }, select: { id:true, fullName:true, email:true } })
+  const toUser = await prisma.user.findUnique({
+    where: { id: toUserId },
+    select: { id: true, fullName: true, email: true, schoolId: true },
+  })
   if (!toUser) return NextResponse.json({ error: "Destinataire introuvable" }, { status: 404 })
+  if (toUser.schoolId !== session.user.schoolId) {
+    return NextResponse.json({ error: "Destinataire non autorisé" }, { status: 403 })
+  }
 
-  const fromUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { fullName:true, role:true } })
+  const fromUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { fullName: true, role: true } })
   const toUserWithPrefs = await prisma.user.findUnique({
     where: { id: toUserId },
-    select: { id:true, fullName:true, email:true, role:true, messageNotifications:true },
+    select: { id: true, fullName: true, email: true, role: true, messageNotifications: true, schoolId: true },
   })
   if (!toUserWithPrefs) return NextResponse.json({ error: "Destinataire introuvable" }, { status: 404 })
 

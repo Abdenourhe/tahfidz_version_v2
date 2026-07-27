@@ -26,11 +26,14 @@ export async function POST(req: Request) {
   // Trouver l'élève par son code
   const student = await prisma.student.findFirst({
     where: { studentCode },
-    include: { user: { select: { fullName: true, fullNameAr: true } } },
+    include: { user: { select: { fullName: true, fullNameAr: true, schoolId: true } } },
   })
 
   if (!student) {
     return NextResponse.json({ error: "Code élève introuvable. Vérifiez le code et réessayez." }, { status: 404 })
+  }
+  if (student.user.schoolId !== session.user.schoolId) {
+    return NextResponse.json({ error: "Code élève invalide pour votre école." }, { status: 403 })
   }
 
   // Récupérer le profil parent
@@ -62,8 +65,11 @@ export async function POST(req: Request) {
     },
   })
 
-  // Notifier l'admin
-  const admins = await prisma.user.findMany({ where: { role: "ADMIN", isActive: true }, select: { id: true, schoolId: true, messageNotifications: true } })
+  // Notifier l'admin (uniquement dans la même école)
+  const admins = await prisma.user.findMany({
+    where: { role: "ADMIN", isActive: true, schoolId: session.user.schoolId },
+    select: { id: true, messageNotifications: true },
+  })
   const enabledAdmins = admins.filter(u => u.messageNotifications !== false)
   await Promise.all(
     enabledAdmins.map(admin =>
