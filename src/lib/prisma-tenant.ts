@@ -6,7 +6,7 @@
 import { prisma } from "@/lib/prisma"
 
 
-// Tables soumises à l'isolation tenant (CORRIGÉ : toutes les tables avec schoolId)
+// Tables soumises à l'isolation tenant (tables avec un champ schoolId non optionnel)
 const TENANT_TABLES = new Set([
   "user", "group", "announcement", "notification",
   "auditLog", "exam", "directMessage", "badge",
@@ -15,8 +15,10 @@ const TENANT_TABLES = new Set([
   "dailyProgressLog", "halaqaSession", "halaqaEvaluation",
   "libraryContent", "libraryCollection", "libraryCategory",
   "feedback", "broadcast", "parentAttendance",
-  "schoolRequest", "schoolUpdateRequest",
-  "certificateTemplate", "uploadedFile",
+  "schoolUpdateRequest", "certificateTemplate",
+  // Note : uploadedFile a schoolId nullable (NULL = fichier global), il est
+  // exclu pour ne pas bloquer les fichiers globaux. schoolRequest est global et
+  // n'a pas de champ schoolId.
 ])
 
 /**
