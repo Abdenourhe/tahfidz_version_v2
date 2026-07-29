@@ -14,6 +14,8 @@ import { Logo } from "@/components/ui/Logo"
 import { PLAN_CONFIG, PLANS, PlanLocale } from "@/lib/halaqa-quota"
 import { useLanguage, useT } from "@/contexts/LanguageContext"
 import type { LandingContent } from "@/lib/landing/default-content"
+import { Modal } from "@/components/ui/Modal"
+import type { PageSection } from "@/lib/site-config/page-types"
 
 /* ─── Types ──────────────────────────────────────────────── */
 type Step = 1 | 2 | 3
@@ -73,6 +75,7 @@ export default function RegisterSchoolClient() {
   const { locale } = useLanguage()
   const lang: PlanLocale = (locale === "ar" ? "ar" : locale === "en" ? "en" : "fr") as PlanLocale
   const t = useT("registerSchool")
+  const tCommon = useT("common")
 
   const steps = [
     { num: 1, label: t("stepSchool"), icon: Building2 },
@@ -113,6 +116,43 @@ export default function RegisterSchoolClient() {
   })
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
+
+  // Modale des pages légales (CGU / privacy)
+  const [legalModal, setLegalModal] = useState<{
+    page: "terms" | "privacy"
+    title: string
+  } | null>(null)
+  const [legalContent, setLegalContent] = useState<{
+    title: string
+    lastUpdated?: string
+    sections: PageSection[]
+  } | null>(null)
+  const [legalLoading, setLegalLoading] = useState(false)
+
+  const openLegal = async (page: "terms" | "privacy") => {
+    const title = page === "terms" ? t("termsLink") : t("privacyLink")
+    setLegalModal({ page, title })
+    setLegalLoading(true)
+    try {
+      const res = await fetch(`/api/legal/${page}?lang=${lang}`)
+      if (!res.ok) throw new Error("fetch_failed")
+      const data = await res.json()
+      setLegalContent({
+        title: data.title ?? title,
+        lastUpdated: data.lastUpdated,
+        sections: data.sections ?? [],
+      })
+    } catch {
+      setLegalContent(null)
+    }
+    setLegalLoading(false)
+  }
+
+  const closeLegal = () => {
+    setLegalModal(null)
+    setLegalContent(null)
+    setLegalLoading(false)
+  }
 
   const update = <K extends keyof FormData>(k: K, v: FormData[K]) => {
     setForm(prev => ({ ...prev, [k]: v }))
@@ -768,13 +808,21 @@ export default function RegisterSchoolClient() {
                         />
                         <span className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
                           {t("acceptTermsLabel")}{" "}
-                          <Link href="/terms" className="text-tahfidz-green hover:underline font-medium">
+                          <button
+                            type="button"
+                            onClick={() => openLegal("terms")}
+                            className="text-tahfidz-green hover:underline font-medium inline align-baseline"
+                          >
                             {t("termsLink")}
-                          </Link>{" "}
+                          </button>{" "}
                           {t("and")}{" "}
-                          <Link href="/privacy" className="text-tahfidz-green hover:underline font-medium">
+                          <button
+                            type="button"
+                            onClick={() => openLegal("privacy")}
+                            className="text-tahfidz-green hover:underline font-medium inline align-baseline"
+                          >
                             {t("privacyLink")}
-                          </Link>.
+                          </button>.
                         </span>
                       </label>
                     </div>
@@ -833,6 +881,72 @@ export default function RegisterSchoolClient() {
           </p>
         </motion.div>
       </div>
+
+      {/* Modale des pages légales */}
+      <Modal
+        isOpen={!!legalModal}
+        onClose={closeLegal}
+        title={legalContent?.title ?? legalModal?.title}
+        size="lg"
+        footer={
+          <button
+            type="button"
+            onClick={closeLegal}
+            className="px-4 py-2 text-sm font-semibold text-white bg-tahfidz-green rounded-lg hover:bg-emerald-700 transition"
+          >
+            {tCommon("close")}
+          </button>
+        }
+      >
+        {legalLoading ? (
+          <div className="space-y-4 animate-pulse">
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full" />
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6" />
+          </div>
+        ) : !legalContent ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {t("legalLoadError")}
+          </p>
+        ) : (
+          <div className="space-y-6">
+            {legalContent.lastUpdated && (
+              <p className="text-xs text-gray-400 dark:text-gray-500">
+                {t("lastUpdated")} {legalContent.lastUpdated}
+              </p>
+            )}
+            {legalContent.sections.map((section, idx) => (
+              <section key={idx} className="space-y-2">
+                <h3 className="text-base font-bold text-gray-900 dark:text-white">
+                  {section.title}
+                </h3>
+                <div className="space-y-3">
+                  {section.body.split(/\n\s*\n/).map((block, bIdx) => {
+                    const lines = block.split("\n").map(l => l.trim()).filter(Boolean)
+                    const isList = lines.every(l => l.startsWith("- "))
+                    if (isList) {
+                      return (
+                        <ul key={bIdx} className="list-disc pl-5 space-y-1 marker:text-tahfidz-green">
+                          {lines.map((line, lIdx) => (
+                            <li key={lIdx} className="text-sm text-gray-600 dark:text-gray-300">
+                              {line.slice(2)}
+                            </li>
+                          ))}
+                        </ul>
+                      )
+                    }
+                    return (
+                      <p key={bIdx} className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-line">
+                        {lines.join(" ")}
+                      </p>
+                    )
+                  })}
+                </div>
+              </section>
+            ))}
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }

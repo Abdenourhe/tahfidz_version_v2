@@ -2850,6 +2850,8 @@ export const translations = {
     and:                { fr: "et la",                                        en: "and the",                                ar: "و" },
     privacyLink:        { fr: "politique de confidentialité",                 en: "privacy policy",                         ar: "سياسة الخصوصية" },
     termsRequired:      { fr: "Vous devez accepter les conditions pour soumettre votre demande.", en: "You must accept the terms to submit your request.", ar: "يجب عليك قبول الشروط لإرسال طلبك." },
+    lastUpdated:        { fr: "Dernière mise à jour :",                       en: "Last updated:",                          ar: "آخر تحديث:" },
+    legalLoadError:     { fr: "Impossible de charger le contenu légal.",       en: "Unable to load legal content.",         ar: "تعذر تحميل المحتوى القانوني." },
     termsNote:          { fr: "En soumettant, vous acceptez que l'Administration TAHFIDZ examine votre demande. Aucune carte bancaire requise.", en: "By submitting, you agree that the TAHFIDZ Administration will review your request. No credit card required.", ar: "بإرسالك هذا النموذج، فإنك توافق على قيام إدارة تحفيظ بمراجعة طلبك. لا حاجة لبطاقة مصرفية." },
   },
 
