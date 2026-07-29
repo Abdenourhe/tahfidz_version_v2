@@ -3,8 +3,9 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { ArrowLeft, KeyRound, Loader2, Mail, School, Send, CheckCircle2 } from "lucide-react"
+import { ArrowLeft, Loader2, Mail, School, Send, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
+import { Logo } from "@/components/ui/Logo"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -55,10 +56,9 @@ export default function ForgotPasswordPage() {
             transition={{ duration: 0.6 }}
           >
             <div className="inline-flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm border border-white/15 flex items-center justify-center">
-                <span className="text-white font-bold text-2xl">ط</span>
-              </div>
-              <span className="text-white font-bold text-2xl tracking-tight">TAHFIDZ</span>
+              <Link href="/" className="inline-flex items-center gap-3">
+                <Logo variant="full" width={100} height={28} darkMode="dark" priority className="h-7 w-auto" />
+              </Link>
             </div>
             <h2 className="text-2xl font-bold text-white mb-3">Recuperation de mot de passe</h2>
             <p className="text-emerald-100/70 text-sm leading-relaxed">
@@ -70,17 +70,22 @@ export default function ForgotPasswordPage() {
 
       {/* Right panel */}
       <div className="w-full lg:w-[55%] xl:w-[58%] flex flex-col min-h-screen">
-        <div className="hidden lg:flex items-center px-10 xl:px-16 pt-8">
+        <div className="hidden lg:flex items-center justify-between px-10 xl:px-16 pt-8">
           <Link href="/login" className="flex items-center gap-2 text-sm text-gray-400 hover:text-tahfidz-green transition">
             <ArrowLeft size={14} /> Retour a la connexion
+          </Link>
+          <Link href="/" className="flex items-center gap-2 text-sm text-gray-400 hover:text-tahfidz-green transition">
+            <ArrowLeft size={14} /> Accueil
           </Link>
         </div>
 
         {/* Mobile header */}
         <div className="lg:hidden flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-800">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-tahfidz-green flex items-center justify-center text-white font-bold">ط</div>
-            <span className="font-bold text-lg text-gray-900 dark:text-white">TAHFIDZ</span>
+            <Logo variant="full" width={90} height={24} priority className="h-6 w-auto" />
+          </Link>
+          <Link href="/login" className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1">
+            <ArrowLeft size={14} /> Retour
           </Link>
         </div>
 
@@ -115,9 +120,9 @@ export default function ForgotPasswordPage() {
               </motion.div>
             ) : (
               <>
-                <div className="mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-tahfidz-green-light dark:bg-emerald-900/20 flex items-center justify-center text-tahfidz-green mb-4">
-                    <KeyRound size={24} />
+                <div className="mb-6 text-center lg:text-left">
+                  <div className="w-14 h-14 rounded-2xl bg-tahfidz-green-light dark:bg-emerald-900/20 flex items-center justify-center mb-4 mx-auto lg:mx-0">
+                    <Logo variant="icon" width={32} height={32} priority className="w-8 h-8" />
                   </div>
                   <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Mot de passe oublie ?</h1>
                   <p className="text-gray-500 dark:text-gray-400 text-sm">
