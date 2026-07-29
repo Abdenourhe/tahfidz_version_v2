@@ -34,6 +34,7 @@ interface FormData {
   plan:            string
   billingCycle:    string
   halaqaSessionDuration: string
+  acceptedTerms:   boolean
 }
 
 type LandingPlan = LandingContent["pricing"]["plans"][number]
@@ -108,11 +109,12 @@ export default function RegisterSchoolClient() {
     plan:            planParam,
     billingCycle:    billingCycleParam,
     halaqaSessionDuration: "45",
+    acceptedTerms:   false,
   })
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
 
-  const update = (k: keyof FormData, v: string) => {
+  const update = <K extends keyof FormData>(k: K, v: FormData[K]) => {
     setForm(prev => ({ ...prev, [k]: v }))
     setError(null)
   }
@@ -125,6 +127,15 @@ export default function RegisterSchoolClient() {
         form.adminEmail.includes("@") &&
         form.adminPassword.length >= 8 &&
         form.adminPassword === form.confirmPassword
+      )
+    }
+    if (step === 3) {
+      return (
+        Boolean(form.classCount) && Number(form.classCount) >= 1 &&
+        Boolean(form.studentsPerClass) && Number(form.studentsPerClass) >= 1 &&
+        Boolean(form.teachersCount) && Number(form.teachersCount) >= 1 &&
+        Boolean(form.halaqaSessionDuration) && Number(form.halaqaSessionDuration) >= 15 &&
+        form.acceptedTerms === true
       )
     }
     return true
@@ -184,6 +195,7 @@ export default function RegisterSchoolClient() {
           halaqaSessionDuration: Number(form.halaqaSessionDuration),
           locale:           locale === "ar" ? "ar" : locale === "en" ? "en" : "fr",
           logo,
+          acceptedTerms:    form.acceptedTerms,
         }),
       })
       if (!res.ok) {
@@ -744,6 +756,28 @@ export default function RegisterSchoolClient() {
                         </motion.div>
                       )
                     })()}
+
+                    {/* Acceptation des conditions */}
+                    <div className="pt-2">
+                      <label className="flex items-start gap-3 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          checked={form.acceptedTerms}
+                          onChange={(e) => update("acceptedTerms", e.target.checked)}
+                          className="mt-1 h-4 w-4 rounded border-gray-300 text-tahfidz-green focus:ring-tahfidz-green cursor-pointer"
+                        />
+                        <span className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                          {t("acceptTermsLabel")}{" "}
+                          <Link href="/terms" className="text-tahfidz-green hover:underline font-medium">
+                            {t("termsLink")}
+                          </Link>{" "}
+                          {t("and")}{" "}
+                          <Link href="/privacy" className="text-tahfidz-green hover:underline font-medium">
+                            {t("privacyLink")}
+                          </Link>.
+                        </span>
+                      </label>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>

@@ -2844,6 +2844,12 @@ export const translations = {
     next:               { fr: "Suivant",                                      en: "Next",                                   ar: "التالي" },
     sending:            { fr: "Envoi…",                                       en: "Sending…",                               ar: "جارٍ الإرسال…" },
     submit:             { fr: "Soumettre ma demande",                         en: "Submit my request",                      ar: "إرسال طلبي" },
+    // Acceptation des conditions
+    acceptTermsLabel:   { fr: "J'ai lu et j'accepte les",                     en: "I have read and accept the",             ar: "لقد قرأت وأوافق على" },
+    termsLink:          { fr: "conditions d'utilisation",                       en: "terms of use",                           ar: "شروط الاستخدام" },
+    and:                { fr: "et la",                                        en: "and the",                                ar: "و" },
+    privacyLink:        { fr: "politique de confidentialité",                 en: "privacy policy",                         ar: "سياسة الخصوصية" },
+    termsRequired:      { fr: "Vous devez accepter les conditions pour soumettre votre demande.", en: "You must accept the terms to submit your request.", ar: "يجب عليك قبول الشروط لإرسال طلبك." },
     termsNote:          { fr: "En soumettant, vous acceptez que l'Administration TAHFIDZ examine votre demande. Aucune carte bancaire requise.", en: "By submitting, you agree that the TAHFIDZ Administration will review your request. No credit card required.", ar: "بإرسالك هذا النموذج، فإنك توافق على قيام إدارة تحفيظ بمراجعة طلبك. لا حاجة لبطاقة مصرفية." },
   },
 

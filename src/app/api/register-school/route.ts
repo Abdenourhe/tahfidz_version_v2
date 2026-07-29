@@ -22,6 +22,7 @@ const schema = z.object({
   halaqaSessionDuration: z.coerce.number().int().min(15).max(180).optional(),
   locale:           z.enum(["fr", "en", "ar"]).default("fr"),
   logo:             z.string().optional(),
+  acceptedTerms:    z.boolean().refine(v => v === true, { message: "Vous devez accepter les conditions d'utilisation et la politique de confidentialité." }),
 })
 
 function getClientIp(req: NextRequest): string {
@@ -80,6 +81,7 @@ export async function POST(req: NextRequest) {
         halaqaSessionDuration: d.halaqaSessionDuration ?? null,
         logo:             d.logo ?? null,
         locale:           d.locale,
+        acceptedTerms:    d.acceptedTerms,
         status:           "PENDING",
       },
     })

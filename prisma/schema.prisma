@@ -1035,6 +1035,7 @@ model SchoolRequest {
   teachersCount    Int
   logo             String?
   locale           String        @default("fr")
+  acceptedTerms    Boolean       @default(false)
   status           RequestStatus @default(PENDING)
   slug             String?
   rejectionReason  String?
