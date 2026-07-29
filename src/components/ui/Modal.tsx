@@ -88,7 +88,7 @@ export function Modal({
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
             className={cn(
-              "relative w-full rounded-xl bg-white shadow-xl dark:bg-gray-800",
+              "relative w-full max-h-[90vh] flex flex-col rounded-xl bg-white shadow-xl dark:bg-gray-800",
               "border border-gray-200 dark:border-gray-700",
               sizeStyles[size]
             )}
@@ -115,7 +115,9 @@ export function Modal({
             )}
 
             {/* Body */}
-            <div className="px-5 py-4">{children}</div>
+            <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4">
+              {children}
+            </div>
 
             {/* Footer */}
             {footer && (
