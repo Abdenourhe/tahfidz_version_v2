@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useRouter } from "next/navigation"
-import { Globe, Plus, Pencil, Trash2, AlertTriangle, Loader2, X, FolderOpen, CheckCircle2, AlertCircle } from "lucide-react"
+import { Globe, Plus, Pencil, Trash2, AlertTriangle, Loader2, X, FolderOpen, CheckCircle2, AlertCircle, ArrowLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { LibraryCategory } from "@prisma/client"
 
@@ -134,6 +134,13 @@ export function SuperAdminCategoryListClient({ initialCategories }: Props) {
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
+          <button
+            type="button"
+            onClick={() => router.push("/admin/super/library")}
+            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-tahfidz-purple transition mb-2"
+          >
+            <ArrowLeft size={14} /> Retour à la bibliothèque
+          </button>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Catégories globales</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
             Gérez les catégories disponibles pour toutes les écoles de la plateforme.
