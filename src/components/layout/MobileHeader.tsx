@@ -108,7 +108,7 @@ const ROLE_NAV: Record<string, { sectionKey?: string; items: { href: string; lab
     {
       items: [
         { href: "/admin/super", labelKey: "dashboard", icon: LayoutDashboard },
-        { href: "/superadmin/schools", labelKey: "halaqaQuotas", icon: Video },
+        { href: "/admin/super/halaqa-quotas", labelKey: "halaqaQuotas", icon: Video },
         { href: "/superadmin/profile", labelKey: "profile", icon: UserCircle },
       ],
     },

@@ -35,7 +35,7 @@ export function SuperAdminSidebar({ user }: SuperAdminSidebarProps) {
   const navItems = [
     { label: tNav("superDashboard"), href: "/admin/super/dashboard", icon: LayoutDashboard },
     { label: tNav("schools"), href: "/admin/super/schools", icon: Building2 },
-    { label: tNav("halaqaQuotas"), href: "/superadmin/schools", icon: Video },
+    { label: tNav("halaqaQuotas"), href: "/admin/super/halaqa-quotas", icon: Video },
     { label: tNav("requests"), href: "/admin/super/requests", icon: Clock },
     { label: tNav("globalLibrary"), href: "/admin/super/library", icon: Library },
     { label: tNav("globalCategories"), href: "/admin/super/library/categories", icon: Layers },
