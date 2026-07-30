@@ -5,12 +5,11 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState } from "react"
 import { signOut } from "next-auth/react"
 import {
   LayoutDashboard, Building2, Clock, Library, Send,
   Eye, MessageCircleQuestion, Activity, LogOut,
-  FileText, Video, ChevronDown,
+  FileText, Video,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { SidebarToggle } from "@/components/layout/SidebarToggle"
@@ -33,30 +32,12 @@ export function SuperAdminSidebar({ user }: SuperAdminSidebarProps) {
   const { collapsed } = useSidebarCollapsed()
   const tNav = (k: string) => tFn("nav", k)
 
-  const [libraryOpen, setLibraryOpen] = useState(
-    pathname.startsWith("/admin/super/library")
-  )
-
-  const topItems = [
+  const navItems = [
     { label: tNav("superDashboard"), href: "/admin/super/dashboard", icon: LayoutDashboard },
     { label: tNav("schools"), href: "/admin/super/schools", icon: Building2 },
     { label: tNav("halaqaQuotas"), href: "/admin/super/halaqa-quotas", icon: Video },
     { label: tNav("requests"), href: "/admin/super/requests", icon: Clock },
-  ]
-
-  const libraryGroup = {
-    label: tNav("globalLibrary"),
-    href: "/admin/super/library",
-    icon: Library,
-    open: libraryOpen,
-    setOpen: setLibraryOpen,
-    children: [
-      { label: tNav("globalLibrary"), href: "/admin/super/library" },
-      { label: tNav("globalCategories"), href: "/admin/super/library/categories" },
-    ],
-  }
-
-  const bottomItems = [
+    { label: tNav("globalLibrary"), href: "/admin/super/library", icon: Library },
     { label: tNav("broadcast"), href: "/admin/super/broadcast", icon: Send },
     { label: tNav("siteContent"), href: "/admin/super/site-config", icon: FileText },
     { label: tNav("audit"), href: "/admin/super/audit", icon: Eye },
@@ -133,64 +114,7 @@ export function SuperAdminSidebar({ user }: SuperAdminSidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-4 space-y-0.5">
-        {topItems.map((item) => renderItem(item))}
-
-        {/* Groupe Bibliothèque globale */}
-        {collapsed ? (
-          renderItem({
-            label: libraryGroup.label,
-            href: libraryGroup.href,
-            icon: libraryGroup.icon,
-          })
-        ) : (
-          <div className="space-y-0.5">
-            <button
-              type="button"
-              onClick={() => setLibraryOpen(!libraryOpen)}
-              className={cn(
-                "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150 group",
-                pathname.startsWith("/admin/super/library")
-                  ? "bg-red-50 text-red-700 font-semibold shadow-sm"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-              )}
-            >
-              <div
-                className={cn(
-                  "flex items-center justify-center w-7 h-7 rounded-lg transition-colors flex-shrink-0",
-                  pathname.startsWith("/admin/super/library") ? "bg-red-100" : "bg-gray-100 group-hover:bg-gray-200"
-                )}
-              >
-                <libraryGroup.icon size={16} className={pathname.startsWith("/admin/super/library") ? "text-red-600" : "text-gray-500 group-hover:text-gray-700"} />
-              </div>
-              <span className="flex-1 text-left truncate">{libraryGroup.label}</span>
-              <ChevronDown size={14} className={cn("text-gray-400 transition-transform", libraryOpen && "rotate-180")} />
-            </button>
-
-            {libraryOpen && (
-              <div className="ml-5 pl-4 border-l border-gray-200 dark:border-gray-700 space-y-0.5">
-                {libraryGroup.children.map((child) => {
-                  const isActive = pathname === child.href || pathname.startsWith(child.href + "/")
-                  return (
-                    <Link
-                      key={child.href}
-                      href={child.href}
-                      className={cn(
-                        "block px-3 py-2 rounded-lg text-sm transition-colors",
-                        isActive
-                          ? "text-red-700 font-semibold bg-red-50"
-                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                      )}
-                    >
-                      {child.label}
-                    </Link>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {bottomItems.map((item) => renderItem(item))}
+        {navItems.map((item) => renderItem(item))}
       </nav>
 
       {/* Footer : User + Logout */}

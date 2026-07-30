@@ -10,7 +10,7 @@ import {
   LayoutDashboard, GraduationCap, Users, BookOpen, BookMarked,
   CalendarCheck, Award, MessageSquare, Megaphone, UserCircle,
   Link2, Video, Star, ClipboardList, BarChart3, ShieldCheck,
-  Settings, UserCheck, Library, Layers,
+  Settings, UserCheck, Library,
 } from "lucide-react"
 import { TopBarControls } from "./TopBarControls"
 import { useT } from "@/contexts/LanguageContext"
@@ -110,7 +110,6 @@ const ROLE_NAV: Record<string, { sectionKey?: string; items: { href: string; lab
         { href: "/admin/super", labelKey: "dashboard", icon: LayoutDashboard },
         { href: "/admin/super/halaqa-quotas", labelKey: "halaqaQuotas", icon: Video },
         { href: "/admin/super/library", labelKey: "globalLibrary", icon: Library },
-        { href: "/admin/super/library/categories", labelKey: "globalCategories", icon: Layers },
         { href: "/superadmin/profile", labelKey: "profile", icon: UserCircle },
       ],
     },
