@@ -262,6 +262,131 @@ export async function sendPasswordResetEmail({
   })
 }
 
+/** Email de confirmation de réception d'une demande d'inscription d'école (en attente de validation) */
+export async function sendSchoolRequestPendingEmail({
+  to,
+  adminName,
+  schoolName,
+  plan,
+  billingCycle,
+  classCount,
+  studentsPerClass,
+  teachersCount,
+  city,
+  country,
+  locale = "fr",
+}: {
+  to: string
+  adminName: string
+  schoolName: string
+  plan: string
+  billingCycle: string
+  classCount: number
+  studentsPerClass: number
+  teachersCount: number
+  city?: string | null
+  country?: string | null
+  locale?: EmailLocale
+}) {
+  const isAr = locale === "ar"
+
+  const planLabels: Record<string, Record<string, string>> = {
+    fr: { FREE: "Gratuit", STARTER: "Starter", ECONOMIQUE: "Économique", PRO: "Pro", ENTERPRISE: "Enterprise" },
+    en: { FREE: "Free", STARTER: "Starter", ECONOMIQUE: "Economy", PRO: "Pro", ENTERPRISE: "Enterprise" },
+    ar: { FREE: "مجاني", STARTER: "ستارتر", ECONOMIQUE: "اقتصادي", PRO: "برو", ENTERPRISE: "مؤسسات" },
+  }
+  const planLabel = planLabels[locale]?.[plan] ?? plan
+
+  const billingLabels: Record<string, Record<string, string>> = {
+    fr: { MONTHLY: "Mensuel", YEARLY: "Annuel" },
+    en: { MONTHLY: "Monthly", YEARLY: "Yearly" },
+    ar: { MONTHLY: "شهري", YEARLY: "سنوي" },
+  }
+  const billingLabel = billingLabels[locale]?.[billingCycle] ?? billingCycle
+
+  const location = [city, country].filter(Boolean).join(", ")
+
+  // Libellés du récapitulatif selon la langue
+  const t = {
+    fr: {
+      greeting: `Salam Alaykoum ${adminName}`,
+      intro: `Nous avons bien reçu votre demande d'inscription pour <strong>${schoolName}</strong>. Elle est actuellement <strong style="color:#D97706;">en attente de validation</strong> par notre équipe.`,
+      recap: "Récapitulatif de votre demande",
+      school: "École",
+      email: "Email administrateur",
+      plan: "Formule",
+      billing: "Facturation",
+      classes: "Groupes / classes",
+      students: "Élèves par classe",
+      teachers: "Enseignants",
+      location: "Localisation",
+      next: "Vous recevrez un email dès que votre école sera activée. Aucune action n'est requise de votre part.",
+    },
+    en: {
+      greeting: `Dear ${adminName}`,
+      intro: `We have received your registration request for <strong>${schoolName}</strong>. It is currently <strong style="color:#D97706;">pending approval</strong> by our team.`,
+      recap: "Your request summary",
+      school: "School",
+      email: "Admin email",
+      plan: "Plan",
+      billing: "Billing",
+      classes: "Groups / classes",
+      students: "Students per class",
+      teachers: "Teachers",
+      location: "Location",
+      next: "You will receive an email as soon as your school is activated. No action is required on your side.",
+    },
+    ar: {
+      greeting: `السلام عليكم ${adminName}`,
+      intro: `لقد استلمنا طلب تسجيل مدرستك <strong>${schoolName}</strong>. طلبك حالياً <strong style="color:#D97706;">قيد المراجعة</strong> من طرف فريقنا.`,
+      recap: "ملخص طلبك",
+      school: "المدرسة",
+      email: "بريد المدير",
+      plan: "الباقة",
+      billing: "الفوترة",
+      classes: "المجموعات / الأقسام",
+      students: "الطلاب في القسم",
+      teachers: "المعلمون",
+      location: "الموقع",
+      next: "ستصلك رسالة بريد إلكتروني فور تفعيل مدرستك. لا حاجة لأي إجراء من طرفك.",
+    },
+  }
+  const l = t[locale] ?? t.fr
+
+  const row = (label: string, value: string) => `
+    <tr>
+      <td style="padding:8px 12px;font-size:13px;color:#6B7280;border-bottom:1px solid #F3F4F6;">${label}</td>
+      <td style="padding:8px 12px;font-size:13px;color:#111827;font-weight:600;text-align:${isAr ? "left" : "right"};border-bottom:1px solid #F3F4F6;">${value}</td>
+    </tr>`
+
+  const content = `
+    <p style="font-size:18px;color:#111827;font-weight:700;margin-bottom:4px;">${l.greeting}</p>
+    <p style="color:#6B7280;font-size:14px;margin-top:0;">${l.intro}</p>
+    <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:16px;margin:20px 0;">
+      <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#1D9E75;text-transform:uppercase;letter-spacing:0.5px;">${l.recap}</p>
+      <table style="width:100%;border-collapse:collapse;">
+        ${row(l.school, schoolName)}
+        ${row(l.email, to)}
+        ${row(l.plan, planLabel)}
+        ${row(l.billing, billingLabel)}
+        ${row(l.classes, String(classCount))}
+        ${row(l.students, String(studentsPerClass))}
+        ${row(l.teachers, String(teachersCount))}
+        ${location ? row(l.location, location) : ""}
+      </table>
+    </div>
+    <p style="color:#6B7280;font-size:13px;">${l.next}</p>
+  `
+
+  const subject = isAr
+    ? `تم استلام طلبك — ${schoolName} قيد المراجعة`
+    : locale === "en"
+      ? `Request received — ${schoolName} pending approval`
+      : `Demande reçue — ${schoolName} en attente de validation`
+
+  return sendMail({ to, subject, html: baseTemplate(content, locale) })
+}
+
 /** Email d'invitation parent */
 export async function sendParentInviteEmail({
   to,

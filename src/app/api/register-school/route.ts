@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkRateLimit } from "@/lib/rate-limit"
 import { prisma } from "@/lib/prisma"
+import { sendSchoolRequestPendingEmail } from "@/lib/email"
 import bcrypt from "bcryptjs"
 import { z } from "zod"
 
@@ -85,6 +86,25 @@ export async function POST(req: NextRequest) {
         status:           "PENDING",
       },
     })
+
+    // Email de confirmation « en attente » — n'empêche jamais la réponse en cas d'échec
+    try {
+      await sendSchoolRequestPendingEmail({
+        to:               d.adminEmail,
+        adminName:        d.adminName,
+        schoolName:       d.schoolName,
+        plan:             d.plan,
+        billingCycle:     d.billingCycle,
+        classCount:       d.classCount,
+        studentsPerClass: d.studentsPerClass,
+        teachersCount:    d.teachersCount,
+        city:             d.city ?? null,
+        country:          d.country,
+        locale:           d.locale,
+      })
+    } catch (mailError) {
+      console.error("[register-school] Échec envoi email de confirmation:", mailError)
+    }
 
     return NextResponse.json(
       { success: true, message: "Demande enregistrée. Vous recevrez une confirmation par email." },
