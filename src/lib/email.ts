@@ -1,5 +1,5 @@
 // src/lib/email.ts
-// Templates email — envoi délégué à src/lib/mail.ts (SendGrid)
+// Templates email — envoi délégué à src/lib/mail.ts (Brevo)
 
 import { sendMail } from "@/lib/mail"
 import {
