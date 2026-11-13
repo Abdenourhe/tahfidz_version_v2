@@ -2,7 +2,7 @@
 "use client"
 
 import Link from "next/link"
-import Image from "next/image"
+import { SchoolLogo } from "@/components/shared/SchoolLogo"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
 import {
@@ -15,7 +15,6 @@ import { NotificationNavItem } from "@/components/layout/NotificationNavItem"
 import { SidebarToggle } from "@/components/layout/SidebarToggle"
 import { useSidebarCollapsed } from "@/hooks/useSidebarCollapsed"
 import { useLanguage } from "@/contexts/LanguageContext"
-import { Logo } from "@/components/ui/Logo"
 
 interface AdminSidebarProps {
   user: {
@@ -98,22 +97,7 @@ export function AdminSidebar({ user, schoolName, schoolLogo, schoolSlug, schoolC
       <div className="p-4 border-b border-gray-100">
         <div className={cn("flex items-center", collapsed ? "justify-center" : "justify-between gap-2")}>
           <Link href="/admin/dashboard" className="flex items-center gap-3 overflow-hidden">
-            <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 shadow-md shadow-emerald-100">
-              {schoolLogo ? (
-                <Image
-                  src={schoolLogo}
-                  alt={`Logo ${displayName}`}
-                  width={40}
-                  height={40}
-                  className="w-full h-full object-contain bg-white p-0.5"
-                  unoptimized
-                />
-              ) : (
-                <div className="w-full h-full bg-white dark:bg-gray-900 flex items-center justify-center">
-                  <Logo variant="icon" size={36} priority />
-                </div>
-              )}
-            </div>
+            <SchoolLogo src={schoolLogo} name={displayName} size={40} />
             {!collapsed && (
               <div className="min-w-0">
                 <p className="font-bold text-gray-900 text-sm tracking-tight truncate">{displayName}</p>

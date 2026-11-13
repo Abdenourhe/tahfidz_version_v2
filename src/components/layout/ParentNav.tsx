@@ -2,7 +2,7 @@
 "use client"
 
 import Link from "next/link"
-import Image from "next/image"
+import { SchoolLogo } from "@/components/shared/SchoolLogo"
 import { usePathname } from "next/navigation"
 import { useState, useEffect } from "react"
 import { signOut, useSession } from "next-auth/react"
@@ -13,7 +13,6 @@ import { useLanguage } from "@/contexts/LanguageContext"
 import { PARENT_NAV_ITEMS } from "@/lib/nav/parent-nav"
 import { TopBarControls } from "@/components/layout/TopBarControls"
 import { NotificationNavItem } from "@/components/layout/NotificationNavItem"
-import { Logo } from "@/components/ui/Logo"
 
 interface ParentNavProps {
   user: { name: string; email: string }
@@ -48,13 +47,7 @@ export function ParentNav({ user: _user, schoolName, schoolLogo }: ParentNavProp
         <div className="grid grid-cols-3 items-center h-16 gap-2">
           {/* Logo + Nom école */}
           <div className="flex items-center gap-2.5 shrink-0 justify-self-start">
-            <div className="w-9 h-9 rounded-xl gradient-tahfidz flex items-center justify-center overflow-hidden shadow-sm shadow-tahfidz-green/20">
-              {logo ? (
-                <Image src={logo} alt={displayName} width={36} height={36} className="w-full h-full object-cover" />
-              ) : (
-                <Logo variant="icon" size={32} priority />
-              )}
-            </div>
+            <SchoolLogo src={logo} name={displayName} size={36} />
             <div className="hidden sm:flex flex-col leading-tight">
               <span className="font-bold text-sm text-gray-900 dark:text-gray-100">{displayName}</span>
               {schoolSlug && (

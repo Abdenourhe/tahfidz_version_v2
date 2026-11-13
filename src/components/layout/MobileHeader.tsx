@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
-import Image from "next/image"
+import { SchoolLogo } from "@/components/shared/SchoolLogo"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -14,7 +14,6 @@ import {
 } from "lucide-react"
 import { TopBarControls } from "./TopBarControls"
 import { useT } from "@/contexts/LanguageContext"
-import { Logo } from "@/components/ui/Logo"
 import { cn } from "@/lib/utils"
 import { useLockBodyScroll } from "@/hooks/useLockBodyScroll"
 import { useSession, signOut } from "next-auth/react"
@@ -204,13 +203,7 @@ export function MobileHeader({
           </button>
 
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-tahfidz-green flex items-center justify-center overflow-hidden">
-              {logo ? (
-                <Image src={logo} alt={displayName} width={32} height={32} className="w-full h-full object-cover" />
-              ) : (
-                <Logo variant="icon" size={24} priority />
-              )}
-            </div>
+            <SchoolLogo src={logo} name={displayName} size={28} className="rounded-lg" />
             <div className="flex flex-col">
               <span className="font-bold text-gray-900 dark:text-white text-sm">{displayName}</span>
               {schoolSlug && <span className="text-[10px] font-mono text-tahfidz-green text-center">{schoolSlug}</span>}

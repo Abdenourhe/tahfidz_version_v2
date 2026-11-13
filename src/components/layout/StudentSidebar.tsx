@@ -2,7 +2,7 @@
 "use client"
 
 import Link from "next/link"
-import Image from "next/image"
+import { SchoolLogo } from "@/components/shared/SchoolLogo"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
 import { useSession } from "next-auth/react"
@@ -14,7 +14,6 @@ import { useLanguage } from "@/contexts/LanguageContext"
 import { NotificationNavItem } from "@/components/layout/NotificationNavItem"
 import { SidebarToggle } from "@/components/layout/SidebarToggle"
 import { useSidebarCollapsed } from "@/hooks/useSidebarCollapsed"
-import { Logo } from "@/components/ui/Logo"
 
 interface StudentSidebarProps {
   user: { name: string; email: string; avatar?: string }
@@ -66,13 +65,7 @@ export function StudentSidebar({ user, schoolName, schoolLogo }: StudentSidebarP
       <div className="p-4 border-b border-gray-100 dark:border-gray-800">
         <div className={cn("flex items-center", collapsed ? "justify-center" : "justify-between gap-2")}>
           <Link href="/student/dashboard" className="flex items-center gap-3 overflow-hidden">
-            <div className="w-10 h-10 rounded-xl bg-tahfidz-green flex items-center justify-center overflow-hidden shrink-0">
-              {logo ? (
-                <Image src={logo} alt={displayName} width={40} height={40} className="w-full h-full object-cover" />
-              ) : (
-                <Logo variant="icon" size={36} priority />
-              )}
-            </div>
+            <SchoolLogo src={logo} name={displayName} size={40} />
             {!collapsed && (
               <div className="min-w-0">
                 <p className="font-bold text-gray-900 dark:text-white text-sm truncate">{displayName}</p>
