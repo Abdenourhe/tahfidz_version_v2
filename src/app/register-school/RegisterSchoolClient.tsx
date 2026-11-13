@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Loader2, CheckCircle2, School, ArrowLeft, Building2, User, Mail,
-  Phone, Lock, MapPin, Globe, Users, GraduationCap, BookOpen,
+  Lock, MapPin, Users, GraduationCap, BookOpen,
   ChevronRight, Check, Sparkles, ShieldCheck, Eye, EyeOff, ImagePlus, X, Clock
 } from "lucide-react"
 import Link from "next/link"
@@ -16,6 +16,8 @@ import { useLanguage, useT } from "@/contexts/LanguageContext"
 import type { LandingContent } from "@/lib/landing/default-content"
 import { Modal } from "@/components/ui/Modal"
 import type { PageSection } from "@/lib/site-config/page-types"
+import CountryPicker from "@/components/shared/CountryPicker"
+import { getDialCode } from "@/data/countries"
 
 /* ─── Types ──────────────────────────────────────────────── */
 type Step = 1 | 2 | 3
@@ -27,7 +29,7 @@ interface FormData {
   country:         string
   adminName:       string
   adminEmail:      string
-  phoneCode:       string
+  phoneCountry:    string
   adminPhone:      string
   adminPassword:   string
   confirmPassword: string
@@ -41,17 +43,6 @@ interface FormData {
 }
 
 type LandingPlan = LandingContent["pricing"]["plans"][number]
-
-/* Indicatifs téléphoniques par pays (synchronisés avec le sélecteur de pays) */
-const COUNTRY_DIAL_CODES: Record<string, { code: string; flag: string }> = {
-  DZ: { code: "+213", flag: "🇩🇿" },
-  MA: { code: "+212", flag: "🇲🇦" },
-  TN: { code: "+216", flag: "🇹🇳" },
-  FR: { code: "+33",  flag: "🇫🇷" },
-  BE: { code: "+32",  flag: "🇧🇪" },
-  CA: { code: "+1",   flag: "🇨🇦" },
-  SA: { code: "+966", flag: "🇸🇦" },
-}
 
 /* ─── Step config ────────────────────────────────────────── */
 
@@ -115,7 +106,7 @@ export default function RegisterSchoolClient() {
     country:         "CA",
     adminName:       "",
     adminEmail:      "",
-    phoneCode:       COUNTRY_DIAL_CODES.CA.code,
+    phoneCountry:    "CA",
     adminPhone:      "",
     adminPassword:   "",
     confirmPassword: "",
@@ -238,7 +229,7 @@ export default function RegisterSchoolClient() {
           country:          form.country,
           adminName:        form.adminName,
           adminEmail:       form.adminEmail,
-          adminPhone:       form.adminPhone ? `${form.phoneCode}${form.adminPhone}` : undefined,
+          adminPhone:       form.adminPhone ? `${getDialCode(form.phoneCountry)}${form.adminPhone}` : undefined,
           adminPassword:    form.adminPassword,
           classCount:       Number(form.classCount),
           studentsPerClass: Number(form.studentsPerClass),
@@ -494,29 +485,14 @@ export default function RegisterSchoolClient() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("countryLabel")}</label>
-                        <div className="relative">
-                          <Globe size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                          <select
-                            value={form.country}
-                            onChange={(e) => {
-                              const country = e.target.value
-                              // Synchronise l'indicatif téléphonique avec le pays choisi
-                              const dial = COUNTRY_DIAL_CODES[country]?.code
-                              setForm(prev => ({ ...prev, country, ...(dial ? { phoneCode: dial } : {}) }))
-                              setError(null)
-                            }}
-                            className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white appearance-none"
-                          >
-                            <option value="DZ">{t("countryDZ")}</option>
-                            <option value="MA">{t("countryMA")}</option>
-                            <option value="TN">{t("countryTN")}</option>
-                            <option value="FR">{t("countryFR")}</option>
-                            <option value="BE">{t("countryBE")}</option>
-                            <option value="CA">{t("countryCA")}</option>
-                            <option value="SA">{t("countrySA")}</option>
-                            <option value="OTHER">{t("countryOther")}</option>
-                          </select>
-                        </div>
+                        <CountryPicker
+                          value={form.country}
+                          onChange={(iso) => {
+                            // Synchronise l'indicatif téléphonique avec le pays choisi
+                            setForm(prev => ({ ...prev, country: iso, phoneCountry: iso }))
+                            setError(null)
+                          }}
+                        />
                       </div>
                     </div>
                   </motion.div>
@@ -574,18 +550,12 @@ export default function RegisterSchoolClient() {
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("phoneLabel")}</label>
                         <div className="flex gap-2">
-                          <div className="relative shrink-0">
-                            <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                            <select
-                              value={form.phoneCode}
-                              onChange={(e) => update("phoneCode", e.target.value)}
-                              className="pl-9 pr-2 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white appearance-none"
-                            >
-                              {Object.entries(COUNTRY_DIAL_CODES).map(([country, { code, flag }]) => (
-                                <option key={country} value={code}>{flag} {code}</option>
-                              ))}
-                            </select>
-                          </div>
+                          <CountryPicker
+                            mode="dial"
+                            value={form.phoneCountry}
+                            onChange={(iso) => update("phoneCountry", iso)}
+                            className="shrink-0 w-28"
+                          />
                           <input
                             type="tel"
                             inputMode="numeric"

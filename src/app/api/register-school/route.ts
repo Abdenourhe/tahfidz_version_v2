@@ -10,7 +10,7 @@ const schema = z.object({
   schoolName:       z.string().min(2, "Nom de l'école requis"),
   address:          z.string().optional(),
   city:             z.string().optional(),
-  country:          z.string().default("DZ"),
+  country:          z.string().default("CA"),
   adminName:        z.string().min(2, "Nom admin requis"),
   adminEmail:       z.string().email("Email invalide"),
   adminPhone:       z.string().optional(),
