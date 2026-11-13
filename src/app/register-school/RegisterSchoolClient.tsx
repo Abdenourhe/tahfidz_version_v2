@@ -554,7 +554,7 @@ export default function RegisterSchoolClient() {
                             mode="dial"
                             value={form.phoneCountry}
                             onChange={(iso) => update("phoneCountry", iso)}
-                            className="shrink-0 w-28"
+                            className="shrink-0 w-32"
                           />
                           <input
                             type="tel"
