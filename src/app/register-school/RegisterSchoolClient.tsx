@@ -27,6 +27,7 @@ interface FormData {
   country:         string
   adminName:       string
   adminEmail:      string
+  phoneCode:       string
   adminPhone:      string
   adminPassword:   string
   confirmPassword: string
@@ -40,6 +41,17 @@ interface FormData {
 }
 
 type LandingPlan = LandingContent["pricing"]["plans"][number]
+
+/* Indicatifs téléphoniques par pays (synchronisés avec le sélecteur de pays) */
+const COUNTRY_DIAL_CODES: Record<string, { code: string; flag: string }> = {
+  DZ: { code: "+213", flag: "🇩🇿" },
+  MA: { code: "+212", flag: "🇲🇦" },
+  TN: { code: "+216", flag: "🇹🇳" },
+  FR: { code: "+33",  flag: "🇫🇷" },
+  BE: { code: "+32",  flag: "🇧🇪" },
+  CA: { code: "+1",   flag: "🇨🇦" },
+  SA: { code: "+966", flag: "🇸🇦" },
+}
 
 /* ─── Step config ────────────────────────────────────────── */
 
@@ -99,10 +111,11 @@ export default function RegisterSchoolClient() {
   const [form, setForm] = useState<FormData>({
     schoolName:      "",
     address:         "",
-    city:            "",
-    country:         "DZ",
+    city:            "Québec",
+    country:         "CA",
     adminName:       "",
     adminEmail:      "",
+    phoneCode:       COUNTRY_DIAL_CODES.CA.code,
     adminPhone:      "",
     adminPassword:   "",
     confirmPassword: "",
@@ -225,7 +238,7 @@ export default function RegisterSchoolClient() {
           country:          form.country,
           adminName:        form.adminName,
           adminEmail:       form.adminEmail,
-          adminPhone:       form.adminPhone || undefined,
+          adminPhone:       form.adminPhone ? `${form.phoneCode}${form.adminPhone}` : undefined,
           adminPassword:    form.adminPassword,
           classCount:       Number(form.classCount),
           studentsPerClass: Number(form.studentsPerClass),
@@ -485,7 +498,13 @@ export default function RegisterSchoolClient() {
                           <Globe size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                           <select
                             value={form.country}
-                            onChange={(e) => update("country", e.target.value)}
+                            onChange={(e) => {
+                              const country = e.target.value
+                              // Synchronise l'indicatif téléphonique avec le pays choisi
+                              const dial = COUNTRY_DIAL_CODES[country]?.code
+                              setForm(prev => ({ ...prev, country, ...(dial ? { phoneCode: dial } : {}) }))
+                              setError(null)
+                            }}
                             className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white appearance-none"
                           >
                             <option value="DZ">{t("countryDZ")}</option>
@@ -554,14 +573,26 @@ export default function RegisterSchoolClient() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t("phoneLabel")}</label>
-                        <div className="relative">
-                          <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <div className="flex gap-2">
+                          <div className="relative shrink-0">
+                            <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                            <select
+                              value={form.phoneCode}
+                              onChange={(e) => update("phoneCode", e.target.value)}
+                              className="pl-9 pr-2 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white appearance-none"
+                            >
+                              {Object.entries(COUNTRY_DIAL_CODES).map(([country, { code, flag }]) => (
+                                <option key={country} value={code}>{flag} {code}</option>
+                              ))}
+                            </select>
+                          </div>
                           <input
                             type="tel"
+                            inputMode="numeric"
                             value={form.adminPhone}
-                            onChange={(e) => update("adminPhone", e.target.value)}
+                            onChange={(e) => update("adminPhone", e.target.value.replace(/\D/g, ""))}
                             placeholder={t("phonePlaceholder")}
-                            className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white"
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-tahfidz-green/50 focus:border-tahfidz-green transition text-sm dark:text-white"
                           />
                         </div>
                       </div>
